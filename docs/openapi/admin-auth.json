@@ -1,0 +1,93 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Manyak admin auth",
+    "version": "KNK-1738",
+    "description": "manyak-server e1083c2caf98ec4f3636a35cfb1c59907f2438a0 /v3/api-docs의 로그인 경로와 참조 스키마를 추출했다."
+  },
+  "paths": {
+    "/api/v1/admin/auth/login/google": {
+      "post": {
+        "tags": ["admin-auth-controller"],
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLoginResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdminLoginRequest": {
+        "type": "object",
+        "properties": {
+          "idToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["idToken"]
+      },
+      "AdminLoginResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "admin": {
+            "$ref": "#/components/schemas/AdminMemberSummary"
+          },
+          "tokenType": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminMemberSummary": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "admin": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

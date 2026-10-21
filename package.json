@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "api:generate": "orval --config ./orval.config.ts && eslint --fix src/api/generated",
+    "api:generate": "orval --config ./orval.config.ts && pnpm api:generate:auth && eslint --fix src/api/generated",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "api:generate:auth": "orval --config ./orval.auth.config.ts && eslint --fix src/api/generated/zod/admin-auth.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
