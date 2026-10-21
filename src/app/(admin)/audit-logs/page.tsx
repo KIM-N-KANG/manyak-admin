@@ -1,10 +1,11 @@
-import { ComingSoon } from '@/components/admin/coming-soon';
+import { Suspense } from 'react';
+
+import { AuditLogListScreen } from '@/features/audit-logs/audit-log-screen';
 
 export default function Page() {
   return (
-    <ComingSoon
-      title="감사 로그"
-      description="감사 로그 조회 기능은 준비 중입니다."
-    />
+    <Suspense fallback={<p role="status">감사 로그를 불러오는 중입니다…</p>}>
+      <AuditLogListScreen />
+    </Suspense>
   );
 }

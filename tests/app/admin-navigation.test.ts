@@ -5,7 +5,6 @@ import { createElement } from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import AuditLogs from '@/app/(admin)/audit-logs/page';
 import LegacyCampaigns from '@/app/(admin)/campaigns/page';
 import Notices from '@/app/(admin)/notices/page';
 import NewCampaign from '@/app/(admin)/notifications/campaigns/new/page';
@@ -47,7 +46,6 @@ describe('기존 경로 호환', () => {
 describe('준비 중 화면', () => {
   it.each([
     [Notices, '공지'],
-    [AuditLogs, '감사 로그'],
     [Campaigns, '캠페인'],
     [Stats, '발송 통계'],
     [Templates, '문구 템플릿'],
