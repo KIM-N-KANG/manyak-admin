@@ -245,7 +245,7 @@ components:
 
 - 사이드바 상단은 `public/logo/manyak-symbol-green.svg`의 글자 없는 초록 심볼(32×32)과 ‘마냑 관리자’ 텍스트를 나란히 표시한다. 텍스트는 `{typography.heading-md}` (Pretendard, 20px, 600, line-height 28px, letter-spacing -0.4px)를 사용한다. 옆의 텍스트가 이름을 전달하므로 심볼 이미지의 `alt`는 빈 문자열로 두고 `aria-hidden="true"`로 중복 낭독을 막는다.
 - 로그인 화면은 `public/logo/manyak-logo.svg` 로크업과 옆의 ‘관리자’ 표시를 유지한다. 로크업 원본은 manyak-web의 같은 경로이며 SVG를 변형하지 않는다.
-- 파비콘은 manyak-web의 `src/app/favicon.ico`, PNG 아이콘은 `public/icons/icon-192.png`, `icon-512.png`, `icon-512-maskable.png`를 그대로 사용한다.
+- 파비콘은 글자 없는 초록 심볼 그대로의 투명 배경을 사용한다. App Router의 `src/app/icon.svg`는 `public/logo/manyak-symbol-green.svg`와 같고, `src/app/favicon.ico`는 같은 심볼의 16·32·48px PNG 프레임으로 구성한다. 모든 ICO 프레임은 8비트 RGBA로 인코딩한다. PWA·Apple용 `public/icons/`와 layout 아이콘 메타데이터는 유지한다.
 - 사이드바 메뉴는 번호 없이 이름만 표시한다. 활성 항목은 연한 초록 배경과 브랜드 초록 전경을 사용한다.
 
 Typography does the heavy lifting. **Pretendard** sets the display headline in tightly-tracked weight-600 (the hero h1 runs -2.4px letter-spacing), and **system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`)** appears as small uppercase eyebrows labeling sections like a technical spec sheet. Buttons split into two shapes by context: the marketing CTAs are fully rounded brand-green **pills** (`{rounded.pill}` — 100px, "Start Deploying" / "Get a Demo"), while nav and in-app controls use a tight 6px square (`{rounded.sm}`, "Sign Up" / "Log In"). The contrast between the rounded marketing pill and the square app button is itself a deliberate signal of which surface you're on.
