@@ -96,10 +96,10 @@
   --sidebar-border: #ebebeb;
   --sidebar-ring: var(--primary);
   --chart-1: var(--primary);
-  --chart-2: #00664f;
-  --chart-3: #0e7490;
-  --chart-4: #b7791f;
-  --chart-5: #6d5bd0;
+  --chart-2: color-mix(in oklab, var(--primary) 80%, transparent);
+  --chart-3: color-mix(in oklab, var(--primary) 60%, transparent);
+  --chart-4: color-mix(in oklab, var(--primary) 40%, transparent);
+  --chart-5: color-mix(in oklab, var(--primary) 20%, transparent);
 }
 
 @layer base {

@@ -18,10 +18,10 @@ colors:
   link-deep: '#017a4e'
   link-soft: '#e6f6ef'
   chart-1: '#01a76b'
-  chart-2: '#00664f'
-  chart-3: '#0e7490'
-  chart-4: '#b7791f'
-  chart-5: '#6d5bd0'
+  chart-2: 'color-mix(in oklab, var(--primary) 80%, transparent)'
+  chart-3: 'color-mix(in oklab, var(--primary) 60%, transparent)'
+  chart-4: 'color-mix(in oklab, var(--primary) 40%, transparent)'
+  chart-5: 'color-mix(in oklab, var(--primary) 20%, transparent)'
   error: '#ee0000'
   error-deep: '#c50000'
   warning: '#f5a623'
@@ -255,7 +255,7 @@ Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafaf
 **Key Characteristics:**
 
 - A single near-black ink (`{colors.ink}`) carries headings, body, and borders on a near-white canvas (`{colors.canvas}`) — near-zero chromatic chrome.
-- 마냑 초록은 주요 동작과 활성 상태에 사용하고, 차트는 아래 전용 팔레트로 구분한다. 레거시 Vercel 그라디언트는 참고 자료로만 남기며 관리자 화면에 추가하지 않는다.
+- 마냑 초록은 주요 동작과 활성 상태에 사용하고, 차트는 마냑 초록 한 색으로 통일하며 같은 색의 명도·투명도·선 스타일로만 계열을 구분한다. 레거시 Vercel 그라디언트는 참고 자료로만 남기며 관리자 화면에 추가하지 않는다.
 - Two button shapes by context: rounded brand-green **pills** (`{rounded.pill}`) for marketing CTAs, tight 6px squares (`{rounded.sm}`) for nav/app controls.
 - Pretendard for tightly-tracked display type (`{typography.display-xl}` at -2.4px), system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`) for uppercase technical eyebrows (`{typography.mono-eyebrow}`).
 - Hairline-bordered white cards (`{colors.hairline}` on `{colors.canvas-elevated}`) in precise grids; depth via 1px border + whisper shadow, never heavy elevation.
@@ -271,7 +271,7 @@ Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafaf
 - **Manyak Green** (`{colors.primary}` / `{colors.link}` — #01A76B): 주요 버튼·링크·포커스·활성 메뉴의 기준색이다. CSS에서는 `oklch(0.6398 0.1458 159.17)`을 사용하며 버튼 전경은 `{colors.on-primary}` (흰색)이다.
 - **Deep / Soft Green**: 링크 hover는 `{colors.link-deep}` (#017A4E), 강조 배경은 `{colors.link-soft}` (#E6F6EF)이다.
 - **Ink** (`{colors.ink}` — #171717): 제목과 가장 진한 본문에 사용한다. 주요 버튼과 로고의 색으로 사용하지 않는다.
-- **Chart palette**: `--chart-1` #01A76B, `--chart-2` #00664F, `--chart-3` #0E7490, `--chart-4` #B7791F, `--chart-5` #6D5BD0이다. 초록을 중심으로 짙은 초록·청록·황토·보라를 배치한다. 축·라벨·툴팁·수치 목록으로 색상 외에도 지표를 구분한다.
+- **Chart palette**: 모든 막대·선·영역은 `--primary`의 마냑 초록을 사용한다. `--chart-1`은 primary 100%, `--chart-2`~`--chart-5`는 같은 초록의 80%·60%·40%·20% 투명도 단계다. 한 차트에서 여러 계열이 필요하면 이 단계나 실선·점선만 사용하고 다른 색상은 쓰지 않는다. 축·라벨·툴팁·수치 목록으로 색상 외에도 지표를 구분한다.
 
 ### Surface
 
@@ -502,7 +502,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 ### Do
 
 - Keep the canvas near-white (`{colors.canvas}`) and let near-black ink (`{colors.ink}`) carry headings and borders. Use Manyak Green for primary CTAs.
-- 브랜드 색과 로고는 마냑을 따른다. 주요 동작·링크·포커스·활성 메뉴는 초록, 차트는 전용 팔레트를 사용한다.
+- 브랜드 색과 로고는 마냑을 따른다. 주요 동작·링크·포커스·활성 메뉴는 초록, 차트는 같은 초록의 투명도 단계와 선 스타일만 사용한다.
 - Use the two button shapes by context: brand-green pill (`{components.button-primary}`) for marketing CTAs, 6px square (`{components.button-primary-sm}`) for nav/app.
 - Define cards and inputs with a 1px hairline (`{colors.hairline}`) before any shadow — flat is the default.
 - Set display headings in Pretendard 600 with tight negative tracking; label sections with uppercase system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`) eyebrows (`{typography.mono-eyebrow}`).

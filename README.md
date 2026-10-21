@@ -59,7 +59,7 @@ Orval은 `/v3/api-docs`에서 TanStack Query 클라이언트와 Zod 스키마를
 
 ## 화면과 데이터 경계
 
-- `/`: KST 기준 숫자 카드, 7·30·90일 추이, 이용 분포 9종. 차트의 수치 목록에서도 키보드로 상세 목록에 이동할 수 있습니다.
+- `/`: KST 기준 DB 숫자 카드, 7·30·90일 추이, 이용 분포 9종. 별도 Amplitude 영역에 오늘 활성 사용자와 DAU·신규 사용자 추이를 제공하며 같은 기간을 사용합니다. Amplitude 조회 실패는 해당 영역의 재시도로 처리합니다. 모든 차트는 마냑 초록을 사용합니다. 차트의 수치 목록에서도 키보드로 상세 목록에 이동할 수 있습니다.
 - `/stories`, `/members`, `/payments`, `/chats`: URL 쿼리 필터와 정렬, `items` / `nextCursor` 커서 페이지(API 기본 50건, 화면은 12건 요청), `/{id}` 상세 연결을 제공합니다.
 - `/login`: Google 로그인 버튼 UI, `/campaigns`, `/notices`, `/audit-logs`: 준비 중 화면입니다.
 - 응답 타입은 `src/features/<도메인>/types.ts`에 있습니다. 회원·결제의 기존 계약 필드를 유지하고, 차트와 목록·상세 확장을 별도 타입으로 정의했습니다. 대시보드 숫자 카드는 회원·채팅 시작·턴·스토리·이프 지급·소진·결제 이력·금액의 8개이며 각각 누적과 오늘 값을 제공합니다.
@@ -67,3 +67,5 @@ Orval은 `/v3/api-docs`에서 TanStack Query 클라이언트와 Zod 스키마를
 - 가상 이메일 `member1@example.com`부터 `member1240@example.com`까지 정확 일치 검색이 가능합니다. 응답에는 이메일을 포함하지 않습니다. 대화 원문과 인증 토큰도 응답에 없습니다.
 - 목록의 `from`, `to`는 KST 날짜로 생성·가입·결제 완료·채팅 시작일에 적용합니다. `attendanceDate`, `creditDate`, `turnDate`는 관련 활동일 필터입니다. 이프는 `creditDirection=granted|spent`로 방향과 ADMIN 2-4의 사유를 함께 검사하며, 회원 목록과 상세는 회원별 원장을 공유합니다. `chatFrom/chatTo`, `aiFrom/aiTo`, `creationFrom/creationTo`는 각각 채팅 생성일·AI 호출일·제작 세션 생성일 기준입니다. 숫자 카드와 추이·분포는 목록과 같은 고정 원천을 집계합니다. 회원의 `chatCount`는 전체 채팅방 수이며 `periodChatCount`는 선택 기간에 생성한 수입니다.
 - 분포의 정의는 Grafana `service-stats`를 기준으로 합니다. 첫 사용자 입력 시간은 900초 이내, 입력 인물 수는 주변 인물만, AI 지연은 성공 호출만, 성공률은 완료 호출만 집계합니다. 결제 건수와 금액은 환불을 포함한 완료 이력 주문을 집계하고 같은 목록으로 이동합니다. 실제 DB 집계와 팀 계정 제외는 서버 연동 단계에서 구현합니다.
+
+Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics.ts`의 가상 집계를 반환합니다. 타입은 `DashboardAnalytics`이며 `asOf/from/to/todayActiveUsers/daily`를 제공합니다. 외부 Amplitude에 직접 연결하지 않으며, 화면의 출처 도움말은 집계 지연과 팀 계정 제외 기준을 설명합니다.

@@ -25,6 +25,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { AnalyticsSection } from '@/features/dashboard/analytics-section';
 import {
   getDailyMetricHref,
   paymentHistoryHref,
@@ -55,15 +56,9 @@ const metrics: Record<MetricKey, { label: string; unit: string }> = {
   attendance: { label: '출석 회원 수', unit: '명' },
 };
 
-function DistributionCard({
-  distribution,
-  index,
-}: {
-  distribution: Distribution;
-  index: number;
-}) {
+function DistributionCard({ distribution }: { distribution: Distribution }) {
   const router = useRouter();
-  const color = `var(--chart-${(index % 5) + 1})`;
+  const color = 'var(--primary)';
 
   return (
     <Card className="min-w-0">
@@ -256,6 +251,7 @@ export function DashboardScreen() {
           </div>
         </>
       ) : null}
+      <AnalyticsSection days={days} />
       <QueryState
         pending={charts.isPending}
         error={charts.error}
@@ -289,7 +285,7 @@ export function DashboardScreen() {
               config={{
                 [metric]: {
                   label: metrics[metric].label,
-                  color: 'var(--chart-1)',
+                  color: 'var(--primary)',
                 },
               }}
               className="mt-8 h-[300px] w-full"
@@ -355,8 +351,8 @@ export function DashboardScreen() {
             </span>
           </div>
           <div className="grid gap-5 xl:grid-cols-2">
-            {c.distributions.map((d, i) => (
-              <DistributionCard key={d.chartId} distribution={d} index={i} />
+            {c.distributions.map((d) => (
+              <DistributionCard key={d.chartId} distribution={d} />
             ))}
           </div>
         </>

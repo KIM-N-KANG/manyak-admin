@@ -53,3 +53,11 @@ export type DashboardCharts = {
   daily: DailyMetrics[];
   distributions: Distribution[];
 };
+
+export type DashboardAnalytics = {
+  asOf: string;
+  from: string;
+  to: string;
+  todayActiveUsers: number;
+  daily: { date: string; activeUsers: number; newUsers: number }[];
+};
