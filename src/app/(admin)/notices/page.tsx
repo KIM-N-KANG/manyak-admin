@@ -1,7 +1,11 @@
-import { ComingSoon } from '@/components/admin/coming-soon';
+import { Suspense } from 'react';
+
+import { NoticeListScreen } from '@/features/notices/notice-list-screen';
 
 export default function Page() {
   return (
-    <ComingSoon title="공지" description="공지 관리 기능은 준비 중입니다." />
+    <Suspense fallback={<p role="status">공지를 불러오는 중입니다…</p>}>
+      <NoticeListScreen />
+    </Suspense>
   );
 }
