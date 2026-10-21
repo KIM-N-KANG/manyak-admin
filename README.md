@@ -12,7 +12,7 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-개발 서버는 http://localhost:3000 에서 실행됩니다. 환경 변수 없이 빌드는 가능하지만 화면에 접근하려면 Google 클라이언트와 관리자 로그인 서버 설정이 필요합니다. 쿠키는 로컬에서도 Secure를 유지하므로 HTTPS 개발 서버(`pnpm dev --experimental-https`)를 권장합니다.
+개발 서버는 http://localhost:3000 에서 실행됩니다. 로컬과 Vercel 비운영 fixture 환경은 Google 설정 없이 고정 데이터 화면을 미리볼 수 있습니다. production 또는 server 모드는 Google 클라이언트와 관리자 로그인 서버 설정이 필요합니다. 쿠키는 로컬에서도 Secure를 유지하므로 HTTPS 개발 서버(`pnpm dev --experimental-https`)를 권장합니다.
 
 ```bash
 pnpm lint
@@ -49,11 +49,11 @@ tests/                  # BFF, mutator, 유틸, 주석 컨벤션 검증
 
 `.env.example`의 빈 값을 `.env.local`에 설정합니다.
 
-| 키                             | 용도                                                                                                                             |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| `API_BASE_URL`                 | Next 서버에서만 사용하는 manyak-server 기본 URL입니다. 경로 접두어 없이 설정합니다. 로그인은 모든 모드에서 이 서버를 사용합니다. |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth 웹 클라이언트 ID입니다. 빌드 시 공개되며 클라이언트 비밀키는 사용하지 않습니다.                                     |
-| `ADMIN_DATA_SOURCE`            | 비어 있으면 `fixture`, 실서버 경로는 `server`입니다.                                                                             |
+| 키                             | 용도                                                                                                                          |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `API_BASE_URL`                 | Next 서버에서만 사용하는 manyak-server 기본 URL입니다. 경로 접두어 없이 설정합니다. 미리보기 우회 외의 로그인에서 사용합니다. |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth 웹 클라이언트 ID입니다. 빌드 시 공개되며 클라이언트 비밀키는 사용하지 않습니다.                                  |
+| `ADMIN_DATA_SOURCE`            | 비어 있으면 `fixture`, 실서버 경로는 `server`입니다.                                                                          |
 
 `/login`에서 [Google Identity Services](https://developers.google.com/identity/gsi/web/reference/js-reference)가 ID token을 발급하면 동일 출처 `POST /api/auth/login`이 서버의 `POST /api/v1/admin/auth/login/google`로 전달합니다. BFF는 관리자 accessToken과 닉네임을 호스트 전용 `__Host-manyak-admin` 쿠키에 보관합니다. Domain을 지정하지 않고 httpOnly·Secure·SameSite=Lax·Path=/를 적용하며 서버의 expiresIn(최대 7200초)을 만료로 사용합니다. 브라우저 응답에는 닉네임만 포함하고 토큰은 노출하지 않습니다. 401과 403은 모두 “관리자 권한이 없는 계정”으로 안내합니다.
 
@@ -61,7 +61,9 @@ tests/                  # BFF, mutator, 유틸, 주석 컨벤션 검증
 
 Next 16의 `src/proxy.ts`가 쿠키 없는 페이지를 `/login`으로 보내고, API는 401로 응답합니다. 관리자 레이아웃에서도 세션 구조를 확인하며 최종 역할·상태·토큰 검증은 서버가 수행합니다. 서버 401은 쿠키 삭제와 화면 로그인 이동으로 이어집니다. 사이드바는 로그인 닉네임과 로그아웃 버튼을 제공합니다. `POST /api/auth/logout`은 쿠키만 삭제하며 서버의 토큰 폐기 API는 없습니다. 로그아웃과 만료 시 전체 페이지 이동으로 클라이언트 조회 캐시를 비웁니다. ID token과 관리자 토큰은 로그·localStorage·sessionStorage에 저장하지 않습니다.
 
-데이터 모드는 로그인 인증과 별개입니다. `fixture`는 기존 fixture route handler를 사용합니다. `server`는 보호된 `/api/admin-upstream/[...path]` route handler로 rewrite하고 경로를 `src/api/admin-endpoints.ts`에서 찾습니다. `src/api/admin-upstream.ts`는 서버 전용 URL, 쿠키의 Bearer 토큰, `X-Manyak-Request-Id`, no-store, 오류·응답 전달을 담당합니다. PR #353 기준 데이터 API는 아직 없으므로 503 “서버 미구현”으로 응답하며 fixture로 자동 전환하지 않습니다. 서버 API를 활성화할 때 생성 Zod로 본문·쿼리 검증을 연결해야 합니다. 브라우저의 Authorization·다른 쿠키나 임의 URL은 업스트림에 전달하지 않습니다.
+fixture(빈 값 포함)이며 `VERCEL_ENV !== production`이면 `src/features/auth/preview.ts`의 단일 판정으로 인증 없는 미리보기를 허용합니다. `/login`은 `/dashboard`로 이동하고 사이드바에 닉네임 “미리보기”와 “고정 데이터 미리보기”를 표시하며 로그아웃은 숨깁니다. 이 상태에서는 로그인 BFF와 공통 업스트림 계층도 실제 서버를 호출하지 않습니다. production+fixture 또는 비운영+server는 기존 쿠키 인증을 유지합니다.
+
+데이터 모드는 이 조건에 따라 인증 정책과 함께 적용합니다. `fixture`는 기존 fixture route handler를 사용합니다. `server`는 보호된 `/api/admin-upstream/[...path]` route handler로 rewrite하고 경로를 `src/api/admin-endpoints.ts`에서 찾습니다. `src/api/admin-upstream.ts`는 서버 전용 URL, 쿠키의 Bearer 토큰, `X-Manyak-Request-Id`, no-store, 오류·응답 전달을 담당합니다. PR #353 기준 데이터 API는 아직 없으므로 503 “서버 미구현”으로 응답하며 fixture로 자동 전환하지 않습니다. 서버 API를 활성화할 때 생성 Zod로 본문·쿼리 검증을 연결해야 합니다. 브라우저의 Authorization·다른 쿠키나 임의 URL은 업스트림에 전달하지 않습니다.
 
 로그인 요청 Zod는 실제 서버 기준 브랜치 `feat/KNK-1738-admin-auth-foundation`의 e1083c2에서 추출한 OpenAPI 스냅샷으로 생성합니다. 테스트 전용 probe 경로는 포함하지 않습니다.
 
@@ -108,6 +110,6 @@ Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics
 
 회원 상세의 거래·출석은 `/api/members/{id}/transactions`와 `/attendance`에서 같은 숫자 페이지 계약으로 조회합니다. URL 상태는 `transactionsPage/transactionsSize`, `attendancePage/attendanceSize`로 분리합니다. 거래 원장은 시각·사유·금액·거래 후 잔액만 노출하며 내부 ID와 가상의 transactionId를 사용하지 않습니다. 결제 상품의 `if_5000` 등 상품 ID는 계약의 `productId`로 표시합니다.
 
-공지·알림 변경은 `src/fixtures/`의 프로세스 메모리에만 반영되며 재시작 시 초기화됩니다. 데이터 fixture는 실제 발송이나 업스트림 변경을 수행하지 않으며, 로그인 인증은 실제 서버를 사용합니다. 목록은 세션 결정에 따라 `page`·`size`·`totalElements`·`totalPages` 및 `sort`·`order`를 사용합니다. 상세·작성 응답의 도메인 필드명은 참조 서버 스펙을 유지합니다. 공지 정보성 알림은 서비스 동의자, 광고성은 광고 동의자 대상이며 KST 야간 안내를 제공합니다. 직접 작성하는 캠페인은 서버 계약에 따라 광고성 전용이며 정보성 선택은 공지 작성 경로를 안내합니다.
+공지·알림 변경은 `src/fixtures/`의 프로세스 메모리에만 반영되며 재시작 시 초기화됩니다. 데이터 fixture는 실제 발송이나 업스트림 변경을 수행하지 않으며, 미리보기 우회 외의 로그인 인증은 실제 서버를 사용합니다. 목록은 세션 결정에 따라 `page`·`size`·`totalElements`·`totalPages` 및 `sort`·`order`를 사용합니다. 상세·작성 응답의 도메인 필드명은 참조 서버 스펙을 유지합니다. 공지 정보성 알림은 서비스 동의자, 광고성은 광고 동의자 대상이며 KST 야간 안내를 제공합니다. 직접 작성하는 캠페인은 서버 계약에 따라 광고성 전용이며 정보성 선택은 공지 작성 경로를 안내합니다.
 
 차트 분포 응답은 `points[].link { list, params }`를 사용하며 화면이 목록 URL을 조립합니다. 출석은 `daily[].attendance`로 조회합니다. AI 기능은 저장 값 4종으로 구분합니다. 회원 상세는 집계 필드만 반환하고 관계 목록은 별도 BFF에서 조회합니다. 게스트 소유 스토리의 owner와 제작 세션 없는 스토리의 supportingCharacterCount는 null입니다.

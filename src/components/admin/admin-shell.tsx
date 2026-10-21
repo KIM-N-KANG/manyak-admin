@@ -56,9 +56,11 @@ const serverSnapshot = () => null;
 export function AdminShell({
   children,
   nickname,
+  preview = false,
 }: {
   children?: ReactNode;
   nickname?: string;
+  preview?: boolean;
 }) {
   const pathname = usePathname();
   const raw = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
@@ -169,7 +171,13 @@ export function AdminShell({
           <p className="mb-3 truncate text-sm font-medium">
             {nickname ?? '관리자'}
           </p>
-          <LogoutButton />
+          {preview ? (
+            <p className="text-xs text-muted-foreground">
+              고정 데이터 미리보기
+            </p>
+          ) : (
+            <LogoutButton />
+          )}
         </div>
       </aside>
       <main

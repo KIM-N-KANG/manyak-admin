@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { isFixturePreview } from '@/features/auth/preview';
 import {
   clearSession,
   readSession,
@@ -52,6 +53,9 @@ export async function forwardAdminRequest(
   body?: string,
   authenticated = true,
 ) {
+  if (isFixturePreview())
+    return failure(503, '미리보기에서는 서버를 호출하지 않습니다.');
+
   const session = readSession(request.cookies.get(sessionCookie)?.value);
 
   if (authenticated && !session) return unauthorized();

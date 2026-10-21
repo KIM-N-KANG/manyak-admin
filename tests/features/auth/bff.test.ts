@@ -62,6 +62,7 @@ const success = {
 };
 
 beforeEach(() => {
+  vi.stubEnv('VERCEL_ENV', 'production');
   vi.stubEnv('API_BASE_URL', 'https://server.example');
   vi.stubEnv('ADMIN_DATA_SOURCE', 'fixture');
 });
