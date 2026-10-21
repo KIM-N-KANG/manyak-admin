@@ -239,7 +239,14 @@ export function StoryRows({ items }: { items: Story[] }) {
         <TextLink href={`/stories/${s.storyId}`}>{s.title}</TextLink>
       </td>
       <td>
-        {s.genre} · {s.scope === 'original' ? '오리지널' : '사용자 제작'}
+        {s.genre} ·{' '}
+        {s.scope === 'original' ? (
+          <span className="rounded-sm border bg-primary/5 px-2 py-1 text-xs text-primary">
+            오리지널
+          </span>
+        ) : (
+          '사용자 제작'
+        )}
       </td>
       <td>
         <Status value={s.visibility} />

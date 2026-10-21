@@ -237,7 +237,13 @@ export function getDashboardCharts(days: number): DashboardCharts {
         '장르별 채팅 깊이',
         '채팅 시작일 기준 · 복수 장르는 각각 포함 · 평균 현재 턴',
         '턴',
-        ['로맨스', '판타지', '일상', '미스터리', 'SF'],
+        [
+          ...new Set(
+            stories.flatMap((story) =>
+              story.genre.split(',').map((genre) => genre.trim()),
+            ),
+          ),
+        ],
         (label) =>
           average(
             periodChats

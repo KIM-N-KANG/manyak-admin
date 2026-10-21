@@ -8,10 +8,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import AuditLogs from '@/app/(admin)/audit-logs/page';
 import LegacyCampaigns from '@/app/(admin)/campaigns/page';
 import Notices from '@/app/(admin)/notices/page';
+import NewCampaign from '@/app/(admin)/notifications/campaigns/new/page';
 import Campaigns from '@/app/(admin)/notifications/campaigns/page';
 import Stats from '@/app/(admin)/notifications/stats/page';
 import Templates from '@/app/(admin)/notifications/templates/page';
-import Originals from '@/app/(admin)/originals/page';
 import Root from '@/app/(admin)/page';
 
 vi.mock('next/navigation', () => ({
@@ -46,7 +46,6 @@ describe('기존 경로 호환', () => {
 
 describe('준비 중 화면', () => {
   it.each([
-    [Originals, '오리지널'],
     [Notices, '공지'],
     [AuditLogs, '감사 로그'],
     [Campaigns, '캠페인'],
@@ -62,5 +61,26 @@ describe('준비 중 화면', () => {
     expect(view.container.querySelectorAll('[data-slot="card"]')).toHaveLength(
       0,
     );
+  });
+});
+
+describe('스토리 홍보 캠페인 준비 화면', () => {
+  it('유효한 storyId를 받아 이동 대상 안내를 보여 준다', async () => {
+    const id = '00000002-0000-4000-8000-000000000001';
+
+    render(
+      await NewCampaign({ searchParams: Promise.resolve({ storyId: id }) }),
+    );
+    expect(
+      screen.getByText(/이 스토리로 이동하는 캠페인/).textContent,
+    ).toContain(id);
+  });
+  it('잘못된 식별자는 이동 대상 안내로 사용하지 않는다', async () => {
+    render(
+      await NewCampaign({
+        searchParams: Promise.resolve({ storyId: ['bad', 'other'] }),
+      }),
+    );
+    expect(screen.getByText(/홍보할 스토리를 선택/)).toBeTruthy();
   });
 });

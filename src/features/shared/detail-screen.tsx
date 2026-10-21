@@ -53,6 +53,11 @@ function StoryContent({ story: s }: { story: StoryDetail }) {
           ]}
         />
       </Card>
+      {s.scope === 'original' ? (
+        <p className="mt-4">
+          <TextLink href={`/originals/${s.storyId}`}>오리지널 관리 →</TextLink>
+        </p>
+      ) : null}
       <Section title="턴 유지율">
         <Card>
           <p className="mb-5 text-xs text-muted-foreground">

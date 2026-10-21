@@ -48,6 +48,11 @@ export const members: MemberListItem[] = Array.from(
     chatCount: 0,
   }),
 );
+
+members[0].nickname = '마냑';
+
+export const officialMember = members[0];
+
 export const stories: Story[] = Array.from({ length: 36 }, (_, i) => ({
   storyId: id(2, i),
   title: titles[i % 8] + (i >= 8 ? ` ${i + 1}` : ''),
@@ -58,7 +63,7 @@ export const stories: Story[] = Array.from({ length: 36 }, (_, i) => ({
   moderationStatus: i % 6 === 0 ? 'HELD' : 'APPROVED',
   supportingCharacterCount: i % 6,
   tags: ['성장', '모험', i % 2 ? '동료' : '비밀'],
-  owner: members[i % members.length],
+  owner: i % 3 === 0 ? officialMember : members[i % members.length],
   chatCount: 126 + i * 19,
   totalTurns: 1200 + i * 147,
   createdAt: new Date(Date.UTC(2026, 9, 21 - (i % 20), 6)).toISOString(),

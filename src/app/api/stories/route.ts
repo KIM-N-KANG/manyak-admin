@@ -52,7 +52,11 @@ export function GET(request: Request) {
           (!sessionStoryIds || sessionStoryIds.has(s.storyId)) &&
           (!aiStoryIds || aiStoryIds.has(s.storyId)) &&
           (!q.get('scope') || s.scope === q.get('scope')) &&
-          (!q.get('genre') || s.genre === q.get('genre')) &&
+          (!q.get('genre') ||
+            s.genre
+              .split(',')
+              .map((genre) => genre.trim())
+              .includes(q.get('genre')!)) &&
           (!q.has('supportingCharacterCount') ||
             s.supportingCharacterCount ===
               Number(q.get('supportingCharacterCount'))) &&

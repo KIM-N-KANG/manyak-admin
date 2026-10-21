@@ -1,4 +1,5 @@
 export const listSorts = {
+  originals: ['chatCount', 'totalTurns', 'updatedAt'],
   stories: ['chatCount', 'totalTurns', 'createdAt'],
   members: [
     'createdAt',
@@ -11,9 +12,11 @@ export const listSorts = {
   chats: ['turnCount', 'startedAt', 'lastActiveAt', 'creditsSpent'],
 } as const;
 
-export type ListDomain = keyof typeof listSorts;
+export type SortDomain = keyof typeof listSorts;
+export type ListDomain = Exclude<SortDomain, 'originals'>;
 
-export const defaultSort: Record<ListDomain, string> = {
+export const defaultSort: Record<SortDomain, string> = {
+  originals: 'updatedAt',
   stories: 'createdAt',
   members: 'createdAt',
   payments: 'completedAt',

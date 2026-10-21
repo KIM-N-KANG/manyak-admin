@@ -55,7 +55,7 @@ pnpm api:generate
 
 Orval은 `/v3/api-docs`에서 TanStack Query 클라이언트와 Zod 스키마를 `src/api/generated/`에 생성합니다. 초기 구성에는 생성물이 없으며 서버 스펙이 없으므로 지금 생성하지 않습니다.
 
-브라우저 요청은 Next route handler를 거치는 BFF 구조를 사용합니다. 향후 구글 id token을 관리자 로그인 API에 전달하고 받은 관리자 토큰을 httpOnly 쿠키에 저장합니다. 토큰을 JS에서 읽을 수 있는 저장소에 보관하지 않습니다. 현재 `/api/dashboard/{summary,charts}`, `/api/{stories,members,payments,chats}`와 각 `/{id}` route handler는 고정 데이터를 반환합니다. 인증과 서버 전달은 다음 작업에서 구현합니다. 서버 전달 전에는 Orval 생성 Zod 스키마로 요청을 검증해야 합니다. 현재는 고정 데이터 조회 조건만 검사하며 직접 작성한 서버 계약 Zod 스키마는 없습니다.
+브라우저 요청은 Next route handler를 거치는 BFF 구조를 사용합니다. 향후 구글 id token을 관리자 로그인 API에 전달하고 받은 관리자 토큰을 httpOnly 쿠키에 저장합니다. 토큰을 JS에서 읽을 수 있는 저장소에 보관하지 않습니다. 현재 `/api/dashboard/{summary,charts}`, `/api/{stories,members,payments,chats}`와 각 `/{id}` route handler는 고정 데이터를 반환합니다. 인증과 서버 전달은 다음 작업에서 구현합니다. 서버 전달 전에는 Orval 생성 Zod 스키마로 요청을 검증해야 합니다. 기존 조회 화면은 고정 데이터 조회 조건을 검사하고, 오리지널 fixture 쓰기는 화면 전용 Zod 폼 검증을 재사용합니다. 직접 작성한 서버 계약 생성 스키마는 없습니다.
 
 ## 화면과 데이터 경계
 
@@ -64,7 +64,8 @@ Orval은 `/v3/api-docs`에서 TanStack Query 클라이언트와 Zod 스키마를
 - `/`는 기존 기간·지표 등 쿼리를 유지해 `/dashboard`로 이동하고, `/campaigns`는 `/notifications/campaigns`로 이동합니다.
 - `/stories`, `/members`, `/payments`, `/chats`: URL 쿼리 필터와 정렬, `items`·`page`·`size`·`totalElements`·`totalPages` 숫자 페이지(1부터, 기본 20건, 크기 1~100), `/{id}` 상세 연결을 제공합니다.
 - `/login`: Google 로그인 버튼 UI입니다.
-- `/originals`, `/notices`, `/audit-logs`, `/notifications/campaigns`, `/notifications/stats`, `/notifications/templates`: 제목과 설명 한 줄만 제공하는 준비 중 화면입니다.
+- `/originals`, `/originals/new`, `/originals/{id}`, `/originals/{id}/edit`: 공식 계정 마냑의 오리지널 목록·작성·미리보기·수정 화면입니다. 초안 저장과 공개, 공개 상태 전환 확인, 표지·인물 이미지 미리보기·교체·제거를 제공합니다.
+- `/notices`, `/audit-logs`, `/notifications/campaigns`, `/notifications/stats`, `/notifications/templates`: 제목과 설명 한 줄만 제공하는 준비 중 화면입니다.
 - 사이드바는 대시보드(개요·분석), 관리(회원·스토리·오리지널·채팅방·결제·공지·감사 로그), 알림(캠페인·발송 통계·문구 템플릿) 세 구역입니다. 목록과 상세에서 해당 메뉴를 활성 표시합니다.
 - 응답 타입은 `src/features/<도메인>/types.ts`에 있습니다. 회원·결제의 기존 계약 필드를 유지하고, 차트와 목록·상세 확장을 별도 타입으로 정의했습니다. 대시보드 숫자 카드는 회원·채팅 시작·턴·스토리·이프 지급·소진·결제 이력·금액의 8개이며 각각 누적과 오늘 값을 제공합니다.
 - API 생성물이 없는 동안 `src/features/shared/use-api.ts`가 TanStack Query와 기존 mutator를 연결합니다. 서버 계약 확정 후 생성 훅으로 대체할 수 있으며 화면 응답 구조는 BFF에서 맞춥니다.
@@ -77,3 +78,5 @@ Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics
 목록 머리글 정렬은 `sort=<열 키>&order=asc|desc`를 사용합니다. 허용 열은 `src/features/shared/list-config.ts`의 `listSorts`를 따르며, 기본은 생성·가입·완료·시작 시각 내림차순입니다. 전체 필터 결과를 정렬한 뒤 페이지를 나누고, 동률은 공개 식별자 오름차순으로 고정합니다. 환불 시각이 없는 주문은 방향과 무관하게 뒤에 둡니다. 범위 밖 페이지는 빈 `items`와 실제 총 페이지 수를 반환하고, 잘못된 page·size·sort·order는 400입니다. 이전 cursor·limit 요청은 지원하지 않습니다.
 
 상세 화면의 스토리·결제·채팅방 하위 목록도 같은 목록 BFF를 관계 필터와 함께 호출합니다. 서로 다른 하위 목록의 페이지·크기·정렬은 URL에서 `chatsPage/chatsSize/chatsSort/chatsOrder`처럼 목록 이름을 앞에 붙여 독립적으로 보존합니다. BFF에 보낼 때는 표준 `page/size/sort/order`로 변환합니다. 이 숫자 페이지 계약은 사용자 지시로 변경한 현재 화면 BFF 계약이며, 읽기 전용 ADMIN 서버 스펙의 커서 계약과는 서버 연동 시 조율이 필요합니다.
+
+오리지널 화면은 `src/features/originals/types.ts`와 화면 전용 Zod 폼 스키마를 사용합니다. 서버의 일반 제작·수정 필드명을 유지하며, 장르 태그는 서버 V91 카탈로그의 정식 이름을 사용합니다. BFF는 프로세스 메모리의 fixture로 초안·발행·수정·이미지 업로드를 흉내 냅니다. 재시작·프로세스 변경 시 저장한 내용과 이미지는 사라집니다. 실제 서버 연결·스토리지 업로드·검수는 수행하지 않습니다. 요청/응답과 서버 연동 차이는 [오리지널 화면 데이터 경계](docs/ORIGINALS.md)에 있습니다. 상세의 ‘홍보 알림 만들기’는 `/notifications/campaigns/new?storyId=<id>`의 준비 중 안내로 연결합니다.

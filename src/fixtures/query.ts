@@ -1,8 +1,8 @@
 import { bffError } from '@/api/bff-error';
 import {
   defaultSort,
-  type ListDomain,
   listSorts,
+  type SortDomain,
 } from '@/features/shared/list-config';
 import type { Page } from '@/features/shared/types';
 
@@ -51,7 +51,7 @@ function positiveInteger(
 export function sortList<T>(
   items: T[],
   query: URLSearchParams,
-  domain: ListDomain,
+  domain: SortDomain,
   identify: (item: T) => string,
 ): T[] {
   const sort = query.get('sort') ?? defaultSort[domain];
