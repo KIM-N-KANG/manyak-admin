@@ -1,78 +1,70 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 
+import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { normalizeSearch, searchHref } from '@/features/shared/search';
 
-export function ListSearch({ label }: { label: string }) {
+export function ListFilterForm({
+  label,
+  placeholder = '검색어를 입력하세요',
+  children,
+}: {
+  label: string;
+  placeholder?: string;
+  children?: ReactNode;
+}) {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const term = params.get('q') ?? '';
-  const searchParams = params.toString();
-  const [previousTerm, setPreviousTerm] = useState(term);
-  const [value, setValue] = useState(term);
-  const [submitted, setSubmitted] = useState(normalizeSearch(term));
 
-  if (term !== previousTerm) {
-    setPreviousTerm(term);
-    setValue(term);
-    setSubmitted(normalizeSearch(term));
-  }
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-  useEffect(() => {
-    const normalized = normalizeSearch(value);
+    const form = new FormData(event.currentTarget);
+    const next = new URLSearchParams(params);
 
-    if (normalized === submitted || normalized.length > 50) return;
+    for (const [key, entry] of form.entries()) {
+      const value =
+        key === 'q' ? normalizeSearch(String(entry)) : String(entry).trim();
 
-    const timer = setTimeout(() => {
-      setSubmitted(normalized);
-      router.replace(
-        searchHref(pathname, new URLSearchParams(searchParams), value),
-      );
-    }, 300);
+      if (value) next.set(key, value);
+      else next.delete(key);
+    }
 
-    return () => clearTimeout(timer);
-  }, [value, submitted, searchParams, pathname, router]);
-
-  function clear() {
-    setValue('');
-    setSubmitted('');
-    router.replace(searchHref(pathname, new URLSearchParams(params), ''));
+    next.set('page', '1');
+    router.push(`${pathname}?${next}`);
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-end gap-3">
-      <label className="flex min-w-0 flex-1 flex-col gap-2 text-sm">
+    <form
+      key={params.toString()}
+      onSubmit={submit}
+      aria-label={`${label} 및 필터`}
+      className="mb-6 flex flex-wrap items-end gap-3 rounded-md border bg-card p-4">
+      <label className="flex min-w-0 flex-1 basis-full flex-col gap-2 text-xs text-muted-foreground sm:min-w-60 sm:basis-72">
         {label}
         <input
           type="search"
-          value={value}
+          name="q"
+          defaultValue={params.get('q') ?? ''}
           maxLength={50}
           className="control w-full"
-          placeholder="검색어를 입력하세요"
-          onChange={(event) => setValue(event.target.value)}
-          aria-invalid={normalizeSearch(value).length > 50}
+          placeholder={placeholder}
         />
       </label>
-      <Button
-        variant="outline"
-        type="button"
-        onClick={clear}
-        disabled={!value && !term}>
-        검색어 지우기
-      </Button>
-      {normalizeSearch(value).length > 50 ? (
-        <p role="alert" className="w-full text-xs text-destructive">
-          검색어는 50자 이하여야 합니다.
-        </p>
-      ) : null}
-    </div>
+      {children}
+      <Button type="submit">적용</Button>
+      <Link href={pathname} className={buttonVariants({ variant: 'outline' })}>
+        초기화
+      </Link>
+    </form>
   );
 }
+
 export function SearchEmpty() {
   const params = useSearchParams();
   const router = useRouter();

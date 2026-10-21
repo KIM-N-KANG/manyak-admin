@@ -12,12 +12,18 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { GET as auditLogs } from '@/app/api/audit-logs/route';
 import { GET as chats } from '@/app/api/chats/route';
 import { GET as members } from '@/app/api/members/route';
+import { GET as notices } from '@/app/api/notices/route';
+import { GET as campaigns } from '@/app/api/notifications/campaigns/route';
 import { GET as originals } from '@/app/api/originals/route';
 import { GET as payments } from '@/app/api/payments/route';
 import { GET as stories } from '@/app/api/stories/route';
-import { ListSearch } from '@/components/admin/list-search';
+import { ListFilterForm } from '@/components/admin/list-search';
+import { AuditLogListScreen } from '@/features/audit-logs/audit-log-screen';
+import { NoticeListScreen } from '@/features/notices/notice-list-screen';
+import { CampaignListScreen } from '@/features/notifications/campaign-list-screen';
 import { OriginalListScreen } from '@/features/originals/original-list-screen';
 import { ListScreen } from '@/features/shared/list-screen';
 
@@ -35,7 +41,16 @@ vi.mock('next/navigation', () => ({
 }));
 
 let client: QueryClient;
-const handlers = { members, stories, originals, chats, payments };
+const handlers = {
+  members,
+  stories,
+  originals,
+  chats,
+  payments,
+  notices,
+  'audit-logs': auditLogs,
+  campaigns,
+};
 
 beforeEach(() => {
   nav.replace.mockReset();
@@ -47,9 +62,12 @@ beforeEach(() => {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
-      const domain = new URL(url, 'http://localhost').pathname.split(
-        '/',
-      )[2] as keyof typeof handlers;
+      const path = new URL(url, 'http://localhost').pathname;
+      const domain = (
+        path.startsWith('/api/notifications/')
+          ? 'campaigns'
+          : path.split('/')[2]
+      ) as keyof typeof handlers;
 
       return handlers[domain](new Request(`http://localhost${url}`));
     }),
@@ -61,57 +79,88 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
-it('입력 중에는 이동하지 않고 마지막 입력 후 300ms에 한 번만 검색한다', async () => {
+
+function filterForm() {
+  return createElement(
+    ListFilterForm,
+    { label: '회원 검색' },
+    createElement(
+      'label',
+      null,
+      '상태',
+      createElement(
+        'select',
+        { name: 'status', defaultValue: 'ACTIVE' },
+        createElement('option', { value: '' }, '전체'),
+        createElement('option', { value: 'ACTIVE' }, '정상'),
+        createElement('option', { value: 'SUSPENDED' }, '정지'),
+      ),
+    ),
+  );
+}
+
+it('입력은 제출 전까지 이동하지 않고 검색어와 필터를 한 번에 적용한다', async () => {
   vi.useFakeTimers();
   nav.pathname = '/members';
-  render(createElement(ListSearch, { label: '회원 검색' }));
+  render(filterForm());
 
-  const input = screen.getByRole('searchbox');
+  const input = screen.getByRole('searchbox') as HTMLInputElement;
+  const apply = screen.getByRole('button', {
+    name: '적용',
+  }) as HTMLButtonElement;
 
-  fireEvent.change(input, { target: { value: '  HELLO  ' } });
-  await act(() => vi.advanceTimersByTimeAsync(299));
-  expect(nav.replace).not.toHaveBeenCalled();
+  expect(input.form).toBe(apply.form);
+  expect(apply.form!.querySelector('input,select')).toBe(input);
   fireEvent.change(input, { target: { value: '  HELLO   WORLD  ' } });
-  await act(() => vi.advanceTimersByTimeAsync(299));
+  fireEvent.change(screen.getByRole('combobox'), {
+    target: { value: 'SUSPENDED' },
+  });
+  await act(() => vi.advanceTimersByTimeAsync(1000));
+  expect(nav.push).not.toHaveBeenCalled();
   expect(nav.replace).not.toHaveBeenCalled();
-  await act(() => vi.advanceTimersByTimeAsync(1));
-  expect(nav.replace).toHaveBeenCalledTimes(1);
+  fireEvent.click(apply);
 
-  const url = new URL(nav.replace.mock.calls[0][0], 'http://localhost');
+  const clicked = nav.push.mock.calls.at(-1)![0];
+  const url = new URL(clicked, 'http://localhost');
 
   expect(url.searchParams.get('q')).toBe('hello world');
+  expect(url.searchParams.get('status')).toBe('SUSPENDED');
   expect(url.searchParams.get('page')).toBe('1');
   expect(url.searchParams.get('sort')).toBe('createdAt');
+  fireEvent.submit(input.form!);
+  expect(nav.push.mock.calls.at(-1)![0]).toBe(clicked);
+  expect(
+    screen.getByRole('link', { name: '초기화' }).getAttribute('href'),
+  ).toBe('/members');
 });
-it('뒤로 이동한 URL을 입력에 반영하고 입력 취소·지우기는 남은 타이머를 취소한다', async () => {
-  vi.useFakeTimers();
+it('뒤로 이동한 URL을 폼에 반영하고 빈 검색어는 쿼리에서 제거한다', () => {
   nav.pathname = '/members';
   nav.search = 'q=old&page=4';
 
-  const view = render(createElement(ListSearch, { label: '회원 검색' }));
+  const view = render(filterForm());
 
   fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'new' } });
-  fireEvent.click(screen.getByRole('button', { name: '검색어 지우기' }));
-  await act(() => vi.advanceTimersByTimeAsync(400));
-  expect(nav.replace).toHaveBeenCalledTimes(1);
-  expect(
-    new URL(nav.replace.mock.calls[0][0], 'http://localhost').searchParams.has(
-      'q',
-    ),
-  ).toBe(false);
   nav.search = 'q=restored&page=2';
-  view.rerender(createElement(ListSearch, { label: '회원 검색' }));
-  expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe(
-    'restored',
-  );
-  await act(() => vi.advanceTimersByTimeAsync(400));
-  expect(nav.replace).toHaveBeenCalledTimes(1);
+  view.rerender(filterForm());
+
+  const input = screen.getByRole('searchbox') as HTMLInputElement;
+
+  expect(input.value).toBe('restored');
+  fireEvent.change(input, { target: { value: '   ' } });
+  fireEvent.submit(input.form!);
+
+  const url = new URL(nav.push.mock.calls.at(-1)![0], 'http://localhost');
+
+  expect(url.searchParams.has('q')).toBe(false);
+  expect(url.searchParams.get('status')).toBe('ACTIVE');
+  expect(url.searchParams.get('page')).toBe('1');
 });
 describe.each(Object.keys(handlers) as (keyof typeof handlers)[])(
   '%s 검색 화면',
   (domain) => {
     it('검색 URL·빈 상태와 지우기·필터 및 정렬의 검색어 보존을 연결한다', async () => {
-      nav.pathname = `/${domain}`;
+      nav.pathname =
+        domain === 'campaigns' ? '/notifications/campaigns' : `/${domain}`;
 
       const sort =
         domain === 'originals'
@@ -129,9 +178,24 @@ describe.each(Object.keys(handlers) as (keyof typeof handlers)[])(
           { client },
           domain === 'originals'
             ? createElement(OriginalListScreen)
-            : createElement(ListScreen, { domain }),
+            : domain === 'notices'
+              ? createElement(NoticeListScreen)
+              : domain === 'audit-logs'
+                ? createElement(AuditLogListScreen)
+                : domain === 'campaigns'
+                  ? createElement(CampaignListScreen)
+                  : createElement(ListScreen, { domain }),
         ),
       );
+
+      const search = screen.getByRole('searchbox') as HTMLInputElement;
+
+      expect(search.form).toBe(
+        screen.getByRole('button', { name: '적용' }).closest('form'),
+      );
+      expect(
+        screen.getByRole('link', { name: '초기화' }).getAttribute('href'),
+      ).toBe(nav.pathname);
       expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe(
         '없는검색어',
       );
@@ -158,9 +222,7 @@ describe.each(Object.keys(handlers) as (keyof typeof handlers)[])(
           'http://localhost',
         ).searchParams.get('q'),
       ).toBe('없는검색어');
-      fireEvent.click(
-        screen.getAllByRole('button', { name: '검색어 지우기' })[1],
-      );
+      fireEvent.click(screen.getByRole('button', { name: '검색어 지우기' }));
 
       const url = new URL(
         nav.replace.mock.calls.at(-1)![0],

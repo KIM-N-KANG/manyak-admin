@@ -12,9 +12,9 @@ import {
   Status,
   TextLink,
 } from '@/components/admin/data-ui';
-import { ListSearch, SearchEmpty } from '@/components/admin/list-search';
+import { ListFilterForm, SearchEmpty } from '@/components/admin/list-search';
 import { PageNavigation } from '@/components/admin/page-navigation';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import type { OriginalListItem } from '@/features/originals/types';
 import type { Page } from '@/features/shared/types';
 import { useApi } from '@/features/shared/use-api';
@@ -45,20 +45,6 @@ export function OriginalListScreen() {
     router.push(`/originals?${next}`);
   }
 
-  function apply(form: FormData) {
-    const next = new URLSearchParams(params);
-
-    for (const key of ['visibility', 'status']) {
-      const value = String(form.get(key) ?? '');
-
-      if (value) next.set(key, value);
-      else next.delete(key);
-    }
-
-    next.set('page', '1');
-    router.push(`/originals?${next}`);
-  }
-
   return (
     <>
       <PageHeading
@@ -68,11 +54,7 @@ export function OriginalListScreen() {
           새 오리지널
         </Link>
       </PageHeading>
-      <ListSearch label="오리지널 검색" />
-      <form
-        key={params.toString()}
-        action={apply}
-        className="mb-6 flex flex-wrap items-end gap-4 rounded-md border bg-card p-5">
+      <ListFilterForm label="오리지널 검색">
         <label className="flex flex-col gap-2 text-xs text-muted-foreground">
           공개 상태
           <select
@@ -95,13 +77,7 @@ export function OriginalListScreen() {
             <option value="PUBLISHED">발행</option>
           </select>
         </label>
-        <Button type="submit">적용</Button>
-        <Link
-          href="/originals"
-          className="text-sm text-muted-foreground hover:underline">
-          초기화
-        </Link>
-      </form>
+      </ListFilterForm>
       <QueryState
         pending={query.isPending}
         error={query.error}

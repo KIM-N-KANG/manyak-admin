@@ -2,8 +2,7 @@
 
 import type { ReactNode } from 'react';
 
-import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 import {
   DataTable,
@@ -15,9 +14,8 @@ import {
   TextLink,
 } from '@/components/admin/data-ui';
 import { ExternalToolLink } from '@/components/admin/external-tool-link';
-import { ListSearch, SearchEmpty } from '@/components/admin/list-search';
+import { ListFilterForm, SearchEmpty } from '@/components/admin/list-search';
 import { PageNavigation } from '@/components/admin/page-navigation';
-import { Button } from '@/components/ui/button';
 import type { ChatRoom } from '@/features/chats/types';
 import type { MemberListItem } from '@/features/members/types';
 import type { PaymentOrder } from '@/features/payments/types';
@@ -143,7 +141,7 @@ const configs: Record<
   },
   members: {
     title: '회원',
-    description: '닉네임 일부, 회원 ID 또는 이메일로 검색하세요.',
+    description: '회원 상태와 이용 내역을 확인하세요.',
     filters: [
       {
         key: 'status',
@@ -363,25 +361,8 @@ export function RelatedList({
 }
 export function ListScreen({ domain }: { domain: Domain }) {
   const params = useSearchParams();
-  const pathname = usePathname();
-  const router = useRouter();
   const config = configs[domain];
   const { query, sort, order, changeSort, href } = usePagedList(domain);
-
-  function apply(form: FormData) {
-    const next = new URLSearchParams(params);
-
-    next.set('page', '1');
-
-    for (const filter of config.filters) {
-      const value = String(form.get(filter.key) ?? '').trim();
-
-      if (value) next.set(filter.key, value);
-      else next.delete(filter.key);
-    }
-
-    router.push(`${pathname}?${next}`);
-  }
 
   const extras = [...params.entries()].filter(
     ([key]) =>
@@ -436,11 +417,13 @@ export function ListScreen({ domain }: { domain: Domain }) {
           </ExternalToolLink>
         )}
       </PageHeading>
-      <ListSearch label={`${config.title} 검색`} />
-      <form
-        key={params.toString()}
-        action={apply}
-        className="mb-6 flex flex-wrap items-end gap-4 rounded-md border bg-card p-5">
+      <ListFilterForm
+        label={`${config.title} 검색`}
+        placeholder={
+          domain === 'members'
+            ? '회원 닉네임 일부, 회원 ID 또는 이메일로 검색하세요'
+            : '검색어를 입력하세요'
+        }>
         {config.filters.map((f) => (
           <label
             key={f.key}
@@ -470,13 +453,7 @@ export function ListScreen({ domain }: { domain: Domain }) {
             )}
           </label>
         ))}
-        <Button type="submit">적용</Button>
-        <Link
-          href={pathname}
-          className="flex h-11 items-center px-2 text-sm text-muted-foreground hover:underline">
-          초기화
-        </Link>
-      </form>
+      </ListFilterForm>
       {extras.length ? (
         <div className="mb-4 flex flex-wrap gap-2">
           {extras.map(([key, value]) => (

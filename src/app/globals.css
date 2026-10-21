@@ -116,6 +116,6 @@
 
 @layer components {
   .control {
-    @apply h-11 rounded-sm border border-input bg-card px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50;
+    @apply h-9 rounded-sm border border-input bg-card px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50;
   }
 }

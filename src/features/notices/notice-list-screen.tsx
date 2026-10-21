@@ -10,14 +10,14 @@ import {
   Status,
   TextLink,
 } from '@/components/admin/data-ui';
-import { ListSearch, SearchEmpty } from '@/components/admin/list-search';
+import { ListFilterForm, SearchEmpty } from '@/components/admin/list-search';
 import { PageNavigation } from '@/components/admin/page-navigation';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { useManagementList } from '@/features/management/use-management-list';
 import type { NoticeListItem } from '@/features/notices/types';
 
 export function NoticeListScreen() {
-  const { query, params, sort, order, changeSort, href, apply } =
+  const { query, params, sort, order, changeSort, href } =
     useManagementList<NoticeListItem>('/api/notices');
 
   return (
@@ -29,11 +29,7 @@ export function NoticeListScreen() {
           새 공지
         </Link>
       </PageHeading>
-      <ListSearch label="공지 제목 검색" />
-      <form
-        key={params.toString()}
-        action={apply}
-        className="mb-6 flex items-end gap-4 rounded-md border bg-card p-5">
+      <ListFilterForm label="공지 제목 검색">
         <label className="flex flex-col gap-2 text-sm">
           상태
           <select
@@ -45,9 +41,7 @@ export function NoticeListScreen() {
             <option value="PUBLISHED">게시</option>
           </select>
         </label>
-        <Button type="submit">적용</Button>
-        <TextLink href="/notices">초기화</TextLink>
-      </form>
+      </ListFilterForm>
       <QueryState
         pending={query.isPending}
         error={query.error}

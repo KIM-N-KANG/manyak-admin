@@ -99,7 +99,7 @@ export function AdminShell({
       <aside className="border-b bg-sidebar lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:border-r lg:border-b-0">
         <Link
           href="/dashboard"
-          className="flex shrink-0 items-center border-b px-6 py-7">
+          className="flex shrink-0 items-center justify-center border-b px-6 py-5">
           <ManyakLogo className="shrink-0 text-primary" />
         </Link>
         <nav
@@ -119,7 +119,7 @@ export function AdminShell({
                       ? '현재 페이지 구역은 펼친 상태로 유지됩니다.'
                       : undefined
                   }
-                  className="flex min-h-11 w-full items-center gap-3 rounded-sm px-3 text-left text-sm font-semibold hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+                  className="flex min-h-11 w-full items-center gap-3 rounded-sm px-3 text-left text-sm font-semibold hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring lg:min-h-9">
                   <HugeiconsIcon
                     icon={groupIcons[group.id]}
                     size={20}
@@ -178,7 +178,7 @@ export function AdminShell({
                 aria-expanded={toolsExpanded}
                 aria-controls="external-tools"
                 onClick={() => setToolsExpanded(!toolsExpanded)}
-                className="flex min-h-11 w-full items-center gap-3 rounded-sm px-2 text-left text-sm font-semibold hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+                className="flex min-h-11 w-full items-center gap-3 rounded-sm px-2 text-left text-sm font-semibold hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring lg:min-h-9">
                 외부 도구
                 <span
                   aria-hidden="true"

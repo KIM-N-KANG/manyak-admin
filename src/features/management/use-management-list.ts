@@ -36,17 +36,5 @@ export function useManagementList<T>(
     router.push(`${pathname}?${next}`);
   }
 
-  function apply(form: FormData) {
-    const next = new URLSearchParams(params);
-
-    for (const [key, value] of form.entries()) {
-      if (String(value)) next.set(key, String(value));
-      else next.delete(key);
-    }
-
-    next.set('page', '1');
-    router.push(`${pathname}?${next}`);
-  }
-
-  return { query, params, sort, order, href, changeSort, apply };
+  return { query, params, sort, order, href, changeSort };
 }

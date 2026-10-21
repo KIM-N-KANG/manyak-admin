@@ -8,9 +8,8 @@ import {
   QueryState,
   TextLink,
 } from '@/components/admin/data-ui';
-import { ListSearch, SearchEmpty } from '@/components/admin/list-search';
+import { ListFilterForm, SearchEmpty } from '@/components/admin/list-search';
 import { PageNavigation } from '@/components/admin/page-navigation';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { auditChangeValues } from '@/features/audit-logs/change-values';
 import type { AuditLog } from '@/features/audit-logs/types';
@@ -18,7 +17,7 @@ import { useManagementList } from '@/features/management/use-management-list';
 import { useApi } from '@/features/shared/use-api';
 
 export function AuditLogListScreen() {
-  const { query, params, sort, order, href, changeSort, apply } =
+  const { query, params, sort, order, href, changeSort } =
     useManagementList<AuditLog>('/api/audit-logs');
 
   return (
@@ -27,11 +26,7 @@ export function AuditLogListScreen() {
         title="감사 로그"
         description="관리자의 조회와 변경 이력을 확인하세요."
       />
-      <ListSearch label="처리자·작업·사유 검색" />
-      <form
-        key={params.toString()}
-        action={apply}
-        className="mb-6 flex flex-wrap items-end gap-4 rounded-md border bg-card p-5">
+      <ListFilterForm label="처리자·작업·사유 검색">
         {(
           [
             ['adminId', '처리자 회원 ID'],
@@ -52,9 +47,7 @@ export function AuditLogListScreen() {
             />
           </label>
         ))}
-        <Button type="submit">적용</Button>
-        <TextLink href="/audit-logs">초기화</TextLink>
-      </form>
+      </ListFilterForm>
       <QueryState
         pending={query.isPending}
         error={query.error}

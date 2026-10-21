@@ -11,14 +11,14 @@ import {
   Status,
   TextLink,
 } from '@/components/admin/data-ui';
-import { ListSearch, SearchEmpty } from '@/components/admin/list-search';
+import { ListFilterForm, SearchEmpty } from '@/components/admin/list-search';
 import { PageNavigation } from '@/components/admin/page-navigation';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { useManagementList } from '@/features/management/use-management-list';
 import type { Campaign } from '@/features/notifications/types';
 
 export function CampaignListScreen() {
-  const { query, params, sort, order, changeSort, href, apply } =
+  const { query, params, sort, order, changeSort, href } =
     useManagementList<Campaign>('/api/notifications/campaigns');
 
   return (
@@ -30,11 +30,7 @@ export function CampaignListScreen() {
           새 캠페인
         </Link>
       </PageHeading>
-      <ListSearch label="캠페인 제목·본문 검색" />
-      <form
-        key={params.toString()}
-        action={apply}
-        className="mb-6 flex flex-wrap items-end gap-4 rounded-md border bg-card p-5">
+      <ListFilterForm label="캠페인 제목·본문 검색">
         <label className="grid gap-2 text-sm">
           상태
           <select
@@ -58,9 +54,7 @@ export function CampaignListScreen() {
             <option value="MARKETING">광고성</option>
           </select>
         </label>
-        <Button type="submit">적용</Button>
-        <TextLink href="/notifications/campaigns">초기화</TextLink>
-      </form>
+      </ListFilterForm>
       <QueryState
         pending={query.isPending}
         error={query.error}
