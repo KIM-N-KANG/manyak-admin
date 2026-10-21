@@ -243,8 +243,9 @@ components:
 
 ### Brand assets
 
-- 사이드바 상단은 `public/logo/manyak-symbol-green.svg`의 글자 없는 초록 심볼(32×32)과 ‘마냑 관리자’ 텍스트를 나란히 표시한다. 텍스트는 `{typography.heading-md}` (Pretendard, 20px, 600, line-height 28px, letter-spacing -0.4px)를 사용한다. 옆의 텍스트가 이름을 전달하므로 심볼 이미지의 `alt`는 빈 문자열로 두고 `aria-hidden="true"`로 중복 낭독을 막는다.
-- 로그인 화면은 `public/logo/manyak-logo.svg` 로크업과 옆의 ‘관리자’ 표시를 유지한다. 로크업 원본은 manyak-web의 같은 경로이며 SVG를 변형하지 않는다.
+- 사이드바 상단과 로그인 화면은 같은 ‘마냑 로고 + 관리자’ 조합을 사용한다. 로고는 manyak-web의 `src/components/layout/manyak-logo.tsx`를 그대로 복사한 `src/components/admin/manyak-logo.tsx`이며, 심볼과 도형 워드마크를 포함한 89×32 SVG다. 로고의 모든 선·면은 `currentColor`로 마냑 브랜드 초록을 따른다. ‘마냑’을 일반 텍스트로 대체하거나 원래 글꼴을 추정하지 않는다.
+- 공용 `ManyakBrand`의 ‘관리자’는 Pretendard 900, 27px, 행간 32px, 자간 -0.05em, 로고와 같은 초록을 사용한다. 워드마크의 실제 잉크 높이 약 25px에 맞추고 로고와 세로 중앙 정렬한다. 로고와 관리자 사이 간격은 6px이며 별도 배지나 테두리를 사용하지 않는다.
+- 조합 전체를 `role="img"`, `aria-label="마냑 관리자"`로 한 번만 노출한다. 웹 SVG의 기존 `aria-label="마냑"`은 보존하고 `aria-hidden="true"`로 조합 안에서 숨기며, ‘관리자’ 텍스트도 같은 방식으로 중복 낭독을 막는다.
 - 파비콘은 글자 없는 초록 심볼 그대로의 투명 배경을 사용한다. App Router의 `src/app/icon.svg`는 `public/logo/manyak-symbol-green.svg`와 같고, `src/app/favicon.ico`는 같은 심볼의 16·32·48px PNG 프레임으로 구성한다. 모든 ICO 프레임은 8비트 RGBA로 인코딩한다. PWA·Apple용 `public/icons/`와 layout 아이콘 메타데이터는 유지한다.
 - 사이드바 메뉴는 번호 없이 이름만 표시한다. 활성 항목은 연한 초록 배경과 브랜드 초록 전경을 사용한다.
 
@@ -421,7 +422,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 
 **`nav-bar`** — top navigation
 
-- Background `{colors.canvas}`, bottom hairline `{colors.hairline}`, text `{colors.body}`, type `{typography.body-md}`, padding `{spacing.sm} {spacing.lg}`. Uses the Manyak symbol with the adjacent 마냑 관리자 heading and the existing navigation spacing.
+- Background `{colors.canvas}`, bottom hairline `{colors.hairline}`, text `{colors.body}`, type `{typography.body-md}`, padding `{spacing.sm} {spacing.lg}`. Uses the shared Manyak SVG logo plus the matching 관리자 label and the existing navigation spacing.
 
 **`nav-link`** — individual nav item
 
