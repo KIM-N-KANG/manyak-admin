@@ -17,11 +17,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET as analyticsResponse } from '@/app/api/dashboard/analytics/route';
 import { GET as chartsResponse } from '@/app/api/dashboard/charts/route';
 import { GET as summaryResponse } from '@/app/api/dashboard/summary/route';
+import { DashboardAnalysisScreen } from '@/features/dashboard/analysis-screen';
 import { DashboardScreen } from '@/features/dashboard/dashboard-screen';
 
-const navigation = vi.hoisted(() => ({ search: 'days=7', push: vi.fn() }));
+const navigation = vi.hoisted(() => ({
+  pathname: '/dashboard',
+  search: 'days=7',
+  push: vi.fn(),
+}));
 
 vi.mock('next/navigation', () => ({
+  usePathname: () => navigation.pathname,
   useSearchParams: () => new URLSearchParams(navigation.search),
   useRouter: () => ({ push: navigation.push }),
 }));
@@ -51,6 +57,7 @@ let failAnalytics: boolean;
 const requested: string[] = [];
 
 beforeEach(() => {
+  navigation.pathname = '/dashboard';
   navigation.search = 'days=7';
   navigation.push.mockReset();
   requested.length = 0;
@@ -104,7 +111,7 @@ function expectDbMetricsVisible() {
   expect(screen.getByText('회원', { selector: 'p' })).toBeTruthy();
   expect(screen.getByText('결제 금액', { selector: 'p' })).toBeTruthy();
   expect(screen.getByRole('heading', { name: '일별 추이' })).toBeTruthy();
-  expect(screen.getByRole('heading', { name: '이용 분포' })).toBeTruthy();
+  expect(screen.queryByRole('heading', { name: '이용 분포' })).toBeNull();
 }
 
 describe('Amplitude 실패 격리', () => {
@@ -149,7 +156,7 @@ describe('Amplitude 실패 격리', () => {
     fireEvent.change(screen.getByRole('combobox', { name: '기간' }), {
       target: { value: '90' },
     });
-    expect(navigation.push).toHaveBeenCalledWith('/?days=90');
+    expect(navigation.push).toHaveBeenCalledWith('/dashboard?days=90');
     navigation.search = 'days=90';
     view.rerender(dashboard());
     await waitFor(() => {
@@ -176,5 +183,96 @@ describe('Amplitude 실패 격리', () => {
     expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
     expect(tooltip.textContent).toContain('몇 분 늦게');
     expect(tooltip.textContent).toContain('팀 계정을 제외');
+  });
+});
+
+describe('개요와 분석 화면 분리', () => {
+  it('분석은 분포 9종과 기존 목록 링크만 표시하고 개요·Amplitude 요청은 하지 않는다', async () => {
+    navigation.pathname = '/dashboard/analytics';
+
+    const view = render(
+      createElement(
+        QueryClientProvider,
+        { client },
+        createElement(DashboardAnalysisScreen),
+      ),
+    );
+
+    await screen.findByRole('heading', { name: '이용 분포' });
+    expect(
+      screen.getByRole('heading', { name: '분석', level: 1 }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: '일별 추이' })).toBeNull();
+    expect(
+      screen.queryByRole('region', { name: 'Amplitude 사용자 지표' }),
+    ).toBeNull();
+    expect(screen.getAllByText('수치 및 관련 목록')).toHaveLength(9);
+    expect(requested).toEqual(['/api/dashboard/charts?days=7']);
+
+    const data = await chartsResponse(
+      new Request('http://localhost/api/dashboard/charts?days=7'),
+    ).json();
+    const links = Array.from(view.container.querySelectorAll('a')).map((link) =>
+      link.getAttribute('href'),
+    );
+
+    expect(links).toEqual(
+      data.distributions.flatMap(
+        (distribution: { points: { href: string }[] }) =>
+          distribution.points.map((point) => point.href),
+      ),
+    );
+    fireEvent.change(screen.getByRole('combobox', { name: '기간' }), {
+      target: { value: '90' },
+    });
+    expect(navigation.push).toHaveBeenCalledWith(
+      '/dashboard/analytics?days=90',
+    );
+    navigation.search = 'days=90';
+    view.rerender(
+      createElement(
+        QueryClientProvider,
+        { client },
+        createElement(DashboardAnalysisScreen),
+      ),
+    );
+    await waitFor(() =>
+      expect(requested).toContain('/api/dashboard/charts?days=90'),
+    );
+    expect(
+      requested.some(
+        (url) => url.includes('/summary') || url.includes('/analytics'),
+      ),
+    ).toBe(false);
+  });
+
+  it('개요의 지표 전환은 새 경로와 기간을 유지하고 일별 목록 이동을 보존한다', async () => {
+    const view = render(dashboard());
+
+    await screen.findByRole('heading', { name: '일별 추이' });
+    expect(
+      screen.getByRole('heading', { name: '개요', level: 1 }),
+    ).toBeTruthy();
+    fireEvent.change(screen.getByRole('combobox', { name: '지표' }), {
+      target: { value: 'spent' },
+    });
+    expect(navigation.push).toHaveBeenCalledWith(
+      '/dashboard?days=7&metric=spent',
+    );
+    navigation.search = 'days=7&metric=spent';
+    view.rerender(dashboard());
+
+    const links = Array.from(view.container.querySelectorAll('a')).map((link) =>
+      link.getAttribute('href'),
+    );
+
+    expect(
+      links.some(
+        (href) =>
+          href?.includes('creditDirection=spent') &&
+          href.includes('creditDate='),
+      ),
+    ).toBe(true);
+    expectDbMetricsVisible();
   });
 });

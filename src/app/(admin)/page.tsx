@@ -1,11 +1,18 @@
-import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 
-import { DashboardScreen } from '@/features/dashboard/dashboard-screen';
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const query = new URLSearchParams();
 
-export default function DashboardPage() {
-  return (
-    <Suspense fallback={<p role="status">대시보드를 불러오는 중입니다…</p>}>
-      <DashboardScreen />
-    </Suspense>
-  );
+  for (const [key, value] of Object.entries(params)) {
+    if (Array.isArray(value))
+      value.forEach((entry) => query.append(key, entry));
+    else if (value !== undefined) query.set(key, value);
+  }
+
+  redirect(`/dashboard${query.size ? `?${query}` : ''}`);
 }

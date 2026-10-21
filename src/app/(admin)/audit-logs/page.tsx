@@ -1,17 +1,10 @@
-import { Card } from '@/components/ui/card';
+import { ComingSoon } from '@/components/admin/coming-soon';
 
 export default function Page() {
   return (
-    <>
-      <h1 className="mb-8 text-[32px] font-semibold tracking-tight">
-        감사 로그
-      </h1>
-      <Card className="py-24 text-center">
-        <h2 className="text-lg font-semibold">준비 중입니다</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          감사 로그 관리 기능은 다음 업데이트에서 제공됩니다.
-        </p>
-      </Card>
-    </>
+    <ComingSoon
+      title="감사 로그"
+      description="감사 로그 조회 기능은 준비 중입니다."
+    />
   );
 }

@@ -59,9 +59,13 @@ Orval은 `/v3/api-docs`에서 TanStack Query 클라이언트와 Zod 스키마를
 
 ## 화면과 데이터 경계
 
-- `/`: KST 기준 DB 숫자 카드, 7·30·90일 추이, 이용 분포 9종. 별도 Amplitude 영역에 오늘 활성 사용자와 DAU·신규 사용자 추이를 제공하며 같은 기간을 사용합니다. Amplitude 조회 실패는 해당 영역의 재시도로 처리합니다. 모든 차트는 마냑 초록을 사용합니다. 차트의 수치 목록에서도 키보드로 상세 목록에 이동할 수 있습니다.
+- `/dashboard`(개요): KST 기준 DB 숫자 카드와 7·30·90일 추이. 별도 Amplitude 영역에 오늘 활성 사용자와 DAU·신규 사용자 추이를 제공하며 같은 기간을 사용합니다. Amplitude 조회 실패는 해당 영역의 재시도로 처리합니다. 모든 차트는 마냑 초록을 사용합니다. 일별 수치 목록에서도 키보드로 필터가 적용된 목록에 이동할 수 있습니다.
+- `/dashboard/analytics`(분석): 7·30·90일 이용 분포 9종과 관련 목록 이동을 제공합니다. 개요의 숫자 카드·일별 추이·Amplitude 영역은 포함하지 않습니다.
+- `/`는 기존 기간·지표 등 쿼리를 유지해 `/dashboard`로 이동하고, `/campaigns`는 `/notifications/campaigns`로 이동합니다.
 - `/stories`, `/members`, `/payments`, `/chats`: URL 쿼리 필터와 정렬, `items`·`page`·`size`·`totalElements`·`totalPages` 숫자 페이지(1부터, 기본 20건, 크기 1~100), `/{id}` 상세 연결을 제공합니다.
-- `/login`: Google 로그인 버튼 UI, `/campaigns`, `/notices`, `/audit-logs`: 준비 중 화면입니다.
+- `/login`: Google 로그인 버튼 UI입니다.
+- `/originals`, `/notices`, `/audit-logs`, `/notifications/campaigns`, `/notifications/stats`, `/notifications/templates`: 제목과 설명 한 줄만 제공하는 준비 중 화면입니다.
+- 사이드바는 대시보드(개요·분석), 관리(회원·스토리·오리지널·채팅방·결제·공지·감사 로그), 알림(캠페인·발송 통계·문구 템플릿) 세 구역입니다. 목록과 상세에서 해당 메뉴를 활성 표시합니다.
 - 응답 타입은 `src/features/<도메인>/types.ts`에 있습니다. 회원·결제의 기존 계약 필드를 유지하고, 차트와 목록·상세 확장을 별도 타입으로 정의했습니다. 대시보드 숫자 카드는 회원·채팅 시작·턴·스토리·이프 지급·소진·결제 이력·금액의 8개이며 각각 누적과 오늘 값을 제공합니다.
 - API 생성물이 없는 동안 `src/features/shared/use-api.ts`가 TanStack Query와 기존 mutator를 연결합니다. 서버 계약 확정 후 생성 훅으로 대체할 수 있으며 화면 응답 구조는 BFF에서 맞춥니다.
 - 가상 이메일 `member1@example.com`부터 `member1240@example.com`까지 정확 일치 검색이 가능합니다. 응답에는 이메일을 포함하지 않습니다. 대화 원문과 인증 토큰도 응답에 없습니다.

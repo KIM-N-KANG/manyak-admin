@@ -26,7 +26,7 @@ export default function LoginPage() {
         </p>
         <Link
           className="mt-8 inline-block text-sm text-link hover:underline"
-          href="/">
+          href="/dashboard">
           화면 미리보기 →
         </Link>
       </Card>

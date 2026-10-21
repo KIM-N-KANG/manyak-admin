@@ -1,16 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 import {
   DataTable,
@@ -33,7 +25,6 @@ import {
 import type {
   DashboardCharts,
   DashboardSummary,
-  Distribution,
   MetricKey,
 } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
@@ -56,71 +47,10 @@ const metrics: Record<MetricKey, { label: string; unit: string }> = {
   attendance: { label: '출석 회원 수', unit: '명' },
 };
 
-function DistributionCard({ distribution }: { distribution: Distribution }) {
-  const router = useRouter();
-  const color = 'var(--primary)';
-
-  return (
-    <Card className="min-w-0">
-      <h2 className="font-semibold">{distribution.title}</h2>
-      <p className="mt-2 min-h-10 text-xs leading-5 text-muted-foreground">
-        {distribution.description}
-      </p>
-      <ChartContainer
-        config={{ value: { label: distribution.unit, color } }}
-        className="mt-5 h-[220px] w-full"
-        aria-label={distribution.title}>
-        <BarChart
-          accessibilityLayer
-          data={distribution.points}
-          onClick={(state) => {
-            const i = state.activeTooltipIndex;
-
-            if (i !== null && i !== undefined && distribution.points[Number(i)])
-              router.push(distribution.points[Number(i)].href);
-          }}>
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey="label"
-            tickLine={false}
-            axisLine={false}
-            tickFormatter={(v) =>
-              String(v).startsWith('2026-') ? String(v).slice(5) : String(v)
-            }
-            minTickGap={10}
-          />
-          <YAxis width={36} tickLine={false} axisLine={false} />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          <Bar
-            dataKey="value"
-            fill="var(--color-value)"
-            radius={[3, 3, 0, 0]}
-            className="cursor-pointer"
-          />
-        </BarChart>
-      </ChartContainer>
-      <details className="mt-4 text-xs">
-        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-          수치 및 관련 목록
-        </summary>
-        <ul className="mt-3 space-y-2">
-          {distribution.points.map((p) => (
-            <li key={p.label} className="flex justify-between gap-3">
-              <TextLink href={p.href}>{p.label} →</TextLink>
-              <span>
-                {p.value.toLocaleString('ko-KR')} {distribution.unit}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </details>
-    </Card>
-  );
-}
-
 export function DashboardScreen() {
   const params = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const days = ['7', '30', '90'].includes(params.get('days') ?? '')
     ? params.get('days')!
     : '30';
@@ -135,7 +65,7 @@ export function DashboardScreen() {
     const q = new URLSearchParams(params);
 
     q.set(key, value);
-    router.push(`/?${q}`);
+    router.push(`${pathname}?${q}`);
   }
 
   const s = summary.data;
@@ -198,7 +128,7 @@ export function DashboardScreen() {
   return (
     <>
       <PageHeading
-        title="대시보드"
+        title="개요"
         description="서비스의 흐름과 이용 현황을 확인하세요.">
         <label className="flex items-center gap-3 text-sm">
           기간
@@ -344,17 +274,6 @@ export function DashboardScreen() {
               </div>
             </details>
           </Card>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold tracking-tight">이용 분포</h2>
-            <span className="text-xs text-muted-foreground">
-              막대 또는 수치를 눌러 목록으로 이동
-            </span>
-          </div>
-          <div className="grid gap-5 xl:grid-cols-2">
-            {c.distributions.map((d) => (
-              <DistributionCard key={d.chartId} distribution={d} />
-            ))}
-          </div>
         </>
       ) : null}
     </>
