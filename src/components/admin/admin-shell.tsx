@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { ManyakBrand } from '@/components/admin/manyak-brand';
+import { ManyakLogo } from '@/components/admin/manyak-logo';
 import { cn } from '@/lib/utils';
 
 const navigation = [
@@ -30,8 +30,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
         본문으로 이동
       </a>
       <aside className="border-b bg-sidebar lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:border-r lg:border-b-0">
-        <Link href="/" className="flex items-center gap-3 border-b px-6 py-7">
-          <ManyakBrand />
+        <Link href="/" className="flex items-center border-b px-6 py-7">
+          <ManyakLogo className="shrink-0 text-primary" />
         </Link>
         <nav
           aria-label="관리자 메뉴"
