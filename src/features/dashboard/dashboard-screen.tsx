@@ -160,7 +160,7 @@ export function DashboardScreen() {
           '턴',
           s.chats.turnsTotal,
           s.chats.turnsToday,
-          '/chats?sort=turns',
+          '/chats?sort=turnCount',
           '턴',
         ],
         ['스토리', s.stories.total, s.stories.createdToday, '/stories', '개'],
@@ -175,7 +175,7 @@ export function DashboardScreen() {
           '이프 소진',
           s.credits.spentTotal,
           s.credits.spentToday,
-          '/members?creditDirection=spent&sort=spent',
+          '/members?creditDirection=spent&sort=creditsSpent',
           '이프',
         ],
         [

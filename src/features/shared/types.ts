@@ -1,4 +1,10 @@
-export type CursorPage<T> = { items: T[]; nextCursor: string | null };
+export type Page<T> = {
+  items: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+};
 export type MemberSummary = {
   memberId: string;
   nickname: string;

@@ -14,6 +14,7 @@ import {
   inPeriod,
   kstDate,
   paginate,
+  sortList,
   validateOptions,
 } from '@/fixtures/query';
 
@@ -21,7 +22,6 @@ export function GET(request: Request) {
   return fixtureResponse(request, (q) => {
     validateOptions(q, {
       status: ['ACTIVE', 'SUSPENDED', 'DELETED'],
-      sort: ['latest', 'active', 'spent', 'paid'],
       chatBucket: ['0', '1', '2', '3', '4'],
       creditDirection: ['granted', 'spent'],
       excludeDeleted: ['true', 'false'],
@@ -76,24 +76,15 @@ export function GET(request: Request) {
       );
     });
 
-    filtered.sort((a, b) =>
-      q.get('sort') === 'spent'
-        ? b.creditsSpent - a.creditsSpent
-        : q.get('sort') === 'paid'
-          ? b.paidKrw - a.paidKrw
-          : q.get('sort') === 'active'
-            ? b.lastActiveAt.localeCompare(a.lastActiveAt)
-            : b.createdAt.localeCompare(a.createdAt),
-    );
+    const sorted = sortList(filtered, q, 'members', (item) => item.memberId);
 
     return paginate(
-      filtered.map((m) =>
+      sorted.map((m) =>
         hasChatPeriod
           ? { ...m, periodChatCount: periodCounts.get(m.memberId) ?? 0 }
           : m,
       ),
       q,
-      (m) => m.memberId,
     );
   });
 }

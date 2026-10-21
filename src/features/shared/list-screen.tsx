@@ -14,15 +14,16 @@ import {
   Status,
   TextLink,
 } from '@/components/admin/data-ui';
+import { PageNavigation } from '@/components/admin/page-navigation';
 import { Button } from '@/components/ui/button';
 import type { ChatRoom } from '@/features/chats/types';
 import type { MemberListItem } from '@/features/members/types';
 import type { PaymentOrder } from '@/features/payments/types';
-import type { CursorPage } from '@/features/shared/types';
-import { useApi } from '@/features/shared/use-api';
+import type { ListDomain } from '@/features/shared/list-config';
+import { usePagedList } from '@/features/shared/use-paged-list';
 import type { Story } from '@/features/stories/types';
 
-type Domain = 'stories' | 'members' | 'payments' | 'chats';
+type Domain = ListDomain;
 
 type Filter = {
   key: string;
@@ -57,7 +58,7 @@ const filterLabels: Record<string, string> = {
   turnDate: '턴 활동일',
   from: '가입 시작일',
   to: '가입 종료일',
-  limit: '페이지 크기',
+  size: '페이지 크기',
 };
 const filterValues: Record<string, string> = {
   granted: '지급',
@@ -132,15 +133,6 @@ const configs: Record<
           ['PRIVATE', '비공개'],
         ],
       },
-      {
-        key: 'sort',
-        label: '정렬',
-        options: [
-          ['latest', '최신순'],
-          ['chats', '채팅 수'],
-          ['turns', '총 턴 수'],
-        ],
-      },
       ...dates,
     ],
   },
@@ -161,16 +153,6 @@ const configs: Record<
           ['ACTIVE', '정상'],
           ['SUSPENDED', '정지'],
           ['DELETED', '탈퇴'],
-        ],
-      },
-      {
-        key: 'sort',
-        label: '정렬',
-        options: [
-          ['latest', '가입순'],
-          ['active', '최근 활동'],
-          ['spent', '이프 소모'],
-          ['paid', '결제액'],
         ],
       },
     ],
@@ -206,46 +188,47 @@ const configs: Record<
         type: 'text',
         placeholder: '회원 공개 식별자',
       },
-      {
-        key: 'sort',
-        label: '정렬',
-        options: [
-          ['latest', '최신순'],
-          ['turns', '턴 수'],
-        ],
-      },
       ...dates,
     ],
   },
 };
-const headers: Record<Domain, string[]> = {
+const headers: Record<Domain, (string | { label: string; key: string })[]> = {
   stories: [
     '스토리',
     '장르 · 범위',
     '공개 상태',
-    '채팅 수',
-    '총 턴 수',
-    '생성일',
+    { label: '채팅 수', key: 'chatCount' },
+    { label: '총 턴 수', key: 'totalTurns' },
+    { label: '생성일', key: 'createdAt' },
   ],
   members: [
     '회원',
     '회원 ID',
     '상태',
-    '가입일',
-    '최근 활동',
-    '채팅방 수',
-    '이프 소모',
-    '결제액',
+    { label: '가입일', key: 'createdAt' },
+    { label: '최근 활동', key: 'lastActiveAt' },
+    { label: '채팅방 수', key: 'chatCount' },
+    { label: '이프 소모', key: 'creditsSpent' },
+    { label: '결제액', key: 'paidKrw' },
   ],
-  payments: ['주문', '회원', '상태', '결제 금액', '적립 이프', '완료 시각'],
+  payments: [
+    '주문',
+    '회원',
+    '상태',
+    { label: '결제 금액', key: 'priceKrw' },
+    { label: '적립 이프', key: 'creditAmount' },
+    { label: '완료 시각', key: 'completedAt' },
+    { label: '환불 시각', key: 'refundedAt' },
+  ],
   chats: [
     '채팅방',
     '스토리',
     '회원',
     '시작 당시',
-    '턴 수',
-    '시작 시각',
-    '이프 소모',
+    { label: '턴 수', key: 'turnCount' },
+    { label: '시작 시각', key: 'startedAt' },
+    { label: '마지막 활동', key: 'lastActiveAt' },
+    { label: '이프 소모', key: 'creditsSpent' },
   ],
 };
 
@@ -298,6 +281,7 @@ export function ChatRows({ items }: { items: ChatRoom[] }) {
         <NumberValue value={c.turnCount} />
       </td>
       <td>{dateTime(c.startedAt)}</td>
+      <td>{dateTime(c.lastActiveAt)}</td>
       <td>
         <NumberValue value={c.creditsSpent} />
       </td>
@@ -327,26 +311,48 @@ export function PaymentRows({ items }: { items: PaymentOrder[] }) {
         <NumberValue value={p.creditAmount} />
       </td>
       <td>{dateTime(p.completedAt)}</td>
+      <td>{p.refundedAt ? dateTime(p.refundedAt) : '—'}</td>
     </tr>
   ));
 }
-export function RelatedTable({
+export function RelatedList({
   kind,
-  items,
-}:
-  | { kind: 'stories'; items: Story[] }
-  | { kind: 'chats'; items: ChatRoom[] }
-  | { kind: 'payments'; items: PaymentOrder[] }) {
+  scope,
+}: {
+  kind: 'stories' | 'chats' | 'payments';
+  scope: Record<string, string>;
+}) {
+  const { query, sort, order, changeSort, href } = usePagedList(kind, scope);
+
   return (
-    <DataTable headers={headers[kind]} empty={items.length === 0}>
-      {kind === 'stories' ? (
-        <StoryRows items={items} />
-      ) : kind === 'chats' ? (
-        <ChatRows items={items} />
-      ) : (
-        <PaymentRows items={items} />
-      )}
-    </DataTable>
+    <>
+      <QueryState
+        pending={query.isPending}
+        error={query.error}
+        retry={query.refetch}
+      />
+      {query.data ? (
+        <>
+          <DataTable
+            headers={headers[kind]}
+            empty={!query.data.items.length}
+            sorting={{ key: sort, order, onSort: changeSort }}>
+            {kind === 'stories' ? (
+              <StoryRows items={query.data.items as Story[]} />
+            ) : kind === 'chats' ? (
+              <ChatRows items={query.data.items as ChatRoom[]} />
+            ) : (
+              <PaymentRows items={query.data.items as PaymentOrder[]} />
+            )}
+          </DataTable>
+          <PageNavigation
+            data={query.data}
+            href={href}
+            label={`${configs[kind].title} 하위 목록 페이지`}
+          />
+        </>
+      ) : null}
+    </>
   );
 }
 export function ListScreen({ domain }: { domain: Domain }) {
@@ -354,18 +360,12 @@ export function ListScreen({ domain }: { domain: Domain }) {
   const pathname = usePathname();
   const router = useRouter();
   const config = configs[domain];
-  const apiParams = new URLSearchParams(params);
-
-  if (!apiParams.has('limit')) apiParams.set('limit', '12');
-
-  const query = useApi<
-    CursorPage<Story | MemberListItem | PaymentOrder | ChatRoom>
-  >(`/api/${domain}?${apiParams.toString()}`);
+  const { query, sort, order, changeSort, href } = usePagedList(domain);
 
   function apply(form: FormData) {
     const next = new URLSearchParams(params);
 
-    next.delete('cursor');
+    next.set('page', '1');
 
     for (const filter of config.filters) {
       const value = String(form.get(filter.key) ?? '').trim();
@@ -377,16 +377,10 @@ export function ListScreen({ domain }: { domain: Domain }) {
     router.push(`${pathname}?${next}`);
   }
 
-  const next = new URLSearchParams(params);
-
-  if (query.data?.nextCursor) next.set('cursor', query.data.nextCursor);
-
-  const first = new URLSearchParams(params);
-
-  first.delete('cursor');
-
   const extras = [...params.entries()].filter(
-    ([key]) => key !== 'cursor' && !config.filters.some((f) => f.key === key),
+    ([key]) =>
+      !['page', 'sort', 'order'].includes(key) &&
+      !config.filters.some((f) => f.key === key),
   );
   let rows: ReactNode = null;
 
@@ -444,9 +438,7 @@ export function ListScreen({ domain }: { domain: Domain }) {
                 name={f.key}
                 defaultValue={params.get(f.key) ?? ''}
                 className="control">
-                <option value="">
-                  {f.key === 'sort' ? '기본 정렬' : '전체'}
-                </option>
+                <option value="">전체</option>
                 {f.options.map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
@@ -490,22 +482,13 @@ export function ListScreen({ domain }: { domain: Domain }) {
       />
       {query.data ? (
         <>
-          <DataTable headers={headers[domain]} empty={!query.data.items.length}>
+          <DataTable
+            headers={headers[domain]}
+            empty={!query.data.items.length}
+            sorting={{ key: sort, order, onSort: changeSort }}>
             {rows}
           </DataTable>
-          <div className="mt-5 flex items-center justify-between text-sm text-muted-foreground">
-            <span>현재 페이지 {query.data.items.length}건</span>
-            <div className="flex items-center gap-5">
-              {params.has('cursor') ? (
-                <TextLink href={`${pathname}?${first}`}>처음으로</TextLink>
-              ) : null}
-              {query.data.nextCursor ? (
-                <TextLink href={`${pathname}?${next}`}>다음 페이지 →</TextLink>
-              ) : (
-                <span>마지막 페이지</span>
-              )}
-            </div>
-          </div>
+          <PageNavigation data={query.data} href={href} />
         </>
       ) : null}
     </>

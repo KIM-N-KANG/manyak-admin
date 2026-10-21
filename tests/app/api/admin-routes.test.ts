@@ -12,7 +12,7 @@ import type { ChatRoom } from '@/features/chats/types';
 import type { DashboardCharts } from '@/features/dashboard/types';
 import type { MemberListItem } from '@/features/members/types';
 import type { PaymentOrder } from '@/features/payments/types';
-import type { CursorPage } from '@/features/shared/types';
+import type { Page } from '@/features/shared/types';
 import type { Story, StoryDetail } from '@/features/stories/types';
 
 const request = (path: string) => new Request(`http://localhost/api/${path}`);
@@ -65,9 +65,9 @@ describe('관리자 고정 데이터 BFF', () => {
   );
 
   it('장르·범위·공개 상태를 AND로 적용하고 정렬한다', async () => {
-    const data: CursorPage<Story> = await stories(
+    const data: Page<Story> = await stories(
       request(
-        'stories?genre=로맨스&scope=original&visibility=PRIVATE&sort=turns',
+        'stories?genre=로맨스&scope=original&visibility=PRIVATE&sort=totalTurns',
       ),
     ).json();
 
@@ -85,25 +85,27 @@ describe('관리자 고정 데이터 BFF', () => {
     );
   });
 
-  it('커서 페이지를 중복 없이 끝까지 탐색한다', async () => {
+  it('숫자 페이지를 중복 없이 끝까지 탐색한다', async () => {
     const ids: string[] = [];
-    let cursor: string | null = null;
+    let number = 1;
+    let totalPages = 1;
 
     do {
-      const page: CursorPage<Story> = await stories(
-        request(`stories?limit=5${cursor ? `&cursor=${cursor}` : ''}`),
+      const page: Page<Story> = await stories(
+        request(`stories?size=5&page=${number}`),
       ).json();
 
       ids.push(...page.items.map((s) => s.storyId));
-      cursor = page.nextCursor;
-    } while (cursor);
+      totalPages = page.totalPages;
+      number++;
+    } while (number <= totalPages);
 
     expect(ids).toHaveLength(36);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('닉네임 부분 일치, ID 일치와 이메일 정확 일치를 구분한다', async () => {
-    const search = async (query: string): Promise<CursorPage<MemberListItem>> =>
+    const search = async (query: string): Promise<Page<MemberListItem>> =>
       members(request(`members?query=${encodeURIComponent(query)}`)).json();
     const exact = await search('member1@example.com');
 
@@ -117,15 +119,15 @@ describe('관리자 고정 데이터 BFF', () => {
   });
 
   it('기간은 KST 날짜로 적용하고 결제·채팅 관계 필터를 유지한다', async () => {
-    const orders: CursorPage<PaymentOrder> = await payments(
+    const orders: Page<PaymentOrder> = await payments(
       request('payments?status=REFUNDED&from=2026-10-21&to=2026-10-21'),
     ).json();
 
     expect(orders.items).toHaveLength(1);
     expect(orders.items[0].status).toBe('REFUNDED');
 
-    const rooms: CursorPage<ChatRoom> = await chats(
-      request('chats?turnBucket=10&startedAs=GUEST&sort=turns'),
+    const rooms: Page<ChatRoom> = await chats(
+      request('chats?turnBucket=10&startedAs=GUEST&sort=turnCount'),
     ).json();
 
     expect(rooms.items.length).toBeGreaterThan(0);
@@ -135,8 +137,8 @@ describe('관리자 고정 데이터 BFF', () => {
   });
 
   it.each([
-    'stories?cursor=invalid',
-    'stories?limit=no',
+    'stories?page=invalid',
+    'stories?size=no',
     'stories?visibility=UNKNOWN',
     'payments?from=2026-02-30',
     'payments?from=2026-10-21&to=2026-10-20',
@@ -174,7 +176,7 @@ describe('관리자 고정 데이터 BFF', () => {
   });
 
   it('스토리 상세에서 채팅방·회원·스토리를 서로 연결하고 대화 필드를 반환하지 않는다', async () => {
-    const list: CursorPage<Story> = await stories(request('stories')).json();
+    const list: Page<Story> = await stories(request('stories')).json();
     const detail: StoryDetail = await (
       await story(request('stories/detail'), {
         params: Promise.resolve({ id: list.items[0].storyId }),

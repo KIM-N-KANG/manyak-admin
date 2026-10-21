@@ -4,13 +4,13 @@ import {
   fixtureResponse,
   inPeriod,
   paginate,
+  sortList,
   validateOptions,
 } from '@/fixtures/query';
 
 export function GET(request: Request) {
   return fixtureResponse(request, (q) => {
     validateOptions(q, {
-      sort: ['latest', 'turns'],
       startedAs: ['GUEST', 'MEMBER'],
       turnBucket: turnBounds.map((_, i) => String(i)),
       hasFirstMessage: ['true', 'false'],
@@ -44,13 +44,8 @@ export function GET(request: Request) {
       );
     });
 
-    filtered.sort((a, b) =>
-      q.get('sort') === 'turns'
-        ? b.turnCount - a.turnCount
-        : b.startedAt.localeCompare(a.startedAt) ||
-          a.chatId.localeCompare(b.chatId),
-    );
+    const sorted = sortList(filtered, q, 'chats', (item) => item.chatId);
 
-    return paginate(filtered, q, (c) => c.chatId);
+    return paginate(sorted, q);
   });
 }

@@ -3,6 +3,7 @@ import {
   fixtureResponse,
   inPeriod,
   paginate,
+  sortList,
   validateOptions,
 } from '@/fixtures/query';
 
@@ -17,14 +18,10 @@ export function GET(request: Request) {
         inPeriod(p.completedAt, q),
     );
 
-    filtered.sort(
-      (a, b) =>
-        b.completedAt.localeCompare(a.completedAt) ||
-        a.orderId.localeCompare(b.orderId),
-    );
+    const sorted = sortList(filtered, q, 'payments', (item) => item.orderId);
 
     return paginate(
-      filtered.map(({ firstPaidAt, before, after, ...order }) => {
+      sorted.map(({ firstPaidAt, before, after, ...order }) => {
         void firstPaidAt;
         void before;
         void after;
@@ -32,7 +29,6 @@ export function GET(request: Request) {
         return order;
       }),
       q,
-      (p) => p.orderId,
     );
   });
 }

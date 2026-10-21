@@ -5,6 +5,7 @@ import {
   inPeriod,
   paginate,
   periodFor,
+  sortList,
   validateOptions,
 } from '@/fixtures/query';
 
@@ -17,7 +18,6 @@ export function GET(request: Request) {
       hasLatency: ['true', 'false'],
       supportingCharacterCount: ['0', '1', '2', '3', '4', '5'],
       visibility: ['PUBLIC', 'PRIVATE'],
-      sort: ['latest', 'chats', 'turns'],
       moderationStatus: ['HELD', 'APPROVED'],
     });
 
@@ -76,15 +76,8 @@ export function GET(request: Request) {
           : s,
       );
 
-    filtered.sort((a, b) =>
-      q.get('sort') === 'chats'
-        ? b.chatCount - a.chatCount
-        : q.get('sort') === 'turns'
-          ? b.totalTurns - a.totalTurns
-          : b.createdAt.localeCompare(a.createdAt) ||
-            a.storyId.localeCompare(b.storyId),
-    );
+    const sorted = sortList(filtered, q, 'stories', (item) => item.storyId);
 
-    return paginate(filtered, q, (s) => s.storyId);
+    return paginate(sorted, q);
   });
 }

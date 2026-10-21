@@ -5,10 +5,10 @@ export const paymentHistoryHref = '/payments';
 const metricPaths: Record<MetricKey, string> = {
   joined: '/members',
   chats: '/chats',
-  turns: '/chats?sort=turns',
+  turns: '/chats?sort=turnCount',
   stories: '/stories',
   granted: '/members?creditDirection=granted',
-  spent: '/members?creditDirection=spent&sort=spent',
+  spent: '/members?creditDirection=spent&sort=creditsSpent',
   payments: paymentHistoryHref,
   revenue: paymentHistoryHref,
   attendance: '/members',

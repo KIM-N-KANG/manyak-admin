@@ -22,7 +22,7 @@ import type {
   MemberListItem,
 } from '@/features/members/types';
 import type { PaymentOrder } from '@/features/payments/types';
-import type { CursorPage } from '@/features/shared/types';
+import type { Page } from '@/features/shared/types';
 import type { Story } from '@/features/stories/types';
 
 const request = (href: string) => new Request(`http://localhost/api${href}`);
@@ -33,23 +33,25 @@ async function all<T>(
 ): Promise<T[]> {
   const url = new URL(href, 'http://localhost');
 
-  url.searchParams.set('limit', '100');
+  url.searchParams.set('size', '100');
 
   const items: T[] = [];
-  let cursor: string | null = null;
+  let number = 1;
+  let totalPages = 1;
 
   do {
-    if (cursor) url.searchParams.set('cursor', cursor);
+    url.searchParams.set('page', String(number));
 
     const response = get(request(url.pathname + url.search));
 
     expect(response.status).toBe(200);
 
-    const page: CursorPage<T> = await response.json();
+    const page: Page<T> = await response.json();
 
     items.push(...page.items);
-    cursor = page.nextCursor;
-  } while (cursor);
+    totalPages = page.totalPages;
+    number++;
+  } while (number <= totalPages);
 
   return items;
 }
@@ -137,7 +139,7 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
 
           if (chart.chartId === 'genre-depth') {
             const stories = await all<Story>(
-              point.href + '&sort=turns',
+              point.href + '&sort=totalTurns',
               storyList,
             );
 

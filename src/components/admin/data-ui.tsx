@@ -90,8 +90,10 @@ export function DataTable({
   headers,
   children,
   empty,
+  sorting,
 }: {
-  headers: string[];
+  headers: (string | { label: string; key: string })[];
+  sorting?: { key: string; order: string; onSort: (key: string) => void };
   children: ReactNode;
   empty?: boolean;
 }) {
@@ -100,14 +102,41 @@ export function DataTable({
       <table className="w-full text-left text-sm">
         <thead className="border-b bg-muted/50">
           <tr>
-            {headers.map((h) => (
-              <th
-                key={h}
-                scope="col"
-                className="px-5 py-4 font-medium whitespace-nowrap text-muted-foreground">
-                {h}
-              </th>
-            ))}
+            {headers.map((header) => {
+              const label = typeof header === 'string' ? header : header.label;
+              const key = typeof header === 'string' ? null : header.key;
+              const active = sorting && key === sorting.key;
+
+              return (
+                <th
+                  key={label}
+                  scope="col"
+                  aria-sort={
+                    active
+                      ? sorting.order === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                      : undefined
+                  }
+                  className="px-5 py-4 font-medium whitespace-nowrap text-muted-foreground">
+                  {key && sorting ? (
+                    <button
+                      type="button"
+                      onClick={() => sorting.onSort(key)}
+                      className="inline-flex items-center gap-2 rounded-sm text-left hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+                      {label}
+                      {active ? (
+                        <span aria-hidden="true">
+                          {sorting.order === 'asc' ? '↑' : '↓'}
+                        </span>
+                      ) : null}
+                    </button>
+                  ) : (
+                    label
+                  )}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody className="divide-y [&_td]:px-5 [&_td]:py-4 [&_td]:whitespace-nowrap [&_tr]:transition-colors [&_tr:hover]:bg-muted/50">

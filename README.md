@@ -60,7 +60,7 @@ Orval은 `/v3/api-docs`에서 TanStack Query 클라이언트와 Zod 스키마를
 ## 화면과 데이터 경계
 
 - `/`: KST 기준 DB 숫자 카드, 7·30·90일 추이, 이용 분포 9종. 별도 Amplitude 영역에 오늘 활성 사용자와 DAU·신규 사용자 추이를 제공하며 같은 기간을 사용합니다. Amplitude 조회 실패는 해당 영역의 재시도로 처리합니다. 모든 차트는 마냑 초록을 사용합니다. 차트의 수치 목록에서도 키보드로 상세 목록에 이동할 수 있습니다.
-- `/stories`, `/members`, `/payments`, `/chats`: URL 쿼리 필터와 정렬, `items` / `nextCursor` 커서 페이지(API 기본 50건, 화면은 12건 요청), `/{id}` 상세 연결을 제공합니다.
+- `/stories`, `/members`, `/payments`, `/chats`: URL 쿼리 필터와 정렬, `items`·`page`·`size`·`totalElements`·`totalPages` 숫자 페이지(1부터, 기본 20건, 크기 1~100), `/{id}` 상세 연결을 제공합니다.
 - `/login`: Google 로그인 버튼 UI, `/campaigns`, `/notices`, `/audit-logs`: 준비 중 화면입니다.
 - 응답 타입은 `src/features/<도메인>/types.ts`에 있습니다. 회원·결제의 기존 계약 필드를 유지하고, 차트와 목록·상세 확장을 별도 타입으로 정의했습니다. 대시보드 숫자 카드는 회원·채팅 시작·턴·스토리·이프 지급·소진·결제 이력·금액의 8개이며 각각 누적과 오늘 값을 제공합니다.
 - API 생성물이 없는 동안 `src/features/shared/use-api.ts`가 TanStack Query와 기존 mutator를 연결합니다. 서버 계약 확정 후 생성 훅으로 대체할 수 있으며 화면 응답 구조는 BFF에서 맞춥니다.
@@ -69,3 +69,7 @@ Orval은 `/v3/api-docs`에서 TanStack Query 클라이언트와 Zod 스키마를
 - 분포의 정의는 Grafana `service-stats`를 기준으로 합니다. 첫 사용자 입력 시간은 900초 이내, 입력 인물 수는 주변 인물만, AI 지연은 성공 호출만, 성공률은 완료 호출만 집계합니다. 결제 건수와 금액은 환불을 포함한 완료 이력 주문을 집계하고 같은 목록으로 이동합니다. 실제 DB 집계와 팀 계정 제외는 서버 연동 단계에서 구현합니다.
 
 Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics.ts`의 가상 집계를 반환합니다. 타입은 `DashboardAnalytics`이며 `asOf/from/to/todayActiveUsers/daily`를 제공합니다. 외부 Amplitude에 직접 연결하지 않으며, 화면의 출처 도움말은 집계 지연과 팀 계정 제외 기준을 설명합니다.
+
+목록 머리글 정렬은 `sort=<열 키>&order=asc|desc`를 사용합니다. 허용 열은 `src/features/shared/list-config.ts`의 `listSorts`를 따르며, 기본은 생성·가입·완료·시작 시각 내림차순입니다. 전체 필터 결과를 정렬한 뒤 페이지를 나누고, 동률은 공개 식별자 오름차순으로 고정합니다. 환불 시각이 없는 주문은 방향과 무관하게 뒤에 둡니다. 범위 밖 페이지는 빈 `items`와 실제 총 페이지 수를 반환하고, 잘못된 page·size·sort·order는 400입니다. 이전 cursor·limit 요청은 지원하지 않습니다.
+
+상세 화면의 스토리·결제·채팅방 하위 목록도 같은 목록 BFF를 관계 필터와 함께 호출합니다. 서로 다른 하위 목록의 페이지·크기·정렬은 URL에서 `chatsPage/chatsSize/chatsSort/chatsOrder`처럼 목록 이름을 앞에 붙여 독립적으로 보존합니다. BFF에 보낼 때는 표준 `page/size/sort/order`로 변환합니다. 이 숫자 페이지 계약은 사용자 지시로 변경한 현재 화면 BFF 계약이며, 읽기 전용 ADMIN 서버 스펙의 커서 계약과는 서버 연동 시 조율이 필요합니다.

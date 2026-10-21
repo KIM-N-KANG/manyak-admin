@@ -18,7 +18,7 @@ import type { ChatRoom } from '@/features/chats/types';
 import { MemberActions } from '@/features/members/member-actions';
 import type { MemberDetail } from '@/features/members/types';
 import type { PaymentDetail } from '@/features/payments/types';
-import { RelatedTable } from '@/features/shared/list-screen';
+import { RelatedList } from '@/features/shared/list-screen';
 import { useApi } from '@/features/shared/use-api';
 import type { StoryDetail } from '@/features/stories/types';
 
@@ -77,7 +77,7 @@ function StoryContent({ story: s }: { story: StoryDetail }) {
         </Card>
       </Section>
       <Section title="최근 채팅방">
-        <RelatedTable kind="chats" items={s.recentChats} />
+        <RelatedList kind="chats" scope={{ storyId: s.storyId }} />
         <div className="mt-3">
           <TextLink href={`/chats?storyId=${s.storyId}`}>
             이 스토리의 채팅방 전체 →
@@ -130,7 +130,7 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
         </DataTable>
       </Section>
       <Section title="결제 내역">
-        <RelatedTable kind="payments" items={m.payments} />
+        <RelatedList kind="payments" scope={{ memberId: m.memberId }} />
         <p className="mt-3">
           <TextLink href={`/payments?memberId=${m.memberId}`}>
             결제 전체 →
@@ -138,7 +138,7 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
         </p>
       </Section>
       <Section title="채팅방">
-        <RelatedTable kind="chats" items={m.chats} />
+        <RelatedList kind="chats" scope={{ memberId: m.memberId }} />
         <p className="mt-3">
           <TextLink href={`/chats?memberId=${m.memberId}`}>
             채팅방 전체 →
@@ -146,7 +146,7 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
         </p>
       </Section>
       <Section title="만든 스토리">
-        <RelatedTable kind="stories" items={m.stories} />
+        <RelatedList kind="stories" scope={{ memberId: m.memberId }} />
         <p className="mt-3">
           <TextLink href={`/stories?memberId=${m.memberId}`}>
             스토리 전체 →
