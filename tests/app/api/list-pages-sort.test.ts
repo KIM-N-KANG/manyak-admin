@@ -82,7 +82,7 @@ for (const { domain, get, rows, id } of cases) {
 
     it('빈 필터 결과도 페이지 메타데이터를 보존한다', async () => {
       const filter =
-        domain === 'members' ? 'query=없는회원검색' : 'memberId=missing';
+        domain === 'members' ? 'q=없는회원검색' : 'memberId=missing';
 
       expect(await read(`${filter}&page=3&size=7`)).toEqual({
         items: [],
@@ -129,7 +129,7 @@ for (const { domain, get, rows, id } of cases) {
         expect(
           get(
             new Request(
-              `http://localhost/api/${domain}?memberId=missing&query=없는회원검색&${query}`,
+              `http://localhost/api/${domain}?memberId=missing&q=없는회원검색&${query}`,
             ),
           ).status,
           query,

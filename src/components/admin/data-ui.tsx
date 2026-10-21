@@ -90,12 +90,14 @@ export function DataTable({
   headers,
   children,
   empty,
+  emptyContent,
   sorting,
 }: {
   headers: (string | { label: string; key: string })[];
   sorting?: { key: string; order: string; onSort: (key: string) => void };
   children: ReactNode;
   empty?: boolean;
+  emptyContent?: ReactNode;
 }) {
   return (
     <div className="overflow-x-auto rounded-md border bg-card">
@@ -145,7 +147,8 @@ export function DataTable({
               <td
                 colSpan={headers.length}
                 className="h-40 text-center text-muted-foreground">
-                조건에 맞는 결과가 없습니다. 필터를 변경해 주세요.
+                {emptyContent ??
+                  '조건에 맞는 결과가 없습니다. 필터를 변경해 주세요.'}
               </td>
             </tr>
           ) : (

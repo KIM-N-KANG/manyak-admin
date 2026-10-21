@@ -11,7 +11,6 @@ export type MemberListItem = MemberSummary & {
   periodChatCount?: number;
 };
 export type CreditTransaction = {
-  transactionId: string;
   amount: number;
   reason: string;
   balanceAfter: number;

@@ -16,6 +16,7 @@ import {
 import { Card } from '@/components/ui/card';
 import type { ChatRoom } from '@/features/chats/types';
 import { MemberActions } from '@/features/members/member-actions';
+import { MemberHistoryList } from '@/features/members/member-history-list';
 import type { MemberDetail } from '@/features/members/types';
 import type { PaymentDetail } from '@/features/payments/types';
 import { RelatedList } from '@/features/shared/list-screen';
@@ -115,24 +116,7 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
         </div>
       </Card>
       <Section title="이프 거래 내역">
-        <DataTable
-          headers={['시각', '거래 ID', '사유', '변동 이프', '거래 후 잔액']}
-          empty={!m.transactions.length}>
-          {m.transactions.map((t) => (
-            <tr key={t.transactionId}>
-              <td>{dateTime(t.createdAt)}</td>
-              <td className="font-mono text-xs">{t.transactionId.slice(-8)}</td>
-              <td>{t.reason}</td>
-              <td>
-                {t.amount > 0 ? '+' : ''}
-                <NumberValue value={t.amount} />
-              </td>
-              <td>
-                <NumberValue value={t.balanceAfter} />
-              </td>
-            </tr>
-          ))}
-        </DataTable>
+        <MemberHistoryList memberId={m.memberId} kind="transactions" />
       </Section>
       <Section title="결제 내역">
         <RelatedList kind="payments" scope={{ memberId: m.memberId }} />
@@ -159,18 +143,7 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
         </p>
       </Section>
       <Section title="출석 기록">
-        <DataTable
-          headers={['출석일 (KST)', '지급 이프']}
-          empty={!m.attendance.length}>
-          {m.attendance.map((a) => (
-            <tr key={a.date}>
-              <td>{a.date}</td>
-              <td>
-                <NumberValue value={a.creditAmount} />
-              </td>
-            </tr>
-          ))}
-        </DataTable>
+        <MemberHistoryList memberId={m.memberId} kind="attendance" />
       </Section>
     </>
   );
@@ -189,7 +162,7 @@ function PaymentContent({ payment: p }: { payment: PaymentDetail }) {
                 {p.member.nickname}
               </TextLink>,
             ],
-            ['상품 ID', p.productId],
+            ['상품 코드', p.productCode],
             ['상태', <Status key="s" value={p.status} />],
             ['결제 금액', `${p.priceKrw.toLocaleString('ko-KR')}원`],
             ['적립 이프', <NumberValue key="c" value={p.creditAmount} />],

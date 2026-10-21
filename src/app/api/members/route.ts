@@ -17,9 +17,12 @@ import {
   sortList,
   validateOptions,
 } from '@/fixtures/query';
+import { matchesSearch, readSearch } from '@/fixtures/search';
 
 export function GET(request: Request) {
   return fixtureResponse(request, (q) => {
+    const search = readSearch(q);
+
     validateOptions(q, {
       status: ['ACTIVE', 'SUSPENDED', 'DELETED'],
       chatBucket: ['0', '1', '2', '3', '4'],
@@ -32,17 +35,9 @@ export function GET(request: Request) {
 
     const periodCounts = getChatCounts(q.get('chatFrom'), q.get('chatTo'));
     const hasChatPeriod = q.has('chatFrom') || q.has('chatTo');
-    const query = (q.get('query') ?? '').trim();
-
-    if (query.length > 50) throw new Error('검색어는 50자 이하여야 합니다.');
-
     const filtered = members.filter((m) => {
       const email = memberEmails.get(m.memberId);
-      const matches =
-        !query ||
-        (query.includes('@')
-          ? email === query
-          : query === m.memberId || m.nickname.includes(query));
+      const matches = matchesSearch(search, [m.nickname], [m.memberId, email]);
       const count = hasChatPeriod
         ? (periodCounts.get(m.memberId) ?? 0)
         : m.chatCount;

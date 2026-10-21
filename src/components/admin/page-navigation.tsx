@@ -74,7 +74,7 @@ export function PageNavigation({
               className={cn(
                 control,
                 page === value
-                  ? 'bg-primary text-primary-foreground'
+                  ? 'bg-primary-text text-primary-foreground'
                   : 'hover:bg-muted',
               )}>
               {value}

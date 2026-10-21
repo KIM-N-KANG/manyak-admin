@@ -2,15 +2,35 @@
 
 import { createElement } from 'react';
 
-import { cleanup, render, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AdminShell } from '@/components/admin/admin-shell';
 
 const navigation = vi.hoisted(() => ({ pathname: '/dashboard' }));
 
 vi.mock('next/navigation', () => ({ usePathname: () => navigation.pathname }));
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+beforeEach(() => {
+  const values = new Map<string, string>();
+
+  vi.stubGlobal('localStorage', {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      values.set(key, value);
+    },
+    clear: () => values.clear(),
+  });
+});
 
 const entries = [
   ['/dashboard', '개요'],
@@ -39,12 +59,15 @@ describe('관리자 메뉴 구조', () => {
   it('번호 없는 세 구역에 지정한 메뉴를 순서대로 배치한다', () => {
     shell('/dashboard');
 
+    fireEvent.click(screen.getByRole('button', { name: '관리' }));
+    fireEvent.click(screen.getByRole('button', { name: '알림' }));
+
     const nav = screen.getByRole('navigation', { name: '관리자 메뉴' });
 
     expect(
       within(nav)
         .getAllByRole('heading', { level: 2 })
-        .map((heading) => heading.textContent),
+        .map((heading) => heading.textContent?.replace('▸', '')),
     ).toEqual(['대시보드', '관리', '알림']);
     expect(
       within(nav)
@@ -101,4 +124,26 @@ describe('관리자 메뉴 구조', () => {
         .some((link) => link.hasAttribute('aria-current')),
     ).toBe(false);
   });
+});
+
+it('다른 구역을 접고 펼친 상태는 새로고침 뒤 유지하고 현재 구역은 접히지 않는다', () => {
+  const view = shell('/members');
+  const current = screen.getByRole('button', { name: '관리' });
+
+  expect(current.getAttribute('aria-expanded')).toBe('true');
+  fireEvent.click(current);
+  expect(current.getAttribute('aria-expanded')).toBe('true');
+
+  const other = screen.getByRole('button', { name: '알림' });
+
+  expect(other.getAttribute('aria-expanded')).toBe('false');
+  fireEvent.click(other);
+  expect(other.getAttribute('aria-expanded')).toBe('true');
+  view.unmount();
+  shell('/members');
+  expect(
+    screen.getByRole('button', { name: '알림' }).getAttribute('aria-expanded'),
+  ).toBe('true');
+  fireEvent.click(screen.getByRole('button', { name: '알림' }));
+  expect(screen.queryByRole('link', { name: '캠페인' })).toBeNull();
 });

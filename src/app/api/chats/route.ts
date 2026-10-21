@@ -7,9 +7,12 @@ import {
   sortList,
   validateOptions,
 } from '@/fixtures/query';
+import { matchesSearch, readSearch } from '@/fixtures/search';
 
 export function GET(request: Request) {
   return fixtureResponse(request, (q) => {
+    const search = readSearch(q);
+
     validateOptions(q, {
       startedAs: ['GUEST', 'MEMBER'],
       turnBucket: turnBounds.map((_, i) => String(i)),
@@ -28,6 +31,11 @@ export function GET(request: Request) {
         : null;
 
       return (
+        matchesSearch(
+          search,
+          [c.story.title, c.member?.nickname ?? ''],
+          [c.chatId],
+        ) &&
         (!q.get('storyId') || c.story.storyId === q.get('storyId')) &&
         (!q.get('memberId') || c.member?.memberId === q.get('memberId')) &&
         (!q.get('startedAs') || c.startedAs === q.get('startedAs')) &&

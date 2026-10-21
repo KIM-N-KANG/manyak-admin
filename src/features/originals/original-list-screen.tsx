@@ -12,6 +12,7 @@ import {
   Status,
   TextLink,
 } from '@/components/admin/data-ui';
+import { ListSearch, SearchEmpty } from '@/components/admin/list-search';
 import { PageNavigation } from '@/components/admin/page-navigation';
 import { Button, buttonVariants } from '@/components/ui/button';
 import type { OriginalListItem } from '@/features/originals/types';
@@ -67,6 +68,7 @@ export function OriginalListScreen() {
           새 오리지널
         </Link>
       </PageHeading>
+      <ListSearch label="오리지널 검색" />
       <form
         key={params.toString()}
         action={apply}
@@ -117,7 +119,8 @@ export function OriginalListScreen() {
               { label: '수정 시각', key: 'updatedAt' },
             ]}
             sorting={{ key: sort, order, onSort: changeSort }}
-            empty={!query.data.items.length}>
+            empty={!query.data.items.length}
+            emptyContent={params.get('q') ? <SearchEmpty /> : undefined}>
             {query.data.items.map((item) => (
               <tr key={item.id}>
                 <td>

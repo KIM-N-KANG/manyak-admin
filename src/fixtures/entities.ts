@@ -87,7 +87,7 @@ export const chats: ChatRoom[] = Array.from({ length: 8210 }, (_, i) => ({
 export const payments: PaymentDetail[] = Array.from({ length: 32 }, (_, i) => ({
   orderId: id(4, i),
   member: members[i % members.length],
-  productId: i % 2 ? 'if_10000' : 'if_5000',
+  productCode: i % 2 ? 'if_10000' : 'if_5000',
   status: i % 6 === 0 ? 'REFUNDED' : 'COMPLETED',
   priceKrw: i % 2 ? 9600 : 4800,
   creditAmount: i % 2 ? 10000 : 5000,
@@ -164,14 +164,12 @@ export const memberTransactions = new Map<string, CreditTransaction[]>(
     const direction = index % 3;
     const rows: CreditTransaction[] = [
       {
-        transactionId: id(5, index * 10),
         amount: 5000,
         reason: 'PURCHASE',
         balanceAfter: 5000,
         createdAt: '2026-10-20T03:00:00Z',
       },
       {
-        transactionId: id(5, index * 10 + 1),
         amount: -30,
         reason: 'CHAT_TURN',
         balanceAfter: 4970,
@@ -179,7 +177,6 @@ export const memberTransactions = new Map<string, CreditTransaction[]>(
           direction === 0 ? '2026-10-21T04:00:00Z' : '2026-10-20T14:59:59Z',
       },
       {
-        transactionId: id(5, index * 10 + 2),
         amount: 250,
         reason: 'ATTENDANCE_REWARD',
         balanceAfter: 5220,
@@ -187,14 +184,12 @@ export const memberTransactions = new Map<string, CreditTransaction[]>(
           direction === 1 ? '2026-10-20T15:00:00Z' : '2026-10-19T15:00:00Z',
       },
       {
-        transactionId: id(5, index * 10 + 3),
         amount: 30,
         reason: 'REFUND',
         balanceAfter: 5250,
         createdAt: '2026-10-21T02:00:00Z',
       },
       {
-        transactionId: id(5, index * 10 + 4),
         amount: -10,
         reason: 'EXPIRE',
         balanceAfter: 5240,

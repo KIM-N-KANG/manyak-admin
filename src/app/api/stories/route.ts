@@ -8,9 +8,12 @@ import {
   sortList,
   validateOptions,
 } from '@/fixtures/query';
+import { matchesSearch, readSearch } from '@/fixtures/search';
 
 export function GET(request: Request) {
   return fixtureResponse(request, (q) => {
+    const search = readSearch(q);
+
     validateOptions(q, {
       scope: ['original', 'user'],
       aiFeature: ['story_creation'],
@@ -48,6 +51,7 @@ export function GET(request: Request) {
     const filtered = stories
       .filter(
         (s) =>
+          matchesSearch(search, [s.title, s.owner.nickname], [s.storyId]) &&
           (!chatStoryIds || chatStoryIds.has(s.storyId)) &&
           (!sessionStoryIds || sessionStoryIds.has(s.storyId)) &&
           (!aiStoryIds || aiStoryIds.has(s.storyId)) &&

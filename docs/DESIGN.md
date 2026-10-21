@@ -5,6 +5,7 @@ description: Geist 기반 레이아웃·여백·Pretendard·회색 톤을 사용
 
 colors:
   primary: '#01a76b'
+  primary-text: '#017a4e'
   on-primary: '#ffffff'
   ink: '#171717'
   body: '#4d4d4d'
@@ -14,8 +15,8 @@ colors:
   hairline-soft: '#f2f2f2'
   canvas: '#fafafa'
   canvas-elevated: '#ffffff'
-  link: '#01a76b'
-  link-deep: '#017a4e'
+  link: '#017a4e'
+  link-deep: '#01613e'
   link-soft: '#e6f6ef'
   chart-1: '#01a76b'
   chart-2: 'color-mix(in oklab, var(--primary) 80%, transparent)'
@@ -142,7 +143,7 @@ components:
     rounded: '{rounded.full}'
     padding: '{spacing.xs} {spacing.sm}'
   button-primary:
-    backgroundColor: '{colors.primary}'
+    backgroundColor: '{colors.primary-text}'
     textColor: '{colors.on-primary}'
     typography: '{typography.button-lg}'
     rounded: '{rounded.pill}'
@@ -154,7 +155,7 @@ components:
     rounded: '{rounded.pill}'
     padding: '0px 14px'
   button-primary-sm:
-    backgroundColor: '{colors.primary}'
+    backgroundColor: '{colors.primary-text}'
     textColor: '{colors.on-primary}'
     typography: '{typography.button-md}'
     rounded: '{rounded.sm}'
@@ -239,16 +240,16 @@ components:
 
 ## Overview
 
-브랜드 색과 로고는 마냑을 따른다. 레이아웃·여백·글꼴·회색 톤은 기존 Vercel Geist 분석을 유지한다. 본문과 제목은 near-black ink (`{colors.ink}` — #171717), 배경은 near-white canvas (`{colors.canvas}` — #fafafa), 카드와 입력은 hairline border를 사용한다. 주요 버튼·링크·포커스·활성 메뉴에는 마냑 브랜드 초록 `{colors.primary}` (#01A76B)을 적용한다. CSS의 기준값은 마냑 웹과 같은 `oklch(0.6398 0.1458 159.17)`이며 주요 버튼의 전경은 흰색이다.
+브랜드 색과 로고는 마냑을 따른다. 레이아웃·여백·글꼴·회색 톤은 기존 Vercel Geist 분석을 유지한다. 본문과 제목은 near-black ink (`{colors.ink}` — #171717), 배경은 near-white canvas (`{colors.canvas}` — #fafafa), 카드와 입력은 hairline border를 사용한다. 로고·차트·아이콘·포커스에는 마냑 브랜드 초록 `{colors.primary}` (#01A76B)을 적용한다. CSS의 기준값은 마냑 웹과 같은 `oklch(0.6398 0.1458 159.17)`이다. 작은 링크·활성 메뉴 글자에는 `{colors.primary-text}` (#017A4E)를 쓰고, 주요 버튼과 현재 페이지는 이 짙은 초록 배경에 흰 글자를 사용한다.
 
 ### Brand assets
 
 - 사이드바 상단과 로그인 화면은 웹과 같은 `ManyakLogo`만 사용한다. 로고 옆에 ‘관리자’ 텍스트나 배지를 덧붙이지 않는다. 로고는 manyak-web의 `src/components/layout/manyak-logo.tsx`를 그대로 복사한 `src/components/admin/manyak-logo.tsx`이며, 심볼과 도형 워드마크를 포함한 89×32 SVG다. 로고의 모든 선·면은 `currentColor`로 마냑 브랜드 초록을 따른다. ‘마냑’을 일반 텍스트로 대체하거나 원래 글꼴을 추정하지 않는다.
 - SVG의 `role="img"`, `aria-label="마냑"`을 그대로 노출해 로고 이름은 ‘마냑’으로 한 번만 읽힌다. 조합용 wrapper·추가 접근성 이름·‘관리자’ 전용 타이포그래피는 사용하지 않는다. 문서 제목과 메타데이터의 ‘마냑 관리자’ 표기는 유지한다.
 - 파비콘은 글자 없는 초록 심볼 그대로의 투명 배경을 사용한다. App Router의 `src/app/icon.svg`는 `public/logo/manyak-symbol-green.svg`와 같고, `src/app/favicon.ico`는 같은 심볼의 16·32·48px PNG 프레임으로 구성한다. 모든 ICO 프레임은 8비트 RGBA로 인코딩한다. PWA·Apple용 `public/icons/`와 layout 아이콘 메타데이터는 유지한다.
-- 목록 표는 정렬 가능한 머리글 버튼과 현재 정렬 열의 방향 화살표·`aria-sort`를 사용한다. 목록 아래 중앙에는 이전·다음과 처음·끝·현재 주변 번호를 배치하며, 생략 구간은 …로 표시한다. 현재 페이지는 브랜드 초록과 `aria-current="page"`로 구분하고 경계 이동은 비활성화한다.
+- 목록 표는 정렬 가능한 머리글 버튼과 현재 정렬 열의 방향 화살표·`aria-sort`를 사용한다. 목록 아래 중앙에는 이전·다음과 처음·끝·현재 주변 번호를 배치하며, 생략 구간은 …로 표시한다. 현재 페이지는 짙은 초록 배경·흰 글자와 `aria-current="page"`로 구분하고 경계 이동은 비활성화한다.
 - 관리자 화면은 별도 상단 헤더 바나 워크스페이스 경로, 영문 eyebrow 표기를 두지 않는다. 사이드바 하단의 운영 표기와 로그인 링크도 두지 않는다. 데이터 화면의 ‘고정 데이터 미리보기’는 페이지 제목 옆에 작은 회색 글씨로 표시한다. 아래 영문 분석의 eyebrow 예시는 관리자 화면에 적용하지 않는다.
-- 사이드바는 ‘대시보드·관리·알림’ 세 구역으로 나누고 구역 제목을 작은 회색 글씨로 표시한다. 개요는 숫자 카드·일별 추이·Amplitude, 분석은 분포 차트를 담는다. 메뉴는 번호 없이 이름만 표시한다. 활성 항목은 연한 초록 배경과 브랜드 초록 전경을 사용한다. 개요와 분석은 각각 활성 상태를 판별하며, 상세 화면에서는 해당 관리 메뉴를 활성화한다. 준비 중 화면은 제목과 설명 한 줄만 두고 큰 빈 카드를 배치하지 않는다.
+- 사이드바는 ‘대시보드·관리·알림’ 세 구역의 아코디언이다. 상위 버튼은 Hugeicons 아이콘·굵은 구역명·회전 화살표를 표시하고, 이동 없이 펼침만 바꾸며 `aria-expanded`와 `aria-controls`로 관계를 알린다. 하위 메뉴는 아이콘 없이 보통 굵기로 표시하고 들여쓰기·왼쪽 세로 안내선으로 묶는다. 현재 페이지 구역은 항상 펼치고 나머지 구역의 상태는 localStorage에 보존한다. 접힌 영역은 접근성 트리와 탭 이동에서 제외한다. 애니메이션은 150ms이며 reduced-motion에서는 끈다. 개요는 숫자 카드·일별 추이·Amplitude, 분석은 분포 차트를 담는다. 메뉴는 번호 없이 이름만 표시한다. 활성 항목은 연한 초록 배경(#E6F6EF)과 짙은 초록 전경(#017A4E)을 사용한다. 개요와 분석은 각각 활성 상태를 판별하며, 상세 화면에서는 해당 관리 메뉴를 활성화한다. 준비 중 화면은 제목과 설명 한 줄만 두고 큰 빈 카드를 배치하지 않는다.
 
 Typography does the heavy lifting. **Pretendard** sets the display headline in tightly-tracked weight-600 (the hero h1 runs -2.4px letter-spacing), and **system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`)** appears as small uppercase eyebrows labeling sections like a technical spec sheet. Buttons split into two shapes by context: the marketing CTAs are fully rounded brand-green **pills** (`{rounded.pill}` — 100px, "Start Deploying" / "Get a Demo"), while nav and in-app controls use a tight 6px square (`{rounded.sm}`, "Sign Up" / "Log In"). The contrast between the rounded marketing pill and the square app button is itself a deliberate signal of which surface you're on.
 
@@ -270,8 +271,9 @@ Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafaf
 
 ### Brand & Accent
 
-- **Manyak Green** (`{colors.primary}` / `{colors.link}` — #01A76B): 주요 버튼·링크·포커스·활성 메뉴의 기준색이다. CSS에서는 `oklch(0.6398 0.1458 159.17)`을 사용하며 버튼 전경은 `{colors.on-primary}` (흰색)이다.
-- **Deep / Soft Green**: 링크 hover는 `{colors.link-deep}` (#017A4E), 강조 배경은 `{colors.link-soft}` (#E6F6EF)이다.
+- **Manyak Green** (`{colors.primary}` — #01A76B): 로고·차트·아이콘·포커스의 기준색이다. CSS에서는 `oklch(0.6398 0.1458 159.17)`을 사용한다. 흰색과 대비는 3.12:1이므로 작은 글자나 흰 글자의 버튼 배경에는 사용하지 않는다.
+- **Text Green** (`{colors.primary-text}` / `{colors.link}` — #017A4E): 작은 링크와 활성 메뉴의 전경, 주요 버튼·현재 페이지의 배경이다. 흰색 대비 5.39:1, 연한 메뉴 배경 #E6F6EF 대비 4.82:1, 캔버스 #FAFAFA 대비 5.17:1로 일반 글자 기준 4.5:1을 만족한다. 대비는 WCAG sRGB 상대 휘도 식으로 계산한다.
+- **Deep / Soft Green**: 링크·버튼 hover는 `{colors.link-deep}` (#01613E), 강조 배경은 `{colors.link-soft}` (#E6F6EF)이다.
 - **Ink** (`{colors.ink}` — #171717): 제목과 가장 진한 본문에 사용한다. 주요 버튼과 로고의 색으로 사용하지 않는다.
 - **Chart palette**: 모든 막대·선·영역은 `--primary`의 마냑 초록을 사용한다. `--chart-1`은 primary 100%, `--chart-2`~`--chart-5`는 같은 초록의 80%·60%·40%·20% 투명도 단계다. 한 차트에서 여러 계열이 필요하면 이 단계나 실선·점선만 사용하고 다른 색상은 쓰지 않는다. 축·라벨·툴팁·수치 목록으로 색상 외에도 지표를 구분한다.
 
@@ -433,7 +435,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 
 **`button-primary`** — the brand-green marketing pill ("Start Deploying", "Deploy")
 
-- Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.button-lg}`, fully rounded `{rounded.pill}` (100px), padding `0px 14px`.
+- Background `{colors.primary-text}`, text `{colors.on-primary}`, type `{typography.button-lg}`, fully rounded `{rounded.pill}` (100px), padding `0px 14px`.
 
 **`button-secondary`** — the white marketing pill ("Get a Demo")
 
@@ -441,7 +443,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 
 **`button-primary-sm`** — the compact brand-green nav CTA ("Sign Up")
 
-- Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.button-md}`, tight square `{rounded.sm}` (6px), padding `0px 6px`.
+- Background `{colors.primary-text}`, text `{colors.on-primary}`, type `{typography.button-md}`, tight square `{rounded.sm}` (6px), padding `0px 6px`.
 
 **`button-ghost-sm`** — the white nav/app button ("Log In", "Ask AI")
 
@@ -456,6 +458,8 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 - Background `{colors.canvas-elevated}`, text `{colors.ink}`, 1px hairline `{colors.hairline}`, type `{typography.body-lg}`, rounded `{rounded.full}`, no padding.
 
 ### Inputs & Forms
+
+관리의 회원·스토리·오리지널·채팅방·결제 목록에는 검색창 하나와 지우기 버튼을 둔다. 입력 후 300ms에 q를 URL에 반영하고 페이지를 1로 돌린다. 검색은 필터·정렬과 함께 적용한다. 결과가 없으면 검색어와 지우기 동작을 표 안에 표시한다. 회원 상세 거래·출석 표도 각각 독립적인 숫자 페이지를 사용하며, 거래는 시각·사유·변동 이프·거래 후 잔액만 표시한다.
 
 **`text-input`** — default form field
 

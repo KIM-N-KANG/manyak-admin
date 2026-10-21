@@ -106,7 +106,7 @@ describe('관리자 고정 데이터 BFF', () => {
 
   it('닉네임 부분 일치, ID 일치와 이메일 정확 일치를 구분한다', async () => {
     const search = async (query: string): Promise<Page<MemberListItem>> =>
-      members(request(`members?query=${encodeURIComponent(query)}`)).json();
+      members(request(`members?q=${encodeURIComponent(query)}`)).json();
     const exact = await search('member1@example.com');
 
     expect(exact.items).toHaveLength(1);

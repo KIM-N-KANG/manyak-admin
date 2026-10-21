@@ -6,13 +6,21 @@ import {
   sortList,
   validateOptions,
 } from '@/fixtures/query';
+import { matchesSearch, readSearch } from '@/fixtures/search';
 
 export function GET(request: Request) {
   return fixtureResponse(request, (q) => {
+    const search = readSearch(q);
+
     validateOptions(q, { status: ['COMPLETED', 'REFUNDED'] });
 
     const filtered = payments.filter(
       (p) =>
+        matchesSearch(
+          search,
+          [p.member.nickname],
+          [p.orderId, p.member.memberId],
+        ) &&
         (!q.get('status') || p.status === q.get('status')) &&
         (!q.get('memberId') || p.member.memberId === q.get('memberId')) &&
         inPeriod(p.completedAt, q),

@@ -14,6 +14,7 @@ import {
   Status,
   TextLink,
 } from '@/components/admin/data-ui';
+import { ListSearch, SearchEmpty } from '@/components/admin/list-search';
 import { PageNavigation } from '@/components/admin/page-navigation';
 import { Button } from '@/components/ui/button';
 import type { ChatRoom } from '@/features/chats/types';
@@ -138,14 +139,8 @@ const configs: Record<
   },
   members: {
     title: '회원',
-    description: '닉네임, 회원 ID 또는 이메일 정확 일치로 검색하세요.',
+    description: '닉네임 일부, 회원 ID 또는 이메일로 검색하세요.',
     filters: [
-      {
-        key: 'query',
-        label: '회원 검색',
-        type: 'search',
-        placeholder: '닉네임 · 회원 ID · 이메일',
-      },
       {
         key: 'status',
         label: '상태',
@@ -241,7 +236,7 @@ export function StoryRows({ items }: { items: Story[] }) {
       <td>
         {s.genre} ·{' '}
         {s.scope === 'original' ? (
-          <span className="rounded-sm border bg-primary/5 px-2 py-1 text-xs text-primary">
+          <span className="rounded-sm border bg-primary/5 px-2 py-1 text-xs text-primary-text">
             오리지널
           </span>
         ) : (
@@ -386,7 +381,7 @@ export function ListScreen({ domain }: { domain: Domain }) {
 
   const extras = [...params.entries()].filter(
     ([key]) =>
-      !['page', 'sort', 'order'].includes(key) &&
+      !['page', 'sort', 'order', 'q'].includes(key) &&
       !config.filters.some((f) => f.key === key),
   );
   let rows: ReactNode = null;
@@ -431,6 +426,7 @@ export function ListScreen({ domain }: { domain: Domain }) {
   return (
     <>
       <PageHeading title={config.title} description={config.description} />
+      <ListSearch label={`${config.title} 검색`} />
       <form
         key={params.toString()}
         action={apply}
@@ -492,6 +488,7 @@ export function ListScreen({ domain }: { domain: Domain }) {
           <DataTable
             headers={headers[domain]}
             empty={!query.data.items.length}
+            emptyContent={params.get('q') ? <SearchEmpty /> : undefined}
             sorting={{ key: sort, order, onSort: changeSort }}>
             {rows}
           </DataTable>

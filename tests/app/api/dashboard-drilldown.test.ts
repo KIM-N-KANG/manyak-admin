@@ -352,11 +352,11 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
   it('KST 자정 전후 거래를 구분하고 환불·만료를 지급·소진에 포함하지 않는다', async () => {
     const id = '00000001-0000-4000-8000-000000000002';
     const day21 = await all<MemberListItem>(
-      `/members?query=${id}&creditDate=2026-10-21&creditDirection=granted`,
+      `/members?q=${id}&creditDate=2026-10-21&creditDirection=granted`,
       memberList,
     );
     const day20 = await all<MemberListItem>(
-      `/members?query=${id}&creditDate=2026-10-20&creditDirection=spent`,
+      `/members?q=${id}&creditDate=2026-10-20&creditDirection=spent`,
       memberList,
     );
 
@@ -364,7 +364,7 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
     expect(day20.map((m) => m.memberId)).toEqual([id]);
     expect(
       await all(
-        `/members?query=${id}&creditDate=2026-10-21&creditDirection=spent`,
+        `/members?q=${id}&creditDate=2026-10-21&creditDirection=spent`,
         memberList,
       ),
     ).toHaveLength(0);
@@ -375,10 +375,7 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
       '00000001-0000-4000-8000-000000000004',
       '00000001-0000-4000-8000-000000000005',
     ]) {
-      const [row] = await all<MemberListItem>(
-        `/members?query=${id}`,
-        memberList,
-      );
+      const [row] = await all<MemberListItem>(`/members?q=${id}`, memberList);
       const member = await detail(id);
       const rooms = await all<ChatRoom>(`/chats?memberId=${id}`, chatList);
 
@@ -389,7 +386,7 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
       if (!rooms.length)
         for (let bucket = 0; bucket < 5; bucket++)
           expect(
-            await all(`/members?query=${id}&chatBucket=${bucket}`, memberList),
+            await all(`/members?q=${id}&chatBucket=${bucket}`, memberList),
           ).toHaveLength(0);
     }
   });

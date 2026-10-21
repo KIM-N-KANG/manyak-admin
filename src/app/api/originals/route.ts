@@ -6,9 +6,12 @@ import {
   sortList,
   validateOptions,
 } from '@/fixtures/query';
+import { matchesSearch, readSearch } from '@/fixtures/search';
 
 export function GET(request: Request) {
   return fixtureResponse(request, (query) => {
+    const search = readSearch(query);
+
     validateOptions(query, {
       visibility: ['PUBLIC', 'PRIVATE'],
       status: ['DRAFT', 'PUBLISHED'],
@@ -16,6 +19,7 @@ export function GET(request: Request) {
 
     const items = listOriginals().filter(
       (item) =>
+        matchesSearch(search, [item.title], [item.id]) &&
         (!query.get('visibility') ||
           item.visibility === query.get('visibility')) &&
         (!query.get('status') || item.status === query.get('status')),
