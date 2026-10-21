@@ -81,9 +81,9 @@ Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics
 
 목록 머리글 정렬은 `sort=<열 키>&order=asc|desc`를 사용합니다. 허용 열은 `src/features/shared/list-config.ts`의 `listSorts`를 따르며, 기본은 생성·가입·완료·시작 시각 내림차순입니다. 전체 필터 결과를 정렬한 뒤 페이지를 나누고, 동률은 공개 식별자 오름차순으로 고정합니다. 환불 시각이 없는 주문은 방향과 무관하게 뒤에 둡니다. 범위 밖 페이지는 빈 `items`와 실제 총 페이지 수를 반환하고, 잘못된 page·size·sort·order는 400입니다. 이전 cursor·limit 요청은 지원하지 않습니다.
 
-상세 화면의 스토리·결제·채팅방 하위 목록도 같은 목록 BFF를 관계 필터와 함께 호출합니다. 서로 다른 하위 목록의 페이지·크기·정렬은 URL에서 `chatsPage/chatsSize/chatsSort/chatsOrder`처럼 목록 이름을 앞에 붙여 독립적으로 보존합니다. BFF에 보낼 때는 표준 `page/size/sort/order`로 변환합니다. 이 숫자 페이지 계약은 사용자 지시로 변경한 현재 화면 BFF 계약이며, 읽기 전용 ADMIN 서버 스펙의 커서 계약과는 서버 연동 시 조율이 필요합니다.
+상세 화면의 스토리·결제·채팅방 하위 목록도 같은 목록 BFF를 관계 필터와 함께 호출합니다. 서로 다른 하위 목록의 페이지·크기·정렬은 URL에서 `chatsPage/chatsSize/chatsSort/chatsOrder`처럼 목록 이름을 앞에 붙여 독립적으로 보존합니다. BFF에 보낼 때는 표준 `page/size/sort/order`로 변환합니다. 숫자 페이지와 정렬은 최신 ADMIN 공통 목록 계약을 따릅니다.
 
-오리지널 화면은 `src/features/originals/types.ts`와 화면 전용 Zod 폼 스키마를 사용합니다. 서버의 일반 제작·수정 필드명을 유지하며, 장르 태그는 서버 V91 카탈로그의 정식 이름을 사용합니다. BFF는 평탄한 등록·부분 수정 요청과 storyId 상세 응답, presign→PUT→objectKey 업로드와 표지 DELETE를 프로세스 메모리 fixture로 흉내 냅니다. 재시작·프로세스 변경 시 저장한 내용과 이미지는 사라집니다. 실제 서버 연결·스토리지 업로드·검수는 수행하지 않습니다. 요청/응답과 서버 연동 차이는 [오리지널 화면 데이터 경계](docs/ORIGINALS.md)에 있습니다. 상세의 ‘홍보 알림 만들기’는 `/notifications/campaigns/new?storyId=<id>`로 연결해 스토리 선택을 미리 채웁니다. 현재 서버 캠페인 작성 계약에는 스토리 이동 대상 필드가 없으므로 선택은 미리보기만 제공하며, 선택을 해제해야 발송할 수 있습니다.
+오리지널 화면은 `src/features/originals/types.ts`와 화면 전용 Zod 폼 스키마를 사용합니다. 서버의 일반 제작·수정 필드명을 유지하며, 장르 태그는 서버 V91 카탈로그의 정식 이름을 사용합니다. BFF는 평탄한 등록·부분 수정 요청과 storyId 상세 응답, presign→PUT→objectKey 업로드와 표지 DELETE를 프로세스 메모리 fixture로 흉내 냅니다. 재시작·프로세스 변경 시 저장한 내용과 이미지는 사라집니다. 실제 서버 연결·스토리지 업로드·검수는 수행하지 않습니다. 요청/응답과 서버 연동 차이는 [오리지널 화면 데이터 경계](docs/ORIGINALS.md)에 있습니다. 상세의 ‘홍보 알림 만들기’는 `/notifications/campaigns/new?storyId=<id>`로 연결해 스토리 선택을 미리 채웁니다. 발행 상태인 공개 스토리를 선택하면 캠페인 작성 본문에 storyId를 전달합니다. 비공개·초안·없는 스토리는 거절합니다.
 
 관리 목록 5종(회원·스토리·오리지널·채팅방·결제)은 공통 검색창의 300ms 디바운스로 `q`를 갱신하고 page=1로 복귀합니다. 검색과 필터·정렬은 AND이며 전체 결과를 검색한 후 정렬·페이지 처리합니다. 앞뒤·연속 공백과 대소문자를 정리하며, 화면에서 빈 검색은 쿼리를 제거해 해제하며, 명시한 빈 q·50자 초과 및 중복 q는 400입니다. UUID와 회원 이메일은 정확 일치, 제목·닉네임은 지정한 대상의 부분 일치입니다.
 

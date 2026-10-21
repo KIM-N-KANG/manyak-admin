@@ -57,6 +57,16 @@ export function CampaignDetailScreen({ id }: { id: string }) {
                   item.finishedAt ? dateTime(item.finishedAt) : '—',
                 ],
                 [
+                  '이동 대상 스토리',
+                  item.storyId ? (
+                    <TextLink href={`/stories/${item.storyId}`}>
+                      {item.storyId}
+                    </TextLink>
+                  ) : (
+                    '—'
+                  ),
+                ],
+                [
                   '연결 공지',
                   item.noticeId ? (
                     <TextLink href={`/notices/${item.noticeId}`}>

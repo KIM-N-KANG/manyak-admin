@@ -13,6 +13,7 @@ export type Campaign = {
   scheduledAt: string;
   status: CampaignStatus;
   noticeId: string | null;
+  storyId: string | null;
   targetCount: number | null;
   sentCount: number | null;
   deliveredMembers: number;
@@ -57,3 +58,11 @@ export type DeliveryRow = {
   failedDevices: number;
 };
 export type DeliveryStats = { from: string; to: string; items: DeliveryRow[] };
+
+export type CampaignCreateRequest = {
+  title: string;
+  body: string;
+  reason: string;
+  scheduledAt?: string;
+  storyId?: string;
+};

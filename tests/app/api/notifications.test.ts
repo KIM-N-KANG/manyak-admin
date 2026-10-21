@@ -10,11 +10,13 @@ import {
   GET as template,
   PUT,
 } from '@/app/api/notifications/templates/[key]/route';
+import { stories } from '@/fixtures/entities';
 import {
   createNoticeCampaign,
   getTemplate,
   listCampaigns,
 } from '@/fixtures/notifications';
+import { saveOriginal } from '@/fixtures/originals';
 
 const req = (body: unknown) =>
   new Request('http://localhost/api/notifications', {
@@ -60,6 +62,39 @@ describe('알림 BFF', () => {
         )
       ).status,
     ).toBe(400);
+  });
+  it('공개·발행 스토리를 연결하고 비공개·초안·없는 ID는 거절한다', async () => {
+    const publicStory = stories.find((s) => s.visibility === 'PUBLIC')!;
+    const result = await POST(
+      req({
+        title: '홍보',
+        body: '본문',
+        reason: '홍보',
+        storyId: publicStory.storyId,
+      }),
+    );
+
+    expect(result.status).toBe(201);
+    expect(await result.json()).toMatchObject({
+      storyId: publicStory.storyId,
+      kind: 'MARKETING',
+    });
+
+    const draft = saveOriginal({ title: '미발행', reason: '작성' });
+
+    for (const storyId of [
+      stories.find((s) => s.visibility === 'PRIVATE')!.storyId,
+      draft.storyId,
+      'bad',
+      '99999999-0000-4000-8000-000000000001',
+    ])
+      expect(
+        (
+          await POST(
+            req({ title: '홍보', body: '본문', reason: '홍보', storyId }),
+          )
+        ).status,
+      ).toBe(400);
   });
   it('목록은 필터·정렬·숫자 페이지와 null 집계를 보존한다', async () => {
     const response = GET(

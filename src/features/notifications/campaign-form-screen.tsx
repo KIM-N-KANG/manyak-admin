@@ -13,7 +13,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useManagementMutation } from '@/features/management/mutation';
-import type { Campaign, TargetCount } from '@/features/notifications/types';
+import type {
+  Campaign,
+  CampaignCreateRequest,
+  TargetCount,
+} from '@/features/notifications/types';
 import { ConfirmDialog } from '@/features/originals/confirm-dialog';
 import type { Page } from '@/features/shared/types';
 import { useApi } from '@/features/shared/use-api';
@@ -24,14 +28,22 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
   const [story, setStory] = useState(storyId);
   const [search, setSearch] = useState('');
   const [immediate, setImmediate] = useState(true);
-  const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
+  const [draft, setDraft] = useState<CampaignCreateRequest | null>(null);
   const [formError, setFormError] = useState('');
   const target = useApi<TargetCount>(
     `/api/notifications/campaigns/target-count?kind=${kind}`,
   );
   const stories = useApi<Page<Story>>(
-    `/api/stories?size=20${search ? `&q=${encodeURIComponent(search)}` : ''}`,
+    `/api/stories?size=20&visibility=PUBLIC${search ? `&q=${encodeURIComponent(search)}` : ''}`,
   );
+  const selected = useApi<Story>(
+    `/api/stories/${encodeURIComponent(story)}`,
+    !!story,
+  );
+  const invalidStory =
+    !!story &&
+    (selected.isError ||
+      (!selected.isPending && selected.data?.visibility !== 'PUBLIC'));
   const mutation = useManagementMutation();
   const router = useRouter();
 
@@ -58,19 +70,18 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
       return;
     }
 
-    if (story) {
-      setFormError(
-        '스토리로 이동하는 캠페인은 아직 지원하지 않습니다. 이동 대상 없음을 선택해 주세요.',
-      );
+    if (story && (!selected.data || selected.data.visibility !== 'PUBLIC')) {
+      setFormError('이동 대상은 발행 상태인 공개 스토리만 선택할 수 있습니다.');
 
       return;
     }
 
     mutation.setError('');
     setDraft({
-      title: form.get('title'),
-      body: form.get('body'),
-      reason: form.get('reason'),
+      title: String(form.get('title') ?? ''),
+      body: String(form.get('body') ?? ''),
+      reason: String(form.get('reason') ?? ''),
+      ...(story ? { storyId: story } : {}),
       ...(!immediate ? { scheduledAt: new Date(scheduled).toISOString() } : {}),
     });
   }
@@ -143,7 +154,7 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
                 <option value="">이동 대상 없음</option>
                 {story &&
                 !stories.data?.items.some((i) => i.storyId === story) ? (
-                  <SelectedStoryOption id={story} />
+                  <option value={story}>{selected.data?.title ?? story}</option>
                 ) : null}
                 {stories.data?.items.map((i) => (
                   <option key={i.storyId} value={i.storyId}>
@@ -153,9 +164,19 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
               </select>
             </label>
             <p className="text-sm text-muted-foreground">
-              스토리 이동 대상은 선택 미리보기만 지원합니다. 현재 서버 계약에
-              저장 필드가 없어 선택한 상태에서는 발송할 수 없습니다.
+              발행 상태인 공개 스토리만 이동 대상으로 선택할 수 있습니다. 알림을
+              누르면 선택한 스토리로 이동합니다.
             </p>
+            <QueryState
+              pending={!!story && selected.isPending}
+              error={story ? selected.error : null}
+              retry={selected.refetch}
+            />
+            {invalidStory ? (
+              <p role="alert" className="text-sm text-destructive">
+                이동 대상은 발행 상태인 공개 스토리만 선택할 수 있습니다.
+              </p>
+            ) : null}
             {story ? (
               <TextLink href={`/stories/${story}`}>선택한 스토리 확인</TextLink>
             ) : null}
@@ -225,7 +246,9 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
               mutation.pending ||
               !target.data ||
               !!target.error ||
-              kind !== 'MARKETING'
+              kind !== 'MARKETING' ||
+              (!!story && selected.isPending) ||
+              invalidStory
             }>
             대상 확인 후 {immediate ? '발송' : '예약'}
           </Button>
@@ -237,17 +260,11 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
           if (!open) setDraft(null);
         }}
         title={immediate ? '캠페인을 발송할까요?' : '캠페인을 예약할까요?'}
-        description={`광고성 알림은 광고 수신에 동의한 회원만 대상입니다. KST 21:00~08:00에는 야간 광고 수신 동의자에게만 발송합니다. 현재 대상 ${target.data?.targetCount.toLocaleString() ?? '—'}명, 야간 광고 동의 ${target.data?.nightEligibleCount?.toLocaleString() ?? '—'}명입니다. 실제 발송 대상은 달라질 수 있습니다.`}
+        description={`이동 대상: ${story ? (selected.data?.title ?? story) : '없음'}. 광고성 알림은 광고 수신에 동의한 회원만 대상입니다. KST 21:00~08:00에는 야간 광고 수신 동의자에게만 발송합니다. 현재 대상 ${target.data?.targetCount.toLocaleString() ?? '—'}명, 야간 광고 동의 ${target.data?.nightEligibleCount?.toLocaleString() ?? '—'}명입니다. 실제 발송 대상은 달라질 수 있습니다.`}
         pending={mutation.pending}
         error={mutation.error}
         onConfirm={() => void confirm()}
       />
     </>
   );
-}
-
-function SelectedStoryOption({ id }: { id: string }) {
-  const q = useApi<Story>(`/api/stories/${encodeURIComponent(id)}`);
-
-  return <option value={id}>{q.data?.title ?? id}</option>;
 }

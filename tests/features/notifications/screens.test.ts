@@ -227,8 +227,8 @@ describe('알림 화면의 BFF 연결', () => {
       reason: '행사 안내',
     });
   });
-  it('storyId를 선택에 채우고 계약 없는 이동 대상을 발송하지 않는다', async () => {
-    const id = stories[0].storyId;
+  it('공개 스토리 storyId를 미리 채우고 확인 후 요청 본문에 보낸다', async () => {
+    const id = stories.find((story) => story.visibility === 'PUBLIC')!.storyId;
     const view = render(
       wrap(createElement(CampaignFormScreen, { storyId: id })),
     );
@@ -248,10 +248,33 @@ describe('알림 화면의 BFF 연결', () => {
       expect((submit as HTMLButtonElement).disabled).toBe(false),
     );
     fireEvent.click(submit);
-    expect((await screen.findByRole('alert')).textContent).toContain(
-      '아직 지원하지 않습니다',
+
+    const dialog = await screen.findByRole('dialog');
+
+    expect(dialog.textContent).toContain(
+      stories.find((s) => s.storyId === id)!.title,
     );
     expect(writes).toHaveLength(0);
+    fireEvent.click(within(dialog).getByRole('button', { name: '확인' }));
+    await waitFor(() => expect(nav.push).toHaveBeenCalled());
+    expect(writes[0].body).toMatchObject({ storyId: id });
+  });
+  it('비공개 스토리 미리 채움은 발송을 막고 정보성은 공지 작성으로 안내한다', async () => {
+    render(
+      wrap(
+        createElement(CampaignFormScreen, {
+          storyId: stories.find((s) => s.visibility === 'PRIVATE')!.storyId,
+        }),
+      ),
+    );
+    await screen.findByRole('alert');
+    expect(
+      (
+        screen.getByRole('button', {
+          name: '대상 확인 후 발송',
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
     fireEvent.change(screen.getByRole('combobox', { name: '종류' }), {
       target: { value: 'SERVICE' },
     });
@@ -260,7 +283,7 @@ describe('알림 화면의 BFF 연결', () => {
         .getByRole('link', { name: '공지 작성으로 이동' })
         .getAttribute('href'),
     ).toBe('/notices/new');
-    expect((submit as HTMLButtonElement).disabled).toBe(true);
+    expect(writes).toHaveLength(0);
   });
   it('목록의 숫자 페이지·정렬이 필터를 보존한다', async () => {
     nav.search = 'page=2&size=2&status=SCHEDULED';

@@ -7,6 +7,7 @@ import type {
   Template,
 } from '@/features/notifications/types';
 import { notificationTypes } from '@/features/notifications/types';
+import { stories } from '@/fixtures/entities';
 import {
   checkFixtureId,
   FixtureError,
@@ -14,6 +15,7 @@ import {
   requireFixture,
   textField,
 } from '@/fixtures/management-bff';
+import { validId } from '@/fixtures/query';
 import { kstDate, validateOptions, validatePeriod } from '@/fixtures/query';
 
 const shared = globalThis as typeof globalThis & {
@@ -45,6 +47,7 @@ function store() {
             ).toISOString(),
             status,
             noticeId: null,
+            storyId: null,
             targetCount: status === 'SCHEDULED' ? null : 412,
             sentCount: status === 'SCHEDULED' ? null : 400,
             deliveredMembers: status === 'SENT' ? 380 : 0,
@@ -89,6 +92,19 @@ export function futureTime(value: unknown, label: string) {
   return new Date(value).toISOString();
 }
 export function createCampaign(body: Record<string, unknown>) {
+  if (
+    body.storyId != null &&
+    (typeof body.storyId !== 'string' ||
+      !validId(body.storyId) ||
+      !stories.some(
+        (story) =>
+          story.storyId === body.storyId && story.visibility === 'PUBLIC',
+      ))
+  )
+    throw new Error(
+      '이동 대상은 발행 상태인 공개 스토리만 선택할 수 있습니다.',
+    );
+
   readReason(body);
 
   const now = new Date().toISOString();
@@ -103,6 +119,7 @@ export function createCampaign(body: Record<string, unknown>) {
         : futureTime(body.scheduledAt, '예약 시각'),
     status: 'SCHEDULED',
     noticeId: null,
+    storyId: null,
     targetCount: null,
     sentCount: null,
     deliveredMembers: 0,
@@ -113,6 +130,7 @@ export function createCampaign(body: Record<string, unknown>) {
     createdAt: now,
   };
 
+  item.storyId = typeof body.storyId === 'string' ? body.storyId : null;
   store().campaigns.set(item.campaignId, item);
 
   return structuredClone(item);
@@ -133,6 +151,7 @@ export function createNoticeCampaign(
     title,
     body: body.slice(0, 300),
     noticeId,
+    storyId: null,
     scheduledAt: now,
     status: 'SCHEDULED',
     targetCount: null,
