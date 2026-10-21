@@ -23,6 +23,9 @@ export default defineConfig({
       client: 'react-query',
       clean: true,
       override: {
+        fetch: {
+          forceSuccessResponse: true,
+        },
         mutator: {
           path: 'src/api/mutator/custom-instance.ts',
           name: 'customInstance',
