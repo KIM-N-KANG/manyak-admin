@@ -62,7 +62,7 @@ Orval은 `/v3/api-docs`에서 TanStack Query 클라이언트와 Zod 스키마를
 - `/`: KST 기준 숫자 카드, 7·30·90일 추이, 이용 분포 9종. 차트의 수치 목록에서도 키보드로 상세 목록에 이동할 수 있습니다.
 - `/stories`, `/members`, `/payments`, `/chats`: URL 쿼리 필터와 정렬, `items` / `nextCursor` 커서 페이지(API 기본 50건, 화면은 12건 요청), `/{id}` 상세 연결을 제공합니다.
 - `/login`: Google 로그인 버튼 UI, `/campaigns`, `/notices`, `/audit-logs`: 준비 중 화면입니다.
-- 응답 타입은 `src/features/<도메인>/types.ts`에 있습니다. ADMIN 기존 요약·회원·결제 필드를 유지하고, 차트와 목록·상세 확장을 별도 타입으로 정의했습니다.
+- 응답 타입은 `src/features/<도메인>/types.ts`에 있습니다. 회원·결제의 기존 계약 필드를 유지하고, 차트와 목록·상세 확장을 별도 타입으로 정의했습니다. 대시보드 숫자 카드는 회원·채팅 시작·턴·스토리·이프 지급·소진·결제 이력·금액의 8개이며 각각 누적과 오늘 값을 제공합니다.
 - API 생성물이 없는 동안 `src/features/shared/use-api.ts`가 TanStack Query와 기존 mutator를 연결합니다. 서버 계약 확정 후 생성 훅으로 대체할 수 있으며 화면 응답 구조는 BFF에서 맞춥니다.
 - 가상 이메일 `member1@example.com`부터 `member1240@example.com`까지 정확 일치 검색이 가능합니다. 응답에는 이메일을 포함하지 않습니다. 대화 원문과 인증 토큰도 응답에 없습니다.
 - 목록의 `from`, `to`는 KST 날짜로 생성·가입·결제 완료·채팅 시작일에 적용합니다. `attendanceDate`, `creditDate`, `turnDate`는 관련 활동일 필터입니다. 이프는 `creditDirection=granted|spent`로 방향과 ADMIN 2-4의 사유를 함께 검사하며, 회원 목록과 상세는 회원별 원장을 공유합니다. `chatFrom/chatTo`, `aiFrom/aiTo`, `creationFrom/creationTo`는 각각 채팅 생성일·AI 호출일·제작 세션 생성일 기준입니다. 숫자 카드와 추이·분포는 목록과 같은 고정 원천을 집계합니다. 회원의 `chatCount`는 전체 채팅방 수이며 `periodChatCount`는 선택 기간에 생성한 수입니다.

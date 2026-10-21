@@ -4,8 +4,6 @@ export type DashboardSummary = {
   members: {
     total: number;
     joinedToday: number;
-    withdrawnTotal: number;
-    withdrawnToday: number;
   };
   chats: {
     startedTotal: number;
@@ -25,10 +23,7 @@ export type DashboardSummary = {
     completedToday: number;
     amountKrwTotal: number;
     amountKrwToday: number;
-    refundedTotal: number;
-    refundedToday: number;
   };
-  moderation: { heldSubmissions: number };
 };
 export type DailyMetrics = {
   date: string;

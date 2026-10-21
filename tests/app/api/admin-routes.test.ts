@@ -29,11 +29,16 @@ describe('관리자 고정 데이터 BFF', () => {
       'stories',
       'credits',
       'payments',
-      'moderation',
     ]);
     expect(data.members.total).toBeGreaterThan(1000);
     expect(data.chats.startedToday).toBeGreaterThan(100);
-    expect(data.payments).toHaveProperty('refundedToday');
+    expect(Object.keys(data.members)).toEqual(['total', 'joinedToday']);
+    expect(Object.keys(data.payments)).toEqual([
+      'completedTotal',
+      'completedToday',
+      'amountKrwTotal',
+      'amountKrwToday',
+    ]);
     expect(data.credits).toHaveProperty('spentTotal');
   });
 

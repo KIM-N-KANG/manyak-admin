@@ -34,10 +34,6 @@ export const summary: DashboardSummary = {
   members: {
     total: members.filter((m) => m.status !== 'DELETED').length,
     joinedToday: members.filter((m) => isToday(m.createdAt)).length,
-    withdrawnTotal: members.filter((m) => m.status === 'DELETED').length,
-    withdrawnToday: members.filter(
-      (m) => m.status === 'DELETED' && isToday('2026-10-20T05:00:00Z'),
-    ).length,
   },
   chats: {
     startedTotal: chats.length,
@@ -81,13 +77,6 @@ export const summary: DashboardSummary = {
       completedOrders.filter((p) => isToday(p.completedAt)),
       (p) => p.priceKrw,
     ),
-    refundedTotal: payments.filter((p) => p.status === 'REFUNDED').length,
-    refundedToday: payments.filter((p) => p.refundedAt && isToday(p.refundedAt))
-      .length,
-  },
-  moderation: {
-    heldSubmissions: stories.filter((s) => s.moderationStatus === 'HELD')
-      .length,
   },
 };
 

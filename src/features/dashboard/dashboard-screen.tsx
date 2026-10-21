@@ -197,27 +197,6 @@ export function DashboardScreen() {
           '/payments',
           '원',
         ],
-        [
-          '환불',
-          s.payments.refundedTotal,
-          s.payments.refundedToday,
-          '/payments?status=REFUNDED',
-          '건',
-        ],
-        [
-          '탈퇴',
-          s.members.withdrawnTotal,
-          s.members.withdrawnToday,
-          '/members?status=DELETED',
-          '명',
-        ],
-        [
-          '검수 보류',
-          s.moderation.heldSubmissions,
-          null,
-          '/stories?moderationStatus=HELD',
-          '개',
-        ],
       ] as const)
     : [];
 
@@ -269,9 +248,7 @@ export function DashboardScreen() {
                   </span>
                 </p>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  {today === null
-                    ? '현재 보류 중'
-                    : `오늘 ${today.toLocaleString('ko-KR')} ${unit}`}
+                  {`오늘 ${today.toLocaleString('ko-KR')} ${unit}`}
                   <span className="float-right">↗</span>
                 </p>
               </Link>
