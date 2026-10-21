@@ -19,14 +19,14 @@ export function GET(request: Request) {
 
     const items = listOriginals().filter(
       (item) =>
-        matchesSearch(search, [item.title], [item.id]) &&
+        matchesSearch(search, [item.title], [item.storyId]) &&
         (!query.get('visibility') ||
           item.visibility === query.get('visibility')) &&
         (!query.get('status') || item.status === query.get('status')),
     );
 
     return paginate(
-      sortList(items, query, 'originals', (item) => item.id),
+      sortList(items, query, 'originals', (item) => item.storyId),
       query,
     );
   });

@@ -15,6 +15,10 @@ import {
   originalDraftSchema,
   originalPublishSchema,
 } from '@/features/originals/form-schema';
+import {
+  originalFormValues,
+  originalRequestFields,
+} from '@/features/originals/form-values';
 import { ImageUpload } from '@/features/originals/image-upload';
 import type {
   OriginalCatalog,
@@ -36,14 +40,20 @@ function OriginalEditor({
   id,
   initial,
   thumbnailUrl,
+  initialStatus = 'DRAFT',
+  initialVisibility = 'PRIVATE',
 }: {
   id?: string;
   initial: OriginalPayload;
   thumbnailUrl?: string | null;
+  initialStatus?: 'DRAFT' | 'PUBLISHED';
+  initialVisibility?: 'PUBLIC' | 'PRIVATE';
 }) {
   const router = useRouter();
   const client = useQueryClient();
   const prefix = useId();
+  const [recordId, setRecordId] = useState(id);
+  const [reason, setReason] = useState('');
   const [payload, setPayload] = useState<OriginalPayload>(() =>
     structuredClone(initial),
   );
@@ -145,7 +155,7 @@ function OriginalEditor({
     );
   }
 
-  function validate(status: OriginalSaveRequest['status']) {
+  function validate(status: NonNullable<OriginalSaveRequest['status']>) {
     const result = (
       status === 'PUBLISHED' ? originalPublishSchema : originalDraftSchema
     ).safeParse(payload);
@@ -168,7 +178,15 @@ function OriginalEditor({
     return result.data;
   }
 
-  async function save(status: OriginalSaveRequest['status']) {
+  async function save(status: NonNullable<OriginalSaveRequest['status']>) {
+    status = initialStatus === 'PUBLISHED' ? 'PUBLISHED' : status;
+
+    if (!reason.trim() || reason.length > 500) {
+      setFailure('변경 사유를 1~500자로 입력하세요.');
+
+      return;
+    }
+
     const data = validate(status);
 
     if (!data || busy) return;
@@ -178,16 +196,35 @@ function OriginalEditor({
 
     try {
       const response = await customInstance<{ data: OriginalDetail }>(
-        id ? `/api/originals/${encodeURIComponent(id)}` : '/api/originals',
+        recordId
+          ? `/api/originals/${encodeURIComponent(recordId)}`
+          : '/api/originals',
         {
-          method: id ? 'PATCH' : 'POST',
-          body: JSON.stringify({ status, payload: data }),
+          method: recordId ? 'PATCH' : 'POST',
+          body: JSON.stringify({
+            ...originalRequestFields(data),
+            status,
+            visibility:
+              status === 'PUBLISHED' &&
+              (initialStatus !== 'PUBLISHED' || confirm)
+                ? 'PUBLIC'
+                : initialVisibility,
+            reason,
+          }),
         },
       );
 
+      setRecordId(response.data.storyId);
+
+      if (data.removeThumbnail)
+        await customInstance(
+          `/api/originals/${response.data.storyId}/thumbnail`,
+          { method: 'DELETE', body: JSON.stringify({ reason }) },
+        );
+
       await client.invalidateQueries();
       setConfirm(false);
-      router.push(`/originals/${response.data.id}`);
+      router.push(`/originals/${response.data.storyId}`);
     } catch {
       setFailure(
         '저장하지 못했습니다. 입력 내용을 유지했으니 다시 시도하세요.',
@@ -217,7 +254,18 @@ function OriginalEditor({
         <fieldset disabled={busy} className="space-y-6 disabled:opacity-70">
           <Card className="space-y-5">
             <h2 className="text-lg font-semibold">기본 정보</h2>
-            {field('title', '제목 · 공개 시 필수 (최대 100자)', false, 100)}
+            <label className="grid gap-2 text-sm">
+              변경 사유
+              <input
+                className="control"
+                name="reason"
+                required
+                maxLength={500}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </label>
+            {field('title', '제목 · 필수 (최대 100자)', false, 100)}
             {field(
               'oneLineIntro',
               '한 줄 소개 · 공개 시 필수 (최대 255자)',
@@ -239,7 +287,7 @@ function OriginalEditor({
                       update('genres', [...payload.genres, event.target.value]);
                   }}>
                   <option value="">장르를 선택해 추가하세요</option>
-                  {(catalog.data?.genres ?? [])
+                  {(catalog.data?.genres.map((genre) => genre.name) ?? [])
                     .filter((genre) => !payload.genres.includes(genre))
                     .map((genre) => (
                       <option key={genre} value={genre}>
@@ -307,6 +355,7 @@ function OriginalEditor({
           <Card>
             <h2 className="mb-5 text-lg font-semibold">표지 이미지</h2>
             <ImageUpload
+              storyId={recordId}
               label="표지"
               kind="COVER"
               imageUrl={cover}
@@ -349,6 +398,7 @@ function OriginalEditor({
                       120,
                     )}
                     <ImageUpload
+                      storyId={recordId}
                       label={`${character.name || `인물 ${index + 1}`} 이미지 ${position + 1}`}
                       kind="CHARACTER"
                       imageUrl={image.imageUrl}
@@ -373,6 +423,7 @@ function OriginalEditor({
                 ))}
                 {character.images.length < 10 ? (
                   <ImageUpload
+                    storyId={recordId}
                     label={`${character.name || `인물 ${index + 1}`} 새 이미지`}
                     kind="CHARACTER"
                     disabled={!character.name.trim()}
@@ -595,7 +646,11 @@ function OriginalEditor({
           ) : null}
           <div className="flex flex-wrap gap-3">
             <Button type="submit" variant="outline">
-              {pending ? '저장 중…' : '초안 저장'}
+              {pending
+                ? '저장 중…'
+                : initialStatus === 'PUBLISHED'
+                  ? '변경 저장'
+                  : '초안 저장'}
             </Button>
             <Button
               type="button"
@@ -609,8 +664,8 @@ function OriginalEditor({
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            초안 저장은 현재 공개된 내용을 바꾸지 않습니다. 공개 시 필수 항목을
-            확인합니다.
+            초안은 제목이 필수입니다. 발행한 오리지널의 변경은 저장 즉시
+            반영되며 초안 상태로 되돌릴 수 없습니다.
           </p>
         </fieldset>
       </form>
@@ -643,7 +698,9 @@ function ExistingOriginalEditor({ id }: { id: string }) {
         <OriginalEditor
           key={id}
           id={id}
-          initial={query.data.draftPayload ?? query.data.payload}
+          initial={originalFormValues(query.data)}
+          initialStatus={query.data.status}
+          initialVisibility={query.data.visibility}
           thumbnailUrl={query.data.thumbnailUrl}
         />
       ) : null}

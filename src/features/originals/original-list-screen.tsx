@@ -122,9 +122,9 @@ export function OriginalListScreen() {
             empty={!query.data.items.length}
             emptyContent={params.get('q') ? <SearchEmpty /> : undefined}>
             {query.data.items.map((item) => (
-              <tr key={item.id}>
+              <tr key={item.storyId}>
                 <td>
-                  <TextLink href={`/originals/${item.id}`}>
+                  <TextLink href={`/originals/${item.storyId}`}>
                     {item.title || '(제목 없는 초안)'}
                   </TextLink>
                   {item.status === 'DRAFT' ? (

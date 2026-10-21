@@ -54,7 +54,7 @@ members[0].nickname = '마냑';
 
 export const officialMember = members[0];
 
-function memberSummary(member: MemberListItem) {
+export function memberSummary(member: MemberListItem) {
   const { memberId, nickname, status, isAdmin, createdAt } = member;
 
   return { memberId, nickname, status, isAdmin, createdAt };

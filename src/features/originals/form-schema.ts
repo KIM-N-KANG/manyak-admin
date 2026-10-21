@@ -108,10 +108,11 @@ const originalPayloadSchema = z
 
 export const originalDraftSchema = originalPayloadSchema.superRefine(
   (value, context) => {
-    if (new TextEncoder().encode(JSON.stringify(value)).length > 65536)
+    if (!value.title.trim())
       context.addIssue({
         code: 'custom',
-        message: '초안 내용은 64KB 이하여야 합니다.',
+        path: ['title'],
+        message: '제목은 필수입니다.',
       });
   },
 );

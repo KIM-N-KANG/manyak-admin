@@ -13,8 +13,12 @@ const valid = (payload: OriginalPayload) =>
   originalPublishSchema.safeParse(payload).success;
 
 describe('오리지널 폼 검증', () => {
-  it('빈 초안은 저장할 수 있지만 공개할 수 없다', () => {
-    expect(originalDraftSchema.safeParse(emptyOriginal()).success).toBe(true);
+  it('초안 제목은 필수이고 제목만 채워도 초안 저장은 가능하다', () => {
+    expect(originalDraftSchema.safeParse(emptyOriginal()).success).toBe(false);
+    expect(
+      originalDraftSchema.safeParse({ ...emptyOriginal(), title: '초안' })
+        .success,
+    ).toBe(true);
     expect(originalPublishSchema.safeParse(emptyOriginal()).success).toBe(
       false,
     );
@@ -144,7 +148,7 @@ describe('오리지널 폼 검증', () => {
     }));
     expect(valid(payload)).toBe(false);
   });
-  it('이름 중복과 빈 필수 설정, 표지 제거·교체 동시 지정 및 64KB 초과를 거절한다', () => {
+  it('이름 중복과 빈 필수 설정, 표지 제거·교체 동시 지정를 거절한다', () => {
     const payload = originalPayload();
 
     payload.characters.push({ ...payload.characters[0], name: '도윤' });
@@ -158,7 +162,5 @@ describe('오리지널 폼 검증', () => {
     expect(valid(payload)).toBe(false);
     delete payload.thumbnailObjectKey;
     payload.removeThumbnail = false;
-    payload.description = '가'.repeat(23000);
-    expect(originalDraftSchema.safeParse(payload).success).toBe(false);
   });
 });

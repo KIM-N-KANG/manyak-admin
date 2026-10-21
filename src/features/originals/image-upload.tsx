@@ -1,15 +1,19 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
 import { customInstance } from '@/api/mutator/custom-instance';
 import { Button } from '@/components/ui/button';
-import type { OriginalUpload } from '@/features/originals/types';
+import type {
+  OriginalPresign,
+  OriginalUpload,
+} from '@/features/originals/types';
 
 export function ImageUpload({
   label,
+  storyId,
   kind,
   imageUrl,
   onUpload,
@@ -18,6 +22,7 @@ export function ImageUpload({
   onPendingChange,
 }: {
   label: string;
+  storyId?: string;
   kind: OriginalUpload['kind'];
   imageUrl?: string | null;
   onUpload: (image: OriginalUpload) => void;
@@ -26,6 +31,15 @@ export function ImageUpload({
   onPendingChange: (pending: boolean) => void;
 }) {
   const id = useId();
+  const previews = useRef<string[]>([]);
+
+  useEffect(
+    () => () => {
+      previews.current.forEach((url) => URL.revokeObjectURL(url));
+    },
+    [],
+  );
+
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
 
@@ -47,17 +61,31 @@ export function ImageUpload({
     onPendingChange(true);
 
     try {
-      const form = new FormData();
-
-      form.set('file', file);
-      form.set('kind', kind);
-
-      const result = await customInstance<{ data: OriginalUpload }>(
-        '/api/originals/images',
-        { method: 'POST', body: form },
+      const result = await customInstance<{ data: OriginalPresign }>(
+        storyId
+          ? `/api/originals/${storyId}/images/presign`
+          : '/api/originals/images/presign',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            kind,
+            contentType: file.type,
+            contentLength: file.size,
+          }),
+        },
       );
+      const uploaded = await fetch(result.data.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
 
-      onUpload(result.data);
+      if (!uploaded.ok) throw new Error('업로드에 실패했습니다.');
+
+      const imageUrl = URL.createObjectURL(file);
+
+      previews.current.push(imageUrl);
+      onUpload({ objectKey: result.data.objectKey, imageUrl, kind });
     } catch {
       setError('이미지를 불러올 수 없습니다. 다른 파일로 다시 시도하세요.');
     } finally {

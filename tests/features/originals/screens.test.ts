@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-
 import { createElement, type ReactNode, useState } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -18,6 +17,7 @@ import { GET as detail, PATCH } from '@/app/api/originals/[id]/route';
 import { GET as catalog } from '@/app/api/originals/catalog/route';
 import { GET as list, POST } from '@/app/api/originals/route';
 import { GET as story } from '@/app/api/stories/[id]/route';
+import { originalRequestFields } from '@/features/originals/form-values';
 import { ImageUpload } from '@/features/originals/image-upload';
 import { OriginalDetailScreen } from '@/features/originals/original-detail-screen';
 import { OriginalFormScreen } from '@/features/originals/original-form-screen';
@@ -127,6 +127,8 @@ function setField(container: HTMLElement, name: string, value: string) {
 function fill(container: HTMLElement) {
   const data = originalPayload();
 
+  setField(container, 'reason', '테스트 사유');
+
   for (const key of [
     'title',
     'oneLineIntro',
@@ -150,12 +152,18 @@ function fill(container: HTMLElement) {
 }
 
 describe('오리지널 작성·수정', () => {
-  it('빈 초안 저장은 가능하고 비어 있는 공개 요청은 폼에서 막는다', async () => {
+  it('빈 제목 저장을 막고 제목·사유를 채운 초안은 저장한다', async () => {
     render(wrapped(createElement(OriginalFormScreen)));
     await screen.findByRole('option', { name: '판타지' });
     fireEvent.click(screen.getByRole('button', { name: '공개' }));
     expect(screen.getByRole('alert').textContent).toContain('필수');
     expect(changes()).toHaveLength(0);
+    fireEvent.change(screen.getByRole('textbox', { name: '변경 사유' }), {
+      target: { value: '초안 작성' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: /제목 ·/ }), {
+      target: { value: '초안 제목' },
+    });
     fireEvent.click(screen.getByRole('button', { name: '초안 저장' }));
     await waitFor(() => expect(navigation.push).toHaveBeenCalled());
 
@@ -191,7 +199,9 @@ describe('오리지널 작성·수정', () => {
     expect(changes()).toHaveLength(1);
     expect(changes()[0].body).toMatchObject({
       status: 'PUBLISHED',
-      payload: { title: '{username}의 도서관', genres: ['판타지'] },
+      title: '{username}의 도서관',
+      genres: ['판타지'],
+      reason: '테스트 사유',
     });
 
     const id = navigation.push.mock.calls[0][0].split('/').at(-1);
@@ -202,30 +212,28 @@ describe('오리지널 작성·수정', () => {
       owner: { nickname: '마냑' },
     });
   });
-  it('수정 초안을 저장해도 발행한 내용은 유지한다', async () => {
+  it('발행 내용은 변경 저장으로 즉시 반영하며 발행 상태를 유지한다', async () => {
     const original = saveOriginal({
+      ...originalRequestFields(originalPayload()),
       status: 'PUBLISHED',
-      payload: originalPayload(),
+      visibility: 'PUBLIC',
+      reason: '작성',
     });
     const view = render(
-      wrapped(createElement(OriginalFormScreen, { id: original.id })),
+      wrapped(createElement(OriginalFormScreen, { id: original.storyId })),
     );
 
     await screen.findByRole('heading', { name: '오리지널 수정' });
-    setField(view.container, 'title', '새 수정 초안');
-    fireEvent.click(screen.getByRole('button', { name: '초안 저장' }));
+    setField(view.container, 'title', '수정 제목');
+    setField(view.container, 'reason', '오탈자 수정');
+    fireEvent.click(screen.getByRole('button', { name: '변경 저장' }));
     await waitFor(() => expect(navigation.push).toHaveBeenCalled());
-    expect(getOriginal(original.id)).toMatchObject({
-      payload: { title: '{username}의 도서관' },
-      draftPayload: { title: '새 수정 초안' },
+    expect(getOriginal(original.storyId)).toMatchObject({
+      title: '수정 제목',
+      status: 'PUBLISHED',
       visibility: 'PUBLIC',
     });
-    view.unmount();
-    render(wrapped(createElement(OriginalDetailScreen, { id: original.id })));
-    await screen.findByText(/저장된 수정 초안이 있습니다/);
-    expect(
-      screen.getByRole('heading', { name: '서린의 도서관', level: 1 }),
-    ).toBeTruthy();
+    expect(changes()[0].body).not.toHaveProperty('payload');
   });
   it('저장 실패 중 입력을 유지하고 다시 저장할 수 있다', async () => {
     failSave = true;
@@ -234,6 +242,7 @@ describe('오리지널 작성·수정', () => {
 
     await screen.findByRole('option', { name: '판타지' });
     setField(view.container, 'title', '유지할 입력');
+    setField(view.container, 'reason', '수정 사유');
     fireEvent.click(screen.getByRole('button', { name: '초안 저장' }));
     await screen.findByText(/저장하지 못했습니다/);
     expect(
@@ -321,10 +330,14 @@ describe('오리지널 목록·상세·연결', () => {
   it('상세의 공개 전환은 확인 후 실행하고 캠페인에 storyId를 전달한다', async () => {
     const original = saveOriginal({
       status: 'PUBLISHED',
-      payload: originalPayload(),
+      ...originalRequestFields(originalPayload()),
+      visibility: 'PUBLIC',
+      reason: '작성',
     });
 
-    render(wrapped(createElement(OriginalDetailScreen, { id: original.id })));
+    render(
+      wrapped(createElement(OriginalDetailScreen, { id: original.storyId })),
+    );
 
     const button = await screen.findByRole('button', { name: '비공개로 전환' });
 
@@ -332,7 +345,10 @@ describe('오리지널 목록·상세·연결', () => {
       screen
         .getByRole('link', { name: '홍보 알림 만들기' })
         .getAttribute('href'),
-    ).toBe(`/notifications/campaigns/new?storyId=${original.id}`);
+    ).toBe(`/notifications/campaigns/new?storyId=${original.storyId}`);
+    fireEvent.change(screen.getByRole('textbox', { name: '변경 사유' }), {
+      target: { value: '비공개 검토' },
+    });
     fireEvent.click(button);
 
     const dialog = await screen.findByRole('dialog', {
@@ -342,7 +358,7 @@ describe('오리지널 목록·상세·연결', () => {
     expect(changes()).toHaveLength(0);
     fireEvent.click(within(dialog).getByRole('button', { name: '확인' }));
     await screen.findByRole('button', { name: '공개로 전환' });
-    expect(getOriginal(original.id)?.visibility).toBe('PRIVATE');
+    expect(getOriginal(original.storyId)?.visibility).toBe('PRIVATE');
   });
   it('관리 스토리 목록에 배지를 표시하고 오리지널 상세 관리로 연결한다', async () => {
     const original = stories.find((entry) => entry.scope === 'original')!;
@@ -390,16 +406,28 @@ function UploadHarness() {
 
 describe('이미지 업로드 UI', () => {
   it('업로드 성공 시 미리보기를 교체하고 제거할 수 있다', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () =>
-        Response.json({
-          objectKey: 'fixture.png',
-          imageUrl: '/new.png',
-          kind: 'COVER',
-        }),
-      ),
+    const create = vi.fn(() => '/new.png');
+
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: create,
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    });
+
+    const uploadFetch = vi.fn(async (_url: string, options?: RequestInit) =>
+      options?.method === 'PUT'
+        ? new Response(null, { status: 200 })
+        : Response.json({
+            objectKey: 'fixture.png',
+            uploadUrl: '/put-target',
+            expiresInSeconds: 600,
+          }),
     );
+
+    vi.stubGlobal('fetch', uploadFetch);
     render(createElement(UploadHarness));
     fireEvent.change(screen.getByLabelText('표지 교체'), {
       target: {
@@ -411,6 +439,9 @@ describe('이미지 업로드 UI', () => {
         screen.getByRole('img', { name: '표지 미리보기' }).getAttribute('src'),
       ).toBe('/new.png'),
     );
+    expect(
+      uploadFetch.mock.calls.map(([, options]) => options?.method),
+    ).toEqual(['POST', 'PUT']);
     fireEvent.click(screen.getByRole('button', { name: '표지 제거' }));
     expect(screen.queryByRole('img')).toBeNull();
     expect(screen.getByLabelText('표지 업로드')).toBeTruthy();

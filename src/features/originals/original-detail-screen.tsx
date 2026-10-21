@@ -27,15 +27,16 @@ export function OriginalDetailScreen({ id }: { id: string }) {
     `/api/originals/${encodeURIComponent(id)}`,
   );
   const client = useQueryClient();
+  const [reason, setReason] = useState('');
   const [confirm, setConfirm] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const data = query.data;
   const target = data?.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC';
-  const preview = (value: string) =>
-    value.replaceAll(
+  const preview = (value: string | null) =>
+    (value ?? '').replaceAll(
       '{username}',
-      data?.payload.protagonistName ?? '{username}',
+      data?.protagonistName ?? '{username}',
     );
 
   async function changeVisibility() {
@@ -45,7 +46,7 @@ export function OriginalDetailScreen({ id }: { id: string }) {
     try {
       await customInstance(`/api/originals/${encodeURIComponent(id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({ visibility: target }),
+        body: JSON.stringify({ visibility: target, reason }),
       });
       await client.invalidateQueries();
       setConfirm(false);
@@ -76,7 +77,10 @@ export function OriginalDetailScreen({ id }: { id: string }) {
                 수정
               </Link>
               {data.status === 'PUBLISHED' ? (
-                <Button variant="outline" onClick={() => setConfirm(true)}>
+                <Button
+                  variant="outline"
+                  disabled={!reason.trim()}
+                  onClick={() => setConfirm(true)}>
                   {target === 'PUBLIC' ? '공개로 전환' : '비공개로 전환'}
                 </Button>
               ) : null}
@@ -87,12 +91,16 @@ export function OriginalDetailScreen({ id }: { id: string }) {
               </Link>
             </div>
           </PageHeading>
-          {data.draftPayload ? (
-            <p className="mb-5 text-sm text-muted-foreground">
-              저장된 수정 초안이 있습니다. 아래는 현재 발행한 내용이며 수정
-              화면에서 초안을 이어 쓸 수 있습니다.
-            </p>
-          ) : null}
+          <label className="mb-5 grid gap-2 text-sm">
+            변경 사유
+            <input
+              className="control"
+              required
+              maxLength={500}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </label>
           <Card>
             <div className="grid gap-6 md:grid-cols-[220px_1fr]">
               {data.thumbnailUrl ? (
@@ -115,10 +123,10 @@ export function OriginalDetailScreen({ id }: { id: string }) {
                   {data.genres.join(' · ')}
                 </p>
                 <p className="mt-5 text-xl font-semibold">
-                  {preview(data.payload.oneLineIntro) || '한 줄 소개 없음'}
+                  {preview(data.oneLineIntro) || '한 줄 소개 없음'}
                 </p>
                 <p className="mt-4 text-sm leading-7 whitespace-pre-wrap">
-                  {preview(data.payload.description) || '소개 없음'}
+                  {preview(data.description) || '소개 없음'}
                 </p>
                 <p className="mt-6 text-sm">
                   채팅 <NumberValue value={data.chatCount} />개 · 총{' '}
@@ -130,17 +138,16 @@ export function OriginalDetailScreen({ id }: { id: string }) {
           <Section title="주인공">
             <Card>
               <h3 className="font-semibold">
-                {data.payload.protagonistName || '이름 미지정'}
+                {data.protagonistName || '이름 미지정'}
               </h3>
               <p className="mt-3 text-sm whitespace-pre-wrap">
-                {preview(data.payload.storySettings.userRoleSetting) ||
-                  '소개 없음'}
+                {preview(data.storySettings.userRoleSetting) || '소개 없음'}
               </p>
             </Card>
           </Section>
           <Section title="주변 인물">
             <div className="grid gap-5 md:grid-cols-2">
-              {data.payload.characters.map((character, index) => (
+              {data.characters.map((character, index) => (
                 <Card key={character.id ?? index}>
                   <h3 className="font-semibold">
                     {character.name || '이름 미지정'}
@@ -166,7 +173,7 @@ export function OriginalDetailScreen({ id }: { id: string }) {
                 </Card>
               ))}
             </div>
-            {!data.payload.characters.length ? (
+            {!data.characters.length ? (
               <p className="text-sm text-muted-foreground">
                 등록한 주변 인물이 없습니다.
               </p>
@@ -174,7 +181,7 @@ export function OriginalDetailScreen({ id }: { id: string }) {
           </Section>
           <Section title="시작 설정">
             <div className="space-y-5">
-              {data.payload.startSettings.map((start, index) => (
+              {data.startSettings.map((start, index) => (
                 <Card key={start.id ?? index}>
                   <h3 className="font-semibold">
                     {start.name || '이름 없는 시작 설정'}
