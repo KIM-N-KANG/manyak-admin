@@ -66,11 +66,23 @@ it('외부 도구는 아코디언으로 접고 펼치며 닉네임 위에 배치
 
   for (const [key, name] of [
     ['amplitude', 'Amplitude'],
+    ['openSearch', 'OpenSearch 로그'],
     ['sentry', 'Sentry'],
     ['langfuse', 'Langfuse'],
     ['groble', '그로블'],
   ] as const)
     assertExternal(name, externalLinks[key]);
+
+  assertExternal(
+    'OpenSearch 로그',
+    'https://search-manyak-logs-p4mhzbcpwj2y35xdrqusddxgum.ap-northeast-2.es.amazonaws.com/_dashboards/',
+  );
+  expect(
+    screen
+      .getAllByRole('link')
+      .filter((link) => link.getAttribute('target') === '_blank')
+      .map((link) => link.textContent),
+  ).toEqual(['Amplitude', 'OpenSearch 로그', 'Sentry', 'Langfuse', '그로블']);
 
   expect(
     screen

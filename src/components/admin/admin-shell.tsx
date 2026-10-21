@@ -197,6 +197,7 @@ export function AdminShell({
               {(
                 [
                   ['amplitude', 'Amplitude'],
+                  ['openSearch', 'OpenSearch 로그'],
                   ['sentry', 'Sentry'],
                   ['langfuse', 'Langfuse'],
                   ['groble', '그로블'],
