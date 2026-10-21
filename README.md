@@ -113,3 +113,7 @@ Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics
 공지·알림 변경은 `src/fixtures/`의 프로세스 메모리에만 반영되며 재시작 시 초기화됩니다. 데이터 fixture는 실제 발송이나 업스트림 변경을 수행하지 않으며, 미리보기 우회 외의 로그인 인증은 실제 서버를 사용합니다. 목록은 세션 결정에 따라 `page`·`size`·`totalElements`·`totalPages` 및 `sort`·`order`를 사용합니다. 상세·작성 응답의 도메인 필드명은 참조 서버 스펙을 유지합니다. 공지 정보성 알림은 서비스 동의자, 광고성은 광고 동의자 대상이며 KST 야간 안내를 제공합니다. 직접 작성하는 캠페인은 서버 계약에 따라 광고성 전용이며 정보성 선택은 공지 작성 경로를 안내합니다.
 
 차트 분포 응답은 `points[].link { list, params }`를 사용하며 화면이 목록 URL을 조립합니다. 출석은 `daily[].attendance`로 조회합니다. AI 기능은 저장 값 4종으로 구분합니다. 회원 상세는 집계 필드만 반환하고 관계 목록은 별도 BFF에서 조회합니다. 게스트 소유 스토리의 owner와 제작 세션 없는 스토리의 supportingCharacterCount는 null입니다.
+
+## 외부 도구
+
+사이드바 하단의 ‘외부 도구’에서 Amplitude·Sentry·Langfuse·그로블을 새 탭으로 엽니다. 결제 목록·상세 머리에는 ‘그로블에서 보기’, 대시보드 Amplitude 지표 카드에는 ‘Amplitude에서 보기’를 제공합니다. URL은 `src/lib/external-links.ts`에 모으며 외부 링크는 noopener·noreferrer를 적용합니다. 그로블 판매 관리의 정확한 주소는 사용자 확인 후 상수를 교체합니다. 현재 ADMIN analytics 계약에는 대시보드 URL 필드가 없어 Amplitude 프로젝트 상수를 사용합니다.

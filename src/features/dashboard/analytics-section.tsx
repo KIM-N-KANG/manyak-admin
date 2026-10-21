@@ -6,6 +6,7 @@ import { Tooltip } from '@base-ui/react/tooltip';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 import { DataTable, dateTime, NumberValue } from '@/components/admin/data-ui';
+import { ExternalToolLink } from '@/components/admin/external-tool-link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui/chart';
 import type { DashboardAnalytics } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
+import { externalLinks } from '@/lib/external-links';
 
 type AnalyticsMetric = 'activeUsers' | 'newUsers';
 
@@ -146,7 +148,11 @@ export function AnalyticsSection({ days }: { days: string }) {
                   명
                 </span>
               </p>
-              <p className="mt-3 text-xs text-muted-foreground">Amplitude</p>
+              <ExternalToolLink
+                href={externalLinks.amplitude}
+                className="mt-3 text-xs">
+                Amplitude에서 보기
+              </ExternalToolLink>
               <p className="mt-auto pt-6 text-xs leading-5 text-muted-foreground">
                 {dateTime(data.asOf)} KST 집계 기준
               </p>

@@ -13,6 +13,7 @@ import {
   Status,
   TextLink,
 } from '@/components/admin/data-ui';
+import { ExternalToolLink } from '@/components/admin/external-tool-link';
 import { Card } from '@/components/ui/card';
 import type { ChatRoom } from '@/features/chats/types';
 import { MemberActions } from '@/features/members/member-actions';
@@ -22,6 +23,7 @@ import type { PaymentDetail } from '@/features/payments/types';
 import { RelatedList } from '@/features/shared/list-screen';
 import { useApi } from '@/features/shared/use-api';
 import type { StoryDetail } from '@/features/stories/types';
+import { externalLinks } from '@/lib/external-links';
 
 function StoryContent({ story: s }: { story: StoryDetail }) {
   return (
@@ -284,8 +286,13 @@ export function DetailScreen({
                 : `${titles[domain]} 상세`
             : `${titles[domain]} 상세`
         }
-        description="공개 식별자로 연결된 운영 정보를 확인하세요."
-      />
+        description="공개 식별자로 연결된 운영 정보를 확인하세요.">
+        {domain === 'payments' && (
+          <ExternalToolLink href={externalLinks.groble}>
+            그로블에서 보기
+          </ExternalToolLink>
+        )}
+      </PageHeading>
       <QueryState
         pending={query.isPending}
         error={query.error}

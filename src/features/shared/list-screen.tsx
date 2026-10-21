@@ -14,6 +14,7 @@ import {
   Status,
   TextLink,
 } from '@/components/admin/data-ui';
+import { ExternalToolLink } from '@/components/admin/external-tool-link';
 import { ListSearch, SearchEmpty } from '@/components/admin/list-search';
 import { PageNavigation } from '@/components/admin/page-navigation';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ import type { PaymentOrder } from '@/features/payments/types';
 import type { ListDomain } from '@/features/shared/list-config';
 import { usePagedList } from '@/features/shared/use-paged-list';
 import type { Story } from '@/features/stories/types';
+import { externalLinks } from '@/lib/external-links';
 
 type Domain = ListDomain;
 
@@ -427,7 +429,13 @@ export function ListScreen({ domain }: { domain: Domain }) {
 
   return (
     <>
-      <PageHeading title={config.title} description={config.description} />
+      <PageHeading title={config.title} description={config.description}>
+        {domain === 'payments' && (
+          <ExternalToolLink href={externalLinks.groble}>
+            그로블에서 보기
+          </ExternalToolLink>
+        )}
+      </PageHeading>
       <ListSearch label={`${config.title} 검색`} />
       <form
         key={params.toString()}
