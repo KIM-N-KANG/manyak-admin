@@ -57,7 +57,12 @@ function NoticeForm({ notice }: { notice?: Notice }) {
         <p className="mb-5 text-sm">
           현재 상태: {notice?.status === 'PUBLISHED' ? '게시' : '초안'}
         </p>
-        <form action={save} className="grid max-w-3xl gap-5">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void save(new FormData(event.currentTarget));
+          }}
+          className="grid max-w-3xl gap-5">
           <label className="grid gap-2 text-sm">
             제목
             <input

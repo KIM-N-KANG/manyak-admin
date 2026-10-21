@@ -1,10 +1,11 @@
-import { ComingSoon } from '@/components/admin/coming-soon';
+import { Suspense } from 'react';
+
+import { StatsScreen } from '@/features/notifications/stats-screen';
 
 export default function Page() {
   return (
-    <ComingSoon
-      title="발송 통계"
-      description="알림 발송 통계는 준비 중입니다."
-    />
+    <Suspense fallback={<p role="status">알림 데이터를 불러오는 중입니다…</p>}>
+      <StatsScreen />
+    </Suspense>
   );
 }

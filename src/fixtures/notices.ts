@@ -6,6 +6,7 @@ import {
   requireFixture,
   textField,
 } from '@/fixtures/management-bff';
+import { createNoticeCampaign } from '@/fixtures/notifications';
 
 const shared = globalThis as typeof globalThis & {
   manyakNotices?: Map<string, Notice>;
@@ -118,7 +119,15 @@ export function publishNotice(
   item.publishedAt = new Date().toISOString();
   item.updatedAt = item.publishedAt;
 
-  if (notified) item.notifiedAt = item.publishedAt;
+  if (notified) {
+    item.notifiedAt = item.publishedAt;
+    createNoticeCampaign(
+      id,
+      item.title,
+      item.body,
+      body.notificationKind as 'SERVICE' | 'MARKETING',
+    );
+  }
 
   records().set(id, item);
 

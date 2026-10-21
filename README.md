@@ -65,7 +65,11 @@ Orval은 `/v3/api-docs`에서 TanStack Query 클라이언트와 Zod 스키마를
 - `/stories`, `/members`, `/payments`, `/chats`: URL 쿼리 필터와 정렬, `items`·`page`·`size`·`totalElements`·`totalPages` 숫자 페이지(1부터, 기본 20건, 크기 1~100), `/{id}` 상세 연결을 제공합니다.
 - `/login`: Google 로그인 버튼 UI입니다.
 - `/originals`, `/originals/new`, `/originals/{id}`, `/originals/{id}/edit`: 공식 계정 마냑의 오리지널 목록·작성·미리보기·수정 화면입니다. 초안 저장과 공개, 공개 상태 전환 확인, 표지·인물 이미지 미리보기·교체·제거를 제공합니다.
-- `/notices`, `/audit-logs`, `/notifications/campaigns`, `/notifications/stats`, `/notifications/templates`: 제목과 설명 한 줄만 제공하는 준비 중 화면입니다.
+- `/audit-logs`: 처리자·작업·대상·기간 필터, 정렬·숫자 페이지, 변경 전후와 요청 ID 상세를 제공합니다.
+- `/notices`: 공지 초안 작성·수정, 게시·게시 해제, 알림 요청과 삭제 제한을 제공합니다.
+- `/notifications/campaigns`: 캠페인 목록·상세, 대상 수 미리보기, 작성·예약, 상태별 취소·재실행을 제공합니다.
+- `/notifications/stats`: 최대 366일 KST 기간·알림 종류·수신 유형 필터, 날짜별·종류별 표와 초록 막대 차트를 제공합니다.
+- `/notifications/templates`: 출석 리마인더의 현재 문구·예약 변경·기본 복귀·변경 이력을 제공합니다.
 - 사이드바는 대시보드(개요·분석), 관리(회원·스토리·오리지널·채팅방·결제·공지·감사 로그), 알림(캠페인·발송 통계·문구 템플릿) 세 구역입니다. 구역 버튼은 아이콘·굵은 글씨·화살표로 접고 펼치며 현재 경로의 구역은 항상 펼칩니다. 나머지 상태는 `manyak-admin:sidebar:v1` localStorage에 기억합니다. 하위 메뉴는 세로 안내선으로 묶고 목록과 상세에서 해당 메뉴를 활성 표시합니다.
 - 응답 타입은 `src/features/<도메인>/types.ts`에 있습니다. 차트와 목록·상세의 화면 BFF 응답을 타입으로 정의했습니다. 대시보드 숫자 카드는 회원·채팅 시작·턴·스토리·이프 지급·소진·결제 이력·금액의 8개이며 각각 누적과 오늘 값을 제공합니다.
 - API 생성물이 없는 동안 `src/features/shared/use-api.ts`가 TanStack Query와 기존 mutator를 연결합니다. 서버 계약 확정 후 생성 훅으로 대체할 수 있으며 화면 응답 구조는 BFF에서 맞춥니다.
@@ -79,8 +83,10 @@ Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics
 
 상세 화면의 스토리·결제·채팅방 하위 목록도 같은 목록 BFF를 관계 필터와 함께 호출합니다. 서로 다른 하위 목록의 페이지·크기·정렬은 URL에서 `chatsPage/chatsSize/chatsSort/chatsOrder`처럼 목록 이름을 앞에 붙여 독립적으로 보존합니다. BFF에 보낼 때는 표준 `page/size/sort/order`로 변환합니다. 이 숫자 페이지 계약은 사용자 지시로 변경한 현재 화면 BFF 계약이며, 읽기 전용 ADMIN 서버 스펙의 커서 계약과는 서버 연동 시 조율이 필요합니다.
 
-오리지널 화면은 `src/features/originals/types.ts`와 화면 전용 Zod 폼 스키마를 사용합니다. 서버의 일반 제작·수정 필드명을 유지하며, 장르 태그는 서버 V91 카탈로그의 정식 이름을 사용합니다. BFF는 프로세스 메모리의 fixture로 초안·발행·수정·이미지 업로드를 흉내 냅니다. 재시작·프로세스 변경 시 저장한 내용과 이미지는 사라집니다. 실제 서버 연결·스토리지 업로드·검수는 수행하지 않습니다. 요청/응답과 서버 연동 차이는 [오리지널 화면 데이터 경계](docs/ORIGINALS.md)에 있습니다. 상세의 ‘홍보 알림 만들기’는 `/notifications/campaigns/new?storyId=<id>`의 준비 중 안내로 연결합니다.
+오리지널 화면은 `src/features/originals/types.ts`와 화면 전용 Zod 폼 스키마를 사용합니다. 서버의 일반 제작·수정 필드명을 유지하며, 장르 태그는 서버 V91 카탈로그의 정식 이름을 사용합니다. BFF는 프로세스 메모리의 fixture로 초안·발행·수정·이미지 업로드를 흉내 냅니다. 재시작·프로세스 변경 시 저장한 내용과 이미지는 사라집니다. 실제 서버 연결·스토리지 업로드·검수는 수행하지 않습니다. 요청/응답과 서버 연동 차이는 [오리지널 화면 데이터 경계](docs/ORIGINALS.md)에 있습니다. 상세의 ‘홍보 알림 만들기’는 `/notifications/campaigns/new?storyId=<id>`로 연결해 스토리 선택을 미리 채웁니다. 현재 서버 캠페인 작성 계약에는 스토리 이동 대상 필드가 없으므로 선택은 미리보기만 제공하며, 선택을 해제해야 발송할 수 있습니다.
 
 관리 목록 5종(회원·스토리·오리지널·채팅방·결제)은 공통 검색창의 300ms 디바운스로 `q`를 갱신하고 page=1로 복귀합니다. 검색과 필터·정렬은 AND이며 전체 결과를 검색한 후 정렬·페이지 처리합니다. 앞뒤·연속 공백과 대소문자를 정리하며, 빈 검색은 해제, 50자 초과 및 중복 q는 400입니다. UUID와 회원 이메일은 정확 일치, 제목·닉네임은 지정한 대상의 부분 일치입니다.
 
 회원 상세의 거래·출석은 `/api/members/{id}/transactions`와 `/attendance`에서 같은 숫자 페이지 계약으로 조회합니다. URL 상태는 `transactionsPage/transactionsSize`, `attendancePage/attendanceSize`로 분리합니다. 거래 원장은 시각·사유·금액·거래 후 잔액만 노출하며 내부 ID와 가상의 transactionId를 사용하지 않습니다. 결제 상품의 `if_5000` 등은 엔터티 ID가 아닌 코드이므로 `productCode`로 표시합니다.
+
+공지·알림 변경은 `src/fixtures/`의 프로세스 메모리에만 반영되며 재시작 시 초기화됩니다. 실제 발송·인증·업스트림 연결은 수행하지 않습니다. 목록은 세션 결정에 따라 `page`·`size`·`totalElements`·`totalPages` 및 `sort`·`order`를 사용합니다. 상세·작성 응답의 도메인 필드명은 참조 서버 스펙을 유지합니다. 공지 정보성 알림은 서비스 동의자, 광고성은 광고 동의자 대상이며 KST 야간 안내를 제공합니다. 직접 작성하는 캠페인은 서버 계약에 따라 광고성 전용이며 정보성 선택은 공지 작성 경로를 안내합니다.

@@ -1,10 +1,11 @@
-import { ComingSoon } from '@/components/admin/coming-soon';
+import { Suspense } from 'react';
+
+import { TemplateScreen } from '@/features/notifications/template-screen';
 
 export default function Page() {
   return (
-    <ComingSoon
-      title="문구 템플릿"
-      description="알림 문구 템플릿 관리 기능은 준비 중입니다."
-    />
+    <Suspense fallback={<p role="status">알림 데이터를 불러오는 중입니다…</p>}>
+      <TemplateScreen />
+    </Suspense>
   );
 }
