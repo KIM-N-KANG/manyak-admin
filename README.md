@@ -116,4 +116,4 @@ Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics
 
 ## 외부 도구
 
-사이드바 하단의 ‘외부 도구’에서 Amplitude·Sentry·Langfuse·그로블을 새 탭으로 엽니다. 결제 목록·상세 머리에는 ‘그로블에서 보기’, 대시보드 Amplitude 지표 카드에는 ‘Amplitude에서 보기’를 제공합니다. URL은 `src/lib/external-links.ts`에 모으며 외부 링크는 noopener·noreferrer를 적용합니다. 그로블 판매 관리의 정확한 주소는 사용자 확인 후 상수를 교체합니다. 현재 ADMIN analytics 계약에는 대시보드 URL 필드가 없어 Amplitude 프로젝트 상수를 사용합니다.
+사이드바 하단의 ‘외부 도구’에서 Amplitude·Sentry·Langfuse·그로블을 새 탭으로 엽니다. 결제 목록·상세 머리에는 ‘그로블에서 보기’, 대시보드 Amplitude 지표 카드에는 ‘Amplitude에서 보기’를 제공합니다. URL은 `src/lib/external-links.ts`에 모으며 외부 링크는 noopener·noreferrer를 적용합니다. 그로블 링크는 사용자 확인을 마친 판매자 운영 현황으로 연결합니다. 현재 ADMIN analytics 계약에는 대시보드 URL 필드가 없어 Amplitude 프로젝트 상수를 사용합니다.

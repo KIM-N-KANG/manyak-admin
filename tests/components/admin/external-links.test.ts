@@ -83,11 +83,17 @@ it('외부 도구는 아코디언으로 접고 펼치며 닉네임 위에 배치
 });
 it('결제 목록 머리에 원본 확인 링크를 표시한다', () => {
   render(createElement(ListScreen, { domain: 'payments' }));
-  assertExternal('그로블에서 보기', externalLinks.groble);
+  assertExternal(
+    '그로블에서 보기',
+    'https://www.groble.im/manage/store/operation',
+  );
 });
 it('결제 상세 머리에 원본 확인 링크를 표시한다', () => {
   render(createElement(DetailScreen, { domain: 'payments', id: 'payment-id' }));
-  assertExternal('그로블에서 보기', externalLinks.groble);
+  assertExternal(
+    '그로블에서 보기',
+    'https://www.groble.im/manage/store/operation',
+  );
 });
 it('Amplitude 카드에서 계약에 없는 URL 필드를 추가하지 않고 프로젝트 링크를 사용한다', () => {
   state.data = {
