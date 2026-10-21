@@ -147,3 +147,9 @@ it('다른 구역을 접고 펼친 상태는 새로고침 뒤 유지하고 현�
   fireEvent.click(screen.getByRole('button', { name: '알림' }));
   expect(screen.queryByRole('link', { name: '캠페인' })).toBeNull();
 });
+
+it('사이드바 하단에 로그인 관리자 닉네임과 로그아웃을 표시한다', () => {
+  render(createElement(AdminShell, { nickname: '운영자 이름' }, '내용'));
+  expect(screen.getByText('운영자 이름')).toBeTruthy();
+  expect(screen.getByRole('button', { name: '로그아웃' })).toBeTruthy();
+});

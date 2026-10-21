@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { ManyakLogo } from '@/components/admin/manyak-logo';
+import { LogoutButton } from '@/features/auth/logout-button';
 import {
   currentSidebarGroup,
   expandedSidebar,
@@ -52,7 +53,13 @@ function snapshot() {
 
 const serverSnapshot = () => null;
 
-export function AdminShell({ children }: { children: ReactNode }) {
+export function AdminShell({
+  children,
+  nickname,
+}: {
+  children?: ReactNode;
+  nickname?: string;
+}) {
   const pathname = usePathname();
   const raw = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const [fallback, setFallback] = useState<SidebarPreferences | null>(null);
@@ -158,6 +165,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </section>
           ))}
         </nav>
+        <div className="mt-auto border-t p-4">
+          <p className="mb-3 truncate text-sm font-medium">
+            {nickname ?? '관리자'}
+          </p>
+          <LogoutButton />
+        </div>
       </aside>
       <main
         id="content"

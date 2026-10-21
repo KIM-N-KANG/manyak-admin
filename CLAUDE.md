@@ -20,10 +20,11 @@
 
 ## Orval과 BFF
 
-- `src/api/generated/`는 직접 작성·수정하지 않는다. 관리자 API 스펙이 준비된 뒤 `.env.local`의 서버 전용 `API_BASE_URL`을 설정하고 `pnpm api:generate`로 생성한다. 지금은 생성물이 없다.
+- `src/api/generated/`는 직접 작성·수정하지 않는다. 전체 관리자 API는 `.env.local`의 서버 전용 `API_BASE_URL`을 설정하고 `pnpm api:generate`로 생성한다. 로그인은 서버에서 추출한 `docs/openapi/admin-auth.json`으로 `pnpm api:generate:auth`를 실행해 Zod를 생성한다. 생성 파일은 직접 수정하지 않는다.
 - API 생성물이 준비되면 생성된 TanStack Query 훅을 사용한다. 현재 고정 데이터 화면은 `src/features/shared/use-api.ts`로 TanStack Query와 기존 mutator를 연결한다. mutator는 `src/api/mutator/custom-instance.ts`이며 응답은 `{ data, status, headers }`다. 생성 훅의 data는 2xx 응답만 담고, non-2xx 응답은 `FetchError`로 오류 채널에 전달된다.
 - 브라우저는 manyak-server를 직접 호출하지 않고 동일 출처 Next route handler(`/api/...`)를 거친다. `API_BASE_URL`을 클라이언트에 노출하지 않는다.
-- 현재 BFF route handler는 `src/fixtures/`의 고정 데이터를 반환하며 인증과 업스트림 서버 연결은 아직 구현하지 않았다. 추후 구글 id token을 서버의 관리자 로그인 API로 전달하고, 받은 관리자 토큰은 Next 서버가 httpOnly 쿠키에 저장한다.
+- Google Identity Services의 ID token은 `/api/auth/login`을 거쳐 서버 관리자 로그인 API로 전달한다. 관리자 토큰은 호스트 전용 `__Host-manyak-admin` httpOnly·Secure·SameSite=Lax 쿠키에 저장한다. `src/proxy.ts`와 관리자 레이아웃이 보호하며 로그아웃·서버 401은 쿠키를 삭제한다.
+- `ADMIN_DATA_SOURCE`는 기본 fixture이다. server 모드는 `src/proxy.ts`가 공통 `/api/admin-upstream/[...path]` route handler로 rewrite한다. 경로 매핑은 `src/api/admin-endpoints.ts`, 서버 호출은 `src/api/admin-upstream.ts`에 모은다. PR #353 기준 로그인 외 데이터 API는 503으로 거부한다. 구현 완료와 생성 Zod 검증이 확보된 엔드포인트만 활성화한다. 로그인은 fixture 모드에서도 실제 서버 인증을 사용한다.
 - 관리자 토큰은 localStorage, sessionStorage, 클라이언트 상태 등 JS에서 읽을 수 있는 곳에 두지 않는다. 서버에서만 쿠키를 읽어 업스트림 인증을 처리한다. next-auth를 도입하지 않는다.
 
 ## 커밋

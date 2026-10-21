@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import Link from 'next/link';
 
+import { FetchError } from '@/api/mutator/custom-instance';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -40,12 +41,26 @@ export function QueryState({
   error: Error | null;
   retry: () => unknown;
 }) {
+  const serverNotImplemented =
+    error instanceof FetchError &&
+    error.status === 503 &&
+    typeof error.data === 'object' &&
+    error.data !== null &&
+    'message' in error.data &&
+    error.data.message === '서버 미구현';
+
   if (error)
     return (
       <Card role="alert">
-        <h2 className="font-semibold">데이터를 불러오지 못했습니다</h2>
+        <h2 className="font-semibold">
+          {serverNotImplemented
+            ? '서버 미구현'
+            : '데이터를 불러오지 못했습니다'}
+        </h2>
         <p className="my-3 text-sm text-muted-foreground">
-          주소와 필터를 확인한 뒤 다시 시도하세요.
+          {serverNotImplemented
+            ? '이 기능은 서버 연결을 준비 중입니다.'
+            : '주소와 필터를 확인한 뒤 다시 시도하세요.'}
         </p>
         <Button variant="outline" onClick={() => void retry()}>
           다시 시도
