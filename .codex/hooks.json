@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/check-comment-convention.mjs",
+            "statusMessage": "주석 컨벤션 검사"
+          }
+        ]
+      }
+    ]
+  }
+}
