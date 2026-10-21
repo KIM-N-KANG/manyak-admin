@@ -65,7 +65,7 @@ Orval은 `/v3/api-docs`에서 TanStack Query 클라이언트와 Zod 스키마를
 - `/stories`, `/members`, `/payments`, `/chats`: URL 쿼리 필터와 정렬, `items`·`page`·`size`·`totalElements`·`totalPages` 숫자 페이지(1부터, 기본 20건, 크기 1~100), `/{id}` 상세 연결을 제공합니다.
 - `/login`: Google 로그인 버튼 UI입니다.
 - `/originals`, `/originals/new`, `/originals/{id}`, `/originals/{id}/edit`: 공식 계정 마냑의 오리지널 목록·작성·미리보기·수정 화면입니다. 초안 저장과 공개, 공개 상태 전환 확인, 표지·인물 이미지 미리보기·교체·제거를 제공합니다.
-- `/audit-logs`: 처리자·작업·대상·기간 필터, 정렬·숫자 페이지, 변경 전후와 요청 ID 상세를 제공합니다.
+- `/audit-logs`: 처리자·작업·대상·기간 필터, 정렬·숫자 페이지, 변경 전후와 요청 ID 상세를 제공합니다. 변경 값은 작업별 허용 키만 표에 표시하고 나머지는 개수만 표시합니다. 이메일처럼 보이는 문자열은 마스킹하며 복합 값의 내부는 표시하지 않습니다.
 - `/notices`: 공지 초안 작성·수정, 게시·게시 해제, 알림 요청과 삭제 제한을 제공합니다.
 - `/notifications/campaigns`: 캠페인 목록·상세, 대상 수 미리보기, 작성·예약, 상태별 취소·재실행을 제공합니다.
 - `/notifications/stats`: 최대 366일 KST 기간·알림 종류·수신 유형 필터, 날짜별·종류별 표와 초록 막대 차트를 제공합니다.

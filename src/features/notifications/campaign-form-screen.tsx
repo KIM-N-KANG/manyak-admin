@@ -101,7 +101,8 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
           </label>
           {kind === 'SERVICE' ? (
             <p className="text-sm">
-              정보성 알림은 서비스 알림 동의자에게 공지를 게시하며 보냅니다.{' '}
+              정보성은 서비스 알림 동의자에게 야간 제한 없이 발송합니다. 공지를
+              게시하며 알림을 보냅니다.{' '}
               <TextLink href="/notices/new">공지 작성으로 이동</TextLink>
             </p>
           ) : null}
@@ -208,8 +209,10 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
             </div>
           ) : null}
           <p className="text-sm text-muted-foreground">
-            광고성 알림에는 (광고) 표시와 수신 거부 안내가 추가됩니다. KST
-            21:00~08:00에는 야간 광고 수신 동의자만 대상입니다.
+            광고성 알림은 광고 수신에 동의한 회원만 대상입니다. (광고) 표시와
+            수신 거부 안내가 추가됩니다. KST 21:00~08:00에는 야간 광고 수신
+            동의자만 대상입니다. 정보성은 서비스 알림 동의자에게 야간 제한 없이
+            발송합니다.
           </p>
           {formError ? (
             <p role="alert" className="text-sm text-destructive">
@@ -234,7 +237,7 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
           if (!open) setDraft(null);
         }}
         title={immediate ? '캠페인을 발송할까요?' : '캠페인을 예약할까요?'}
-        description={`현재 대상 ${target.data?.targetCount.toLocaleString() ?? '—'}명, 야간 광고 동의 ${target.data?.nightEligibleCount?.toLocaleString() ?? '—'}명입니다. 실제 발송 대상은 달라질 수 있습니다.`}
+        description={`광고성 알림은 광고 수신에 동의한 회원만 대상입니다. KST 21:00~08:00에는 야간 광고 수신 동의자에게만 발송합니다. 현재 대상 ${target.data?.targetCount.toLocaleString() ?? '—'}명, 야간 광고 동의 ${target.data?.nightEligibleCount?.toLocaleString() ?? '—'}명입니다. 실제 발송 대상은 달라질 수 있습니다.`}
         pending={mutation.pending}
         error={mutation.error}
         onConfirm={() => void confirm()}

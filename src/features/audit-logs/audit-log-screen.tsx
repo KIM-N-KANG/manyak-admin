@@ -12,6 +12,7 @@ import { ListSearch, SearchEmpty } from '@/components/admin/list-search';
 import { PageNavigation } from '@/components/admin/page-navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { auditChangeValues } from '@/features/audit-logs/change-values';
 import type { AuditLog } from '@/features/audit-logs/types';
 import { useManagementList } from '@/features/management/use-management-list';
 import { useApi } from '@/features/shared/use-api';
@@ -102,6 +103,7 @@ export function AuditLogListScreen() {
 export function AuditLogDetailScreen({ id }: { id: string }) {
   const query = useApi<AuditLog>(`/api/audit-logs/${id}`);
   const item = query.data;
+  const changes = item ? auditChangeValues(item) : null;
 
   return (
     <>
@@ -130,23 +132,26 @@ export function AuditLogDetailScreen({ id }: { id: string }) {
               ]}
             />
           </Card>
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
-            {(
-              [
-                ['변경 전', item.before],
-                ['변경 후', item.after],
-              ] as const
-            ).map(([label, value]) => (
-              <Card key={label}>
-                <h2 className="mb-4 font-semibold">{label}</h2>
-                <pre className="overflow-auto text-sm break-all whitespace-pre-wrap">
-                  {value
-                    ? JSON.stringify(value, null, 2)
-                    : '기록된 값이 없습니다.'}
-                </pre>
-              </Card>
-            ))}
-          </div>
+          {changes ? (
+            <section className="mt-6" aria-label="변경 값">
+              <DataTable
+                headers={['항목', '변경 전', '변경 후']}
+                empty={!changes.rows.length}
+                emptyContent="표시할 변경 항목이 없습니다.">
+                {changes.rows.map((row) => (
+                  <tr key={row.key}>
+                    <td>{row.label}</td>
+                    <td>{row.before}</td>
+                    <td>{row.after}</td>
+                  </tr>
+                ))}
+              </DataTable>
+              <p className="mt-3 text-sm text-muted-foreground">
+                표시하지 않은 항목: 변경 전 {changes.hiddenBefore}개 · 변경 후{' '}
+                {changes.hiddenAfter}개
+              </p>
+            </section>
+          ) : null}
         </>
       ) : null}
     </>

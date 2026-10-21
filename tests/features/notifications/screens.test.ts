@@ -130,6 +130,59 @@ function fill(view: HTMLElement) {
 }
 
 describe('알림 화면의 BFF 연결', () => {
+  it.each(['SERVICE', 'MARKETING'])(
+    '공지 %s 안내와 게시 확인에 종류·동의 대상·야간 기준을 표시한다',
+    async (kind) => {
+      const item = saveNotice({
+        title: '동의 안내 확인',
+        body: '공지 본문',
+        reason: '작성',
+      });
+
+      render(wrap(createElement(NoticeDetailScreen, { id: item.noticeId })));
+      await screen.findByRole('heading', { name: '동의 안내 확인' });
+      fireEvent.click(
+        screen.getByRole('checkbox', { name: '게시할 때 알림 보내기' }),
+      );
+      fireEvent.change(screen.getByRole('combobox', { name: '알림 종류' }), {
+        target: { value: kind },
+      });
+
+      const guidance = screen.getByText(
+        kind === 'SERVICE'
+          ? /^정보성은 서비스 알림 동의자에게/
+          : /^광고성 알림은 광고 수신에 동의한 회원만 대상이며/,
+      );
+
+      expect(guidance.textContent).toContain(
+        '정보성은 서비스 알림 동의자에게 야간 제한 없이 발송',
+      );
+
+      if (kind === 'MARKETING')
+        expect(guidance.textContent).toContain('야간 광고 수신 동의자만 대상');
+
+      fireEvent.change(screen.getByRole('textbox', { name: '처리 사유' }), {
+        target: { value: '게시 사유' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: '게시' }));
+
+      const dialog = await screen.findByRole('dialog');
+
+      expect(dialog.textContent).toContain(
+        kind === 'SERVICE'
+          ? '정보성 알림을 서비스 알림 동의자에게 야간 제한 없이 발송'
+          : '광고성 알림은 광고 수신에 동의한 회원만 대상',
+      );
+
+      if (kind === 'MARKETING')
+        expect(dialog.textContent).toContain(
+          '야간 광고 수신 동의자에게만 발송',
+        );
+
+      expect(writes).toHaveLength(0);
+    },
+  );
+
   it('대상 수 확인 전 발송하지 않고 실패 후 문구를 유지해 재시도한다', async () => {
     const view = render(wrap(createElement(CampaignFormScreen)));
 
@@ -145,6 +198,15 @@ describe('알림 화면의 BFF 연결', () => {
     const dialog = await screen.findByRole('dialog');
 
     expect(dialog.textContent).toContain('412명');
+    expect(dialog.textContent).toContain(
+      '광고성 알림은 광고 수신에 동의한 회원만 대상',
+    );
+    expect(dialog.textContent).toContain('야간 광고 수신 동의자에게만 발송');
+    expect(
+      screen
+        .getByText(/광고성 알림은 광고 수신에 동의한 회원만 대상.*정보성은/)
+        .textContent?.replace(/\s+/g, ' '),
+    ).toContain('정보성은 서비스 알림 동의자에게 야간 제한 없이 발송');
     expect(writes).toHaveLength(0);
     fail = true;
     fireEvent.click(within(dialog).getByRole('button', { name: '확인' }));
