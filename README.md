@@ -60,7 +60,7 @@ Orval은 `/v3/api-docs`에서 TanStack Query 클라이언트와 Zod 스키마를
 ## 화면과 데이터 경계
 
 - `/dashboard`(개요): KST 기준 DB 숫자 카드와 7·30·90일 추이. 별도 Amplitude 영역에 오늘 활성 사용자와 DAU·신규 사용자 추이를 제공하며 같은 기간을 사용합니다. Amplitude 조회 실패는 해당 영역의 재시도로 처리합니다. 모든 차트는 마냑 초록을 사용합니다. 일별 수치 목록에서도 키보드로 필터가 적용된 목록에 이동할 수 있습니다.
-- `/dashboard/analytics`(분석): 7·30·90일 이용 분포 9종과 관련 목록 이동을 제공합니다. 개요의 숫자 카드·일별 추이·Amplitude 영역은 포함하지 않습니다.
+- `/dashboard/analytics`(분석): 7·30·90일 이용 분포 8종과 관련 목록 이동을 제공합니다. 개요의 숫자 카드·일별 추이·Amplitude 영역은 포함하지 않습니다.
 - `/`는 기존 기간·지표 등 쿼리를 유지해 `/dashboard`로 이동하고, `/campaigns`는 `/notifications/campaigns`로 이동합니다.
 - `/stories`, `/members`, `/payments`, `/chats`: URL 쿼리 필터와 정렬, `items`·`page`·`size`·`totalElements`·`totalPages` 숫자 페이지(1부터, 기본 20건, 크기 1~100), `/{id}` 상세 연결을 제공합니다.
 - `/login`: Google 로그인 버튼 UI입니다.
@@ -85,8 +85,10 @@ Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics
 
 오리지널 화면은 `src/features/originals/types.ts`와 화면 전용 Zod 폼 스키마를 사용합니다. 서버의 일반 제작·수정 필드명을 유지하며, 장르 태그는 서버 V91 카탈로그의 정식 이름을 사용합니다. BFF는 프로세스 메모리의 fixture로 초안·발행·수정·이미지 업로드를 흉내 냅니다. 재시작·프로세스 변경 시 저장한 내용과 이미지는 사라집니다. 실제 서버 연결·스토리지 업로드·검수는 수행하지 않습니다. 요청/응답과 서버 연동 차이는 [오리지널 화면 데이터 경계](docs/ORIGINALS.md)에 있습니다. 상세의 ‘홍보 알림 만들기’는 `/notifications/campaigns/new?storyId=<id>`로 연결해 스토리 선택을 미리 채웁니다. 현재 서버 캠페인 작성 계약에는 스토리 이동 대상 필드가 없으므로 선택은 미리보기만 제공하며, 선택을 해제해야 발송할 수 있습니다.
 
-관리 목록 5종(회원·스토리·오리지널·채팅방·결제)은 공통 검색창의 300ms 디바운스로 `q`를 갱신하고 page=1로 복귀합니다. 검색과 필터·정렬은 AND이며 전체 결과를 검색한 후 정렬·페이지 처리합니다. 앞뒤·연속 공백과 대소문자를 정리하며, 빈 검색은 해제, 50자 초과 및 중복 q는 400입니다. UUID와 회원 이메일은 정확 일치, 제목·닉네임은 지정한 대상의 부분 일치입니다.
+관리 목록 5종(회원·스토리·오리지널·채팅방·결제)은 공통 검색창의 300ms 디바운스로 `q`를 갱신하고 page=1로 복귀합니다. 검색과 필터·정렬은 AND이며 전체 결과를 검색한 후 정렬·페이지 처리합니다. 앞뒤·연속 공백과 대소문자를 정리하며, 화면에서 빈 검색은 쿼리를 제거해 해제하며, 명시한 빈 q·50자 초과 및 중복 q는 400입니다. UUID와 회원 이메일은 정확 일치, 제목·닉네임은 지정한 대상의 부분 일치입니다.
 
-회원 상세의 거래·출석은 `/api/members/{id}/transactions`와 `/attendance`에서 같은 숫자 페이지 계약으로 조회합니다. URL 상태는 `transactionsPage/transactionsSize`, `attendancePage/attendanceSize`로 분리합니다. 거래 원장은 시각·사유·금액·거래 후 잔액만 노출하며 내부 ID와 가상의 transactionId를 사용하지 않습니다. 결제 상품의 `if_5000` 등은 엔터티 ID가 아닌 코드이므로 `productCode`로 표시합니다.
+회원 상세의 거래·출석은 `/api/members/{id}/transactions`와 `/attendance`에서 같은 숫자 페이지 계약으로 조회합니다. URL 상태는 `transactionsPage/transactionsSize`, `attendancePage/attendanceSize`로 분리합니다. 거래 원장은 시각·사유·금액·거래 후 잔액만 노출하며 내부 ID와 가상의 transactionId를 사용하지 않습니다. 결제 상품의 `if_5000` 등 상품 ID는 계약의 `productId`로 표시합니다.
 
 공지·알림 변경은 `src/fixtures/`의 프로세스 메모리에만 반영되며 재시작 시 초기화됩니다. 실제 발송·인증·업스트림 연결은 수행하지 않습니다. 목록은 세션 결정에 따라 `page`·`size`·`totalElements`·`totalPages` 및 `sort`·`order`를 사용합니다. 상세·작성 응답의 도메인 필드명은 참조 서버 스펙을 유지합니다. 공지 정보성 알림은 서비스 동의자, 광고성은 광고 동의자 대상이며 KST 야간 안내를 제공합니다. 직접 작성하는 캠페인은 서버 계약에 따라 광고성 전용이며 정보성 선택은 공지 작성 경로를 안내합니다.
+
+차트 분포 응답은 `points[].link { list, params }`를 사용하며 화면이 목록 URL을 조립합니다. 출석은 `daily[].attendance`로 조회합니다. AI 기능은 저장 값 4종으로 구분합니다. 회원 상세는 집계 필드만 반환하고 관계 목록은 별도 BFF에서 조회합니다. 게스트 소유 스토리의 owner와 제작 세션 없는 스토리의 supportingCharacterCount는 null입니다.

@@ -31,7 +31,7 @@ const cases = [
     domain: 'stories',
     get: stories,
     partial: story.title.slice(0, 2),
-    extra: story.owner.nickname,
+    extra: story.owner?.nickname ?? '',
     exact: [story.storyId],
     field: 'storyId',
     id: story.storyId,
@@ -157,11 +157,10 @@ for (const c of cases) {
 
       expect(url.searchParams.get(key)).toBe(value);
     });
-    it('빈 검색은 해제하고 50자 경계·초과·중복은 전체 결과 전에 검증한다', async () => {
-      expect((await read('   ')).totalElements).toBeGreaterThan(0);
+    it('명시한 빈 검색·초과·중복은 거절하고 화면 해제는 쿼리를 지운다', async () => {
       expect((await read('가'.repeat(50))).items).toEqual([]);
 
-      for (const suffix of [`q=${'가'.repeat(51)}`, 'q=a&q=b'])
+      for (const suffix of [`q=${'가'.repeat(51)}`, 'q=a&q=b', 'q=++', 'q='])
         expect(
           c.get(new Request(`http://localhost/api/${c.domain}?${suffix}`))
             .status,

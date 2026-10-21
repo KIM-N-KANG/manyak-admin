@@ -77,7 +77,7 @@ export function GET(request: Request) {
       sorted.map((m) =>
         hasChatPeriod
           ? { ...m, periodChatCount: periodCounts.get(m.memberId) ?? 0 }
-          : m,
+          : { ...m, periodChatCount: null },
       ),
       q,
     );

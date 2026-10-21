@@ -9,6 +9,7 @@ import { GET as payments } from '@/app/api/payments/route';
 import { GET as story } from '@/app/api/stories/[id]/route';
 import { GET as stories } from '@/app/api/stories/route';
 import type { ChatRoom } from '@/features/chats/types';
+import { getDistributionHref } from '@/features/dashboard/links';
 import type { DashboardCharts } from '@/features/dashboard/types';
 import type { MemberListItem } from '@/features/members/types';
 import type { PaymentOrder } from '@/features/payments/types';
@@ -43,21 +44,23 @@ describe('관리자 고정 데이터 BFF', () => {
   });
 
   it.each([7, 30, 90])(
-    '%i일의 일별 지표와 9종 분포를 제공한다',
+    '%i일의 일별 지표와 8종 분포를 제공한다',
     async (days) => {
       const data: DashboardCharts = await charts(
         request(`dashboard/charts?days=${days}`),
       ).json();
 
       expect(data.daily).toHaveLength(days);
-      expect(data.distributions).toHaveLength(9);
+      expect(data.distributions).toHaveLength(8);
       expect(Object.keys(data.daily[0])).toHaveLength(10);
 
       for (const distribution of data.distributions) {
         expect(distribution.points.length).toBeGreaterThan(0);
-        expect(distribution.points.every((p) => p.href.startsWith('/'))).toBe(
-          true,
-        );
+        expect(
+          distribution.points.every((p) =>
+            getDistributionHref(p.link).startsWith('/'),
+          ),
+        ).toBe(true);
       }
 
       expect(charts(request('dashboard/charts?days=365')).status).toBe(400);
@@ -192,12 +195,12 @@ describe('관리자 고정 데이터 BFF', () => {
     );
 
     const memberResponse = await member(request('members/detail'), {
-      params: Promise.resolve({ id: detail.owner.memberId }),
+      params: Promise.resolve({ id: detail.owner!.memberId }),
     });
     const payload = await memberResponse.json();
 
     expect(payload).toHaveProperty('creditBalance');
-    expect(payload).toHaveProperty('attendance');
+    expect(payload).not.toHaveProperty('attendance');
 
     const visit = (value: unknown) => {
       if (value && typeof value === 'object')

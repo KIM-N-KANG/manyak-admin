@@ -3,7 +3,7 @@ import type { MemberSummary } from '@/features/shared/types';
 export type PaymentOrder = {
   orderId: string;
   member: MemberSummary;
-  productCode: string;
+  productId: string;
   status: 'COMPLETED' | 'REFUNDED';
   priceKrw: number;
   creditAmount: number;

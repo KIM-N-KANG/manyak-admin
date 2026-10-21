@@ -249,7 +249,7 @@ function syncStory(record: OriginalDetail) {
     moderationStatus: 'APPROVED' as const,
     tags: record.payload.genres,
     supportingCharacterCount:
-      index >= 0 ? stories[index].supportingCharacterCount : 0,
+      index >= 0 ? stories[index].supportingCharacterCount : null,
     owner: officialMember,
     chatCount: record.chatCount,
     totalTurns: record.totalTurns,

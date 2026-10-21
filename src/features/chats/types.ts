@@ -10,5 +10,4 @@ export type ChatRoom = {
   lastActiveAt: string;
   creditsSpent: number;
   firstMessageSeconds: number | null;
-  aiFeature: string;
 };

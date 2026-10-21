@@ -40,7 +40,7 @@ const filterLabels: Record<string, string> = {
   storyId: '스토리 ID',
   moderationStatus: '검수 상태',
   supportingCharacterCount: '주변 인물 수',
-  startedAs: '채팅 시작 당시',
+  startedAs: '채팅방 소유자 유형',
   turnBucket: '턴 구간',
   chatBucket: '채팅방 생성 구간',
   hasFirstMessage: '900초 이내 첫 입력',
@@ -73,7 +73,9 @@ const filterValues: Record<string, string> = {
   true: '있음',
   false: '없음',
   chat_response: '채팅 응답',
-  chat_image: '채팅 이미지',
+  choice_generation: '선택지 생성',
+  storyline_generation: '스토리라인 생성',
+  story_completion: '스토리 완성',
 };
 const turnBuckets = [
   '0턴',
@@ -404,7 +406,7 @@ export function ListScreen({ domain }: { domain: Domain }) {
             <Status value={m.status} />
           </td>
           <td>{dateTime(m.createdAt)}</td>
-          <td>{dateTime(m.lastActiveAt)}</td>
+          <td>{m.lastActiveAt ? dateTime(m.lastActiveAt) : '—'}</td>
           <td>
             <NumberValue value={m.chatCount} />
             {m.periodChatCount !== undefined ? (

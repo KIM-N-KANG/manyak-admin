@@ -16,7 +16,7 @@ export function GET(request: Request) {
 
     validateOptions(q, {
       scope: ['original', 'user'],
-      aiFeature: ['story_creation'],
+      aiFeature: ['storyline_generation', 'story_completion'],
       aiStatus: ['SUCCEEDED', 'FAILED', 'STARTED', 'FINISHED'],
       hasLatency: ['true', 'false'],
       supportingCharacterCount: ['0', '1', '2', '3', '4', '5'],
@@ -44,14 +44,22 @@ export function GET(request: Request) {
     const aiStoryIds = hasAiFilters(q)
       ? new Set(
           selectAiCalls(q)
-            .filter((call) => call.feature === 'story_creation')
+            .filter((call) =>
+              ['storyline_generation', 'story_completion'].includes(
+                call.feature,
+              ),
+            )
             .map((call) => call.storyId),
         )
       : null;
     const filtered = stories
       .filter(
         (s) =>
-          matchesSearch(search, [s.title, s.owner.nickname], [s.storyId]) &&
+          matchesSearch(
+            search,
+            [s.title, s.owner?.nickname ?? ''],
+            [s.storyId],
+          ) &&
           (!chatStoryIds || chatStoryIds.has(s.storyId)) &&
           (!sessionStoryIds || sessionStoryIds.has(s.storyId)) &&
           (!aiStoryIds || aiStoryIds.has(s.storyId)) &&
@@ -65,7 +73,7 @@ export function GET(request: Request) {
             s.supportingCharacterCount ===
               Number(q.get('supportingCharacterCount'))) &&
           (!q.get('visibility') || s.visibility === q.get('visibility')) &&
-          (!q.get('memberId') || s.owner.memberId === q.get('memberId')) &&
+          (!q.get('memberId') || s.owner?.memberId === q.get('memberId')) &&
           (!q.get('moderationStatus') ||
             s.moderationStatus === q.get('moderationStatus')) &&
           inPeriod(s.createdAt, q),

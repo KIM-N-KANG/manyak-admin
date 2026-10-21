@@ -10,6 +10,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { getDistributionHref } from '@/features/dashboard/links';
 import type { DashboardCharts, Distribution } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
@@ -34,7 +35,9 @@ function DistributionCard({ distribution }: { distribution: Distribution }) {
             const i = state.activeTooltipIndex;
 
             if (i !== null && i !== undefined && distribution.points[Number(i)])
-              router.push(distribution.points[Number(i)].href);
+              router.push(
+                getDistributionHref(distribution.points[Number(i)].link),
+              );
           }}>
           <CartesianGrid vertical={false} />
           <XAxis
@@ -63,7 +66,9 @@ function DistributionCard({ distribution }: { distribution: Distribution }) {
         <ul className="mt-3 space-y-2">
           {distribution.points.map((p) => (
             <li key={p.label} className="flex justify-between gap-3">
-              <TextLink href={p.href}>{p.label} →</TextLink>
+              <TextLink href={getDistributionHref(p.link)}>
+                {p.label} →
+              </TextLink>
               <span>
                 {p.value.toLocaleString('ko-KR')} {distribution.unit}
               </span>

@@ -1,4 +1,5 @@
 import type {
+  ChartLink,
   DailyMetrics,
   DashboardCharts,
   DashboardSummary,
@@ -157,7 +158,7 @@ function distribution(
   unit: string,
   labels: string[],
   value: (label: string, index: number) => number,
-  href: (label: string, index: number) => string,
+  link: (label: string, index: number) => ChartLink,
 ): Distribution {
   return {
     chartId,
@@ -167,7 +168,7 @@ function distribution(
     points: labels.map((label, index) => ({
       label,
       value: value(label, index),
-      href: href(label, index),
+      link: link(label, index),
     })),
   };
 }
@@ -203,7 +204,7 @@ export function getDashboardCharts(days: number): DashboardCharts {
     )
     .map((c) => c.firstMessageSeconds!);
   const link = (
-    path: string,
+    list: ChartLink['list'],
     filters: Record<string, string> = {},
     prefix = '',
   ) => {
@@ -212,12 +213,19 @@ export function getDashboardCharts(days: number): DashboardCharts {
     q.set(prefix ? prefix + 'From' : 'from', from);
     q.set(prefix ? prefix + 'To' : 'to', to);
 
-    return `${path}?${q}`;
+    return { list, params: Object.fromEntries(q) };
   };
-  const features = ['chat_response', 'story_creation', 'chat_image'];
+  const features = [
+    'chat_response',
+    'choice_generation',
+    'storyline_generation',
+    'story_completion',
+  ];
   const aiLink = (feature: string, latency: boolean) =>
     link(
-      feature === 'story_creation' ? '/stories' : '/chats',
+      ['storyline_generation', 'story_completion'].includes(feature)
+        ? 'stories'
+        : 'chats',
       {
         aiFeature: feature,
         aiStatus: latency ? 'SUCCEEDED' : 'FINISHED',
@@ -255,7 +263,7 @@ export function getDashboardCharts(days: number): DashboardCharts {
               )
               .map((c) => c.turnCount),
           ),
-        (label) => link('/stories', { genre: label }, 'chat'),
+        (label) => link('stories', { genre: label }, 'chat'),
       ),
       distribution(
         'turns',
@@ -281,12 +289,12 @@ export function getDashboardCharts(days: number): DashboardCharts {
               c.turnCount >= turnBounds[i][0] &&
               c.turnCount <= turnBounds[i][1],
           ).length,
-        (_, i) => link('/chats', { turnBucket: String(i) }),
+        (_, i) => link('chats', { turnBucket: String(i) }),
       ),
       distribution(
         'started-as',
-        '채팅 시작 시점 게스트·회원',
-        '채팅 시작 당시 회원 여부 · 이후 전환 여부와 무관',
+        '채팅방 소유자 게스트·회원',
+        '현재 소유 회원 유무 기준 · 게스트 이관은 회원으로 집계',
         '%',
         ['게스트', '회원'],
         (_, i) =>
@@ -297,7 +305,7 @@ export function getDashboardCharts(days: number): DashboardCharts {
                 periodChats.length) *
               100
             : 0,
-        (_, i) => link('/chats', { startedAs: i ? 'MEMBER' : 'GUEST' }),
+        (_, i) => link('chats', { startedAs: i ? 'MEMBER' : 'GUEST' }),
       ),
       distribution(
         'member-chats',
@@ -306,7 +314,7 @@ export function getDashboardCharts(days: number): DashboardCharts {
         '명',
         ['1개', '2개', '3~4개', '5~9개', '10개+'],
         (_, i) => counts.filter((count) => chatBucket(count) === i).length,
-        (_, i) => link('/members', { chatBucket: String(i) }, 'chat'),
+        (_, i) => link('members', { chatBucket: String(i) }, 'chat'),
       ),
       distribution(
         'first-message',
@@ -316,7 +324,7 @@ export function getDashboardCharts(days: number): DashboardCharts {
         ['평균', 'P50', 'P75', 'P90'],
         (_, i) =>
           i ? percentile(eligible, [0, 0.5, 0.75, 0.9][i]) : average(eligible),
-        () => link('/chats', { hasFirstMessage: 'true' }),
+        () => link('chats', { hasFirstMessage: 'true' }),
       ),
       distribution(
         'ai-latency',
@@ -365,16 +373,7 @@ export function getDashboardCharts(days: number): DashboardCharts {
         (_, i) =>
           sessions.filter((s) => s.supportingCharacterCount === i).length,
         (_, i) =>
-          link('/stories', { supportingCharacterCount: String(i) }, 'creation'),
-      ),
-      distribution(
-        'attendance',
-        '일별 출석 회원 수',
-        'KST 날짜 · ATTENDANCE_REWARD의 고유 회원 수',
-        '명',
-        selected.map((d) => d.date),
-        (_, i) => selected[i].attendance,
-        (label) => `/members?attendanceDate=${label}`,
+          link('stories', { supportingCharacterCount: String(i) }, 'creation'),
       ),
     ],
   };

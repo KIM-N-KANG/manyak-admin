@@ -7,6 +7,7 @@ import { GET as image } from '@/app/api/originals/images/[id]/route';
 import { POST as upload } from '@/app/api/originals/images/route';
 import { GET as list, POST } from '@/app/api/originals/route';
 import { GET as storyList } from '@/app/api/stories/route';
+import { getDistributionHref } from '@/features/dashboard/links';
 import { emptyOriginal } from '@/features/originals/form-schema';
 import type {
   OriginalDetail,
@@ -342,7 +343,9 @@ describe('오리지널 BFF', () => {
         (item: { label: string }) => item.label === genre,
       );
       const response = storyList(
-        new Request(`http://localhost/api${point.href}&size=100`),
+        new Request(
+          `http://localhost/api${getDistributionHref(point.link)}&size=100`,
+        ),
       );
       const rows = await response.json();
 

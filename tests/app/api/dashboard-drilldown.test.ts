@@ -4,10 +4,12 @@ import { GET as chatList } from '@/app/api/chats/route';
 import { GET as chartResponse } from '@/app/api/dashboard/charts/route';
 import { GET as summaryResponse } from '@/app/api/dashboard/summary/route';
 import { GET as memberDetail } from '@/app/api/members/[id]/route';
+import { GET as transactionList } from '@/app/api/members/[id]/transactions/route';
 import { GET as memberList } from '@/app/api/members/route';
 import { GET as paymentList } from '@/app/api/payments/route';
 import { GET as storyList } from '@/app/api/stories/route';
 import type { ChatRoom } from '@/features/chats/types';
+import { getDistributionHref } from '@/features/dashboard/links';
 import {
   getDailyMetricHref,
   paymentHistoryHref,
@@ -122,7 +124,10 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
           continue;
 
         for (const point of chart.points) {
-          const url = new URL(point.href, 'http://localhost');
+          const url = new URL(
+            getDistributionHref(point.link),
+            'http://localhost',
+          );
           const prefix =
             chart.chartId === 'genre-depth'
               ? 'chat'
@@ -139,7 +144,7 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
 
           if (chart.chartId === 'genre-depth') {
             const stories = await all<Story>(
-              point.href + '&sort=totalTurns',
+              getDistributionHref(point.link) + '&sort=totalTurns',
               storyList,
             );
 
@@ -155,11 +160,17 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
               count ? total(stories.map((s) => s.totalTurns)) / count : 0,
             );
           } else if (chart.chartId === 'characters') {
-            const stories = await all<Story>(point.href, storyList);
+            const stories = await all<Story>(
+              getDistributionHref(point.link),
+              storyList,
+            );
 
             expect(point.value).toBe(stories.length);
           } else {
-            const selected = await all<ChatRoom>(point.href, chatList);
+            const selected = await all<ChatRoom>(
+              getDistributionHref(point.link),
+              chatList,
+            );
 
             expect(selected.every((c) => within(c.startedAt))).toBe(true);
 
@@ -229,7 +240,10 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
       )!;
 
       for (const [index, point] of chart.points.entries()) {
-        const selected = await all<MemberListItem>(point.href, memberList);
+        const selected = await all<MemberListItem>(
+          getDistributionHref(point.link),
+          memberList,
+        );
 
         expect(point.value).toBe(selected.length);
 
@@ -257,7 +271,10 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
       expect(new Set(found).size).toBe(found.length);
 
       if (days === 7) {
-        const old = await all<MemberListItem>(chart.points[0].href, memberList);
+        const old = await all<MemberListItem>(
+          getDistributionHref(chart.points[0].link),
+          memberList,
+        );
 
         expect(old.some((m) => date(m.createdAt) < data.from)).toBe(true);
       }
@@ -272,7 +289,10 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
       d.chartId.startsWith('ai-'),
     )) {
       for (const point of chart.points) {
-        const url = new URL(point.href, 'http://localhost');
+        const url = new URL(
+          getDistributionHref(point.link),
+          'http://localhost',
+        );
 
         expect(url.searchParams.get('aiFrom')).toBe(data.from);
         expect(url.searchParams.get('aiTo')).toBe(data.to);
@@ -281,7 +301,7 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
         );
 
         const get = url.pathname === '/stories' ? storyList : chatList;
-        const selected = await all(point.href, get);
+        const selected = await all(getDistributionHref(point.link), get);
 
         expect(selected.length).toBeGreaterThan(0);
         url.searchParams.set('aiFrom', '2027-01-01');
@@ -328,8 +348,13 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
       const amounts: number[] = [];
 
       for (const member of selected) {
-        const memberData = await detail(member.memberId);
-        const rows = memberData.transactions.filter((t) =>
+        const memberData = (await (
+          await transactionList(
+            request(`/members/${member.memberId}/transactions`),
+            { params: Promise.resolve({ id: member.memberId }) },
+          )
+        ).json()) as Page<CreditTransaction>;
+        const rows = memberData.items.filter((t) =>
           matches(t, day.date, direction),
         );
 
@@ -342,7 +367,13 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
       const third = '00000001-0000-4000-8000-000000000003';
 
       expect(
-        (await detail(third)).transactions.some((t) => t.reason === 'REFUND'),
+        (
+          (await (
+            await transactionList(request(`/members/${third}/transactions`), {
+              params: Promise.resolve({ id: third }),
+            })
+          ).json()) as Page<CreditTransaction>
+        ).items.some((t) => t.reason === 'REFUND'),
       ).toBe(true);
       expect(selected.some((m) => m.memberId === third)).toBe(false);
     },
@@ -381,7 +412,7 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
 
       expect(row.chatCount).toBe(rooms.length);
       expect(member.chatCount).toBe(rooms.length);
-      expect(member.chats).toHaveLength(rooms.length);
+      expect(member).not.toHaveProperty('chats');
 
       if (!rooms.length)
         for (let bucket = 0; bucket < 5; bucket++)

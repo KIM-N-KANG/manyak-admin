@@ -9,7 +9,10 @@ import {
   QueryState,
 } from '@/components/admin/data-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
-import type { CreditTransaction, MemberDetail } from '@/features/members/types';
+import type {
+  AttendanceRecord,
+  CreditTransaction,
+} from '@/features/members/types';
 import type { Page } from '@/features/shared/types';
 import { useApi } from '@/features/shared/use-api';
 
@@ -30,9 +33,9 @@ export function MemberHistoryList({
     if (value !== null) apiParams.set(name, value);
   }
 
-  const query = useApi<
-    Page<CreditTransaction | MemberDetail['attendance'][number]>
-  >(`/api/members/${encodeURIComponent(memberId)}/${kind}?${apiParams}`);
+  const query = useApi<Page<CreditTransaction | AttendanceRecord>>(
+    `/api/members/${encodeURIComponent(memberId)}/${kind}?${apiParams}`,
+  );
   const title = kind === 'transactions' ? '이프 거래 내역' : '출석 기록';
 
   function href(page: number) {

@@ -1,6 +1,6 @@
 import { bffError } from '@/api/bff-error';
-import { getMemberDetail } from '@/fixtures/entities';
-import { fixtureResponse, paginate, validId } from '@/fixtures/query';
+import { getMemberDetail, getMemberTransactions } from '@/fixtures/entities';
+import { fixtureResponse, kstDate, paginate, validId } from '@/fixtures/query';
 
 export async function memberHistoryResponse(
   request: Request,
@@ -22,11 +22,37 @@ export async function memberHistoryResponse(
   if (!member) return bffError(request, 404, '회원을 찾을 수 없습니다.');
 
   return fixtureResponse(request, (query) => {
-    // 동일 시각 거래는 원장 원천의 순서를 유지한다. 내부 식별자는 노출하지 않는다.
-    if (kind === 'transactions') return paginate(member.transactions, query);
+    const sort = kind === 'transactions' ? 'createdAt' : 'date';
+
+    if (
+      (query.has('sort') && query.get('sort') !== sort) ||
+      query.getAll('sort').length > 1 ||
+      query.getAll('order').length > 1 ||
+      (query.has('order') && !['asc', 'desc'].includes(query.get('order')!))
+    )
+      throw new Error('정렬 조건을 확인하세요.');
+
+    const rows = getMemberTransactions(id);
+
+    if (kind === 'transactions')
+      return paginate(
+        rows.toSorted((a, b) =>
+          query.get('order') === 'asc'
+            ? a.createdAt.localeCompare(b.createdAt)
+            : b.createdAt.localeCompare(a.createdAt),
+        ),
+        query,
+      );
 
     return paginate(
-      member.attendance.toSorted((a, b) => b.date.localeCompare(a.date)),
+      rows
+        .filter((t) => t.reason === 'ATTENDANCE_REWARD' && t.amount > 0)
+        .map((t) => ({ date: kstDate(t.createdAt), creditAmount: t.amount }))
+        .toSorted((a, b) =>
+          query.get('order') === 'asc'
+            ? a.date.localeCompare(b.date)
+            : b.date.localeCompare(a.date),
+        ),
       query,
     );
   });

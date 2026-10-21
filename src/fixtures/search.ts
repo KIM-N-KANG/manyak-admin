@@ -3,7 +3,11 @@ import { normalizeSearch } from '@/features/shared/search';
 export function readSearch(params: URLSearchParams) {
   const value = normalizeSearch(params.get('q') ?? '');
 
-  if (value.length > 50 || params.getAll('q').length > 1)
+  if (
+    (params.has('q') && !value) ||
+    value.length > 50 ||
+    params.getAll('q').length > 1
+  )
     throw new Error('검색어는 50자 이하로 한 번만 지정하세요.');
 
   return value;

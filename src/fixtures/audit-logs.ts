@@ -1,6 +1,6 @@
 import type { AuditLog } from '@/features/audit-logs/types';
 import { managementPage } from '@/fixtures/management-query';
-import { inPeriod, validId } from '@/fixtures/query';
+import { inPeriod, validateOptions, validId } from '@/fixtures/query';
 import { matchesSearch, readSearch } from '@/fixtures/search';
 
 export const auditLogs: AuditLog[] = Array.from({ length: 47 }, (_, i) => ({
@@ -29,6 +29,8 @@ export function listAuditLogs(query: URLSearchParams) {
   if (query.get('targetId') && !query.get('targetType'))
     throw new Error('대상 ID는 대상 종류와 함께 지정하세요.');
 
+  validateOptions(query, { category: ['CHANGE', 'ACCESS'] });
+
   const search = readSearch(query);
   const items = auditLogs.filter(
     (item) =>
@@ -41,6 +43,7 @@ export function listAuditLogs(query: URLSearchParams) {
         (key) => !query.get(key) || item[key as 'action'] === query.get(key),
       ) &&
       (!query.get('adminId') || item.admin.memberId === query.get('adminId')) &&
+      (!query.get('category') || item.category === query.get('category')) &&
       inPeriod(item.createdAt, query),
   );
 

@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-
 import { createElement, type PropsWithChildren } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -19,6 +18,8 @@ import { GET as chartsResponse } from '@/app/api/dashboard/charts/route';
 import { GET as summaryResponse } from '@/app/api/dashboard/summary/route';
 import { DashboardAnalysisScreen } from '@/features/dashboard/analysis-screen';
 import { DashboardScreen } from '@/features/dashboard/dashboard-screen';
+import { getDistributionHref } from '@/features/dashboard/links';
+import type { ChartLink } from '@/features/dashboard/types';
 
 const navigation = vi.hoisted(() => ({
   pathname: '/dashboard',
@@ -187,7 +188,7 @@ describe('Amplitude 실패 격리', () => {
 });
 
 describe('개요와 분석 화면 분리', () => {
-  it('분석은 분포 9종과 기존 목록 링크만 표시하고 개요·Amplitude 요청은 하지 않는다', async () => {
+  it('분석은 분포 8종과 기존 목록 링크만 표시하고 개요·Amplitude 요청은 하지 않는다', async () => {
     navigation.pathname = '/dashboard/analytics';
 
     const view = render(
@@ -206,7 +207,7 @@ describe('개요와 분석 화면 분리', () => {
     expect(
       screen.queryByRole('region', { name: 'Amplitude 사용자 지표' }),
     ).toBeNull();
-    expect(screen.getAllByText('수치 및 관련 목록')).toHaveLength(9);
+    expect(screen.getAllByText('수치 및 관련 목록')).toHaveLength(8);
     expect(requested).toEqual(['/api/dashboard/charts?days=7']);
 
     const data = await chartsResponse(
@@ -218,8 +219,8 @@ describe('개요와 분석 화면 분리', () => {
 
     expect(links).toEqual(
       data.distributions.flatMap(
-        (distribution: { points: { href: string }[] }) =>
-          distribution.points.map((point) => point.href),
+        (distribution: { points: { link: ChartLink }[] }) =>
+          distribution.points.map((point) => getDistributionHref(point.link)),
       ),
     );
     fireEvent.change(screen.getByRole('combobox', { name: '기간' }), {

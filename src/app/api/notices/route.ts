@@ -23,6 +23,7 @@ export function GET(request: Request) {
         publishedAt: (i) => i.publishedAt,
         notifiedAt: (i) => i.notifiedAt,
         createdAt: (i) => i.createdAt,
+        updatedAt: (i) => i.updatedAt,
       },
     );
   });

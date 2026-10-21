@@ -30,7 +30,7 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
     `/api/notifications/campaigns/target-count?kind=${kind}`,
   );
   const stories = useApi<Page<Story>>(
-    `/api/stories?size=20&q=${encodeURIComponent(search)}`,
+    `/api/stories?size=20${search ? `&q=${encodeURIComponent(search)}` : ''}`,
   );
   const mutation = useManagementMutation();
   const router = useRouter();

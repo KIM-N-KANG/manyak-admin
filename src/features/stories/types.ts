@@ -4,14 +4,14 @@ import type { MemberSummary } from '@/features/shared/types';
 export type Story = {
   storyId: string;
   title: string;
-  description: string;
+  description: string | null;
   genre: string;
   scope: 'original' | 'user';
   visibility: 'PUBLIC' | 'PRIVATE';
   moderationStatus: 'APPROVED' | 'HELD';
   tags: string[];
-  supportingCharacterCount: number;
-  owner: MemberSummary;
+  supportingCharacterCount: number | null;
+  owner: MemberSummary | null;
   chatCount: number;
   totalTurns: number;
   createdAt: string;

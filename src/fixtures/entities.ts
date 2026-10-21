@@ -46,12 +46,19 @@ export const members: MemberListItem[] = Array.from(
     creditsSpent: 1200 + i * 320,
     paidKrw: 4800 * (i % 6),
     chatCount: 0,
+    periodChatCount: null,
   }),
 );
 
 members[0].nickname = '마냑';
 
 export const officialMember = members[0];
+
+function memberSummary(member: MemberListItem) {
+  const { memberId, nickname, status, isAdmin, createdAt } = member;
+
+  return { memberId, nickname, status, isAdmin, createdAt };
+}
 
 export const stories: Story[] = Array.from({ length: 36 }, (_, i) => ({
   storyId: id(2, i),
@@ -61,9 +68,14 @@ export const stories: Story[] = Array.from({ length: 36 }, (_, i) => ({
   scope: i % 3 === 0 ? 'original' : 'user',
   visibility: i % 5 === 0 ? 'PRIVATE' : 'PUBLIC',
   moderationStatus: i % 6 === 0 ? 'HELD' : 'APPROVED',
-  supportingCharacterCount: i % 6,
-  tags: ['성장', '모험', i % 2 ? '동료' : '비밀'],
-  owner: i % 3 === 0 ? officialMember : members[i % members.length],
+  supportingCharacterCount: i % 7 === 0 ? null : i % 6,
+  tags: i % 7 === 0 ? [] : ['성장', '모험', i % 2 ? '동료' : '비밀'],
+  owner:
+    i % 3 === 0
+      ? memberSummary(officialMember)
+      : i % 8 === 0
+        ? null
+        : memberSummary(members[i % members.length]),
   chatCount: 126 + i * 19,
   totalTurns: 1200 + i * 147,
   createdAt: new Date(Date.UTC(2026, 9, 21 - (i % 20), 6)).toISOString(),
@@ -75,19 +87,18 @@ export const chats: ChatRoom[] = Array.from({ length: 8210 }, (_, i) => ({
     title: stories[i % 36].title,
     genre: stories[i % 36].genre,
   },
-  member: i % 4 === 0 ? null : members[i % members.length],
-  startedAs: i % 3 === 0 || i % 4 === 0 ? 'GUEST' : 'MEMBER',
+  member: i % 4 === 0 ? null : memberSummary(members[i % members.length]),
+  startedAs: i % 4 === 0 ? 'GUEST' : 'MEMBER',
   turnCount: (i * 7) % 63,
   startedAt: new Date(Date.UTC(2026, 9, 21 - (i % 28), 2)).toISOString(),
   lastActiveAt: new Date(Date.UTC(2026, 9, 21 - (i % 28), 7)).toISOString(),
   creditsSpent: ((i * 7) % 63) * 30,
   firstMessageSeconds: i % 7 === 0 ? null : 12 + i * 3,
-  aiFeature: i % 5 === 0 ? 'chat_image' : 'chat_response',
 }));
 export const payments: PaymentDetail[] = Array.from({ length: 32 }, (_, i) => ({
   orderId: id(4, i),
-  member: members[i % members.length],
-  productCode: i % 2 ? 'if_10000' : 'if_5000',
+  member: memberSummary(members[i % members.length]),
+  productId: i % 2 ? 'if_10000' : 'if_5000',
   status: i % 6 === 0 ? 'REFUNDED' : 'COMPLETED',
   priceKrw: i % 2 ? 9600 : 4800,
   creditAmount: i % 2 ? 10000 : 5000,
@@ -110,8 +121,7 @@ export function getMemberDetail(memberId: string): MemberDetail | null {
 
   if (!member) return null;
 
-  const ownedStories = stories.filter((s) => s.owner.memberId === memberId);
-  const ownedChats = chats.filter((c) => c.member?.memberId === memberId);
+  const ownedStories = stories.filter((s) => s.owner?.memberId === memberId);
 
   return {
     ...member,
@@ -122,13 +132,7 @@ export function getMemberDetail(memberId: string): MemberDetail | null {
     storyCount: ownedStories.length,
     chatCount: member.chatCount,
     deletedAt: member.status === 'DELETED' ? '2026-10-20T05:00:00Z' : null,
-    transactions: getMemberTransactions(memberId),
-    payments: payments.filter((p) => p.member.memberId === memberId),
-    chats: ownedChats,
-    stories: ownedStories,
-    attendance: getMemberTransactions(memberId)
-      .filter((t) => t.reason === 'ATTENDANCE_REWARD' && t.amount > 0)
-      .map((t) => ({ date: kstDate(t.createdAt), creditAmount: t.amount })),
+    periodChatCount: null,
   };
 }
 
@@ -145,15 +149,23 @@ export function getStoryDetail(storyId: string): StoryDetail | null {
   return story
     ? {
         ...story,
-        retention: [
-          { turn: 1, rate: 0.86 },
-          { turn: 3, rate: 0.67 },
-          { turn: 5, rate: 0.52 },
-          { turn: 10, rate: 0.34 },
-          { turn: 20, rate: 0.18 },
-        ],
+        retention: [1, 3, 5, 10, 20].map((turn) => {
+          const rooms = chats.filter((c) => c.story.storyId === storyId);
+
+          return {
+            turn,
+            rate: rooms.length
+              ? rooms.filter((c) => c.turnCount >= turn).length / rooms.length
+              : 0,
+          };
+        }),
         recentChats: chats
           .filter((c) => c.story.storyId === storyId)
+          .toSorted(
+            (a, b) =>
+              b.startedAt.localeCompare(a.startedAt) ||
+              a.chatId.localeCompare(b.chatId),
+          )
           .slice(0, 5),
       }
     : null;
@@ -237,20 +249,24 @@ for (const member of members) {
     )
     .reduce((sum, t) => sum - t.amount, 0);
   member.paidKrw = payments
-    .filter((p) => p.member.memberId === member.memberId)
+    .filter(
+      (p) => p.member.memberId === member.memberId && p.status === 'COMPLETED',
+    )
     .reduce((sum, p) => sum + p.priceKrw, 0);
 }
 
-export const creationSessions = stories.map((story) => ({
-  storyId: story.storyId,
-  createdAt: story.createdAt,
-  supportingCharacterCount: story.supportingCharacterCount,
-}));
+export const creationSessions = stories
+  .filter((s) => s.supportingCharacterCount !== null)
+  .map((story) => ({
+    storyId: story.storyId,
+    createdAt: story.createdAt,
+    supportingCharacterCount: story.supportingCharacterCount,
+  }));
 export const aiCalls = [
   ...chats.map((chat, index) => ({
     chatId: chat.chatId,
     storyId: chat.story.storyId,
-    feature: chat.aiFeature,
+    feature: index % 2 ? 'chat_response' : 'choice_generation',
     createdAt: chat.lastActiveAt,
     status:
       index % 17 === 0 ? 'FAILED' : index % 19 === 0 ? 'STARTED' : 'SUCCEEDED',
@@ -259,7 +275,7 @@ export const aiCalls = [
   ...stories.map((story, index) => ({
     chatId: null,
     storyId: story.storyId,
-    feature: 'story_creation',
+    feature: index % 2 ? 'storyline_generation' : 'story_completion',
     createdAt: story.createdAt,
     status: index % 11 === 0 ? 'FAILED' : 'SUCCEEDED',
     latencySeconds: 8 + (index % 50) / 10,

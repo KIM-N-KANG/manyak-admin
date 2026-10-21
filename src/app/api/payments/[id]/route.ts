@@ -16,7 +16,9 @@ export async function GET(
       'orderId',
     );
 
-  const entity = payments.find((x) => x.orderId === id);
+  const entity = payments.find(
+    (x) => x.orderId === id && Boolean(x.completedAt),
+  );
 
   if (!entity) return bffError(request, 404, '대상을 찾을 수 없습니다.');
 

@@ -36,9 +36,13 @@ function StoryContent({ story: s }: { story: StoryDetail }) {
             ['검수 상태', <Status key="m" value={s.moderationStatus} />],
             [
               '제작자',
-              <TextLink key="o" href={`/members/${s.owner.memberId}`}>
-                {s.owner.nickname}
-              </TextLink>,
+              s.owner ? (
+                <TextLink key="o" href={`/members/${s.owner.memberId}`}>
+                  {s.owner.nickname}
+                </TextLink>
+              ) : (
+                '게스트'
+              ),
             ],
             ['생성 시각', dateTime(s.createdAt)],
             [
@@ -49,7 +53,12 @@ function StoryContent({ story: s }: { story: StoryDetail }) {
             ],
             ['총 턴 수', <NumberValue key="t" value={s.totalTurns} />],
             ['태그', s.tags.join(' · ')],
-            ['입력 주변 인물 수', `${s.supportingCharacterCount}명`],
+            [
+              '입력 주변 인물 수',
+              s.supportingCharacterCount === null
+                ? '—'
+                : `${s.supportingCharacterCount}명`,
+            ],
             ['설명', s.description],
           ]}
         />
@@ -104,7 +113,7 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
             ['상태', <Status key="s" value={m.status} />],
             ['관리자 역할', m.isAdmin ? '보유' : '없음'],
             ['가입 시각', dateTime(m.createdAt)],
-            ['최근 활동', dateTime(m.lastActiveAt)],
+            ['최근 활동', m.lastActiveAt ? dateTime(m.lastActiveAt) : '—'],
             ['탈퇴 시각', m.deletedAt ? dateTime(m.deletedAt) : '—'],
             ['이프 잔액', <NumberValue key="b" value={m.creditBalance} />],
             ['만든 스토리', m.storyCount],
@@ -162,7 +171,7 @@ function PaymentContent({ payment: p }: { payment: PaymentDetail }) {
                 {p.member.nickname}
               </TextLink>,
             ],
-            ['상품 코드', p.productCode],
+            ['상품 ID', p.productId],
             ['상태', <Status key="s" value={p.status} />],
             ['결제 금액', `${p.priceKrw.toLocaleString('ko-KR')}원`],
             ['적립 이프', <NumberValue key="c" value={p.creditAmount} />],
@@ -229,7 +238,7 @@ function ChatContent({ chat: c }: { chat: ChatRoom }) {
             ['시작 시각', dateTime(c.startedAt)],
             ['마지막 활동', dateTime(c.lastActiveAt)],
             ['이프 소모', <NumberValue key="c" value={c.creditsSpent} />],
-            ['시작 당시', <Status key="a" value={c.startedAs} />],
+            ['소유자 유형', <Status key="a" value={c.startedAs} />],
           ]}
         />
       </Card>

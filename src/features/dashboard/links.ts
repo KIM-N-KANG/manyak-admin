@@ -1,14 +1,14 @@
-import type { MetricKey } from '@/features/dashboard/types';
+import type { ChartLink, MetricKey } from '@/features/dashboard/types';
 
 export const paymentHistoryHref = '/payments';
 
 const metricPaths: Record<MetricKey, string> = {
   joined: '/members',
   chats: '/chats',
-  turns: '/chats?sort=turnCount',
+  turns: '/chats',
   stories: '/stories',
   granted: '/members?creditDirection=granted',
-  spent: '/members?creditDirection=spent&sort=creditsSpent',
+  spent: '/members?creditDirection=spent',
   payments: paymentHistoryHref,
   revenue: paymentHistoryHref,
   attendance: '/members',
@@ -27,4 +27,8 @@ export function getDailyMetricHref(metric: MetricKey, date: string) {
   }
 
   return `${path}?${query}`;
+}
+
+export function getDistributionHref(link: ChartLink) {
+  return `/${link.list}?${new URLSearchParams(link.params)}`;
 }

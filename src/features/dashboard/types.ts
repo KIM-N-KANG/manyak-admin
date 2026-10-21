@@ -38,7 +38,11 @@ export type DailyMetrics = {
   attendance: number;
 };
 export type MetricKey = Exclude<keyof DailyMetrics, 'date'>;
-export type ChartPoint = { label: string; value: number; href: string };
+export type ChartLink = {
+  list: 'stories' | 'chats' | 'members';
+  params: Record<string, string>;
+};
+export type ChartPoint = { label: string; value: number; link: ChartLink };
 export type Distribution = {
   chartId: string;
   title: string;

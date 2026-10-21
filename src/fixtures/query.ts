@@ -129,7 +129,7 @@ export function validatePeriod(query: URLSearchParams) {
 
 function validateDate(value: string | null) {
   if (
-    value &&
+    value !== null &&
     (!/^\d{4}-\d{2}-\d{2}$/.test(value) ||
       new Date(value).toISOString().slice(0, 10) !== value)
   )
@@ -143,7 +143,10 @@ export function validateOptions(
   for (const [key, values] of Object.entries(options)) {
     const value = query.get(key);
 
-    if (value && !values.includes(value))
+    if (
+      query.has(key) &&
+      (!values.includes(value!) || query.getAll(key).length > 1)
+    )
       throw new Error(`${key} 필터가 올바르지 않습니다.`);
   }
 }
@@ -155,6 +158,13 @@ export function fixtureResponse(
     const query = new URL(request.url).searchParams;
 
     validatePeriod(query);
+
+    for (const key of ['memberId', 'storyId', 'adminId'])
+      if (
+        query.has(key) &&
+        (!validId(query.get(key)!) || query.getAll(key).length > 1)
+      )
+        throw new Error(`${key} 형식을 확인하세요.`);
 
     return Response.json(read(query));
   } catch (error) {

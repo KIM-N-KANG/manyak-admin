@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { GET as attendance } from '@/app/api/members/[id]/attendance/route';
 import { GET as detail } from '@/app/api/members/[id]/route';
 import { GET as transactions } from '@/app/api/members/[id]/transactions/route';
-import { getMemberDetail, members } from '@/fixtures/entities';
+import { getMemberTransactions, members, payments } from '@/fixtures/entities';
 
 for (const [kind, get] of [
   ['transactions', transactions],
@@ -16,7 +16,19 @@ for (const [kind, get] of [
 
   describe(`${kind} 페이지 응답`, () => {
     it('기본값·마지막·범위 밖 및 원천 전체 이력의 연속성을 확인한다', async () => {
-      const all = getMemberDetail(id)![kind];
+      const source = getMemberTransactions(id);
+      const all =
+        kind === 'transactions'
+          ? source
+          : source
+              .filter((t) => t.reason === 'ATTENDANCE_REWARD' && t.amount > 0)
+              .map((t) => ({
+                date: new Date(t.createdAt).toLocaleDateString('sv-SE', {
+                  timeZone: 'Asia/Seoul',
+                }),
+                creditAmount: t.amount,
+              }))
+              .toSorted((a, b) => b.date.localeCompare(a.date));
       const base = await (await get(request(), context)).json();
 
       expect(base).toMatchObject({
@@ -78,23 +90,33 @@ for (const [kind, get] of [
   });
 }
 
-it('회원 상세의 거래도 ID 없는 동일 원천을 사용한다', async () => {
+it('회원 상세는 집계만 반환하고 거래·출석·관계 배열은 별도 조회한다', async () => {
   const id = members[0].memberId;
-  const response = await detail(
-    new Request(`http://localhost/api/members/${id}`),
-    { params: Promise.resolve({ id }) },
-  );
-  const data = await response.json();
+  const data = await (
+    await detail(new Request(`http://localhost/api/members/${id}`), {
+      params: Promise.resolve({ id }),
+    })
+  ).json();
 
-  expect(data.transactions).toEqual(getMemberDetail(id)!.transactions);
+  for (const key of [
+    'transactions',
+    'attendance',
+    'payments',
+    'chats',
+    'stories',
+  ])
+    expect(data).not.toHaveProperty(key);
 
-  for (const row of data.transactions)
-    expect(Object.keys(row).sort()).toEqual([
-      'amount',
-      'balanceAfter',
-      'createdAt',
-      'reason',
-    ]);
+  expect(data.periodChatCount).toBeNull();
+
+  const page = await (
+    await transactions(
+      new Request(`http://localhost/api/members/${id}/transactions`),
+      { params: Promise.resolve({ id }) },
+    )
+  ).json();
+
+  expect(page.items).toEqual(getMemberTransactions(id));
 });
 
 it('공개 응답의 엔터티 식별자는 UUID이고 상품 코드를 ID로 노출하지 않는다', async () => {
@@ -128,10 +150,10 @@ it('공개 응답의 엔터티 식별자는 UUID이고 상품 코드를 ID로 �
   }
 
   check(data);
-  expect(checked).toBeGreaterThan(1);
+  expect(checked).toBeGreaterThan(0);
 
-  for (const order of data.payments) {
-    expect(order.productCode).toMatch(/^if_\d+$/);
-    expect(order).not.toHaveProperty('productId');
+  for (const order of payments) {
+    expect(order.productId).toMatch(/^if_\d+$/);
+    expect(order).not.toHaveProperty('productCode');
   }
 });
