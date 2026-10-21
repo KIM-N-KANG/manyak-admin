@@ -2,10 +2,10 @@
 
 import type { ReactNode } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { ManyakBrand } from '@/components/admin/manyak-brand';
 import { cn } from '@/lib/utils';
 
 const navigation = [
@@ -31,7 +31,17 @@ export function AdminShell({ children }: { children: ReactNode }) {
       </a>
       <aside className="border-b bg-sidebar lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:border-r lg:border-b-0">
         <Link href="/" className="flex items-center gap-3 border-b px-6 py-7">
-          <ManyakBrand />
+          <Image
+            src="/logo/manyak-symbol-green.svg"
+            alt=""
+            aria-hidden="true"
+            width={32}
+            height={32}
+            className="shrink-0"
+          />
+          <span className="font-sans text-xl leading-7 font-semibold tracking-[-0.4px] whitespace-nowrap">
+            마냑 관리자
+          </span>
         </Link>
         <nav
           aria-label="관리자 메뉴"

@@ -243,7 +243,8 @@ components:
 
 ### Brand assets
 
-- 사이드바 상단과 로그인 화면은 `public/logo/manyak-logo.svg`를 사용하고 로고 옆에 ‘관리자’를 표시한다. 원본은 manyak-web의 같은 경로이며 SVG를 변형하거나 새 로고로 대체하지 않는다.
+- 사이드바 상단은 `public/logo/manyak-symbol-green.svg`의 글자 없는 초록 심볼(32×32)과 ‘마냑 관리자’ 텍스트를 나란히 표시한다. 텍스트는 `{typography.heading-md}` (Pretendard, 20px, 600, line-height 28px, letter-spacing -0.4px)를 사용한다. 옆의 텍스트가 이름을 전달하므로 심볼 이미지의 `alt`는 빈 문자열로 두고 `aria-hidden="true"`로 중복 낭독을 막는다.
+- 로그인 화면은 `public/logo/manyak-logo.svg` 로크업과 옆의 ‘관리자’ 표시를 유지한다. 로크업 원본은 manyak-web의 같은 경로이며 SVG를 변형하지 않는다.
 - 파비콘은 manyak-web의 `src/app/favicon.ico`, PNG 아이콘은 `public/icons/icon-192.png`, `icon-512.png`, `icon-512-maskable.png`를 그대로 사용한다.
 - 사이드바 메뉴는 번호 없이 이름만 표시한다. 활성 항목은 연한 초록 배경과 브랜드 초록 전경을 사용한다.
 
@@ -420,7 +421,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 
 **`nav-bar`** — top navigation
 
-- Background `{colors.canvas}`, bottom hairline `{colors.hairline}`, text `{colors.body}`, type `{typography.body-md}`, padding `{spacing.sm} {spacing.lg}`. Uses the Manyak SVG logo with the adjacent 관리자 label and the existing navigation spacing.
+- Background `{colors.canvas}`, bottom hairline `{colors.hairline}`, text `{colors.body}`, type `{typography.body-md}`, padding `{spacing.sm} {spacing.lg}`. Uses the Manyak symbol with the adjacent 마냑 관리자 heading and the existing navigation spacing.
 
 **`nav-link`** — individual nav item
 
