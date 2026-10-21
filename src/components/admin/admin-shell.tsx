@@ -5,17 +5,18 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { ManyakBrand } from '@/components/admin/manyak-brand';
 import { cn } from '@/lib/utils';
 
 const navigation = [
-  ['/', '대시보드', '01'],
-  ['/stories', '스토리', '02'],
-  ['/members', '회원', '03'],
-  ['/payments', '결제', '04'],
-  ['/chats', '채팅방', '05'],
-  ['/campaigns', '캠페인', '06'],
-  ['/notices', '공지', '07'],
-  ['/audit-logs', '감사 로그', '08'],
+  ['/', '대시보드'],
+  ['/stories', '스토리'],
+  ['/members', '회원'],
+  ['/payments', '결제'],
+  ['/chats', '채팅방'],
+  ['/campaigns', '캠페인'],
+  ['/notices', '공지'],
+  ['/audit-logs', '감사 로그'],
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
@@ -30,20 +31,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
       </a>
       <aside className="border-b bg-sidebar lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:border-r lg:border-b-0">
         <Link href="/" className="flex items-center gap-3 border-b px-6 py-7">
-          <span className="flex size-8 items-center justify-center rounded-sm bg-primary font-semibold text-primary-foreground">
-            M
-          </span>
-          <span className="font-semibold tracking-tight">
-            마냑{' '}
-            <span className="font-mono text-xs font-normal text-muted-foreground">
-              ADMIN
-            </span>
-          </span>
+          <ManyakBrand />
         </Link>
         <nav
           aria-label="관리자 메뉴"
           className="flex flex-wrap gap-1 p-3 lg:flex-col lg:py-6">
-          {navigation.map(([href, label, number]) => {
+          {navigation.map(([href, label]) => {
             const active =
               href === '/' ? pathname === '/' : pathname.startsWith(href);
 
@@ -54,11 +47,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   'flex min-h-11 items-center gap-3 rounded-sm px-3 text-sm text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring',
-                  active && 'bg-muted font-medium text-foreground',
+                  active &&
+                    'bg-sidebar-accent font-medium text-sidebar-accent-foreground',
                 )}>
-                <span className="font-mono text-xs text-foreground-secondary">
-                  {number}
-                </span>
                 {label}
               </Link>
             );

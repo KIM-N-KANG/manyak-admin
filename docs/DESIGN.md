@@ -1,10 +1,10 @@
 ---
 version: alpha
 name: Vercel Analysis
-description: An analysis of Vercel's design language — the Geist system, a stark black-on-near-white developer-platform aesthetic where a single ink tone carries every heading, CTA, and border, and the only color the page allows itself is a multi-stop mesh gradient (cyan / blue / violet / magenta / amber) confined to the hero. Pretendard drives tightly-tracked display type, system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`) labels the technical eyebrows, and pill-shaped black buttons mark the marketing CTAs while 6px square buttons handle app and nav chrome.
+description: Geist 기반 레이아웃·여백·Pretendard·회색 톤을 사용하는 마냑 관리자 디자인이다. 브랜드 색과 로고는 마냑을 따른다. 주요 버튼·링크·포커스·활성 메뉴는 마냑 초록을 사용한다.
 
 colors:
-  primary: '#171717'
+  primary: '#01a76b'
   on-primary: '#ffffff'
   ink: '#171717'
   body: '#4d4d4d'
@@ -14,9 +14,14 @@ colors:
   hairline-soft: '#f2f2f2'
   canvas: '#fafafa'
   canvas-elevated: '#ffffff'
-  link: '#0070f3'
-  link-deep: '#0761d1'
-  link-soft: '#d3e5ff'
+  link: '#01a76b'
+  link-deep: '#017a4e'
+  link-soft: '#e6f6ef'
+  chart-1: '#01a76b'
+  chart-2: '#00664f'
+  chart-3: '#0e7490'
+  chart-4: '#b7791f'
+  chart-5: '#6d5bd0'
   error: '#ee0000'
   error-deep: '#c50000'
   warning: '#f5a623'
@@ -234,31 +239,38 @@ components:
 
 ## Overview
 
-Vercel's Geist system is an exercise in subtraction. The page is a near-white sheet (`{colors.canvas}` — #fafafa) carrying near-black ink (`{colors.ink}` — #171717), and almost nothing else competes. Headings, body copy, primary buttons, and the thin 1px borders that define every card all draw from the same ink-and-grey ladder. The one place color is allowed to exist is the hero, where a soft multi-stop **mesh gradient** — cyan, blue, violet, magenta, amber — blooms behind or beside the headline as the brand's entire decorative system. Everywhere else, restraint.
+브랜드 색과 로고는 마냑을 따른다. 레이아웃·여백·글꼴·회색 톤은 기존 Vercel Geist 분석을 유지한다. 본문과 제목은 near-black ink (`{colors.ink}` — #171717), 배경은 near-white canvas (`{colors.canvas}` — #fafafa), 카드와 입력은 hairline border를 사용한다. 주요 버튼·링크·포커스·활성 메뉴에는 마냑 브랜드 초록 `{colors.primary}` (#01A76B)을 적용한다. CSS의 기준값은 마냑 웹과 같은 `oklch(0.6398 0.1458 159.17)`이며 주요 버튼의 전경은 흰색이다.
 
-Typography does the heavy lifting. **Pretendard** sets the display headline in tightly-tracked weight-600 (the hero h1 runs -2.4px letter-spacing), and **system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`)** appears as small uppercase eyebrows labeling sections like a technical spec sheet. Buttons split into two shapes by context: the marketing CTAs are fully rounded black **pills** (`{rounded.pill}` — 100px, "Start Deploying" / "Get a Demo"), while nav and in-app controls use a tight 6px square (`{rounded.sm}`, "Sign Up" / "Log In"). The contrast between the rounded marketing pill and the square app button is itself a deliberate signal of which surface you're on.
+### Brand assets
 
-Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafafa canvas, separated by a 1px hairline (`{colors.hairline}` — #ebebeb) and, at most, a whisper-soft layered shadow. Feature sections are built from precise grids of these hairline cards, often holding thin node-graph or code-editor illustrations rendered in the same ink-on-white palette. The page reads like documentation that happens to be selling something — engineered, exact, and confident enough to let a single gradient be the only flourish.
+- 사이드바 상단과 로그인 화면은 `public/logo/manyak-logo.svg`를 사용하고 로고 옆에 ‘관리자’를 표시한다. 원본은 manyak-web의 같은 경로이며 SVG를 변형하거나 새 로고로 대체하지 않는다.
+- 파비콘은 manyak-web의 `src/app/favicon.ico`, PNG 아이콘은 `public/icons/icon-192.png`, `icon-512.png`, `icon-512-maskable.png`를 그대로 사용한다.
+- 사이드바 메뉴는 번호 없이 이름만 표시한다. 활성 항목은 연한 초록 배경과 브랜드 초록 전경을 사용한다.
+
+Typography does the heavy lifting. **Pretendard** sets the display headline in tightly-tracked weight-600 (the hero h1 runs -2.4px letter-spacing), and **system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`)** appears as small uppercase eyebrows labeling sections like a technical spec sheet. Buttons split into two shapes by context: the marketing CTAs are fully rounded brand-green **pills** (`{rounded.pill}` — 100px, "Start Deploying" / "Get a Demo"), while nav and in-app controls use a tight 6px square (`{rounded.sm}`, "Sign Up" / "Log In"). The contrast between the rounded marketing pill and the square app button is itself a deliberate signal of which surface you're on.
+
+Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafafa canvas, separated by a 1px hairline (`{colors.hairline}` — #ebebeb) and, at most, a whisper-soft layered shadow. Feature sections are built from precise grids of these hairline cards, often holding thin node-graph or code-editor illustrations rendered in the same ink-on-white palette. The page reads like documentation that happens to be selling something — engineered, exact, and with brand green reserved for actions and navigation.
 
 **Key Characteristics:**
 
-- A single near-black ink (`{colors.ink}`) carries headings, body, primary CTAs, and borders on a near-white canvas (`{colors.canvas}`) — near-zero chromatic chrome.
-- The multi-stop mesh gradient (cyan → blue → violet → magenta → amber) is the entire decorative system, confined to the hero.
-- Two button shapes by context: rounded black **pills** (`{rounded.pill}`) for marketing CTAs, tight 6px squares (`{rounded.sm}`) for nav/app controls.
+- A single near-black ink (`{colors.ink}`) carries headings, body, and borders on a near-white canvas (`{colors.canvas}`) — near-zero chromatic chrome.
+- 마냑 초록은 주요 동작과 활성 상태에 사용하고, 차트는 아래 전용 팔레트로 구분한다. 레거시 Vercel 그라디언트는 참고 자료로만 남기며 관리자 화면에 추가하지 않는다.
+- Two button shapes by context: rounded brand-green **pills** (`{rounded.pill}`) for marketing CTAs, tight 6px squares (`{rounded.sm}`) for nav/app controls.
 - Pretendard for tightly-tracked display type (`{typography.display-xl}` at -2.4px), system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`) for uppercase technical eyebrows (`{typography.mono-eyebrow}`).
 - Hairline-bordered white cards (`{colors.hairline}` on `{colors.canvas-elevated}`) in precise grids; depth via 1px border + whisper shadow, never heavy elevation.
 - The classic Vercel gradient trio (develop/preview/ship) survives as a named accent system: `{colors.gradient-develop-start}`→end, preview, ship.
-- Color-block page rhythm: white hero with mesh gradient → logo strip → hairline feature-card grid → code-editor band → template cards → black-text CTA band → grey footer.
+- Color-block page rhythm: white hero with mesh gradient → logo strip → hairline feature-card grid → code-editor band → template cards → brand-green CTA band → grey footer.
 
 ## Colors
 
-> Source pages analyzed: the home page, the AI Gateway page, the customers page, and the pricing page. The ink/canvas/hairline trio recurs on every page; the accent blue (`{colors.link}`) surfaces on pricing, and the mesh-gradient stops live in the hero.
+> Source pages analyzed: the home page, the AI Gateway page, the customers page, and the pricing page. The ink/canvas/hairline trio remains the layout reference. 마냑 관리자에서는 브랜드 색과 로고는 마냑을 따른다.
 
 ### Brand & Accent
 
-- **Ink** (`{colors.primary}` / `{colors.ink}` — #171717): the brand's defining near-black. Headings, primary CTA fill, logo, and the darkest text tier. Paired with `{colors.on-primary}` (white).
-- **Vercel Blue** (`{colors.link}` — #0070f3): the link and accent blue — inline links, pricing highlights, focus signals. Darker press tone `{colors.link-deep}` (#0761d1), pale wash `{colors.link-soft}` (#d3e5ff).
-- **Violet** (`{colors.violet}` — #7928ca), **Cyan** (`{colors.cyan}` — #50e3c2), **Pink** (`{colors.pink}` — #ff0080), **Magenta** (`{colors.magenta}` — #eb367f): the chromatic accent family, used sparingly for illustration accents and as mesh-gradient stops, never as chrome fills.
+- **Manyak Green** (`{colors.primary}` / `{colors.link}` — #01A76B): 주요 버튼·링크·포커스·활성 메뉴의 기준색이다. CSS에서는 `oklch(0.6398 0.1458 159.17)`을 사용하며 버튼 전경은 `{colors.on-primary}` (흰색)이다.
+- **Deep / Soft Green**: 링크 hover는 `{colors.link-deep}` (#017A4E), 강조 배경은 `{colors.link-soft}` (#E6F6EF)이다.
+- **Ink** (`{colors.ink}` — #171717): 제목과 가장 진한 본문에 사용한다. 주요 버튼과 로고의 색으로 사용하지 않는다.
+- **Chart palette**: `--chart-1` #01A76B, `--chart-2` #00664F, `--chart-3` #0E7490, `--chart-4` #B7791F, `--chart-5` #6D5BD0이다. 초록을 중심으로 짙은 초록·청록·황토·보라를 배치한다. 축·라벨·툴팁·수치 목록으로 색상 외에도 지표를 구분한다.
 
 ### Surface
 
@@ -281,11 +293,11 @@ Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafaf
 
 - **Error** (`{colors.error}` — #ee0000): validation / destructive, with a deep press tier `{colors.error-deep}` (#c50000).
 - **Warning** (`{colors.warning}` — #f5a623): caution states, with soft `{colors.warning-soft}` and deep `{colors.warning-deep}` tiers.
-- **Success** maps to `{colors.link}` (#0070f3) — the blue doubles as the positive/active signal.
+- **Success** maps to `{colors.primary}` (#01A76B) — 브랜드 초록을 긍정 상태에도 사용한다.
 
 ### Brand Gradient
 
-Three named two-stop gradients form the legacy Vercel gradient identity, surviving as illustration and accent washes:
+다음은 원래 Vercel 분석의 참고 색이다. 마냑 관리자의 브랜드·버튼·메뉴·차트 팔레트에는 적용하지 않는다:
 
 - **Develop**: `{colors.gradient-develop-start}` (#007cf0) → `{colors.gradient-develop-end}` (#00dfd8) — blue to cyan.
 - **Preview**: `{colors.gradient-preview-start}` (#7928ca) → `{colors.gradient-preview-end}` (#ff0080) — violet to pink.
@@ -408,7 +420,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 
 **`nav-bar`** — top navigation
 
-- Background `{colors.canvas}`, bottom hairline `{colors.hairline}`, text `{colors.body}`, type `{typography.body-md}`, padding `{spacing.sm} {spacing.lg}`. Holds the black wordmark, ghost nav links, and the Sign Up / Log In buttons at right.
+- Background `{colors.canvas}`, bottom hairline `{colors.hairline}`, text `{colors.body}`, type `{typography.body-md}`, padding `{spacing.sm} {spacing.lg}`. Uses the Manyak SVG logo with the adjacent 관리자 label and the existing navigation spacing.
 
 **`nav-link`** — individual nav item
 
@@ -416,7 +428,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 
 ### Buttons
 
-**`button-primary`** — the black marketing pill ("Start Deploying", "Deploy")
+**`button-primary`** — the brand-green marketing pill ("Start Deploying", "Deploy")
 
 - Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.button-lg}`, fully rounded `{rounded.pill}` (100px), padding `0px 14px`.
 
@@ -424,7 +436,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 
 - Background `{colors.canvas-elevated}`, text `{colors.ink}`, type `{typography.button-lg}`, rounded `{rounded.pill}`, padding `0px 14px`. Same pill shape as primary, inverted fill.
 
-**`button-primary-sm`** — the compact black nav CTA ("Sign Up")
+**`button-primary-sm`** — the compact brand-green nav CTA ("Sign Up")
 
 - Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.button-md}`, tight square `{rounded.sm}` (6px), padding `0px 6px`.
 
@@ -488,9 +500,9 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 
 ### Do
 
-- Keep the canvas near-white (`{colors.canvas}`) and let near-black ink (`{colors.ink}`) carry headings, CTAs, and borders — the system is a black-and-white duet.
-- Confine color to the hero mesh gradient and small illustration accents; reserve `{colors.link}` for links and focus.
-- Use the two button shapes by context: black pill (`{components.button-primary}`) for marketing CTAs, 6px square (`{components.button-primary-sm}`) for nav/app.
+- Keep the canvas near-white (`{colors.canvas}`) and let near-black ink (`{colors.ink}`) carry headings and borders. Use Manyak Green for primary CTAs.
+- 브랜드 색과 로고는 마냑을 따른다. 주요 동작·링크·포커스·활성 메뉴는 초록, 차트는 전용 팔레트를 사용한다.
+- Use the two button shapes by context: brand-green pill (`{components.button-primary}`) for marketing CTAs, 6px square (`{components.button-primary-sm}`) for nav/app.
 - Define cards and inputs with a 1px hairline (`{colors.hairline}`) before any shadow — flat is the default.
 - Set display headings in Pretendard 600 with tight negative tracking; label sections with uppercase system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`) eyebrows (`{typography.mono-eyebrow}`).
 - Step the grey text ladder deliberately: `{colors.ink}` → `{colors.body}` → `{colors.mute}` → `{colors.faint}`.
