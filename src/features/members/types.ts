@@ -8,6 +8,7 @@ export type MemberListItem = MemberSummary & {
   creditsSpent: number;
   paidKrw: number;
   chatCount: number;
+  periodChatCount?: number;
 };
 export type CreditTransaction = {
   transactionId: string;

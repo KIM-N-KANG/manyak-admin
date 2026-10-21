@@ -1,3 +1,4 @@
+import { hasAiFilters, selectAiCalls, turnBounds } from '@/fixtures/cohorts';
 import { chats } from '@/fixtures/entities';
 import {
   fixtureResponse,
@@ -5,20 +6,6 @@ import {
   paginate,
   validateOptions,
 } from '@/fixtures/query';
-
-const turnBounds = [
-  [0, 0],
-  [1, 1],
-  [2, 2],
-  [3, 4],
-  [5, 6],
-  [7, 9],
-  [10, 14],
-  [15, 19],
-  [20, 29],
-  [30, 49],
-  [50, Infinity],
-];
 
 export function GET(request: Request) {
   return fixtureResponse(request, (q) => {
@@ -28,8 +15,13 @@ export function GET(request: Request) {
       turnBucket: turnBounds.map((_, i) => String(i)),
       hasFirstMessage: ['true', 'false'],
       aiFeature: ['chat_response', 'chat_image'],
+      aiStatus: ['SUCCEEDED', 'FAILED', 'STARTED', 'FINISHED'],
+      hasLatency: ['true', 'false'],
     });
 
+    const aiChatIds = hasAiFilters(q)
+      ? new Set(selectAiCalls(q).map((call) => call.chatId))
+      : null;
     const filtered = chats.filter((c) => {
       const bounds = q.has('turnBucket')
         ? turnBounds[Number(q.get('turnBucket'))]
@@ -43,7 +35,7 @@ export function GET(request: Request) {
         (!q.get('hasFirstMessage') ||
           (c.firstMessageSeconds !== null && c.firstMessageSeconds <= 900) ===
             (q.get('hasFirstMessage') === 'true')) &&
-        (!q.get('aiFeature') || c.aiFeature === q.get('aiFeature')) &&
+        (!aiChatIds || aiChatIds.has(c.chatId)) &&
         inPeriod(c.startedAt, q) &&
         (!q.get('turnDate') ||
           new Date(c.lastActiveAt).toLocaleDateString('sv-SE', {

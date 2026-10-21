@@ -31,40 +31,59 @@ export function paginate<T>(
   };
 }
 export function inPeriod(value: string, query: URLSearchParams) {
-  const date = new Date(value).toLocaleDateString('sv-SE', {
-    timeZone: 'Asia/Seoul',
-  });
+  const date = kstDate(value);
 
   return (
     (!query.get('from') || date >= query.get('from')!) &&
     (!query.get('to') || date <= query.get('to')!)
   );
 }
-export function validatePeriod(query: URLSearchParams) {
-  for (const key of [
-    'from',
-    'to',
-    'attendanceDate',
-    'creditDate',
-    'turnDate',
-  ]) {
-    const v = query.get(key);
 
-    if (
-      v &&
-      (!/^\d{4}-\d{2}-\d{2}$/.test(v) ||
-        new Date(v).toISOString().slice(0, 10) !== v)
-    )
-      throw new Error('날짜가 올바르지 않습니다.');
+const kstFormatter = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'Asia/Seoul',
+});
+
+export function kstDate(value: string) {
+  return kstFormatter.format(new Date(value));
+}
+export function periodFor(query: URLSearchParams, prefix: string) {
+  const result = new URLSearchParams();
+
+  for (const [key, suffix] of [
+    ['from', 'From'],
+    ['to', 'To'],
+  ]) {
+    const v = query.get(prefix + suffix);
+
+    if (v) result.set(key, v);
   }
 
-  if (
-    query.get('from') &&
-    query.get('to') &&
-    query.get('from')! > query.get('to')!
-  )
-    throw new Error('시작일은 종료일 이후일 수 없습니다.');
+  return result;
 }
+export function validatePeriod(query: URLSearchParams) {
+  for (const prefix of ['', 'chat', 'ai', 'creation']) {
+    const from = prefix ? prefix + 'From' : 'from';
+    const to = prefix ? prefix + 'To' : 'to';
+
+    for (const key of [from, to]) validateDate(query.get(key));
+
+    if (query.get(from) && query.get(to) && query.get(from)! > query.get(to)!)
+      throw new Error('시작일은 종료일 이후일 수 없습니다.');
+  }
+
+  for (const key of ['attendanceDate', 'creditDate', 'turnDate'])
+    validateDate(query.get(key));
+}
+
+function validateDate(value: string | null) {
+  if (
+    value &&
+    (!/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+      new Date(value).toISOString().slice(0, 10) !== value)
+  )
+    throw new Error('날짜가 올바르지 않습니다.');
+}
+
 export function validateOptions(
   query: URLSearchParams,
   options: Record<string, string[]>,

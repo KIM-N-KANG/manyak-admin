@@ -1,12 +1,18 @@
 import {
-  attendanceDates,
-  creditDates,
+  type CreditDirection,
+  isCreditMetric,
+} from '@/features/members/credit-metrics';
+import { chatBucket } from '@/fixtures/cohorts';
+import {
+  getChatCounts,
+  getMemberTransactions,
   memberEmails,
   members,
 } from '@/fixtures/entities';
 import {
   fixtureResponse,
   inPeriod,
+  kstDate,
   paginate,
   validateOptions,
 } from '@/fixtures/query';
@@ -17,8 +23,15 @@ export function GET(request: Request) {
       status: ['ACTIVE', 'SUSPENDED', 'DELETED'],
       sort: ['latest', 'active', 'spent', 'paid'],
       chatBucket: ['0', '1', '2', '3', '4'],
+      creditDirection: ['granted', 'spent'],
+      excludeDeleted: ['true', 'false'],
     });
 
+    if (q.has('creditDate') && !q.has('creditDirection'))
+      throw new Error('거래일과 함께 지급·소진 방향을 지정하세요.');
+
+    const periodCounts = getChatCounts(q.get('chatFrom'), q.get('chatTo'));
+    const hasChatPeriod = q.has('chatFrom') || q.has('chatTo');
     const query = (q.get('query') ?? '').trim();
 
     if (query.length > 50) throw new Error('검색어는 50자 이하여야 합니다.');
@@ -30,18 +43,36 @@ export function GET(request: Request) {
         (query.includes('@')
           ? email === query
           : query === m.memberId || m.nickname.includes(query));
-      const count = m.chatCount;
-      const bucket =
-        count === 1 ? 0 : count === 2 ? 1 : count <= 4 ? 2 : count <= 9 ? 3 : 4;
+      const count = hasChatPeriod
+        ? (periodCounts.get(m.memberId) ?? 0)
+        : m.chatCount;
+      const bucket = chatBucket(count);
+      const transactions = getMemberTransactions(m.memberId);
+      const matchesCredit =
+        (!q.has('creditDirection') && !q.has('creditDate')) ||
+        transactions.some(
+          (t) =>
+            (!q.get('creditDate') ||
+              kstDate(t.createdAt) === q.get('creditDate')) &&
+            (!q.get('creditDirection') ||
+              isCreditMetric(t, q.get('creditDirection') as CreditDirection)),
+        );
 
       return (
         matches &&
+        (q.get('excludeDeleted') !== 'true' || m.status !== 'DELETED') &&
         inPeriod(m.createdAt, q) &&
-        (!q.get('creditDate') || creditDates.includes(q.get('creditDate')!)) &&
+        matchesCredit &&
         (!q.get('status') || m.status === q.get('status')) &&
-        (!q.get('chatBucket') || bucket === Number(q.get('chatBucket'))) &&
+        (!hasChatPeriod || count > 0) &&
+        (!q.has('chatBucket') || bucket === Number(q.get('chatBucket'))) &&
         (!q.get('attendanceDate') ||
-          attendanceDates.includes(q.get('attendanceDate')!))
+          transactions.some(
+            (t) =>
+              t.reason === 'ATTENDANCE_REWARD' &&
+              t.amount > 0 &&
+              kstDate(t.createdAt) === q.get('attendanceDate'),
+          ))
       );
     });
 
@@ -55,6 +86,14 @@ export function GET(request: Request) {
             : b.createdAt.localeCompare(a.createdAt),
     );
 
-    return paginate(filtered, q, (m) => m.memberId);
+    return paginate(
+      filtered.map((m) =>
+        hasChatPeriod
+          ? { ...m, periodChatCount: periodCounts.get(m.memberId) ?? 0 }
+          : m,
+      ),
+      q,
+      (m) => m.memberId,
+    );
   });
 }

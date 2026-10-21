@@ -34,6 +34,7 @@ type Filter = {
 
 const filterLabels: Record<string, string> = {
   memberId: '회원 ID',
+  excludeDeleted: '탈퇴 회원 제외',
   storyId: '스토리 ID',
   moderationStatus: '검수 상태',
   supportingCharacterCount: '주변 인물 수',
@@ -44,12 +45,25 @@ const filterLabels: Record<string, string> = {
   aiFeature: 'AI 기능',
   attendanceDate: '출석일',
   creditDate: '이프 거래일',
+  creditDirection: '이프 거래 방향',
+  chatFrom: '채팅 생성 시작일',
+  chatTo: '채팅 생성 종료일',
+  aiFrom: 'AI 호출 시작일',
+  aiTo: 'AI 호출 종료일',
+  aiStatus: 'AI 호출 상태',
+  hasLatency: '지연값',
+  creationFrom: '제작 시작일',
+  creationTo: '제작 종료일',
   turnDate: '턴 활동일',
   from: '가입 시작일',
   to: '가입 종료일',
   limit: '페이지 크기',
 };
 const filterValues: Record<string, string> = {
+  granted: '지급',
+  spent: '소진',
+  SUCCEEDED: '성공',
+  FINISHED: '성공·실패 완료',
   HELD: '보류',
   APPROVED: '승인',
   GUEST: '게스트',
@@ -219,6 +233,7 @@ const headers: Record<Domain, string[]> = {
     '상태',
     '가입일',
     '최근 활동',
+    '채팅방 수',
     '이프 소모',
     '결제액',
   ],
@@ -394,6 +409,14 @@ export function ListScreen({ domain }: { domain: Domain }) {
           </td>
           <td>{dateTime(m.createdAt)}</td>
           <td>{dateTime(m.lastActiveAt)}</td>
+          <td>
+            <NumberValue value={m.chatCount} />
+            {m.periodChatCount !== undefined ? (
+              <span className="ml-2 text-xs text-muted-foreground">
+                (기간 {m.periodChatCount}개)
+              </span>
+            ) : null}
+          </td>
           <td>
             <NumberValue value={m.creditsSpent} />
           </td>

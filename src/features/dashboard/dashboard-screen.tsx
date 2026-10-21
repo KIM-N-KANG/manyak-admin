@@ -25,6 +25,10 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import {
+  getDailyMetricHref,
+  paymentHistoryHref,
+} from '@/features/dashboard/links';
 import type {
   DashboardCharts,
   DashboardSummary,
@@ -33,19 +37,22 @@ import type {
 } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
-const metrics: Record<
-  MetricKey,
-  { label: string; unit: string; href: string }
-> = {
-  joined: { label: '가입', unit: '명', href: '/members' },
-  chats: { label: '채팅 시작', unit: '개', href: '/chats' },
-  turns: { label: '턴', unit: '턴', href: '/chats?sort=turns' },
-  stories: { label: '스토리 생성', unit: '개', href: '/stories' },
-  granted: { label: '이프 지급', unit: '이프', href: '/members' },
-  spent: { label: '이프 소진', unit: '이프', href: '/members?sort=spent' },
-  payments: { label: '결제 건수', unit: '건', href: '/payments' },
-  revenue: { label: '결제 금액', unit: '원', href: '/payments' },
-  attendance: { label: '출석 회원 수', unit: '명', href: '/members' },
+const metrics: Record<MetricKey, { label: string; unit: string }> = {
+  joined: { label: '가입', unit: '명' },
+  chats: { label: '채팅 시작', unit: '개' },
+  turns: { label: '턴', unit: '턴' },
+  stories: { label: '스토리 생성', unit: '개' },
+  granted: {
+    label: '이프 지급',
+    unit: '이프',
+  },
+  spent: {
+    label: '이프 소진',
+    unit: '이프',
+  },
+  payments: { label: '결제 건수', unit: '건' },
+  revenue: { label: '결제 금액', unit: '원' },
+  attendance: { label: '출석 회원 수', unit: '명' },
 };
 
 function DistributionCard({
@@ -140,7 +147,13 @@ export function DashboardScreen() {
   const c = charts.data;
   const cards = s
     ? ([
-        ['회원', s.members.total, s.members.joinedToday, '/members', '명'],
+        [
+          '회원',
+          s.members.total,
+          s.members.joinedToday,
+          '/members?excludeDeleted=true',
+          '명',
+        ],
         [
           '채팅 시작',
           s.chats.startedTotal,
@@ -160,21 +173,21 @@ export function DashboardScreen() {
           '이프 지급',
           s.credits.grantedTotal,
           s.credits.grantedToday,
-          '/members',
+          '/members?creditDirection=granted',
           '이프',
         ],
         [
           '이프 소진',
           s.credits.spentTotal,
           s.credits.spentToday,
-          '/members?sort=spent',
+          '/members?creditDirection=spent&sort=spent',
           '이프',
         ],
         [
-          '결제 완료',
+          '결제 이력',
           s.payments.completedTotal,
           s.payments.completedToday,
-          '/payments?status=COMPLETED',
+          paymentHistoryHref,
           '건',
         ],
         [
@@ -312,23 +325,7 @@ export function DashboardScreen() {
                   const date = c.daily[Number(i)]?.date;
 
                   if (i !== null && date) {
-                    const target = new URL(
-                      metrics[metric].href,
-                      'https://fixture.invalid',
-                    );
-
-                    if (metric === 'turns')
-                      target.searchParams.set('turnDate', date);
-                    else if (metric === 'granted' || metric === 'spent')
-                      target.searchParams.set('creditDate', date);
-                    else if (metric === 'attendance')
-                      target.searchParams.set('attendanceDate', date);
-                    else {
-                      target.searchParams.set('from', date);
-                      target.searchParams.set('to', date);
-                    }
-
-                    router.push(target.pathname + target.search);
+                    router.push(getDailyMetricHref(metric, date));
                   }
                 }}>
                 <CartesianGrid vertical={false} />
@@ -364,18 +361,7 @@ export function DashboardScreen() {
                         <NumberValue value={d[metric]} /> {metrics[metric].unit}
                       </td>
                       <td>
-                        <TextLink
-                          href={
-                            metrics[metric].href +
-                            (metrics[metric].href.includes('?') ? '&' : '?') +
-                            (metric === 'turns'
-                              ? `turnDate=${d.date}`
-                              : metric === 'granted' || metric === 'spent'
-                                ? `creditDate=${d.date}`
-                                : metric === 'attendance'
-                                  ? `attendanceDate=${d.date}`
-                                  : `from=${d.date}&to=${d.date}`)
-                          }>
+                        <TextLink href={getDailyMetricHref(metric, d.date)}>
                           목록 →
                         </TextLink>
                       </td>
