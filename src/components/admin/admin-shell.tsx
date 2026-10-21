@@ -55,27 +55,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="mt-auto hidden border-t p-6 text-xs text-muted-foreground lg:block">
-          <p className="mb-2 font-mono">MANYAK / OPERATIONS</p>
-          <Link href="/login" className="hover:text-foreground hover:underline">
-            로그인 화면 →
-          </Link>
-        </div>
       </aside>
-      <div className="min-w-0">
-        <header className="flex min-h-[89px] items-center justify-between gap-4 border-b bg-card px-6 lg:px-10">
-          <p className="text-sm text-muted-foreground">
-            워크스페이스 <span className="mx-3 text-border">/</span>
-            <span className="text-foreground">서비스 운영</span>
-          </p>
-          <span className="rounded-sm border bg-muted px-2.5 py-1 font-mono text-xs">
-            고정 데이터 미리보기
-          </span>
-        </header>
-        <main id="content" className="mx-auto max-w-[1600px] p-6 lg:p-10">
-          {children}
-        </main>
-      </div>
+      <main
+        id="content"
+        className="mx-auto w-full max-w-[1600px] min-w-0 p-6 lg:p-10">
+        {children}
+      </main>
     </div>
   );
 }

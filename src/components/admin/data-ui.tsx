@@ -17,12 +17,14 @@ export function PageHeading({
   return (
     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <p className="mb-2 font-mono text-xs tracking-widest text-muted-foreground">
-          MANYAK / ANALYTICS
-        </p>
-        <h1 className="text-[32px] leading-10 font-semibold tracking-[-1.28px]">
-          {title}
-        </h1>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <h1 className="text-[32px] leading-10 font-semibold tracking-[-1.28px]">
+            {title}
+          </h1>
+          <span className="text-xs text-muted-foreground">
+            고정 데이터 미리보기
+          </span>
+        </div>
         <p className="mt-2 text-sm text-muted-foreground">{description}</p>
       </div>
       {children}
