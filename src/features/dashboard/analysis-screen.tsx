@@ -9,6 +9,7 @@ import {
   TextLink,
 } from '@/components/admin/data-ui';
 import { Card } from '@/components/ui/card';
+import { genreDepthTitle } from '@/features/dashboard/chart-data';
 import { DistributionChart } from '@/features/dashboard/distribution-chart';
 import { getDistributionHref } from '@/features/dashboard/links';
 import type { DashboardCharts, Distribution } from '@/features/dashboard/types';
@@ -24,7 +25,11 @@ function DistributionCard({ distribution }: { distribution: Distribution }) {
           ? 'min-w-0 xl:col-span-2'
           : 'min-w-0'
       }>
-      <h2 className="font-semibold">{distribution.title}</h2>
+      <h2 className="font-semibold">
+        {distribution.chartId === 'genre-depth'
+          ? genreDepthTitle
+          : distribution.title}
+      </h2>
       <p className="mt-2 min-h-10 text-xs leading-5 text-muted-foreground">
         {distribution.description}
       </p>

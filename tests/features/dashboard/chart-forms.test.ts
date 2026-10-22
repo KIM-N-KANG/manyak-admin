@@ -86,7 +86,7 @@ function draw(data: Distribution) {
   return { ...view, onSelect };
 }
 
-it('장르 상위 30개를 값 내림차순 가로 막대로 그리며 정렬 후에도 원래 링크를 선택한다', async () => {
+it('장르 상위 30개를 값 내림차순 세로 막대로 그리며 정렬 후에도 원래 링크를 선택한다', async () => {
   const points = Array.from({ length: 35 }, (_, index) =>
     point(`장르${index}`, index + 1),
   );
@@ -98,21 +98,28 @@ it('장르 상위 30개를 값 내림차순 가로 막대로 그리며 정렬 �
   expect(
     screen.getByText('상위 30개 · 외 5개 장르는 아래 표에서 확인하세요.'),
   ).toBeTruthy();
+
+  const scroll = screen.getByRole('region', {
+    name: '장르별 평균 턴 수 차트 가로 스크롤',
+  });
+
+  expect(scroll.classList.contains('overflow-x-auto')).toBe(true);
+  expect(scroll.getAttribute('tabindex')).toBe('0');
   expect(
-    container.querySelector('[data-slot="chart"]')?.getAttribute('style'),
-  ).toContain('1000px');
-  expect(
-    Array.from(
-      container.querySelectorAll(
-        '.recharts-yAxis-tick-labels .recharts-cartesian-axis-tick-value',
-      ),
-    ).map((node) => node.textContent),
-  ).toEqual(
+    scroll.querySelector<HTMLElement>('[data-slot="chart"]')?.style.minWidth,
+  ).toBe('2600px');
+
+  const ticks = container.querySelectorAll(
+    '.recharts-xAxis-tick-labels .recharts-cartesian-axis-tick-value',
+  );
+
+  expect(Array.from(ticks).map((node) => node.textContent)).toEqual(
     points
       .toReversed()
       .slice(0, 30)
       .map((p) => p.label),
   );
+  expect(ticks[0].getAttribute('transform')).toContain('rotate(-40');
   fireEvent.click(bars[0]);
   await waitFor(() => expect(onSelect).toHaveBeenCalledWith(points[34]));
   expect(points[0].value).toBe(1);
@@ -304,23 +311,39 @@ it('개요 카드 8개의 스파크라인과 일별 2px 선·평균 점선을 �
   expect(screen.getByText('일별 수치와 목록 이동')).toBeTruthy();
 });
 
-it('장르 차트를 30개로 제한해도 details 표에는 모든 행과 목록 링크를 남긴다', () => {
-  const points = Array.from({ length: 35 }, (_, index) =>
-    point(`장르${index}`, index + 1),
-  );
+it('미리보기는 35개 장르 중 상위 30개와 나머지 안내·전체 표를 표시하고 이전 서버 제목도 바꿔 표시한다', () => {
+  const genre = state.charts!.distributions.find(
+    (item) => item.chartId === 'genre-depth',
+  )!;
 
+  expect(genre.title).toBe('장르별 평균 턴 수');
+  expect(genre.points).toHaveLength(35);
+  expect(rankedPoints(genre).every((point) => point.value > 0)).toBe(true);
   state.charts = {
     ...state.charts!,
-    distributions: [distribution('genre-depth', points, '턴')],
+    distributions: [{ ...genre, title: '장르별 채팅 깊이' }],
   };
-  render(createElement(DashboardAnalysisScreen));
+
+  const { container } = render(createElement(DashboardAnalysisScreen));
+
+  expect(
+    screen.getByRole('heading', { name: '장르별 평균 턴 수' }),
+  ).toBeTruthy();
+  expect(
+    screen.getByText('상위 30개 · 외 5개 장르는 아래 표에서 확인하세요.'),
+  ).toBeTruthy();
+  expect(container.querySelectorAll('.recharts-bar-rectangle')).toHaveLength(
+    30,
+  );
 
   const details = screen.getByText('수치 및 관련 목록').closest('details')!;
 
   expect(within(details).getAllByRole('link')).toHaveLength(35);
   expect(
-    within(details).getByRole('link', { name: '장르0 →' }).getAttribute('href'),
-  ).toBe('/chats?feature=%EC%9E%A5%EB%A5%B40');
+    within(details)
+      .getByRole('link', { name: '로맨스 →' })
+      .getAttribute('href'),
+  ).toContain('genre=%EB%A1%9C%EB%A7%A8%EC%8A%A4');
 });
 
 it('일별 선의 호버에는 십자선·날짜 툴팁을 표시하고 클릭하면 해당 날짜 목록으로 이동한다', async () => {

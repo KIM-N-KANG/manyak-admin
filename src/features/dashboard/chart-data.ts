@@ -1,5 +1,7 @@
 import type { ChartPoint, Distribution } from '@/features/dashboard/types';
 
+export const genreDepthTitle = '장르별 평균 턴 수';
+
 export function rankedPoints(distribution: Distribution): ChartPoint[] {
   const sorted = distribution.points.toSorted(
     (a, b) => b.value - a.value || a.label.localeCompare(b.label, 'ko'),

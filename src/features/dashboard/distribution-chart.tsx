@@ -21,7 +21,11 @@ import {
   ChartLegend,
   ChartTooltip,
 } from '@/components/ui/chart';
-import { chartNumber, rankedPoints } from '@/features/dashboard/chart-data';
+import {
+  chartNumber,
+  genreDepthTitle,
+  rankedPoints,
+} from '@/features/dashboard/chart-data';
 import type { ChartPoint, Distribution } from '@/features/dashboard/types';
 
 type ChartProps = {
@@ -61,9 +65,10 @@ function DistributionTooltip({
   );
 }
 
-function HorizontalBars({ distribution, onSelect }: ChartProps) {
+function GenreBars({ distribution, onSelect }: ChartProps) {
   const points = rankedPoints(distribution);
   const omitted = distribution.points.length - points.length;
+  const minWidth = Math.max(360, points.length * 84 + 80);
 
   return (
     <>
@@ -72,50 +77,105 @@ function HorizontalBars({ distribution, onSelect }: ChartProps) {
           상위 30개 · 외 {omitted}개 장르는 아래 표에서 확인하세요.
         </p>
       ) : null}
-      <ChartContainer
-        config={{
-          value: { label: distribution.unit, color: 'var(--primary)' },
-        }}
-        className="mt-5 w-full"
-        style={{ height: Math.max(180, points.length * 32 + 40) }}
-        aria-label={distribution.title}>
-        <BarChart
-          accessibilityLayer
-          data={points}
-          layout="vertical"
-          margin={{ top: 8, right: 72, bottom: 8, left: 0 }}>
-          <CartesianGrid horizontal={false} />
-          <XAxis type="number" tickLine={false} axisLine={false} />
-          <YAxis
-            type="category"
-            dataKey="label"
-            width={128}
-            interval={0}
-            tickLine={false}
-            axisLine={false}
-          />
-          <ChartTooltip
-            isAnimationActive={false}
-            content={<DistributionTooltip unit={distribution.unit} />}
-          />
-          <Bar
-            dataKey="value"
-            fill="var(--color-value)"
-            barSize={18}
-            radius={[0, 3, 3, 0]}
-            isAnimationActive={false}
-            className="cursor-pointer"
-            onClick={(_data, index) => onSelect(points[index])}>
-            <LabelList
-              dataKey="value"
-              position="right"
-              formatter={chartNumber}
-              fill="var(--foreground)"
+      <div
+        className="mt-5 overflow-x-auto rounded-sm focus-visible:ring-2 focus-visible:ring-ring"
+        role="region"
+        aria-label={`${genreDepthTitle} 차트 가로 스크롤`}
+        tabIndex={0}>
+        <ChartContainer
+          config={{
+            value: { label: distribution.unit, color: 'var(--primary)' },
+          }}
+          className="h-[360px] w-full"
+          style={{ minWidth }}
+          initialDimension={{ width: minWidth, height: 360 }}
+          aria-label={genreDepthTitle}>
+          <BarChart
+            accessibilityLayer
+            data={points}
+            margin={{ top: 24, right: 24, bottom: 8, left: 12 }}>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="label"
+              interval={0}
+              angle={-40}
+              textAnchor="end"
+              height={110}
+              tickLine={false}
+              axisLine={false}
             />
-          </Bar>
-        </BarChart>
-      </ChartContainer>
+            <YAxis type="number" width={48} tickLine={false} axisLine={false} />
+            <ChartTooltip
+              isAnimationActive={false}
+              content={<DistributionTooltip unit={distribution.unit} />}
+            />
+            <Bar
+              dataKey="value"
+              fill="var(--color-value)"
+              maxBarSize={48}
+              radius={[3, 3, 0, 0]}
+              isAnimationActive={false}
+              className="cursor-pointer"
+              onClick={(_data, index) => onSelect(points[index])}>
+              <LabelList
+                dataKey="value"
+                position="top"
+                formatter={chartNumber}
+                fill="var(--foreground)"
+              />
+            </Bar>
+          </BarChart>
+        </ChartContainer>
+      </div>
     </>
+  );
+}
+
+function HorizontalBars({ distribution, onSelect }: ChartProps) {
+  const points = rankedPoints(distribution);
+
+  return (
+    <ChartContainer
+      config={{ value: { label: distribution.unit, color: 'var(--primary)' } }}
+      className="mt-5 w-full"
+      style={{ height: Math.max(180, points.length * 32 + 40) }}
+      aria-label={distribution.title}>
+      <BarChart
+        accessibilityLayer
+        data={points}
+        layout="vertical"
+        margin={{ top: 8, right: 72, bottom: 8, left: 0 }}>
+        <CartesianGrid horizontal={false} />
+        <XAxis type="number" tickLine={false} axisLine={false} />
+        <YAxis
+          type="category"
+          dataKey="label"
+          width={128}
+          interval={0}
+          tickLine={false}
+          axisLine={false}
+        />
+        <ChartTooltip
+          isAnimationActive={false}
+          content={<DistributionTooltip unit={distribution.unit} />}
+        />
+        <Bar
+          dataKey="value"
+          fill="var(--color-value)"
+          barSize={18}
+          radius={[0, 3, 3, 0]}
+          isAnimationActive={false}
+          className="cursor-pointer"
+          onClick={(_data, index) => onSelect(points[index])}>
+          <LabelList
+            dataKey="value"
+            position="right"
+            formatter={chartNumber}
+            fill="var(--foreground)"
+          />
+        </Bar>
+      </BarChart>
+    </ChartContainer>
   );
 }
 
@@ -426,6 +486,7 @@ function Histogram({ distribution, onSelect }: ChartProps) {
 export function DistributionChart(props: ChartProps) {
   switch (props.distribution.chartId) {
     case 'genre-depth':
+      return <GenreBars {...props} />;
     case 'ai-latency':
       return <HorizontalBars {...props} />;
     case 'started-as':
