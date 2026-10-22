@@ -1,3 +1,4 @@
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { originalError, readOriginalSave } from '@/features/originals/bff';
 import { listOriginals, saveOriginal } from '@/fixtures/originals';
 import {
@@ -9,6 +10,10 @@ import {
 import { matchesSearch, readSearch } from '@/fixtures/search';
 
 export function GET(request: Request) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   return fixtureResponse(request, (query) => {
     const search = readSearch(query);
 
@@ -32,6 +37,10 @@ export function GET(request: Request) {
   });
 }
 export async function POST(request: Request) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   try {
     return Response.json(saveOriginal(await readOriginalSave(request)), {
       status: 201,

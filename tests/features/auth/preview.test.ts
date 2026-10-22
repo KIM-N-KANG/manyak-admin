@@ -61,7 +61,9 @@ it.each([
       expect(auth.cookies).not.toHaveBeenCalled();
     } else {
       expect(page.headers.get('Location')).toBe('https://admin.example/login');
-      expect(api.status).toBe(401);
+      expect(api.status).toBe(
+        environment === 'production' && source !== 'server' ? 503 : 401,
+      );
       expect(entry.headers.get('x-middleware-next')).toBe('1');
       await expect(AdminLayout({ children: '본문' })).rejects.toThrow(
         'redirect:/login',

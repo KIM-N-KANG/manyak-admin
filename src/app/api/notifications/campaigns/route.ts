@@ -1,3 +1,4 @@
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { fixtureBody, fixtureFailure } from '@/fixtures/management-bff';
 import { managementPage } from '@/fixtures/management-query';
 import { createCampaign, listCampaigns } from '@/fixtures/notifications';
@@ -5,6 +6,10 @@ import { fixtureResponse, validateOptions } from '@/fixtures/query';
 import { matchesSearch, readSearch } from '@/fixtures/search';
 
 export function GET(request: Request) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   return fixtureResponse(request, (q) => {
     validateOptions(q, {
       status: ['SCHEDULED', 'SENDING', 'SENT', 'CANCELED', 'FAILED'],
@@ -37,6 +42,10 @@ export function GET(request: Request) {
   });
 }
 export async function POST(request: Request) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   try {
     return Response.json(createCampaign(await fixtureBody(request)), {
       status: 201,

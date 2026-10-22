@@ -61,7 +61,7 @@ tests/                  # BFF, mutator, 유틸, 주석 컨벤션 검증
 
 Next 16의 `src/proxy.ts`가 쿠키 없는 페이지를 `/login`으로 보내고, API는 401로 응답합니다. 관리자 레이아웃에서도 세션 구조를 확인하며 최종 역할·상태·토큰 검증은 서버가 수행합니다. 서버 401은 쿠키 삭제와 화면 로그인 이동으로 이어집니다. 사이드바는 로그인 닉네임과 로그아웃 버튼을 제공합니다. `POST /api/auth/logout`은 쿠키만 삭제하며 서버의 토큰 폐기 API는 없습니다. 로그아웃과 만료 시 전체 페이지 이동으로 클라이언트 조회 캐시를 비웁니다. ID token과 관리자 토큰은 로그·localStorage·sessionStorage에 저장하지 않습니다.
 
-fixture(빈 값 포함)이며 `VERCEL_ENV !== production`이면 `src/features/auth/preview.ts`의 단일 판정으로 인증 없는 미리보기를 허용합니다. `/login`은 `/dashboard`로 이동하고 사이드바에 닉네임 “미리보기”와 “고정 데이터 미리보기”를 표시하며 로그아웃은 숨깁니다. 이 상태에서는 로그인 BFF와 공통 업스트림 계층도 실제 서버를 호출하지 않습니다. production+fixture 또는 비운영+server는 기존 쿠키 인증을 유지합니다.
+fixture(빈 값 포함)이며 `VERCEL_ENV !== production`이면 `src/features/auth/preview.ts`의 단일 판정으로 인증 없는 미리보기를 허용합니다. `/login`은 `/dashboard`로 이동하고 사이드바에 닉네임 “미리보기”와 “고정 데이터 미리보기”를 표시하며 로그아웃은 숨깁니다. 이 상태에서는 로그인 BFF와 공통 업스트림 계층도 실제 서버를 호출하지 않습니다. 운영은 `ADMIN_DATA_SOURCE=server` 필수입니다. production에서 fixture·빈 값·미설정이면 모든 데이터 BFF는 쿠키와 무관하게 503 “서버 연결 설정 필요”로 거부하며 고정 데이터 핸들러를 실행하지 않습니다. 로그인은 이 경우에도 실제 서버 인증을 사용합니다. 비운영+server는 기존 쿠키 인증을 유지합니다.
 
 데이터 모드는 이 조건에 따라 인증 정책과 함께 적용합니다. `fixture`는 기존 fixture route handler를 사용합니다. `server`는 보호된 `/api/admin-upstream/[...path]` route handler로 rewrite하고 경로를 `src/api/admin-endpoints.ts`에서 찾습니다. `src/api/admin-upstream.ts`는 서버 전용 URL, 쿠키의 Bearer 토큰, `X-Manyak-Request-Id`, no-store, 오류·응답 전달을 담당합니다. PR #353 기준 데이터 API는 아직 없으므로 503 “서버 미구현”으로 응답하며 fixture로 자동 전환하지 않습니다. 서버 API를 활성화할 때 생성 Zod로 본문·쿼리 검증을 연결해야 합니다. 브라우저의 Authorization·다른 쿠키나 임의 URL은 업스트림에 전달하지 않습니다.
 

@@ -2,6 +2,7 @@ import { type NextRequest } from 'next/server';
 
 import { findAdminEndpoint } from '@/api/admin-endpoints';
 import { failure, isServerMode } from '@/api/admin-upstream';
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { isFixturePreview } from '@/features/auth/preview';
 import {
   readSession,
@@ -14,6 +15,10 @@ async function handle(
   request: NextRequest,
   context: { params: Promise<{ path: string[] }> },
 ) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   if (isFixturePreview()) return failure(404, '지원하지 않는 경로입니다.');
 
   if (!readSession(request.cookies.get(sessionCookie)?.value))

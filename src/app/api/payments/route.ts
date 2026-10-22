@@ -1,3 +1,4 @@
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { payments } from '@/fixtures/entities';
 import {
   fixtureResponse,
@@ -9,6 +10,10 @@ import {
 import { matchesSearch, readSearch } from '@/fixtures/search';
 
 export function GET(request: Request) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   return fixtureResponse(request, (q) => {
     const search = readSearch(q);
 

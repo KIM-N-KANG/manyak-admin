@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { failure, isSameOrigin, isServerMode } from '@/api/admin-upstream';
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { isFixturePreview } from '@/features/auth/preview';
 import {
   readSession,
@@ -11,6 +12,10 @@ import {
 export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const api = path.startsWith('/api/');
+  const auth = path === '/api/auth/login' || path === '/api/auth/logout';
+  const configurationError = api && !auth ? productionDataSourceError() : null;
+
+  if (configurationError) return configurationError;
 
   if (
     api &&

@@ -209,6 +209,9 @@ describe('로그인 BFF', () => {
 });
 
 describe('보호와 서버 연동', () => {
+  beforeEach(() => {
+    vi.stubEnv('ADMIN_DATA_SOURCE', 'server');
+  });
   it('익명 페이지는 로그인으로, API는 401로 보낸다', () => {
     expect(proxy(request('/members')).headers.get('Location')).toBe(
       `${origin}/login`,
@@ -228,6 +231,7 @@ describe('보호와 서버 연동', () => {
     expect(proxy(broken).headers.get('Location')).toBe(`${origin}/login`);
   });
   it('fixture가 기본이며 server만 공통 route handler로 rewrite한다', () => {
+    vi.stubEnv('VERCEL_ENV', 'preview');
     vi.stubEnv('ADMIN_DATA_SOURCE', '');
     expect(
       proxy(request('/api/members?q=test', {}, true)).headers.get(
@@ -357,6 +361,7 @@ describe('보호와 서버 연동', () => {
     expect(await response.json()).toEqual({ message: '서버 미구현' });
     expect(fetchMock).not.toHaveBeenCalled();
     vi.stubEnv('ADMIN_DATA_SOURCE', 'fixture');
+    vi.stubEnv('VERCEL_ENV', 'preview');
     expect(
       (
         await upstreamRoute(request('/api/admin-upstream/members', {}, true), {

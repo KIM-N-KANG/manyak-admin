@@ -1,3 +1,4 @@
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { fixtureBody, fixtureFailure } from '@/fixtures/management-bff';
 import { managementPage } from '@/fixtures/management-query';
 import { listNotices, saveNotice } from '@/fixtures/notices';
@@ -5,6 +6,10 @@ import { fixtureResponse, validateOptions } from '@/fixtures/query';
 import { matchesSearch, readSearch } from '@/fixtures/search';
 
 export function GET(request: Request) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   return fixtureResponse(request, (q) => {
     validateOptions(q, { status: ['DRAFT', 'PUBLISHED'] });
 
@@ -29,6 +34,10 @@ export function GET(request: Request) {
   });
 }
 export async function POST(request: Request) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   try {
     return Response.json(saveNotice(await fixtureBody(request)), {
       status: 201,

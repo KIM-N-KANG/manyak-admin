@@ -1,3 +1,4 @@
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { originalGenres } from '@/fixtures/original-genres';
 
 const featured = [
@@ -19,6 +20,10 @@ const featured = [
 ];
 
 export function GET() {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   const genres = originalGenres.map((name, index) => ({ id: index + 1, name }));
 
   return Response.json({

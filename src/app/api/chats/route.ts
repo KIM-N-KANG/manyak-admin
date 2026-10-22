@@ -1,3 +1,4 @@
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { hasAiFilters, selectAiCalls, turnBounds } from '@/fixtures/cohorts';
 import { chats } from '@/fixtures/entities';
 import {
@@ -10,6 +11,10 @@ import {
 import { matchesSearch, readSearch } from '@/fixtures/search';
 
 export function GET(request: Request) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   return fixtureResponse(request, (q) => {
     const search = readSearch(q);
 

@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { isFixturePreview } from '@/features/auth/preview';
 import {
   clearSession,
@@ -8,9 +9,7 @@ import {
   unauthorized,
 } from '@/features/auth/session';
 
-export function isServerMode() {
-  return process.env.ADMIN_DATA_SOURCE === 'server';
-}
+export { isServerMode } from '@/features/auth/preview';
 
 export function failure(status: number, message: string) {
   return NextResponse.json(
@@ -55,6 +54,10 @@ export async function forwardAdminRequest(
 ) {
   if (isFixturePreview())
     return failure(503, '미리보기에서는 서버를 호출하지 않습니다.');
+
+  const configurationError = authenticated ? productionDataSourceError() : null;
+
+  if (configurationError) return configurationError;
 
   const session = readSession(request.cookies.get(sessionCookie)?.value);
 

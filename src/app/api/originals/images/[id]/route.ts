@@ -1,4 +1,5 @@
 import { bffError } from '@/api/bff-error';
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { originalError } from '@/features/originals/bff';
 import { originalAsset, putOriginalAsset } from '@/fixtures/originals';
 import { validId } from '@/fixtures/query';
@@ -7,6 +8,10 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   const { id } = await context.params;
   const asset = validId(id) ? originalAsset(id) : undefined;
 
@@ -25,6 +30,10 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   try {
     await putOriginalAsset((await params).id, request);
 

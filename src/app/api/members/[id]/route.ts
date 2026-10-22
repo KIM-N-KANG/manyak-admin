@@ -1,4 +1,5 @@
 import { bffError } from '@/api/bff-error';
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { getMemberDetail } from '@/fixtures/entities';
 import { validId } from '@/fixtures/query';
 
@@ -6,6 +7,10 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   const { id } = await context.params;
 
   if (!validId(id))

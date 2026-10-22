@@ -1,9 +1,14 @@
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { fixtureBody, fixtureFailure } from '@/fixtures/management-bff';
 import { deleteNotice, getNotice, saveNotice } from '@/fixtures/notices';
 
 type Context = { params: Promise<{ id: string }> };
 
 export async function GET(request: Request, { params }: Context) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   try {
     return Response.json(getNotice((await params).id));
   } catch (e) {
@@ -11,6 +16,10 @@ export async function GET(request: Request, { params }: Context) {
   }
 }
 export async function PATCH(request: Request, { params }: Context) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   try {
     return Response.json(
       saveNotice(await fixtureBody(request), (await params).id),
@@ -20,6 +29,10 @@ export async function PATCH(request: Request, { params }: Context) {
   }
 }
 export async function DELETE(request: Request, { params }: Context) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   try {
     deleteNotice((await params).id, await fixtureBody(request));
 

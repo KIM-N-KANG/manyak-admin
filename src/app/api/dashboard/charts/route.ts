@@ -1,7 +1,12 @@
 import { bffError } from '@/api/bff-error';
+import { productionDataSourceError } from '@/api/data-source-guard';
 import { getDashboardCharts } from '@/fixtures/dashboard';
 
 export function GET(request: Request) {
+  const configurationError = productionDataSourceError();
+
+  if (configurationError) return configurationError;
+
   const days = Number(new URL(request.url).searchParams.get('days') ?? '30');
 
   if (![7, 30, 90].includes(days))
