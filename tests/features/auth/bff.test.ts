@@ -353,8 +353,8 @@ describe('보호와 서버 연동', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const response = await upstreamRoute(
-      request('/api/admin-upstream/members', {}, true),
-      { params: Promise.resolve({ path: ['members'] }) },
+      request('/api/admin-upstream/originals/catalog', {}, true),
+      { params: Promise.resolve({ path: ['originals', 'catalog'] }) },
     );
 
     expect(response.status).toBe(503);
@@ -364,9 +364,12 @@ describe('보호와 서버 연동', () => {
     vi.stubEnv('VERCEL_ENV', 'preview');
     expect(
       (
-        await upstreamRoute(request('/api/admin-upstream/members', {}, true), {
-          params: Promise.resolve({ path: ['members'] }),
-        })
+        await upstreamRoute(
+          request('/api/admin-upstream/originals/catalog', {}, true),
+          {
+            params: Promise.resolve({ path: ['originals', 'catalog'] }),
+          },
+        )
       ).status,
     ).toBe(404);
   });
