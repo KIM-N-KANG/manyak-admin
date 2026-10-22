@@ -37,7 +37,7 @@ export function MemberHistoryList({
   const query = useApi<Page<CreditTransaction | AttendanceRecord>>(
     `/api/members/${encodeURIComponent(memberId)}/${kind}?${apiParams}`,
   );
-  const title = kind === 'transactions' ? '이프 거래 내역' : '출석 기록';
+  const title = kind === 'transactions' ? '이프 내역' : '출석 기록';
 
   function href(page: number) {
     const next = new URLSearchParams(params);

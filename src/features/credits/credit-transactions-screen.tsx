@@ -22,14 +22,14 @@ export function CreditTransactionsScreen() {
   return (
     <>
       <PageHeading
-        title="이프 거래 내역"
+        title="이프 내역"
         description="전체 회원의 이프 원장을 확인하세요."
       />
       <p className="mb-4 text-sm text-muted-foreground">
         팀 계정 거래도 포함하므로 팀 계정을 제외하는 대시보드 카드의 집계와 다를
         수 있습니다. 전체에는 사용 취소·만료·회수 등 모든 사유가 포함됩니다.
       </p>
-      <ListFilterForm label="이프 거래" searchEnabled={false}>
+      <ListFilterForm label="이프 내역" searchEnabled={false}>
         <label className="flex flex-col gap-2 text-xs text-muted-foreground">
           방향
           <select
@@ -93,7 +93,7 @@ export function CreditTransactionsScreen() {
           <PageNavigation
             data={query.data}
             href={href}
-            label="이프 거래 페이지"
+            label="이프 내역 페이지"
           />
         </>
       ) : null}

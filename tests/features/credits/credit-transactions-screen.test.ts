@@ -84,7 +84,9 @@ it('원장 열·한국어 사유·음수·회원 링크와 필터를 유지하�
   expect(screen.queryByRole('searchbox')).toBeNull();
   expect(screen.queryByLabelText('memberId')).toBeNull();
 
-  const next = within(screen.getByRole('navigation')).getByRole('link', {
+  const next = within(
+    screen.getByRole('navigation', { name: '이프 내역 페이지' }),
+  ).getByRole('link', {
     name: '다음 ›',
   });
 
@@ -101,7 +103,7 @@ it('방향·기록일 적용 시 첫 페이지로 이동하고 초기화는 필�
   fireEvent.change(screen.getByLabelText('기록일 (KST)'), {
     target: { value: '2026-10-20' },
   });
-  fireEvent.submit(screen.getByRole('form'));
+  fireEvent.submit(screen.getByRole('form', { name: '이프 내역 및 필터' }));
   expect(navigation.push).toHaveBeenLastCalledWith(
     '/credits/transactions?direction=granted&date=2026-10-20&page=1&size=2',
   );
@@ -114,7 +116,7 @@ it('방향·기록일 적용 시 첫 페이지로 이동하고 초기화는 필�
   fireEvent.change(screen.getByLabelText('기록일 (KST)'), {
     target: { value: '' },
   });
-  fireEvent.submit(screen.getByRole('form'));
+  fireEvent.submit(screen.getByRole('form', { name: '이프 내역 및 필터' }));
   expect(navigation.push).toHaveBeenLastCalledWith(
     '/credits/transactions?page=1&size=2',
   );

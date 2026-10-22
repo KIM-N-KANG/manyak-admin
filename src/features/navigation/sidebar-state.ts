@@ -16,7 +16,7 @@ export const navigation = [
       ['/originals', '오리지널'],
       ['/chats', '채팅방'],
       ['/payments', '결제'],
-      ['/credits/transactions', '이프 거래'],
+      ['/credits/transactions', '이프'],
       ['/notices', '공지'],
       ['/audit-logs', '감사 로그'],
     ],
