@@ -38,8 +38,17 @@ vi.mock('recharts', () => {
 
   return {
     AreaChart: Container,
+    LineChart: Container,
+    PieChart: Container,
+    ScatterChart: Container,
     BarChart: Container,
     Area: () => null,
+    Line: Container,
+    Pie: Container,
+    Scatter: Container,
+    Label: () => null,
+    LabelList: () => null,
+    ReferenceLine: () => null,
     Bar: () => null,
     CartesianGrid: () => null,
     XAxis: () => null,
@@ -49,6 +58,8 @@ vi.mock('recharts', () => {
 vi.mock('@/components/ui/chart', () => ({
   ChartContainer: ({ children }: PropsWithChildren) =>
     createElement('div', null, children),
+  ChartLegend: () => null,
+  ChartLegendContent: () => null,
   ChartTooltip: () => null,
   ChartTooltipContent: () => null,
 }));

@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 import {
   DataTable,
@@ -18,10 +25,13 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { AnalyticsSection } from '@/features/dashboard/analytics-section';
+import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
+import { chartNumber, periodAverage } from '@/features/dashboard/chart-data';
 import {
   getDailyMetricHref,
   paymentHistoryHref,
 } from '@/features/dashboard/links';
+import { MetricSparkline } from '@/features/dashboard/metric-sparkline';
 import type {
   DashboardCharts,
   DashboardSummary,
@@ -70,6 +80,7 @@ export function DashboardScreen() {
 
   const s = summary.data;
   const c = charts.data;
+  const average = periodAverage(c?.daily.map((day) => day[metric]) ?? []);
   const cards = s
     ? ([
         [
@@ -78,6 +89,7 @@ export function DashboardScreen() {
           s.members.joinedToday,
           '/members?excludeDeleted=true',
           '명',
+          'joined',
         ],
         [
           '채팅 시작',
@@ -85,6 +97,7 @@ export function DashboardScreen() {
           s.chats.startedToday,
           '/chats',
           '개',
+          'chats',
         ],
         [
           '턴',
@@ -92,14 +105,23 @@ export function DashboardScreen() {
           s.chats.turnsToday,
           '/chats?sort=turnCount',
           '턴',
+          'turns',
         ],
-        ['스토리', s.stories.total, s.stories.createdToday, '/stories', '개'],
+        [
+          '스토리',
+          s.stories.total,
+          s.stories.createdToday,
+          '/stories',
+          '개',
+          'stories',
+        ],
         [
           '이프 지급',
           s.credits.grantedTotal,
           s.credits.grantedToday,
           '/members?creditDirection=granted',
           '이프',
+          'granted',
         ],
         [
           '이프 소진',
@@ -107,6 +129,7 @@ export function DashboardScreen() {
           s.credits.spentToday,
           '/members?creditDirection=spent&sort=creditsSpent',
           '이프',
+          'spent',
         ],
         [
           '결제 이력',
@@ -114,6 +137,7 @@ export function DashboardScreen() {
           s.payments.completedToday,
           paymentHistoryHref,
           '건',
+          'payments',
         ],
         [
           '결제 금액',
@@ -121,6 +145,7 @@ export function DashboardScreen() {
           s.payments.amountKrwToday,
           '/payments',
           '원',
+          'revenue',
         ],
       ] as const)
     : [];
@@ -160,7 +185,7 @@ export function DashboardScreen() {
             KST 기준 · 오늘은 KST 자정부터 · 팀 계정 제외
           </div>
           <div className="mb-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {cards.map(([label, total, today, href, unit]) => (
+            {cards.map(([label, total, today, href, unit, cardMetric]) => (
               <Link
                 href={href}
                 key={label}
@@ -172,6 +197,13 @@ export function DashboardScreen() {
                     {unit}
                   </span>
                 </p>
+                {c?.daily.length ? (
+                  <MetricSparkline
+                    daily={c.daily}
+                    metric={cardMetric}
+                    label={label}
+                  />
+                ) : null}
                 <p className="mt-3 text-xs text-muted-foreground">
                   {`오늘 ${today.toLocaleString('ko-KR')} ${unit}`}
                   <span className="float-right">↗</span>
@@ -220,7 +252,7 @@ export function DashboardScreen() {
               }}
               className="mt-8 h-[300px] w-full"
               aria-label={`${metrics[metric].label} 일별 추이`}>
-              <AreaChart
+              <LineChart
                 accessibilityLayer
                 data={c.daily}
                 onClick={(state) => {
@@ -240,15 +272,32 @@ export function DashboardScreen() {
                   minTickGap={32}
                 />
                 <YAxis width={52} tickLine={false} axisLine={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Area
-                  type="monotone"
+                <ChartTooltip
+                  cursor={<ChartCrosshair />}
+                  isAnimationActive={false}
+                  content={<ChartTooltipContent />}
+                />
+                <ReferenceLine
+                  y={average}
+                  stroke="var(--muted-foreground)"
+                  strokeDasharray="4 4"
+                  label={{
+                    value: `기간 평균 ${chartNumber(average)}`,
+                    position: 'insideTopRight',
+                    fill: 'var(--muted-foreground)',
+                    fontSize: 11,
+                  }}
+                />
+                <Line
+                  type="linear"
                   dataKey={metric}
                   stroke={`var(--color-${metric})`}
-                  fill={`var(--color-${metric})`}
-                  fillOpacity={0.08}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                  isAnimationActive={false}
                 />
-              </AreaChart>
+              </LineChart>
             </ChartContainer>
             <details className="mt-4">
               <summary className="cursor-pointer text-xs text-muted-foreground">

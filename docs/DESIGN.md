@@ -259,7 +259,7 @@ Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafaf
 **Key Characteristics:**
 
 - A single near-black ink (`{colors.ink}`) carries headings, body, and borders on a near-white canvas (`{colors.canvas}`) — near-zero chromatic chrome.
-- 마냑 초록은 주요 동작과 활성 상태에 사용하고, 차트는 마냑 초록 한 색으로 통일하며 같은 색의 명도·투명도·선 스타일로만 계열을 구분한다. 레거시 Vercel 그라디언트는 참고 자료로만 남기며 관리자 화면에 추가하지 않는다.
+- 마냑 초록은 주요 동작과 활성 상태에 사용하고, 차트는 마냑 초록을 주색으로 쓰고 비교 계열은 회색·점선으로 구분하며 성공률 경고에는 기존 경고색을 사용한다. 레거시 Vercel 그라디언트는 참고 자료로만 남기며 관리자 화면에 추가하지 않는다.
 - Two button shapes by context: rounded brand-green **pills** (`{rounded.pill}`) for marketing CTAs, tight 6px squares (`{rounded.sm}`) for nav/app controls.
 - Pretendard for tightly-tracked display type (`{typography.display-xl}` at -2.4px), system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`) for uppercase technical eyebrows (`{typography.mono-eyebrow}`).
 - Hairline-bordered white cards (`{colors.hairline}` on `{colors.canvas-elevated}`) in precise grids; depth via 1px border + whisper shadow, never heavy elevation.
@@ -276,7 +276,25 @@ Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafaf
 - **Text Green** (`{colors.primary-text}` / `{colors.link}` — #017A4E): 작은 링크와 활성 메뉴의 전경, 주요 버튼·현재 페이지의 배경이다. 흰색 대비 5.39:1, 연한 메뉴 배경 #E6F6EF 대비 4.82:1, 캔버스 #FAFAFA 대비 5.17:1로 일반 글자 기준 4.5:1을 만족한다. 대비는 WCAG sRGB 상대 휘도 식으로 계산한다.
 - **Deep / Soft Green**: 링크·버튼 hover는 `{colors.link-deep}` (#01613E), 강조 배경은 `{colors.link-soft}` (#E6F6EF)이다.
 - **Ink** (`{colors.ink}` — #171717): 제목과 가장 진한 본문에 사용한다. 주요 버튼과 로고의 색으로 사용하지 않는다.
-- **Chart palette**: 모든 막대·선·영역은 `--primary`의 마냑 초록을 사용한다. `--chart-1`은 primary 100%, `--chart-2`~`--chart-5`는 같은 초록의 80%·60%·40%·20% 투명도 단계다. 한 차트에서 여러 계열이 필요하면 이 단계나 실선·점선만 사용하고 다른 색상은 쓰지 않는다. 축·라벨·툴팁·수치 목록으로 색상 외에도 지표를 구분한다.
+- **Chart palette**: 주계열은 `--primary`의 마냑 초록, 비교 계열은 회색(`--muted-foreground`), 95% 미만 성공률은 경고색(`--warning-foreground`)을 사용한다. `--chart-1`은 primary 100%, `--chart-2`~`--chart-5`는 같은 초록의 80%·60%·40%·20% 투명도 단계다. 여러 계열은 범례·직접 라벨과 실선·점선으로도 구분한다. 축·라벨·툴팁·수치 목록으로 색상 외에도 지표를 구분한다.
+
+### 관리자 차트
+
+차트 형태는 서버의 `chartId`로 선택하며 응답과 집계 정의를 바꾸지 않는다. 단위가 다른 지표는 차트를 나누고 이중 y축은 쓰지 않는다. 단일 계열은 제목으로 식별하고, 비교 계열에는 범례와 직접 라벨을 표시한다. 모든 차트에 호버 툴팁을 제공하고 선에는 십자선을 표시한다. 막대·점·도넛 조각 클릭과 details 안 전체 수치 표의 링크는 기존 목록 이동을 유지한다. 데이터 전환 애니메이션은 꺼 reduced-motion에서도 움직임 없이 값을 읽을 수 있게 한다. 관리자는 라이트 모드만 사용한다.
+
+| 위치 / chartId                    | 형태와 표시                                                      | 선택 이유                                         |
+| --------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------- |
+| 개요 요약 카드 8개                | 선택 기간 `charts.daily`의 해당 지표 스파크라인, 축·격자 없음    | 숫자 옆에서 흐름 비교                             |
+| 개요 일별 추이                    | 2px 선, 호버 때만 점, 기간 평균 점선                             | 추이와 평균 대비 높낮이                           |
+| Amplitude                         | 활성(초록 실선)·신규(회색 점선) 2계열, 범례·끝점 라벨            | 같은 단위의 사용자 비교                           |
+| genre-depth                       | 값 내림차순 상위 30개 가로 막대, 끝 값·가변 높이, 제외 개수 안내 | 긴 장르명과 순위 비교, 평균값이므로 파레토선 없음 |
+| turns / member-chats / characters | 구간 순서 유지, 간격이 좁은 히스토그램                           | 분포 모양 비교                                    |
+| started-as                        | 게스트·회원 도넛, 가운데 게스트 %, 조각 %·범례, 조각 사이 2px    | 두 범주의 부분과 전체 비교                        |
+| first-message                     | 같은 초 축 위 P50·P75·P90 점 연결, 평균은 회색 마름모, 값 라벨   | 분포의 위치와 퍼짐 비교                           |
+| ai-latency                        | 값 내림차순 가로 막대                                            | 긴 기능명과 지연 비교                             |
+| ai-success                        | 0~100 미터·% 값, 95% 미만은 경고색·아이콘·문구                   | 한도 대비 성공률 확인                             |
+
+알림 도달 차트는 기존 형태를 유지한다.
 
 ### Surface
 
@@ -509,7 +527,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 ### Do
 
 - Keep the canvas near-white (`{colors.canvas}`) and let near-black ink (`{colors.ink}`) carry headings and borders. Use Manyak Green for primary CTAs.
-- 브랜드 색과 로고는 마냑을 따른다. 주요 동작·링크·포커스·활성 메뉴는 초록, 차트는 같은 초록의 투명도 단계와 선 스타일만 사용한다.
+- 브랜드 색과 로고는 마냑을 따른다. 주요 동작·링크·포커스·활성 메뉴는 초록, 차트는 초록 주계열과 회색 비교 계열을 사용하고 성공률 경고는 경고색·아이콘·문구로 함께 표시한다.
 - Use the two button shapes by context: brand-green pill (`{components.button-primary}`) for marketing CTAs, 6px square (`{components.button-primary-sm}`) for nav/app.
 - Define cards and inputs with a 1px hairline (`{colors.hairline}`) before any shadow — flat is the default.
 - Set display headings in Pretendard 600 with tight negative tracking; label sections with uppercase system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`) eyebrows (`{typography.mono-eyebrow}`).
