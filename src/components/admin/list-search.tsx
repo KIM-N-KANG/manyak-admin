@@ -12,10 +12,12 @@ export function ListFilterForm({
   label,
   placeholder = '검색어를 입력하세요',
   children,
+  searchEnabled = true,
 }: {
   label: string;
   placeholder?: string;
   children?: ReactNode;
+  searchEnabled?: boolean;
 }) {
   const params = useSearchParams();
   const router = useRouter();
@@ -45,17 +47,19 @@ export function ListFilterForm({
       onSubmit={submit}
       aria-label={`${label} 및 필터`}
       className="mb-6 flex flex-wrap items-end gap-3 rounded-md border bg-card p-4">
-      <label className="flex min-w-0 flex-1 basis-full flex-col gap-2 text-xs text-muted-foreground sm:min-w-60 sm:basis-72">
-        {label}
-        <input
-          type="search"
-          name="q"
-          defaultValue={params.get('q') ?? ''}
-          maxLength={50}
-          className="control w-full"
-          placeholder={placeholder}
-        />
-      </label>
+      {searchEnabled ? (
+        <label className="flex min-w-0 flex-1 basis-full flex-col gap-2 text-xs text-muted-foreground sm:min-w-60 sm:basis-72">
+          {label}
+          <input
+            type="search"
+            name="q"
+            defaultValue={params.get('q') ?? ''}
+            maxLength={50}
+            className="control w-full"
+            placeholder={placeholder}
+          />
+        </label>
+      ) : null}
       {children}
       <Button type="submit">적용</Button>
       <Link href={pathname} className={buttonVariants({ variant: 'outline' })}>

@@ -13,7 +13,7 @@ export type Campaign = {
   scheduledAt: string;
   status: CampaignStatus;
   noticeId: string | null;
-  storyId: string | null;
+  storyId?: string | null;
   targetCount: number | null;
   sentCount: number | null;
   deliveredMembers: number;

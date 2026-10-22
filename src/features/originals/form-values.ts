@@ -29,9 +29,11 @@ export function originalFormValues(detail: OriginalDetail): OriginalPayload {
     }),
     characters: detail.characters.map((character) => ({
       ...character,
+      id: character.id ?? undefined,
       description: character.description ?? '',
       images: character.images.map((image) => ({
-        id: image.id,
+        id: image.id ?? undefined,
+        objectKey: image.objectKey ?? undefined,
         imageName: image.imageName,
         imageUrl: image.imageUrl,
       })),

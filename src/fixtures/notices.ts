@@ -124,7 +124,7 @@ export function publishNotice(
     createNoticeCampaign(
       id,
       item.title,
-      item.body,
+      item.body ?? '',
       body.notificationKind as 'SERVICE' | 'MARKETING',
     );
   }

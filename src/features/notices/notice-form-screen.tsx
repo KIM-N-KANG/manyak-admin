@@ -80,7 +80,7 @@ function NoticeForm({ notice }: { notice?: Notice }) {
               name="body"
               required
               maxLength={5000}
-              defaultValue={notice?.body}
+              defaultValue={notice?.body ?? ''}
             />
           </label>
           <label className="grid gap-2 text-sm">

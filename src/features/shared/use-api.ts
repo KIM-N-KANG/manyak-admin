@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { customInstance } from '@/api/mutator/custom-instance';
+import { adminResponseValues } from '@/features/shared/response-values';
 
 export function useApi<T>(url: string, enabled = true) {
   return useQuery({
@@ -15,7 +16,7 @@ export function useApi<T>(url: string, enabled = true) {
         headers: Headers;
       }>(url, { signal });
 
-      return response.data;
+      return adminResponseValues(response.data, url) as T;
     },
   });
 }

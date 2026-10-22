@@ -6,7 +6,7 @@ import {
   forwardAdminRequest,
   isSameOrigin,
 } from '@/api/admin-upstream';
-import { LoginBody } from '@/api/generated/zod/admin-auth';
+import { LoginBody } from '@/api/generated/zod/admin';
 import { isFixturePreview } from '@/features/auth/preview';
 import { clearSession, setSession } from '@/features/auth/session';
 

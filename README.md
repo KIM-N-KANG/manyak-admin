@@ -63,20 +63,20 @@ Next 16의 `src/proxy.ts`가 쿠키 없는 페이지를 `/login`으로 보내고
 
 fixture(빈 값 포함)이며 `VERCEL_ENV !== production`이면 `src/features/auth/preview.ts`의 단일 판정으로 인증 없는 미리보기를 허용합니다. `/login`은 `/dashboard`로 이동하고 사이드바에 닉네임 “미리보기”와 “고정 데이터 미리보기”를 표시하며 로그아웃은 숨깁니다. 이 상태에서는 로그인 BFF와 공통 업스트림 계층도 실제 서버를 호출하지 않습니다. 운영은 `ADMIN_DATA_SOURCE=server` 필수입니다. production에서 fixture·빈 값·미설정이면 모든 데이터 BFF는 쿠키와 무관하게 503 “서버 연결 설정 필요”로 거부하며 고정 데이터 핸들러를 실행하지 않습니다. 로그인은 이 경우에도 실제 서버 인증을 사용합니다. 비운영+server는 기존 쿠키 인증을 유지합니다.
 
-데이터 모드는 이 조건에 따라 인증 정책과 함께 적용합니다. `fixture`는 기존 fixture route handler를 사용합니다. `server`는 보호된 `/api/admin-upstream/[...path]` route handler로 rewrite하고 경로를 `src/api/admin-endpoints.ts`에서 찾습니다. `src/api/admin-upstream.ts`는 서버 전용 URL, 쿠키의 Bearer 토큰, `X-Manyak-Request-Id`, no-store, 오류·응답 전달을 담당합니다. PR #353 기준 데이터 API는 아직 없으므로 503 “서버 미구현”으로 응답하며 fixture로 자동 전환하지 않습니다. 서버 API를 활성화할 때 생성 Zod로 본문·쿼리 검증을 연결해야 합니다. 브라우저의 Authorization·다른 쿠키나 임의 URL은 업스트림에 전달하지 않습니다.
+데이터 모드는 이 조건에 따라 인증 정책과 함께 적용합니다. `fixture`는 기존 fixture route handler를 사용합니다. `server`는 보호된 `/api/admin-upstream/[...path]` route handler로 rewrite하고 경로를 `src/api/admin-endpoints.ts`에서 찾습니다. `src/api/admin-upstream.ts`는 서버 전용 URL, 쿠키의 Bearer 토큰, `X-Manyak-Request-Id`, no-store, 오류·응답 전달을 담당합니다. 추출한 관리자 OpenAPI의 연산은 생성 Zod로 경로·쿼리·본문을 검증한 뒤 전달합니다. Spring이 평탄하게 받는 쿼리는 검증할 때만 OpenAPI의 request/query 객체로 묶고 원래 쿼리를 전달합니다. OpenAPI에 대응 경로가 없는 감사 로그 단건, 오리지널 카탈로그와 fixture 이미지 조회·PUT은 503 “서버 미구현”을 유지하며 fixture로 자동 전환하지 않습니다. 오리지널 등록·수정은 서버 ObjectNode 본문의 필드 스키마가 없어 생성된 공통 사유를 검증하고 나머지 필드 검증은 서버가 수행합니다. 브라우저의 Authorization·다른 쿠키나 임의 URL은 업스트림에 전달하지 않습니다.
 
-로그인 요청 Zod는 실제 서버 기준 브랜치 `feat/KNK-1738-admin-auth-foundation`의 e1083c2에서 추출한 OpenAPI 스냅샷으로 생성합니다. 테스트 전용 probe 경로는 포함하지 않습니다.
+관리자 경로와 참조 DTO는 공개 dev OpenAPI에서 추출합니다. 스냅샷의 `x-source`에 입력 URL/파일, 받은 UTC 시각과 선택한 서버 커밋을 기록합니다. 관리자 외 경로와 미참조 DTO는 포함하지 않습니다.
 
 ```bash
-# 새 서버 /v3/api-docs JSON에서 로그인 경로와 참조 DTO를 추출합니다.
-node scripts/extract-admin-auth-openapi.mjs /path/to/server-openapi.json server-commit-sha
-pnpm api:generate:auth
-
-# 전체 관리자 API 연결 시 서버 OpenAPI에서 클라이언트와 Zod를 생성합니다.
+pnpm api:extract https://dev-api.manyak.app/v3/api-docs
+# 파일 입력과 서버 커밋 기록도 가능합니다.
+pnpm api:extract /path/to/server-openapi.json server-commit-sha
+pnpm api:generate:admin
+# 관리자 Zod·연산 레지스트리와 기존 로그인 전용 Zod를 함께 생성합니다.
 pnpm api:generate
 ```
 
-생성 파일은 직접 수정하지 않습니다. 현재 조회 화면은 fixture용 TanStack Query와 기존 mutator를 사용합니다. 로그인 성공 응답의 토큰은 일반 조회 훅으로 브라우저에 반환하지 않습니다. 서버 OpenAPI의 성공 응답이 `*/*`로 선언되어 Orval 응답 검증은 unknown이므로, BFF가 쿠키 발급에 필요한 토큰·만료·닉네임을 별도로 확인합니다.
+생성 파일은 직접 수정하지 않습니다. `scripts/generate-admin-operations.mjs`는 Orval 출력과 스냅샷에서 연산별 생성 Zod·쿼리 타입 메타데이터를 연결합니다. 공지의 Java 정규식은 `scripts/transform-admin-openapi.mjs`가 생성 입력에서만 동등한 ECMAScript 문자 클래스로 바꾸며 원본 스냅샷은 보존합니다. 조회 화면은 TanStack Query와 기존 mutator를 사용합니다. BFF는 업스트림 응답·상태·오류 본문을 그대로 반환하고, 화면은 회원 `admin/isAdmin`, 템플릿 `default/isDefault` 이름을 함께 처리합니다. 서버 OpenAPI의 성공 응답이 `*/*`로 선언되어 Orval 응답 스키마는 unknown입니다. 로그인 토큰은 일반 조회 응답으로 브라우저에 반환하지 않으며 쿠키 발급에 필요한 토큰·만료·닉네임을 별도로 확인합니다.
 
 ## 화면과 데이터 경계
 
@@ -93,24 +93,24 @@ pnpm api:generate
 - `/notifications/templates`: 출석 리마인더의 현재 문구·예약 변경·기본 복귀·변경 이력을 제공합니다.
 - 사이드바는 대시보드(개요·분석), 관리(회원·스토리·오리지널·채팅방·결제·공지·감사 로그), 알림(캠페인·발송 통계·문구 템플릿) 세 구역입니다. 구역 버튼은 아이콘·굵은 글씨·화살표로 접고 펼치며 현재 경로의 구역은 항상 펼칩니다. 나머지 상태는 `manyak-admin:sidebar:v1` localStorage에 기억합니다. 하위 메뉴는 세로 안내선으로 묶고 목록과 상세에서 해당 메뉴를 활성 표시합니다.
 - 응답 타입은 `src/features/<도메인>/types.ts`에 있습니다. 차트와 목록·상세의 화면 BFF 응답을 타입으로 정의했습니다. 대시보드 숫자 카드는 회원·채팅 시작·턴·스토리·이프 지급·소진·결제 이력·금액의 8개이며 각각 누적과 오늘 값을 제공합니다.
-- API 생성물이 없는 동안 `src/features/shared/use-api.ts`가 TanStack Query와 기존 mutator를 연결합니다. 서버 계약 확정 후 생성 훅으로 대체할 수 있으며 화면 응답 구조는 BFF에서 맞춥니다.
+- 현재 `src/features/shared/use-api.ts`가 TanStack Query와 기존 mutator를 연결합니다. 요청 검증에는 생성 Zod를 사용합니다. 서버 계약 확정 후 생성 훅으로 대체할 수 있으며 서버 응답 본문은 BFF에서 변환하지 않습니다.
 - 가상 이메일 `member1@example.com`부터 `member1240@example.com`까지 정확 일치 검색이 가능합니다. 응답에는 이메일을 포함하지 않습니다. 대화 원문과 인증 토큰도 응답에 없습니다.
 - 목록의 `from`, `to`는 KST 날짜로 생성·가입·결제 완료·채팅 시작일에 적용합니다. `attendanceDate`, `creditDate`, `turnDate`는 관련 활동일 필터입니다. 이프는 `creditDirection=granted|spent`로 방향과 ADMIN 2-4의 사유를 함께 검사하며, 회원 목록과 상세는 회원별 원장을 공유합니다. `chatFrom/chatTo`, `aiFrom/aiTo`, `creationFrom/creationTo`는 각각 채팅 생성일·AI 호출일·제작 세션 생성일 기준입니다. 숫자 카드와 추이·분포는 목록과 같은 고정 원천을 집계합니다. 회원의 `chatCount`는 전체 채팅방 수이며 `periodChatCount`는 선택 기간에 생성한 수입니다.
-- 분포의 정의는 Grafana `service-stats`를 기준으로 합니다. 첫 사용자 입력 시간은 900초 이내, 입력 인물 수는 주변 인물만, AI 지연은 성공 호출만, 성공률은 완료 호출만 집계합니다. 결제 건수와 금액은 환불을 포함한 완료 이력 주문을 집계하고 같은 목록으로 이동합니다. 실제 DB 집계와 팀 계정 제외는 서버 연동 단계에서 구현합니다.
+- 분포의 정의는 Grafana `service-stats`를 기준으로 합니다. 첫 사용자 입력 시간은 900초 이내, 입력 인물 수는 주변 인물만, AI 지연은 성공 호출만, 성공률은 완료 호출만 집계합니다. 결제 건수와 금액은 환불을 포함한 완료 이력 주문을 집계하고 같은 목록으로 이동합니다. server 모드의 실제 DB 집계와 팀 계정 제외는 manyak-server가 수행합니다.
 
-Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics.ts`의 가상 집계를 반환합니다. 타입은 `DashboardAnalytics`이며 `asOf/from/to/todayActiveUsers/daily`를 제공합니다. 외부 Amplitude에 직접 연결하지 않으며, 화면의 출처 도움말은 집계 지연과 팀 계정 제외 기준을 설명합니다.
+Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics.ts`의 가상 집계를 반환합니다. 타입은 `DashboardAnalytics`이며 `asOf/from/to/todayActiveUsers/daily`를 제공합니다. server 모드에서는 manyak-server의 분석 API로 전달하며, 브라우저는 외부 Amplitude에 직접 연결하지 않습니다. 화면의 출처 도움말은 집계 지연과 팀 계정 제외 기준을 설명합니다.
 
 목록 머리글 정렬은 `sort=<열 키>&order=asc|desc`를 사용합니다. 허용 열은 `src/features/shared/list-config.ts`의 `listSorts`를 따르며, 기본은 생성·가입·완료·시작 시각 내림차순입니다. 전체 필터 결과를 정렬한 뒤 페이지를 나누고, 동률은 공개 식별자 오름차순으로 고정합니다. 환불 시각이 없는 주문은 방향과 무관하게 뒤에 둡니다. 범위 밖 페이지는 빈 `items`와 실제 총 페이지 수를 반환하고, 잘못된 page·size·sort·order는 400입니다. 이전 cursor·limit 요청은 지원하지 않습니다.
 
 상세 화면의 스토리·결제·채팅방 하위 목록도 같은 목록 BFF를 관계 필터와 함께 호출합니다. 서로 다른 하위 목록의 페이지·크기·정렬은 URL에서 `chatsPage/chatsSize/chatsSort/chatsOrder`처럼 목록 이름을 앞에 붙여 독립적으로 보존합니다. BFF에 보낼 때는 표준 `page/size/sort/order`로 변환합니다. 숫자 페이지와 정렬은 최신 ADMIN 공통 목록 계약을 따릅니다.
 
-오리지널 화면은 `src/features/originals/types.ts`와 화면 전용 Zod 폼 스키마를 사용합니다. 서버의 일반 제작·수정 필드명을 유지하며, 장르 태그는 서버 V91 카탈로그의 정식 이름을 사용합니다. BFF는 평탄한 등록·부분 수정 요청과 storyId 상세 응답, presign→PUT→objectKey 업로드와 표지 DELETE를 프로세스 메모리 fixture로 흉내 냅니다. 재시작·프로세스 변경 시 저장한 내용과 이미지는 사라집니다. 실제 서버 연결·스토리지 업로드·검수는 수행하지 않습니다. 요청/응답과 서버 연동 차이는 [오리지널 화면 데이터 경계](docs/ORIGINALS.md)에 있습니다. 상세의 ‘홍보 알림 만들기’는 `/notifications/campaigns/new?storyId=<id>`로 연결해 스토리 선택을 미리 채웁니다. 발행 상태인 공개 스토리를 선택하면 캠페인 작성 본문에 storyId를 전달합니다. 비공개·초안·없는 스토리는 거절합니다.
+오리지널 화면은 `src/features/originals/types.ts`와 화면 전용 Zod 폼 스키마를 사용합니다. 서버의 일반 제작·수정 필드명을 유지하며, 장르 태그는 서버 V91 카탈로그의 정식 이름을 사용합니다. BFF는 평탄한 등록·부분 수정 요청과 storyId 상세 응답, presign→PUT→objectKey 업로드와 표지 DELETE를 프로세스 메모리 fixture로 흉내 냅니다. 재시작·프로세스 변경 시 저장한 내용과 이미지는 사라집니다. 이는 fixture 모드의 동작입니다. server 모드에서는 관리자 API로 전달하며 업로드는 서버가 발급한 presigned URL로 수행합니다. 카탈로그 경로는 대응 서버 API가 없어 503을 유지합니다. 요청/응답과 서버 연동 차이는 [오리지널 화면 데이터 경계](docs/ORIGINALS.md)에 있습니다. 상세의 ‘홍보 알림 만들기’는 `/notifications/campaigns/new?storyId=<id>`로 연결해 스토리 선택을 미리 채웁니다. fixture 모드에서는 발행 상태인 공개 스토리를 선택하면 캠페인 작성 본문에 storyId를 전달합니다. 현재 서버 DTO에는 storyId가 없어 server 모드에서는 이동 대상 선택을 제공하지 않습니다. 비공개·초안·없는 스토리는 거절합니다.
 
 회원·스토리·오리지널·채팅방·결제·공지·감사 로그·캠페인 목록은 공통 필터 카드 첫 칸에 검색 입력을 둡니다. Enter 또는 적용 버튼으로 작성 중인 검색어와 필터를 함께 제출하고 page=1로 복귀합니다. 초기화는 검색·필터·정렬을 포함한 전체 쿼리를 지웁니다. 검색과 필터·정렬은 AND이며 전체 결과를 검색한 후 정렬·페이지 처리합니다. 앞뒤·연속 공백과 대소문자를 정리하며, 화면에서 빈 검색은 쿼리를 제거해 해제하며, 명시한 빈 q·50자 초과 및 중복 q는 400입니다. UUID와 회원 이메일은 정확 일치, 제목·닉네임은 지정한 대상의 부분 일치입니다.
 
 회원 상세의 거래·출석은 `/api/members/{id}/transactions`와 `/attendance`에서 같은 숫자 페이지 계약으로 조회합니다. URL 상태는 `transactionsPage/transactionsSize`, `attendancePage/attendanceSize`로 분리합니다. 거래 원장은 시각·사유·금액·거래 후 잔액만 노출하며 내부 ID와 가상의 transactionId를 사용하지 않습니다. 결제 상품의 `if_5000` 등 상품 ID는 계약의 `productId`로 표시합니다.
 
-공지·알림 변경은 `src/fixtures/`의 프로세스 메모리에만 반영되며 재시작 시 초기화됩니다. 데이터 fixture는 실제 발송이나 업스트림 변경을 수행하지 않으며, 미리보기 우회 외의 로그인 인증은 실제 서버를 사용합니다. 목록은 세션 결정에 따라 `page`·`size`·`totalElements`·`totalPages` 및 `sort`·`order`를 사용합니다. 상세·작성 응답의 도메인 필드명은 참조 서버 스펙을 유지합니다. 공지 정보성 알림은 서비스 동의자, 광고성은 광고 동의자 대상이며 KST 야간 안내를 제공합니다. 직접 작성하는 캠페인은 서버 계약에 따라 광고성 전용이며 정보성 선택은 공지 작성 경로를 안내합니다.
+fixture 모드의 공지·알림 변경은 `src/fixtures/`의 프로세스 메모리에만 반영되며 재시작 시 초기화됩니다. server 모드는 관리자 API로 전달합니다. 데이터 fixture는 실제 발송이나 업스트림 변경을 수행하지 않으며, 미리보기 우회 외의 로그인 인증은 실제 서버를 사용합니다. 목록은 세션 결정에 따라 `page`·`size`·`totalElements`·`totalPages` 및 `sort`·`order`를 사용합니다. 상세·작성 응답의 도메인 필드명은 참조 서버 스펙을 유지합니다. 공지 정보성 알림은 서비스 동의자, 광고성은 광고 동의자 대상이며 KST 야간 안내를 제공합니다. 직접 작성하는 캠페인은 서버 계약에 따라 광고성 전용이며 정보성 선택은 공지 작성 경로를 안내합니다.
 
 차트 분포 응답은 `points[].link { list, params }`를 사용하며 화면이 목록 URL을 조립합니다. 출석은 `daily[].attendance`로 조회합니다. AI 기능은 저장 값 4종으로 구분합니다. 회원 상세는 집계 필드만 반환하고 관계 목록은 별도 BFF에서 조회합니다. 게스트 소유 스토리의 owner와 제작 세션 없는 스토리의 supportingCharacterCount는 null입니다.
 

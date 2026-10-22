@@ -1,0 +1,3942 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Manyak admin API",
+    "description": "관리자 경로와 해당 경로가 참조하는 구성 요소만 추출했다.",
+    "version": "v1"
+  },
+  "x-source": {
+    "input": "https://dev-api.manyak.app/v3/api-docs",
+    "receivedAt": "2026-10-22T04:09:32.257Z"
+  },
+  "paths": {
+    "/api/v1/admin/push/templates/{templateKey}": {
+      "get": {
+        "tags": ["admin-push-controller"],
+        "operationId": "template",
+        "parameters": [
+          {
+            "name": "templateKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPushTemplateResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["admin-push-controller"],
+        "operationId": "upsert",
+        "parameters": [
+          {
+            "name": "templateKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPushTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPushTemplateResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["admin-push-controller"],
+        "operationId": "reset",
+        "parameters": [
+          {
+            "name": "templateKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPushReasonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPushTemplateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/credits/policies/{policyKey}": {
+      "put": {
+        "tags": ["admin-credit-controller"],
+        "operationId": "upsert_1",
+        "parameters": [
+          {
+            "name": "policyKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreditPolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCreditPolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["admin-credit-controller"],
+        "operationId": "delete_2",
+        "parameters": [
+          {
+            "name": "policyKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreditPolicyDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCreditPolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/push/campaigns": {
+      "get": {
+        "tags": ["admin-push-controller"],
+        "operationId": "list_1",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["SCHEDULED", "SENDING", "SENT", "CANCELED", "FAILED"]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "createdAt"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "desc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCampaignPageResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["admin-push-controller"],
+        "operationId": "create_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCampaignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCampaignResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/push/campaigns/{campaignId}/retry": {
+      "post": {
+        "tags": ["admin-push-controller"],
+        "operationId": "retry",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPushReasonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCampaignResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/push/campaigns/{campaignId}/cancel": {
+      "post": {
+        "tags": ["admin-push-controller"],
+        "operationId": "cancel",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPushReasonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCampaignResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/originals": {
+      "get": {
+        "tags": ["admin-original-controller"],
+        "operationId": "list_2",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["admin-original-controller"],
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {}
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/admin/originals/{storyId}/images/presign": {
+      "post": {
+        "tags": ["admin-original-controller"],
+        "operationId": "presign_1",
+        "parameters": [
+          {
+            "name": "storyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImagePresignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImagePresignResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/originals/images/presign": {
+      "post": {
+        "tags": ["admin-original-controller"],
+        "operationId": "presignDraft",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImagePresignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImagePresignResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/notices": {
+      "get": {
+        "tags": ["admin-notice-controller"],
+        "operationId": "list_3",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminNoticesRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminNoticePageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["admin-notice-controller"],
+        "operationId": "create_4",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNoticeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminNoticeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/notices/{noticeId}/unpublish": {
+      "post": {
+        "tags": ["admin-notice-controller"],
+        "operationId": "unpublish",
+        "parameters": [
+          {
+            "name": "noticeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticeReasonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminNoticeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/notices/{noticeId}/publish": {
+      "post": {
+        "tags": ["admin-notice-controller"],
+        "operationId": "publish",
+        "parameters": [
+          {
+            "name": "noticeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishNoticeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminNoticeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/moderation/holds/{submissionId}/release": {
+      "post": {
+        "tags": ["admin-moderation-controller"],
+        "operationId": "release",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminOperationReason"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminHoldReleased"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/members/{memberId}/suspension": {
+      "post": {
+        "tags": ["admin-suspension-controller"],
+        "operationId": "suspend",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminOperationReason"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSuspensionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["admin-suspension-controller"],
+        "operationId": "unsuspend",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminOperationReason"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSuspensionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/credits/adjustments": {
+      "post": {
+        "tags": ["admin-credit-controller"],
+        "operationId": "adjust",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreditAdjustmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCreditAdjustmentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/auth/login/google": {
+      "post": {
+        "tags": ["admin-auth-controller"],
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLoginResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/originals/{storyId}": {
+      "get": {
+        "tags": ["admin-original-controller"],
+        "operationId": "detail",
+        "parameters": [
+          {
+            "name": "storyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {}
+          }
+        }
+      },
+      "patch": {
+        "tags": ["admin-original-controller"],
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "name": "storyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {}
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/admin/notices/{noticeId}": {
+      "get": {
+        "tags": ["admin-notice-controller"],
+        "operationId": "detail_1",
+        "parameters": [
+          {
+            "name": "noticeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminNoticeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["admin-notice-controller"],
+        "operationId": "delete_4",
+        "parameters": [
+          {
+            "name": "noticeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticeReasonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": ["admin-notice-controller"],
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "noticeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNoticeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminNoticeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/stories": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "stories",
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminStoriesRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageResponseAdminStoryListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/stories/{storyId}": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "story",
+        "parameters": [
+          {
+            "name": "storyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStoryDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/push/delivery-stats": {
+      "get": {
+        "tags": ["admin-push-delivery-controller"],
+        "operationId": "stats",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "STORY_COMPLETED",
+                "STORY_MODERATION_COMPLETED",
+                "ATTENDANCE_REMINDER",
+                "PROMOTION",
+                "NOTICE"
+              ]
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["SERVICE", "MARKETING"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushDeliveryStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/push/campaigns/{campaignId}": {
+      "get": {
+        "tags": ["admin-push-controller"],
+        "operationId": "detail_3",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCampaignResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/push/campaigns/target-count": {
+      "get": {
+        "tags": ["admin-push-controller"],
+        "operationId": "targetCount",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["SERVICE", "MARKETING"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCampaignTargetResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/payments/orders": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "payments",
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminPaymentsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageResponseAdminPaymentOrderResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/payments/orders/{orderId}": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "payment",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPaymentDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/moderation/holds": {
+      "get": {
+        "tags": ["admin-moderation-controller"],
+        "operationId": "holds",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminHoldListRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminHoldPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/members": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "members",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminMembersRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageResponseAdminMemberListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/members/{memberId}": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "member",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMemberDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/members/{memberId}/transactions": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "transactions",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminListRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageResponseAdminTransactionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/members/{memberId}/attendance": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "attendance",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminListRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageResponseAdminAttendanceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/dashboard/summary": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "summary",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDashboardSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/dashboard/charts": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "charts",
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminChartsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminChartsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/dashboard/analytics": {
+      "get": {
+        "tags": ["admin-analytics-controller"],
+        "operationId": "analytics",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAnalyticsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/credits/policies": {
+      "get": {
+        "tags": ["admin-credit-controller"],
+        "operationId": "policies",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCreditPoliciesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/chats": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "chats",
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminChatsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageResponseAdminChatResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/chats/{chatId}": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "chat",
+        "parameters": [
+          {
+            "name": "chatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminChatResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit-logs": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "operationId": "auditLogs",
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminAuditLogsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageResponseAdminAuditLogResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/originals/{storyId}/thumbnail": {
+      "delete": {
+        "tags": ["admin-original-controller"],
+        "operationId": "deleteThumbnail_1",
+        "parameters": [
+          {
+            "name": "storyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OriginalReason"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {}
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdminPushTemplateResponse": {
+        "type": "object",
+        "properties": {
+          "templateKey": {
+            "type": "string"
+          },
+          "effective": {
+            "$ref": "#/components/schemas/AdminPushEffectiveTextResponse"
+          },
+          "overrides": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminPushTemplateOverrideResponse"
+            }
+          }
+        }
+      },
+      "AdminPushEffectiveTextResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "default": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AdminPushTemplateOverrideResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effectiveUntil": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AdminPushTemplateRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 0
+          },
+          "effectiveFrom": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "effectiveUntil": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": ["body", "reason", "title"]
+      },
+      "AdminPushReasonRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": ["reason"]
+      },
+      "AdminCreditPolicyRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "effectiveUntil": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": ["reason"]
+      },
+      "AdminCreditPolicyResponse": {
+        "type": "object",
+        "properties": {
+          "policyKey": {
+            "type": "string"
+          },
+          "defaultAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "effectiveAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "minimum": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "override": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AdminCreditPolicyOverrideResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "AdminCreditPolicyOverrideResponse": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "effectiveUntil": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminCreditPolicyDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": ["reason"]
+      },
+      "AdminCampaignPageResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCampaignResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AdminCampaignResponse": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["SERVICE", "MARKETING"]
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["SCHEDULED", "SENDING", "SENT", "CANCELED", "FAILED"]
+          },
+          "noticeId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "targetCount": {
+            "type": ["integer", "null"],
+            "format": "int32"
+          },
+          "sentCount": {
+            "type": ["integer", "null"],
+            "format": "int32"
+          },
+          "startedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deliveredMembers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deliveredDevices": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "failedDevices": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminCampaignRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 0
+          },
+          "scheduledAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": ["body", "reason", "title"]
+      },
+      "ImagePresignRequest": {
+        "type": "object",
+        "description": "이미지 업로드용 presigned URL 발급 요청",
+        "properties": {
+          "kind": {
+            "type": ["string", "null"],
+            "description": "업로드 대상. 객체 키 prefix가 갈린다",
+            "enum": ["COVER", "CHARACTER"],
+            "example": "COVER"
+          },
+          "contentType": {
+            "type": ["string", "null"],
+            "description": "image/jpeg · image/png · image/webp 중 하나",
+            "example": "image/webp",
+            "minLength": 1
+          },
+          "contentLength": {
+            "type": ["integer", "null"],
+            "format": "int64",
+            "description": "바이트 크기(1~5,242,880). 클라이언트는 이 값 그대로 PUT해야 한다",
+            "example": 204800,
+            "maximum": 5242880,
+            "minimum": 1
+          }
+        },
+        "required": ["contentLength", "contentType", "kind"]
+      },
+      "ImagePresignResponse": {
+        "type": "object",
+        "description": "presigned URL 발급 응답",
+        "properties": {
+          "uploadUrl": {
+            "type": "string",
+            "description": "이 URL로 PUT한다. 요청한 Content-Type·Content-Length 그대로 보내야 서명이 맞는다"
+          },
+          "objectKey": {
+            "type": "string",
+            "description": "PUT을 마친 뒤 연결 요청에 그대로 넣는 객체 키",
+            "example": "thumbnails/uploaded/3f2504e0-.../8f1c....webp"
+          },
+          "expiresInSeconds": {
+            "type": "integer",
+            "format": "int64",
+            "description": "서명 만료(초)",
+            "example": 600
+          }
+        }
+      },
+      "AdminNoticesRequest": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": ["string", "null"],
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "status": {
+            "type": ["string", "null"],
+            "enum": ["DRAFT", "PUBLISHED"]
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1
+          },
+          "sort": {
+            "type": "string"
+          },
+          "order": {
+            "type": "string",
+            "pattern": "asc|desc"
+          },
+          "cursor": {
+            "type": ["string", "null"]
+          },
+          "limit": {
+            "type": ["string", "null"]
+          }
+        }
+      },
+      "AdminNoticePageResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminNoticeResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminNoticeResponse": {
+        "type": "object",
+        "properties": {
+          "noticeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": ["string", "null"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DRAFT", "PUBLISHED"]
+          },
+          "publishedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "notifiedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/NoticeAuthorResponse"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notified": {
+            "type": ["boolean", "null"]
+          }
+        }
+      },
+      "NoticeAuthorResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nickname": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateNoticeRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 0
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": ["body", "reason", "title"]
+      },
+      "NoticeReasonRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": ["reason"]
+      },
+      "PublishNoticeRequest": {
+        "type": "object",
+        "properties": {
+          "notify": {
+            "type": "boolean"
+          },
+          "notificationKind": {
+            "type": ["string", "null"],
+            "enum": ["SERVICE", "MARKETING"]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": ["reason"]
+      },
+      "AdminOperationReason": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": ["reason"]
+      },
+      "AdminHoldReleased": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "APPROVED", "REJECTED", "FAILED"]
+          },
+          "attempt": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "releasedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminSuspensionResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminCreditAdjustmentRequest": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["GRANT", "REVOKE"]
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 100000,
+            "minimum": 1
+          },
+          "expiresInDays": {
+            "type": ["integer", "null"],
+            "format": "int32"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0,
+            "pattern": "[A-Za-z0-9-]+"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": ["idempotencyKey", "reason"]
+      },
+      "AdminCreditAdjustmentResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["GRANT", "REVOKE"]
+          },
+          "requestedAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "appliedAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "shortfall": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "balance": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "duplicated": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminLoginRequest": {
+        "type": "object",
+        "properties": {
+          "idToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["idToken"]
+      },
+      "AdminLoginResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "admin": {
+            "$ref": "#/components/schemas/AdminMemberSummary"
+          },
+          "tokenType": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminMemberSummary": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "admin": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateNoticeRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": ["string", "null"],
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "(?sU).*\\S.*"
+          },
+          "body": {
+            "type": ["string", "null"],
+            "maxLength": 5000,
+            "minLength": 1,
+            "pattern": "(?sU).*\\S.*"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": ["reason"]
+      },
+      "AdminStoriesRequest": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1
+          },
+          "cursor": {
+            "type": ["string", "null"]
+          },
+          "limit": {
+            "type": ["string", "null"]
+          },
+          "sort": {
+            "type": ["string", "null"]
+          },
+          "order": {
+            "type": "string",
+            "pattern": "asc|desc"
+          },
+          "q": {
+            "type": ["string", "null"],
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "from": {
+            "type": ["string", "null"]
+          },
+          "to": {
+            "type": ["string", "null"]
+          },
+          "aiFrom": {
+            "type": ["string", "null"]
+          },
+          "aiTo": {
+            "type": ["string", "null"]
+          },
+          "aiFeature": {
+            "type": ["string", "null"]
+          },
+          "aiStatus": {
+            "type": ["string", "null"]
+          },
+          "hasLatency": {
+            "type": ["boolean", "null"]
+          },
+          "scope": {
+            "type": ["string", "null"]
+          },
+          "genre": {
+            "type": ["string", "null"]
+          },
+          "visibility": {
+            "type": ["string", "null"]
+          },
+          "moderationStatus": {
+            "type": ["string", "null"]
+          },
+          "memberId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "supportingCharacterCount": {
+            "type": ["integer", "null"],
+            "format": "int32",
+            "maximum": 5,
+            "minimum": 0
+          },
+          "chatFrom": {
+            "type": ["string", "null"]
+          },
+          "chatTo": {
+            "type": ["string", "null"]
+          },
+          "creationFrom": {
+            "type": ["string", "null"]
+          },
+          "creationTo": {
+            "type": ["string", "null"]
+          }
+        }
+      },
+      "AdminPageResponseAdminStoryListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminStoryListResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminStoryListResponse": {
+        "type": "object",
+        "properties": {
+          "storyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "genre": {
+            "type": "string"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "scope": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string"
+          },
+          "moderationStatus": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supportingCharacterCount": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "owner": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AdminMemberSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chatCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalTurns": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminStoryDetailResponse": {
+        "type": "object",
+        "properties": {
+          "storyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "genre": {
+            "type": "string"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "scope": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string"
+          },
+          "moderationStatus": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supportingCharacterCount": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "owner": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AdminMemberSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chatCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalTurns": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retention": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminRetention"
+            }
+          },
+          "recentChats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminChatResponse"
+            }
+          }
+        }
+      },
+      "AdminRetention": {
+        "type": "object",
+        "properties": {
+          "turn": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AdminChatResponse": {
+        "type": "object",
+        "properties": {
+          "chatId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "story": {
+            "$ref": "#/components/schemas/AdminStorySummary"
+          },
+          "member": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AdminMemberSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "startedAs": {
+            "type": "string"
+          },
+          "turnCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastActiveAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "creditsSpent": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "firstMessageSeconds": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          }
+        }
+      },
+      "AdminStorySummary": {
+        "type": "object",
+        "properties": {
+          "storyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "genre": {
+            "type": "string"
+          }
+        }
+      },
+      "PushDeliveryStatsResponse": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PushDeliveryStatsItem"
+            }
+          }
+        }
+      },
+      "PushDeliveryStatsItem": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "STORY_COMPLETED",
+              "STORY_MODERATION_COMPLETED",
+              "ATTENDANCE_REMINDER",
+              "PROMOTION",
+              "NOTICE"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["SERVICE", "MARKETING"]
+          },
+          "requested": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deliveredMembers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deliveredDevices": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "failedDevices": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminCampaignTargetResponse": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["SERVICE", "MARKETING"]
+          },
+          "targetCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "nightEligibleCount": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "nightNow": {
+            "type": "boolean"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminPaymentsRequest": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1
+          },
+          "cursor": {
+            "type": ["string", "null"]
+          },
+          "limit": {
+            "type": ["string", "null"]
+          },
+          "sort": {
+            "type": ["string", "null"]
+          },
+          "order": {
+            "type": "string",
+            "pattern": "asc|desc"
+          },
+          "q": {
+            "type": ["string", "null"],
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "from": {
+            "type": ["string", "null"]
+          },
+          "to": {
+            "type": ["string", "null"]
+          },
+          "status": {
+            "type": ["string", "null"],
+            "enum": ["PENDING", "COMPLETED", "REFUNDED"]
+          },
+          "memberId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          }
+        }
+      },
+      "AdminPageResponseAdminPaymentOrderResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminPaymentOrderResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminPaymentOrderResponse": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member": {
+            "$ref": "#/components/schemas/AdminMemberSummary"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "COMPLETED", "REFUNDED"]
+          },
+          "priceKrw": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "creditAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "refundedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "reversalShortfall": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          }
+        }
+      },
+      "AdminPaymentDetailResponse": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member": {
+            "$ref": "#/components/schemas/AdminMemberSummary"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "COMPLETED", "REFUNDED"]
+          },
+          "priceKrw": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "creditAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "refundedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "reversalShortfall": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "firstPaidAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "before": {
+            "$ref": "#/components/schemas/AdminPaymentUsage"
+          },
+          "after": {
+            "$ref": "#/components/schemas/AdminPaymentUsage"
+          }
+        }
+      },
+      "AdminPaymentUsage": {
+        "type": "object",
+        "properties": {
+          "turns": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "stories": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "creditsSpent": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminHoldListRequest": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1
+          },
+          "sort": {
+            "type": "string"
+          },
+          "order": {
+            "type": "string",
+            "pattern": "asc|desc"
+          },
+          "limit": {
+            "type": ["string", "null"]
+          },
+          "cursor": {
+            "type": ["string", "null"]
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminHoldPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminHoldSummary"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminHoldSummary": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["CREATE", "UPDATE"]
+          },
+          "storyId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "holdReason": {
+            "type": "string"
+          },
+          "attempt": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "heldAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminMembersRequest": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1
+          },
+          "cursor": {
+            "type": ["string", "null"]
+          },
+          "limit": {
+            "type": ["string", "null"]
+          },
+          "sort": {
+            "type": ["string", "null"]
+          },
+          "order": {
+            "type": "string",
+            "pattern": "asc|desc"
+          },
+          "q": {
+            "type": ["string", "null"],
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "from": {
+            "type": ["string", "null"]
+          },
+          "to": {
+            "type": ["string", "null"]
+          },
+          "status": {
+            "type": ["string", "null"],
+            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
+          },
+          "excludeDeleted": {
+            "type": ["boolean", "null"]
+          },
+          "chatBucket": {
+            "type": ["integer", "null"],
+            "format": "int32",
+            "maximum": 4,
+            "minimum": 0
+          },
+          "chatFrom": {
+            "type": ["string", "null"]
+          },
+          "chatTo": {
+            "type": ["string", "null"]
+          },
+          "creditDirection": {
+            "type": ["string", "null"]
+          },
+          "creditDate": {
+            "type": ["string", "null"]
+          },
+          "attendanceDate": {
+            "type": ["string", "null"]
+          }
+        }
+      },
+      "AdminPageResponseAdminMemberListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminMemberListResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminMemberListResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastActiveAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "creditsSpent": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paidKrw": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "chatCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "periodChatCount": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "admin": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AdminMemberDetailResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastActiveAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "creditsSpent": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paidKrw": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "chatCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "periodChatCount": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "creditBalance": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "storyCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deletedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "admin": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AdminListRequest": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1
+          },
+          "cursor": {
+            "type": ["string", "null"]
+          },
+          "limit": {
+            "type": ["string", "null"]
+          },
+          "sort": {
+            "type": ["string", "null"]
+          },
+          "order": {
+            "type": "string",
+            "pattern": "asc|desc"
+          }
+        }
+      },
+      "AdminPageResponseAdminTransactionResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminTransactionResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminTransactionResponse": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "balanceAfter": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminPageResponseAdminAttendanceResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminAttendanceResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminAttendanceResponse": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "creditAmount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminDashboardSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "todayStartsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "members": {
+            "$ref": "#/components/schemas/AdminMemberMetrics"
+          },
+          "chats": {
+            "$ref": "#/components/schemas/AdminChatMetrics"
+          },
+          "stories": {
+            "$ref": "#/components/schemas/AdminStoryMetrics"
+          },
+          "credits": {
+            "$ref": "#/components/schemas/AdminCreditMetrics"
+          },
+          "payments": {
+            "$ref": "#/components/schemas/AdminPaymentMetrics"
+          }
+        }
+      },
+      "AdminMemberMetrics": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "joinedToday": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminChatMetrics": {
+        "type": "object",
+        "properties": {
+          "startedTotal": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startedToday": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "turnsTotal": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "turnsToday": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminStoryMetrics": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdToday": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminCreditMetrics": {
+        "type": "object",
+        "properties": {
+          "grantedTotal": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "grantedToday": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "spentTotal": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "spentToday": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminPaymentMetrics": {
+        "type": "object",
+        "properties": {
+          "completedTotal": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completedToday": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amountKrwTotal": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amountKrwToday": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminChartsRequest": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AdminChartsResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminDailyMetrics"
+            }
+          },
+          "distributions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminDistribution"
+            }
+          }
+        }
+      },
+      "AdminDailyMetrics": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "joined": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "chats": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "turns": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "stories": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "granted": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "spent": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "payments": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revenue": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendance": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminDistribution": {
+        "type": "object",
+        "properties": {
+          "chartId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminChartPoint"
+            }
+          }
+        }
+      },
+      "AdminChartPoint": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number",
+            "format": "double"
+          },
+          "link": {
+            "$ref": "#/components/schemas/AdminChartLink"
+          }
+        }
+      },
+      "AdminChartLink": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "string"
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AdminAnalyticsResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "todayActiveUsers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsDay"
+            }
+          }
+        }
+      },
+      "AnalyticsDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "activeUsers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "newUsers": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminCreditPoliciesResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCreditPolicyResponse"
+            }
+          }
+        }
+      },
+      "AdminChatsRequest": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1
+          },
+          "cursor": {
+            "type": ["string", "null"]
+          },
+          "limit": {
+            "type": ["string", "null"]
+          },
+          "sort": {
+            "type": ["string", "null"]
+          },
+          "order": {
+            "type": "string",
+            "pattern": "asc|desc"
+          },
+          "q": {
+            "type": ["string", "null"],
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "from": {
+            "type": ["string", "null"]
+          },
+          "to": {
+            "type": ["string", "null"]
+          },
+          "aiFrom": {
+            "type": ["string", "null"]
+          },
+          "aiTo": {
+            "type": ["string", "null"]
+          },
+          "aiFeature": {
+            "type": ["string", "null"]
+          },
+          "aiStatus": {
+            "type": ["string", "null"]
+          },
+          "hasLatency": {
+            "type": ["boolean", "null"]
+          },
+          "storyId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "memberId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "startedAs": {
+            "type": ["string", "null"]
+          },
+          "turnBucket": {
+            "type": ["integer", "null"],
+            "format": "int32",
+            "maximum": 10,
+            "minimum": 0
+          },
+          "hasFirstMessage": {
+            "type": ["boolean", "null"]
+          },
+          "turnDate": {
+            "type": ["string", "null"]
+          }
+        }
+      },
+      "AdminPageResponseAdminChatResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminChatResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminAuditLogsRequest": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1
+          },
+          "cursor": {
+            "type": ["string", "null"]
+          },
+          "limit": {
+            "type": ["string", "null"]
+          },
+          "sort": {
+            "type": ["string", "null"]
+          },
+          "order": {
+            "type": "string",
+            "pattern": "asc|desc"
+          },
+          "q": {
+            "type": ["string", "null"],
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "from": {
+            "type": ["string", "null"]
+          },
+          "to": {
+            "type": ["string", "null"]
+          },
+          "adminId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "action": {
+            "type": ["string", "null"],
+            "enum": [
+              "MEMBER_SEARCHED",
+              "MEMBER_VIEWED",
+              "MEMBER_SUSPENDED",
+              "MEMBER_UNSUSPENDED",
+              "CREDIT_GRANTED",
+              "CREDIT_REVOKED",
+              "CREDIT_POLICY_UPSERTED",
+              "CREDIT_POLICY_DELETED",
+              "PUSH_CAMPAIGN_CREATED",
+              "PUSH_CAMPAIGN_CANCELED",
+              "PUSH_CAMPAIGN_RETRIED",
+              "PUSH_TEMPLATE_UPSERTED",
+              "PUSH_TEMPLATE_RESET",
+              "NOTICE_CREATED",
+              "NOTICE_UPDATED",
+              "NOTICE_PUBLISHED",
+              "NOTICE_UNPUBLISHED",
+              "NOTICE_DELETED",
+              "ORIGINAL_CREATED",
+              "ORIGINAL_UPDATED",
+              "ORIGINAL_THUMBNAIL_DELETED",
+              "SUBMISSION_HOLD_RELEASED"
+            ]
+          },
+          "targetType": {
+            "type": ["string", "null"],
+            "enum": [
+              "MEMBER_QUERY",
+              "MEMBER",
+              "CREDIT_POLICY",
+              "PUSH_CAMPAIGN",
+              "PUSH_TEMPLATE",
+              "NOTICE",
+              "SUBMISSION",
+              "STORY"
+            ]
+          },
+          "category": {
+            "type": ["string", "null"],
+            "enum": ["CHANGE", "ACCESS"]
+          },
+          "targetId": {
+            "type": ["string", "null"],
+            "maxLength": 255,
+            "minLength": 1
+          }
+        }
+      },
+      "AdminPageResponseAdminAuditLogResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminAuditLogResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminAuditLogResponse": {
+        "type": "object",
+        "properties": {
+          "auditLogId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "admin": {
+            "$ref": "#/components/schemas/AdminMemberSummary"
+          },
+          "category": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": ["string", "null"]
+          },
+          "before": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "after": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JsonNode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "JsonNode": {
+        "type": "object",
+        "properties": {
+          "string": {
+            "type": "boolean"
+          },
+          "container": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "integralNumber": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "boolean"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": [
+              "ARRAY",
+              "BINARY",
+              "BOOLEAN",
+              "MISSING",
+              "NULL",
+              "NUMBER",
+              "OBJECT",
+              "POJO",
+              "STRING"
+            ]
+          },
+          "int": {
+            "type": "boolean"
+          },
+          "long": {
+            "type": "boolean"
+          },
+          "short": {
+            "type": "boolean"
+          },
+          "double": {
+            "type": "boolean"
+          },
+          "bigDecimal": {
+            "type": "boolean"
+          },
+          "bigInteger": {
+            "type": "boolean"
+          },
+          "valueNode": {
+            "type": "boolean"
+          },
+          "object": {
+            "type": "boolean"
+          },
+          "pojo": {
+            "type": "boolean"
+          },
+          "textual": {
+            "type": "boolean",
+            "deprecated": true
+          },
+          "boolean": {
+            "type": "boolean"
+          },
+          "binary": {
+            "type": "boolean"
+          },
+          "array": {
+            "type": "boolean"
+          },
+          "empty": {
+            "type": "boolean"
+          },
+          "null": {
+            "type": "boolean"
+          },
+          "float": {
+            "type": "boolean"
+          },
+          "embeddedValue": {
+            "type": "boolean"
+          }
+        }
+      },
+      "OriginalReason": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "description": "access 토큰(HS256 JWT). `Authorization: Bearer <accessToken>` 로 보낸다.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
