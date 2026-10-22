@@ -6,6 +6,7 @@ import type {
 } from '@/features/members/types';
 import type { PaymentDetail } from '@/features/payments/types';
 import type { Story, StoryDetail } from '@/features/stories/types';
+import { originalGenres } from '@/fixtures/original-genres';
 import { kstDate } from '@/fixtures/query';
 
 function id(group: number, index: number) {
@@ -60,11 +61,16 @@ export function memberSummary(member: MemberListItem) {
   return { memberId, nickname, status, isAdmin, createdAt };
 }
 
+// 상위 30개 제한을 미리보기에서 확인할 수 있도록 35개 장르를 사용한다.
+const storyGenres = [
+  ...new Set(['로맨스', '판타지', '일상', '미스터리', 'SF', ...originalGenres]),
+].slice(0, 35);
+
 export const stories: Story[] = Array.from({ length: 36 }, (_, i) => ({
   storyId: id(2, i),
   title: titles[i % 8] + (i >= 8 ? ` ${i + 1}` : ''),
   description: '선택에 따라 새로운 이야기가 펼쳐지는 인터랙티브 스토리입니다.',
-  genre: ['로맨스', '판타지', '일상', '미스터리', 'SF'][i % 5],
+  genre: storyGenres[i % storyGenres.length],
   scope: i % 3 === 0 ? 'original' : 'user',
   visibility: i % 5 === 0 ? 'PRIVATE' : 'PUBLIC',
   moderationStatus: i % 6 === 0 ? 'HELD' : 'APPROVED',

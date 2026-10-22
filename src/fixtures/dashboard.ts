@@ -1,3 +1,4 @@
+import { genreDepthTitle } from '@/features/dashboard/chart-data';
 import type {
   ChartLink,
   DailyMetrics,
@@ -242,7 +243,7 @@ export function getDashboardCharts(days: number): DashboardCharts {
     distributions: [
       distribution(
         'genre-depth',
-        '장르별 채팅 깊이',
+        genreDepthTitle,
         '채팅 시작일 기준 · 복수 장르는 각각 포함 · 평균 현재 턴',
         '턴',
         [

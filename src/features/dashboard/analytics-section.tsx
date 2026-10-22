@@ -3,7 +3,14 @@
 import { useId } from 'react';
 
 import { Tooltip } from '@base-ui/react/tooltip';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import {
+  CartesianGrid,
+  LabelList,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 import { DataTable, dateTime, NumberValue } from '@/components/admin/data-ui';
 import { ExternalToolLink } from '@/components/admin/external-tool-link';
@@ -11,9 +18,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
+import { chartNumber } from '@/features/dashboard/chart-data';
 import type { DashboardAnalytics } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 import { externalLinks } from '@/lib/external-links';
@@ -60,23 +71,26 @@ function AnalyticsSource() {
   );
 }
 
-function AnalyticsTrend({
-  daily,
-  metric,
-}: {
-  daily: DashboardAnalytics['daily'];
-  metric: AnalyticsMetric;
-}) {
+function AnalyticsTrend({ daily }: { daily: DashboardAnalytics['daily'] }) {
+  const lastDate = daily.at(-1)?.date;
+
   return (
-    <Card className="min-w-0">
-      <h3 className="font-semibold">{labels[metric]}</h3>
+    <Card className="min-w-0 lg:col-span-2">
+      <h3 className="font-semibold">활성·신규 사용자 추이</h3>
       <ChartContainer
         config={{
-          [metric]: { label: labels[metric], color: 'var(--primary)' },
+          activeUsers: { label: labels.activeUsers, color: 'var(--primary)' },
+          newUsers: {
+            label: labels.newUsers,
+            color: 'var(--muted-foreground)',
+          },
         }}
-        className="mt-6 h-[200px] w-full"
-        aria-label={`${labels[metric]} 추이`}>
-        <AreaChart accessibilityLayer data={daily}>
+        className="mt-6 h-[240px] w-full"
+        aria-label="활성·신규 사용자 추이">
+        <LineChart
+          accessibilityLayer
+          data={daily}
+          margin={{ top: 20, right: 88, bottom: 8, left: 0 }}>
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="date"
@@ -85,16 +99,42 @@ function AnalyticsTrend({
             axisLine={false}
             minTickGap={24}
           />
-          <YAxis width={36} tickLine={false} axisLine={false} />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          <Area
-            type="monotone"
-            dataKey={metric}
-            stroke="var(--primary)"
-            fill="var(--primary)"
-            fillOpacity={0.08}
+          <YAxis width={40} tickLine={false} axisLine={false} unit="명" />
+          <ChartTooltip
+            cursor={<ChartCrosshair />}
+            isAnimationActive={false}
+            content={<ChartTooltipContent />}
           />
-        </AreaChart>
+          {(['activeUsers', 'newUsers'] as const).map((metric) => (
+            <Line
+              key={metric}
+              type="linear"
+              dataKey={metric}
+              stroke={`var(--color-${metric})`}
+              strokeWidth={2}
+              strokeDasharray={metric === 'newUsers' ? '4 3' : undefined}
+              dot={false}
+              activeDot={{ r: 4 }}
+              isAnimationActive={false}>
+              <LabelList
+                dataKey={(point: DashboardAnalytics['daily'][number]) =>
+                  point.date === lastDate
+                    ? `${metric === 'activeUsers' ? '활성' : '신규'} ${chartNumber(point[metric])}`
+                    : null
+                }
+                position="right"
+                dy={metric === 'activeUsers' ? -10 : 12}
+                fill={
+                  metric === 'activeUsers'
+                    ? 'var(--primary-text)'
+                    : 'var(--foreground)'
+                }
+                fontSize={11}
+              />
+            </Line>
+          ))}
+          <ChartLegend content={<ChartLegendContent />} />
+        </LineChart>
       </ChartContainer>
     </Card>
   );
@@ -138,7 +178,7 @@ export function AnalyticsSection({ days }: { days: string }) {
       ) : data ? (
         <>
           <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
-            <Card className="flex flex-col lg:col-span-2 xl:col-span-1">
+            <Card className="flex flex-col">
               <h3 className="text-sm text-muted-foreground">
                 오늘 활성 사용자
               </h3>
@@ -157,8 +197,7 @@ export function AnalyticsSection({ days }: { days: string }) {
                 {dateTime(data.asOf)} KST 집계 기준
               </p>
             </Card>
-            <AnalyticsTrend daily={data.daily} metric="activeUsers" />
-            <AnalyticsTrend daily={data.daily} metric="newUsers" />
+            <AnalyticsTrend daily={data.daily} />
           </div>
           <details className="mt-4 text-xs">
             <summary className="cursor-pointer text-muted-foreground">

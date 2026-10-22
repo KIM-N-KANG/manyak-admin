@@ -29,6 +29,11 @@ vi.mock('@/features/shared/use-api', () => ({
 vi.mock('recharts', () => ({
   AreaChart: ({ children }: PropsWithChildren) =>
     createElement('div', null, children),
+  LineChart: ({ children }: PropsWithChildren) =>
+    createElement('div', null, children),
+  Line: ({ children }: PropsWithChildren) =>
+    createElement('div', null, children),
+  LabelList: () => null,
   Area: () => null,
   CartesianGrid: () => null,
   XAxis: () => null,
@@ -37,6 +42,8 @@ vi.mock('recharts', () => ({
 vi.mock('@/components/ui/chart', () => ({
   ChartContainer: ({ children }: PropsWithChildren) =>
     createElement('div', null, children),
+  ChartLegend: () => null,
+  ChartLegendContent: () => null,
   ChartTooltip: () => null,
   ChartTooltipContent: () => null,
 }));
