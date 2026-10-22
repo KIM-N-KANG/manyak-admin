@@ -7,7 +7,7 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-10-22T04:07:11.373Z"
+    "receivedAt": "2026-10-22T04:09:32.257Z"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {

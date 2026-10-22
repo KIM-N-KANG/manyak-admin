@@ -5,7 +5,6 @@ const revision = process.argv[3];
 
 if (!input) throw new Error('OpenAPI 입력 URL 또는 파일 경로가 필요하다.');
 
-const receivedAt = new Date().toISOString();
 const document = JSON.parse(
   /^https?:\/\//.test(input)
     ? await fetch(input, { signal: AbortSignal.timeout(30000) }).then(
@@ -17,6 +16,7 @@ const document = JSON.parse(
       )
     : await readFile(input, 'utf8'),
 );
+const receivedAt = new Date().toISOString();
 const paths = Object.fromEntries(
   Object.entries(document.paths).filter(([path]) =>
     path.startsWith('/api/v1/admin/'),
