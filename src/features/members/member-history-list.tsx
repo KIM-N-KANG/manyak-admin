@@ -9,6 +9,7 @@ import {
   QueryState,
 } from '@/components/admin/data-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
+import { creditReasonLabel } from '@/features/credits/reason-label';
 import type {
   AttendanceRecord,
   CreditTransaction,
@@ -36,7 +37,7 @@ export function MemberHistoryList({
   const query = useApi<Page<CreditTransaction | AttendanceRecord>>(
     `/api/members/${encodeURIComponent(memberId)}/${kind}?${apiParams}`,
   );
-  const title = kind === 'transactions' ? '이프 거래 내역' : '출석 기록';
+  const title = kind === 'transactions' ? '이프 내역' : '출석 기록';
 
   function href(page: number) {
     const next = new URLSearchParams(params);
@@ -66,7 +67,7 @@ export function MemberHistoryList({
               'createdAt' in row ? (
                 <tr key={`${row.createdAt}-${index}`}>
                   <td>{dateTime(row.createdAt)}</td>
-                  <td>{row.reason}</td>
+                  <td>{creditReasonLabel(row.reason)}</td>
                   <td>
                     {row.amount > 0 ? '+' : ''}
                     <NumberValue value={row.amount} />

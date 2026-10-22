@@ -126,7 +126,7 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
           <MemberActions nickname={m.nickname} />
         </div>
       </Card>
-      <Section title="이프 거래 내역">
+      <Section title="이프 내역">
         <MemberHistoryList memberId={m.memberId} kind="transactions" />
       </Section>
       <Section title="결제 내역">

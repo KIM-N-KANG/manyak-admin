@@ -254,6 +254,18 @@ describe('개요와 분석 화면 분리', () => {
     expect(
       screen.getByRole('heading', { name: '개요', level: 1 }),
     ).toBeTruthy();
+
+    for (const [label, direction] of [
+      ['이프 지급', 'granted'],
+      ['이프 소진', 'spent'],
+    ]) {
+      expect(
+        screen
+          .getByRole('link', { name: new RegExp(`^${label}`) })
+          .getAttribute('href'),
+      ).toBe(`/credits/transactions?direction=${direction}`);
+    }
+
     fireEvent.change(screen.getByRole('combobox', { name: '지표' }), {
       target: { value: 'spent' },
     });
@@ -270,8 +282,8 @@ describe('개요와 분석 화면 분리', () => {
     expect(
       links.some(
         (href) =>
-          href?.includes('creditDirection=spent') &&
-          href.includes('creditDate='),
+          href?.startsWith('/credits/transactions?direction=spent') &&
+          href.includes('date='),
       ),
     ).toBe(true);
     expectDbMetricsVisible();

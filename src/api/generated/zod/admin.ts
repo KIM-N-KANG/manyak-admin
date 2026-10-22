@@ -630,6 +630,34 @@ export const AnalyticsQueryParams = zod.object({
 
 export const AnalyticsResponse = zod.unknown();
 
+/**
+ * 팀 계정 제외를 적용하지 않아 대시보드의 지급·소진 합계와 다를 수 있습니다. 접속 기록은 남기지 않습니다.
+ * @summary 전체 이프 거래 내역
+ */
+export const creditTransactionsQueryDirectionRegExp = new RegExp(
+  'granted|spent',
+);
+
+export const creditTransactionsQuerySizeMax = 100;
+
+export const creditTransactionsQueryOrderRegExp = new RegExp('asc|desc');
+
+export const CreditTransactionsQueryParams = zod.object({
+  direction: zod
+    .string()
+    .regex(creditTransactionsQueryDirectionRegExp)
+    .optional(),
+  date: zod.string().optional(),
+  page: zod.number().min(1),
+  size: zod.number().min(1).max(creditTransactionsQuerySizeMax),
+  cursor: zod.string().optional(),
+  limit: zod.string().optional(),
+  sort: zod.string().optional(),
+  order: zod.string().regex(creditTransactionsQueryOrderRegExp),
+});
+
+export const CreditTransactionsResponse = zod.unknown();
+
 export const PoliciesResponse = zod.unknown();
 
 export const chatsQueryRequestSizeMax = 100;

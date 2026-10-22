@@ -127,7 +127,7 @@ export function validatePeriod(query: URLSearchParams) {
     validateDate(query.get(key));
 }
 
-function validateDate(value: string | null) {
+export function validateDate(value: string | null) {
   if (
     value !== null &&
     (!/^\d{4}-\d{2}-\d{2}$/.test(value) ||
