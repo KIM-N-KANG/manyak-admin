@@ -16,8 +16,10 @@ import { PageNavigation } from '@/components/admin/page-navigation';
 import { buttonVariants } from '@/components/ui/button';
 import { useManagementList } from '@/features/management/use-management-list';
 import type { Campaign } from '@/features/notifications/types';
+import { useServerData } from '@/features/shared/data-source';
 
 export function CampaignListScreen() {
+  const serverData = useServerData();
   const { query, params, sort, order, changeSort, href } =
     useManagementList<Campaign>('/api/notifications/campaigns');
 
@@ -30,7 +32,7 @@ export function CampaignListScreen() {
           새 캠페인
         </Link>
       </PageHeading>
-      <ListFilterForm label="캠페인 제목·본문 검색">
+      <ListFilterForm label="캠페인 제목·본문 검색" searchEnabled={!serverData}>
         <label className="grid gap-2 text-sm">
           상태
           <select
@@ -43,17 +45,23 @@ export function CampaignListScreen() {
             ))}
           </select>
         </label>
-        <label className="grid gap-2 text-sm">
-          종류
-          <select
-            className="control"
-            name="kind"
-            defaultValue={params.get('kind') ?? ''}>
-            <option value="">전체</option>
-            <option value="SERVICE">정보성</option>
-            <option value="MARKETING">광고성</option>
-          </select>
-        </label>
+        {!serverData ? (
+          <label className="grid gap-2 text-sm">
+            종류
+            <select
+              className="control"
+              name="kind"
+              defaultValue={params.get('kind') ?? ''}>
+              <option value="">전체</option>
+              <option value="SERVICE">정보성</option>
+              <option value="MARKETING">광고성</option>
+            </select>
+          </label>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            제목·본문 검색과 종류 필터는 준비 중입니다.
+          </p>
+        )}
       </ListFilterForm>
       <QueryState
         pending={query.isPending}
@@ -73,7 +81,16 @@ export function CampaignListScreen() {
               { label: '도달 회원', key: 'deliveredMembers' },
               { label: '도달 기기', key: 'deliveredDevices' },
               { label: '실패 기기', key: 'failedDevices' },
-            ]}
+            ].map((header) =>
+              serverData &&
+              [
+                'deliveredMembers',
+                'deliveredDevices',
+                'failedDevices',
+              ].includes(header.key)
+                ? header.label
+                : header,
+            )}
             sorting={{ key: sort, order, onSort: changeSort }}
             empty={!query.data.items.length}
             emptyContent={params.get('q') ? <SearchEmpty /> : undefined}>

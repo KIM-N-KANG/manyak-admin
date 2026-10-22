@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "api:generate": "orval --config ./orval.config.ts && pnpm api:generate:auth && eslint --fix src/api/generated",
+    "api:generate": "pnpm api:generate:admin && pnpm api:generate:auth",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -15,7 +15,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
-    "api:generate:auth": "orval --config ./orval.auth.config.ts && eslint --fix src/api/generated/zod/admin-auth.ts"
+    "api:generate:auth": "orval --config ./orval.auth.config.ts && eslint --fix src/api/generated/zod/admin-auth.ts",
+    "api:extract": "node scripts/extract-admin-openapi.mjs",
+    "api:generate:admin": "orval --config ./orval.admin.config.ts && node scripts/generate-admin-operations.mjs && prettier --write src/api/generated/admin-operations.ts && eslint --fix src/api/generated"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
