@@ -12,8 +12,7 @@ import { Card } from '@/components/ui/card';
 import { ConfirmDialog } from '@/features/originals/confirm-dialog';
 import {
   emptyOriginal,
-  originalDraftSchema,
-  originalPublishSchema,
+  originalSaveSchema,
 } from '@/features/originals/form-schema';
 import {
   originalFormValues,
@@ -53,6 +52,9 @@ function OriginalEditor({
   const client = useQueryClient();
   const prefix = useId();
   const [recordId, setRecordId] = useState(id);
+  const [savedProtagonistName, setSavedProtagonistName] = useState(
+    initial.protagonistName,
+  );
   const [reason, setReason] = useState('');
   const [payload, setPayload] = useState<OriginalPayload>(() =>
     structuredClone(initial),
@@ -156,8 +158,9 @@ function OriginalEditor({
   }
 
   function validate(status: NonNullable<OriginalSaveRequest['status']>) {
-    const result = (
-      status === 'PUBLISHED' ? originalPublishSchema : originalDraftSchema
+    const result = originalSaveSchema(
+      status,
+      recordId ? savedProtagonistName : undefined,
     ).safeParse(payload);
 
     if (!result.success) {
@@ -215,6 +218,7 @@ function OriginalEditor({
       );
 
       setRecordId(response.data.storyId);
+      setSavedProtagonistName(response.data.protagonistName ?? undefined);
 
       if (data.removeThumbnail)
         await customInstance(

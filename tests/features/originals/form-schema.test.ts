@@ -4,6 +4,7 @@ import {
   emptyOriginal,
   originalDraftSchema,
   originalPublishSchema,
+  originalSaveSchema,
 } from '@/features/originals/form-schema';
 import type { OriginalPayload } from '@/features/originals/types';
 
@@ -164,3 +165,38 @@ describe('오리지널 폼 검증', () => {
     payload.removeThumbnail = false;
   });
 });
+
+it.each(['DRAFT', 'PUBLISHED'] as const)(
+  '%s 수정은 토큰이 없어도 저장된 주인공 이름을 지울 수 없다',
+  (status) => {
+    const payload = {
+      ...originalPayload(),
+      title: '토큰 없는 제목',
+      protagonistName: '   ',
+    };
+    const result = originalSaveSchema(status, '서린').safeParse(payload);
+
+    expect(result.success).toBe(false);
+
+    if (!result.success)
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({
+          path: ['protagonistName'],
+          message: expect.stringContaining('지울 수 없습니다'),
+        }),
+      );
+
+    expect(
+      originalSaveSchema(status).parse(payload).protagonistName,
+    ).toBeUndefined();
+    expect(
+      originalSaveSchema(status, null).parse(payload).protagonistName,
+    ).toBeUndefined();
+    expect(
+      originalSaveSchema(status, '서린').parse({
+        ...payload,
+        protagonistName: '  하린  ',
+      }).protagonistName,
+    ).toBe('하린');
+  },
+);

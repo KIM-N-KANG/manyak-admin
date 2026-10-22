@@ -451,3 +451,37 @@ describe('최신 오리지널 계약', () => {
     ).toBe(true);
   });
 });
+
+it.each(['', '   '])(
+  'PATCH의 주인공 이름 %j는 400이며 기존 값을 유지한다',
+  async (protagonistName) => {
+    const original = await create('DRAFT');
+    const response = await PATCH(
+      req({ protagonistName, reason: '이름 변경' }),
+      ctx(original.storyId),
+    );
+
+    expect(response.status).toBe(400);
+
+    const stored = await detail(req(), ctx(original.storyId));
+
+    expect((await stored.json()).protagonistName).toBe(
+      original.protagonistName,
+    );
+  },
+);
+it.each([undefined, null])(
+  'PATCH의 주인공 이름 %j는 기존 값을 유지한다',
+  async (protagonistName) => {
+    const original = await create('DRAFT');
+    const response = await PATCH(
+      req({ protagonistName, reason: '일부 변경' }),
+      ctx(original.storyId),
+    );
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).protagonistName).toBe(
+      original.protagonistName,
+    );
+  },
+);

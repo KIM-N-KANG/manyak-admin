@@ -236,6 +236,23 @@ export const originalPublishSchema = originalPayloadSchema.superRefine(
   },
 );
 
+/** 이미 저장된 주인공 이름을 지우는 수정은 계약에 따라 거부한다. */
+export function originalSaveSchema(
+  status: 'DRAFT' | 'PUBLISHED',
+  previousProtagonistName?: string | null,
+) {
+  return (
+    status === 'PUBLISHED' ? originalPublishSchema : originalDraftSchema
+  ).superRefine((value, context) => {
+    if (previousProtagonistName && !value.protagonistName)
+      context.addIssue({
+        code: 'custom',
+        path: ['protagonistName'],
+        message: '기존 주인공 이름은 지울 수 없습니다. 이름을 입력하세요.',
+      });
+  });
+}
+
 export function emptyOriginal() {
   return {
     title: '',

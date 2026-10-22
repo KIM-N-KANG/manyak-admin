@@ -467,3 +467,55 @@ describe('이미지 업로드 UI', () => {
     expect(screen.getByRole('img').getAttribute('src')).toBe('/old.png');
   });
 });
+
+it.each(['DRAFT', 'PUBLISHED'] as const)(
+  '%s 수정에서 기존 주인공 이름을 지우면 요청하지 않고 안내한다',
+  async (status) => {
+    const original = saveOriginal({
+      ...originalRequestFields({
+        ...originalPayload(),
+        title: '토큰 없는 제목',
+      }),
+      status,
+      visibility: 'PRIVATE',
+      reason: '작성',
+    });
+    const view = render(
+      wrapped(createElement(OriginalFormScreen, { id: original.storyId })),
+    );
+
+    await screen.findByRole('heading', { name: '오리지널 수정' });
+    setField(view.container, 'protagonistName', '   ');
+    setField(view.container, 'reason', '이름 수정');
+
+    const button = screen.getByRole('button', {
+      name: status === 'PUBLISHED' ? '변경 저장' : '초안 저장',
+    });
+
+    fireEvent.click(button);
+
+    const nameInput = view.container.querySelector('[name="protagonistName"]')!;
+
+    await waitFor(() =>
+      expect(nameInput.getAttribute('aria-invalid')).toBe('true'),
+    );
+    expect(
+      document.getElementById(nameInput.getAttribute('aria-describedby')!)
+        ?.textContent,
+    ).toContain('기존 주인공 이름은 지울 수 없습니다.');
+    expect(changes()).toHaveLength(0);
+    expect(
+      view.container
+        .querySelector('[name="protagonistName"]')!
+        .getAttribute('aria-invalid'),
+    ).toBe('true');
+    expect(getOriginal(original.storyId)?.protagonistName).toBe(
+      original.protagonistName,
+    );
+    setField(view.container, 'protagonistName', '하린');
+    fireEvent.click(button);
+    await waitFor(() => expect(navigation.push).toHaveBeenCalled());
+    expect(changes()[0].body).toMatchObject({ protagonistName: '하린' });
+    expect(getOriginal(original.storyId)?.protagonistName).toBe('하린');
+  },
+);

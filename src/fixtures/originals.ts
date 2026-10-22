@@ -344,6 +344,16 @@ export function saveOriginal(
       throw new Error('일반 등록 필드와 상태·공개 범위·사유를 지정하세요.');
 
   const previous = id ? requireFixture(state().records.get(id)) : undefined;
+
+  if (
+    previous &&
+    typeof input.protagonistName === 'string' &&
+    !input.protagonistName.trim()
+  )
+    throw new Error(
+      'protagonistName: 빈 문자열이나 공백으로 이름을 지울 수 없습니다.',
+    );
+
   const status = input.status ?? previous?.status ?? 'DRAFT';
   const visibility = input.visibility ?? previous?.visibility ?? 'PRIVATE';
 
