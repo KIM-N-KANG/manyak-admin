@@ -9,6 +9,7 @@ import {
   QueryState,
 } from '@/components/admin/data-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
+import { creditReasonLabel } from '@/features/credits/reason-label';
 import type {
   AttendanceRecord,
   CreditTransaction,
@@ -66,7 +67,7 @@ export function MemberHistoryList({
               'createdAt' in row ? (
                 <tr key={`${row.createdAt}-${index}`}>
                   <td>{dateTime(row.createdAt)}</td>
-                  <td>{row.reason}</td>
+                  <td>{creditReasonLabel(row.reason)}</td>
                   <td>
                     {row.amount > 0 ? '+' : ''}
                     <NumberValue value={row.amount} />

@@ -386,3 +386,18 @@ it('공지 PATCH는 줄바꿈과 Unicode 공백 사이의 실제 글자를 허�
     ).status,
   ).toBe(200);
 });
+
+it('이프 거래는 OpenAPI 생성 전까지 업스트림을 호출하지 않고 503으로 응답한다', async () => {
+  const fetchMock = vi.fn();
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  const response = await invoke(
+    'GET',
+    '/credits/transactions?direction=granted&date=2026-10-21',
+  );
+
+  expect(response.status).toBe(503);
+  expect(await response.json()).toMatchObject({ message: '서버 미구현' });
+  expect(fetchMock).not.toHaveBeenCalled();
+});

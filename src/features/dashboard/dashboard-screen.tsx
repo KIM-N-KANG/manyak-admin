@@ -98,14 +98,14 @@ export function DashboardScreen() {
           '이프 지급',
           s.credits.grantedTotal,
           s.credits.grantedToday,
-          '/members?creditDirection=granted',
+          '/credits/transactions?direction=granted',
           '이프',
         ],
         [
           '이프 소진',
           s.credits.spentTotal,
           s.credits.spentToday,
-          '/members?creditDirection=spent&sort=creditsSpent',
+          '/credits/transactions?direction=spent',
           '이프',
         ],
         [

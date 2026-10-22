@@ -95,6 +95,7 @@ pnpm api:generate
 - 응답 타입은 `src/features/<도메인>/types.ts`에 있습니다. 차트와 목록·상세의 화면 BFF 응답을 타입으로 정의했습니다. 대시보드 숫자 카드는 회원·채팅 시작·턴·스토리·이프 지급·소진·결제 이력·금액의 8개이며 각각 누적과 오늘 값을 제공합니다.
 - 현재 `src/features/shared/use-api.ts`가 TanStack Query와 기존 mutator를 연결합니다. 요청 검증에는 생성 Zod를 사용합니다. 서버 계약 확정 후 생성 훅으로 대체할 수 있으며 서버 응답 본문은 BFF에서 변환하지 않습니다.
 - 가상 이메일 `member1@example.com`부터 `member1240@example.com`까지 정확 일치 검색이 가능합니다. 응답에는 이메일을 포함하지 않습니다. 대화 원문과 인증 토큰도 응답에 없습니다.
+- `/credits/transactions`는 전체 회원 원장을 기록 시각 내림차순(동률은 내부 순번 내림차순)으로 보여 줍니다. `direction=granted|spent`와 KST `date` 필터를 사용하며 회원별 조회 필터는 없습니다. 응답 회원은 공통 `MemberSummary` 구조이며 내부 원장 ID와 `balanceAfter`는 노출하지 않습니다. 팀 계정을 포함하므로 대시보드 집계와 차이가 날 수 있습니다. 서버 OpenAPI 반영 전까지 수기 타입과 fixture를 사용하며 server 모드에서는 503으로 응답합니다. 서버 머지 후 스냅샷 갱신과 `pnpm api:generate:admin`으로 생성 계약을 연결합니다.
 - 목록의 `from`, `to`는 KST 날짜로 생성·가입·결제 완료·채팅 시작일에 적용합니다. `attendanceDate`, `creditDate`, `turnDate`는 관련 활동일 필터입니다. 이프는 `creditDirection=granted|spent`로 방향과 ADMIN 2-4의 사유를 함께 검사하며, 회원 목록과 상세는 회원별 원장을 공유합니다. `chatFrom/chatTo`, `aiFrom/aiTo`, `creationFrom/creationTo`는 각각 채팅 생성일·AI 호출일·제작 세션 생성일 기준입니다. 숫자 카드와 추이·분포는 목록과 같은 고정 원천을 집계합니다. 회원의 `chatCount`는 전체 채팅방 수이며 `periodChatCount`는 선택 기간에 생성한 수입니다.
 - 분포의 정의는 Grafana `service-stats`를 기준으로 합니다. 첫 사용자 입력 시간은 900초 이내, 입력 인물 수는 주변 인물만, AI 지연은 성공 호출만, 성공률은 완료 호출만 집계합니다. 결제 건수와 금액은 환불을 포함한 완료 이력 주문을 집계하고 같은 목록으로 이동합니다. server 모드의 실제 DB 집계와 팀 계정 제외는 manyak-server가 수행합니다.
 
