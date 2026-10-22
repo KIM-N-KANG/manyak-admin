@@ -11,7 +11,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { ExternalToolLink } from '@/components/admin/external-tool-link';
+import { ExternalToolsPopover } from '@/components/admin/external-tools-popover';
 import { ManyakLogo } from '@/components/admin/manyak-logo';
 import { LogoutButton } from '@/features/auth/logout-button';
 import {
@@ -25,7 +25,6 @@ import {
   type SidebarPreferences,
   sidebarStorageKey,
 } from '@/features/navigation/sidebar-state';
-import { externalLinks } from '@/lib/external-links';
 import { cn } from '@/lib/utils';
 
 const sidebarEvent = 'manyak-sidebar-change';
@@ -65,7 +64,6 @@ export function AdminShell({
   preview?: boolean;
 }) {
   const pathname = usePathname();
-  const [toolsExpanded, setToolsExpanded] = useState(false);
   const raw = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const [fallback, setFallback] = useState<SidebarPreferences | null>(null);
   const stored = fallback ?? parseSidebarState(raw);
@@ -171,47 +169,7 @@ export function AdminShell({
           ))}
         </nav>
         <div className="mt-auto shrink-0 border-t p-4">
-          <section className="mb-4">
-            <h2>
-              <button
-                type="button"
-                aria-expanded={toolsExpanded}
-                aria-controls="external-tools"
-                onClick={() => setToolsExpanded(!toolsExpanded)}
-                className="flex min-h-11 w-full items-center gap-3 rounded-sm px-2 text-left text-sm font-semibold hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring lg:min-h-9">
-                외부 도구
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    'ml-auto transition-transform duration-150 motion-reduce:transition-none',
-                    toolsExpanded && 'rotate-90',
-                  )}>
-                  ▸
-                </span>
-              </button>
-            </h2>
-            <div
-              id="external-tools"
-              hidden={!toolsExpanded}
-              className="ml-2 border-l pl-3">
-              {(
-                [
-                  ['amplitude', 'Amplitude'],
-                  ['openSearch', 'OpenSearch 로그'],
-                  ['sentry', 'Sentry'],
-                  ['langfuse', 'Langfuse'],
-                  ['groble', '그로블'],
-                ] as const
-              ).map(([key, label]) => (
-                <ExternalToolLink
-                  key={key}
-                  href={externalLinks[key]}
-                  className="flex px-2 text-muted-foreground hover:bg-muted">
-                  {label}
-                </ExternalToolLink>
-              ))}
-            </div>
-          </section>
+          <ExternalToolsPopover />
           <p className="mb-3 truncate text-sm font-medium">
             {nickname ?? '관리자'}
           </p>
