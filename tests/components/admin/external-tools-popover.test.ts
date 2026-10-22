@@ -49,6 +49,7 @@ it('Portal에 이름 있는 팝오버와 링크 5개를 열고 버튼에 관계�
   const { trigger, container } = setup();
 
   expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  expect(trigger.hasAttribute('data-popup-open')).toBe(false);
   expect(screen.queryByRole('dialog')).toBeNull();
   fireEvent.click(trigger);
 
@@ -56,6 +57,7 @@ it('Portal에 이름 있는 팝오버와 링크 5개를 열고 버튼에 관계�
 
   expect(container.contains(popup)).toBe(false);
   expect(trigger.getAttribute('aria-expanded')).toBe('true');
+  expect(trigger.hasAttribute('data-popup-open')).toBe(true);
   expect(trigger.getAttribute('aria-controls')).toBe(popup.id);
   expect(
     within(popup)
@@ -65,6 +67,7 @@ it('Portal에 이름 있는 팝오버와 링크 5개를 열고 버튼에 관계�
   fireEvent.click(trigger);
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  expect(trigger.hasAttribute('data-popup-open')).toBe(false);
 });
 
 it.each(['escape', 'outside'] as const)(
@@ -94,6 +97,7 @@ it.each(['escape', 'outside'] as const)(
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(trigger));
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(trigger.hasAttribute('data-popup-open')).toBe(false);
   },
 );
 
@@ -113,11 +117,14 @@ it('데스크톱 오른쪽 아래 정렬에서 모바일 아래 왼쪽 정렬로
   );
 
   const { trigger } = setup();
+  const arrow = trigger.querySelector('[aria-hidden="true"]')!;
 
+  expect(arrow.textContent).toBe('▸');
   fireEvent.click(trigger);
 
   const popup = await screen.findByRole('dialog');
 
+  expect(arrow.textContent).toBe('▸');
   expect(popup.getAttribute('data-side')).toBe('right');
   expect(popup.getAttribute('data-align')).toBe('end');
   act(() => {
@@ -127,4 +134,8 @@ it('데스크톱 오른쪽 아래 정렬에서 모바일 아래 왼쪽 정렬로
   });
   await waitFor(() => expect(popup.getAttribute('data-side')).toBe('bottom'));
   expect(popup.getAttribute('data-align')).toBe('start');
+  expect(arrow.textContent).toBe('▾');
+  fireEvent.click(trigger);
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  expect(arrow.textContent).toBe('▾');
 });

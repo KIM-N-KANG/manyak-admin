@@ -42,12 +42,10 @@ export function ExternalToolsPopover() {
         <h2>
           <Popover.Trigger
             ref={trigger}
-            className="group flex min-h-11 w-full items-center gap-3 rounded-sm px-2 text-left text-sm font-semibold hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring lg:min-h-9">
+            className="flex min-h-11 w-full items-center gap-3 rounded-sm px-2 text-left text-sm font-semibold hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground data-popup-open:hover:bg-sidebar-accent lg:min-h-9">
             외부 도구
-            <span
-              aria-hidden="true"
-              className="ml-auto transition-transform duration-150 group-data-popup-open:rotate-90 motion-reduce:transition-none">
-              ▸
+            <span aria-hidden="true" className="ml-auto">
+              {desktop ? '▸' : '▾'}
             </span>
           </Popover.Trigger>
         </h2>
