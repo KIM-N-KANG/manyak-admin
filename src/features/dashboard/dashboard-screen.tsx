@@ -80,6 +80,12 @@ export function DashboardScreen() {
 
   const s = summary.data;
   const c = charts.data;
+  const yesterdayDate = s
+    ? new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(
+        new Date(Date.parse(s.todayStartsAt) - 1),
+      )
+    : null;
+  const yesterday = c?.daily.find((day) => day.date === yesterdayDate);
   const average = periodAverage(c?.daily.map((day) => day[metric]) ?? []);
   const cards = s
     ? ([
@@ -184,32 +190,64 @@ export function DashboardScreen() {
             }).format(new Date(s.asOf))}{' '}
             KST 기준 · 오늘은 KST 자정부터 · 팀 계정 제외
           </div>
-          <div className="mb-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {cards.map(([label, total, today, href, unit, cardMetric]) => (
-              <Link
-                href={href}
-                key={label}
-                className="rounded-md border bg-card p-5 transition-colors hover:border-foreground-tertiary focus-visible:ring-2 focus-visible:ring-ring">
-                <p className="text-sm text-muted-foreground">{label}</p>
-                <p className="mt-3 text-2xl font-semibold tracking-tight">
-                  <NumberValue value={total} />
-                  <span className="ml-1 text-xs font-normal text-muted-foreground">
-                    {unit}
-                  </span>
-                </p>
-                {c?.daily.length ? (
-                  <MetricSparkline
-                    daily={c.daily}
-                    metric={cardMetric}
-                    label={label}
-                  />
-                ) : null}
-                <p className="mt-3 text-xs text-muted-foreground">
-                  {`오늘 ${today.toLocaleString('ko-KR')} ${unit}`}
-                  <span className="float-right">↗</span>
-                </p>
-              </Link>
-            ))}
+          <div className="mb-8 grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
+            {cards.map(([label, total, today, href, unit, cardMetric]) => {
+              const periodTotal = c?.daily.reduce(
+                (sum, day) => sum + day[cardMetric],
+                0,
+              );
+              const yesterdayValue = yesterday?.[cardMetric];
+
+              return (
+                <Link
+                  href={href}
+                  key={label}
+                  className="flex items-center gap-3 rounded-md border bg-card p-4 transition-colors hover:border-foreground-tertiary focus-visible:ring-2 focus-visible:ring-ring">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-muted-foreground">{label}</p>
+                    <dl className="mt-3 grid grid-cols-2 gap-3">
+                      {(
+                        [
+                          ['오늘', today],
+                          ['누적', total],
+                        ] as const
+                      ).map(([name, value]) => (
+                        <div
+                          key={name}
+                          className="flex flex-wrap items-baseline gap-x-1">
+                          <dt className="text-xs text-muted-foreground">
+                            {name}
+                          </dt>
+                          <dd className="text-lg font-semibold tracking-tight xl:text-xl">
+                            <NumberValue value={value} />
+                            <span className="ml-1 text-xs font-normal text-muted-foreground">
+                              {unit}
+                            </span>
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                      {`최근 ${days}일 ${periodTotal?.toLocaleString('ko-KR') ?? '—'} ${unit} · 어제 ${yesterdayValue?.toLocaleString('ko-KR') ?? '—'} ${unit}`}
+                    </p>
+                  </div>
+                  <div className="w-14 shrink-0 sm:w-20">
+                    {c?.daily.length ? (
+                      <MetricSparkline
+                        daily={c.daily}
+                        metric={cardMetric}
+                        label={label}
+                      />
+                    ) : null}
+                    <span
+                      aria-hidden="true"
+                      className="mt-2 block text-right text-xs text-muted-foreground">
+                      ↗
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </>
       ) : null}

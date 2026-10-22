@@ -22,6 +22,7 @@ import { DistributionChart } from '@/features/dashboard/distribution-chart';
 import type {
   ChartPoint,
   DashboardCharts,
+  DashboardSummary,
   Distribution,
 } from '@/features/dashboard/types';
 import { getDashboardAnalytics } from '@/fixtures/analytics';
@@ -29,6 +30,7 @@ import { getDashboardCharts, summary } from '@/fixtures/dashboard';
 
 const state = vi.hoisted(() => ({
   charts: undefined as DashboardCharts | undefined,
+  summary: undefined as DashboardSummary | undefined,
   push: vi.fn(),
 }));
 
@@ -40,7 +42,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/features/shared/use-api', () => ({
   useApi: (url: string) => ({
     data: url.includes('/summary')
-      ? summary
+      ? state.summary
       : url.includes('/analytics')
         ? getDashboardAnalytics(7)
         : state.charts,
@@ -53,6 +55,7 @@ vi.mock('@/features/shared/use-api', () => ({
 
 beforeEach(() => {
   state.charts = getDashboardCharts(7);
+  state.summary = structuredClone(summary);
   state.push.mockReset();
 });
 afterEach(() => {
@@ -372,4 +375,59 @@ it('일별 선의 호버에는 십자선·날짜 툴팁을 표시하고 클릭�
       `/members?from=${selectedDate}&to=${selectedDate}`,
     ),
   );
+});
+
+it('오늘 0과 누적을 함께 표시하고 KST 어제·기간 합계와 원 단위 천 구분을 계산한다', () => {
+  const daily = state.charts!.daily.at(-1)!;
+
+  state.charts = {
+    ...state.charts!,
+    daily: [
+      { ...daily, date: '2026-10-19', joined: 2, revenue: 1000 },
+      { ...daily, date: '2026-10-20', joined: 4, revenue: 12345 },
+      { ...daily, date: '2026-10-21', joined: 0, revenue: 0 },
+    ],
+  };
+  state.summary = {
+    ...state.summary!,
+    asOf: '2026-10-20T15:03:00Z',
+    todayStartsAt: '2026-10-20T15:00:00Z',
+    members: { total: 1234, joinedToday: 0 },
+    payments: {
+      ...state.summary!.payments,
+      amountKrwTotal: 1234567,
+      amountKrwToday: 0,
+    },
+  };
+  render(createElement(DashboardScreen));
+
+  const memberCard = screen.getByRole('link', { name: /^회원/ });
+  const paymentCard = screen.getByRole('link', { name: /^결제 금액/ });
+
+  for (const card of [memberCard, paymentCard]) {
+    expect(within(card).getByText('오늘', { selector: 'dt' })).toBeTruthy();
+    expect(within(card).getByText('누적', { selector: 'dt' })).toBeTruthy();
+    expect(within(card).getByText('0')).toBeTruthy();
+  }
+
+  expect(within(memberCard).getByText('1,234')).toBeTruthy();
+  expect(
+    within(memberCard).getByText('최근 7일 6 명 · 어제 4 명'),
+  ).toBeTruthy();
+  expect(within(paymentCard).getByText('1,234,567')).toBeTruthy();
+  expect(
+    within(paymentCard).getByText('최근 7일 13,345 원 · 어제 12,345 원'),
+  ).toBeTruthy();
+});
+
+it('어제 원장이 없는 경우 실제 0으로 채우지 않고 미확인 값을 표시한다', () => {
+  state.charts = {
+    ...state.charts!,
+    daily: state.charts!.daily.filter((day) => day.date !== '2026-10-20'),
+  };
+  render(createElement(DashboardScreen));
+
+  const memberCard = screen.getByRole('link', { name: /^회원/ });
+
+  expect(within(memberCard).getByText(/어제 — 명/)).toBeTruthy();
 });

@@ -165,6 +165,21 @@ describe('Amplitude 실패 격리', () => {
     await screen.findByRole('heading', { name: '오늘 활성 사용자' });
     expect(requested).toContain('/api/dashboard/analytics?days=7');
     expect(requested).toContain('/api/dashboard/charts?days=7');
+
+    const memberCard = screen.getByRole('link', { name: /^회원/ });
+    const headline = memberCard.querySelector('dl')!.textContent;
+    const sevenDays = await chartsResponse(
+      new Request('http://localhost/api/dashboard/charts?days=7'),
+    ).json();
+    const sevenTotal = sevenDays.daily.reduce(
+      (sum: number, day: { joined: number }) => sum + day.joined,
+      0,
+    );
+
+    await within(memberCard).findByText(
+      new RegExp(`최근 7일 ${sevenTotal.toLocaleString('ko-KR')} 명`),
+    );
+
     fireEvent.change(screen.getByRole('combobox', { name: '기간' }), {
       target: { value: '90' },
     });
@@ -178,6 +193,20 @@ describe('Amplitude 실패 격리', () => {
     await screen.findByRole('heading', { name: '오늘 활성 사용자' });
     expectDbMetricsVisible();
     expect(requested.filter((url) => url.includes('/summary'))).toHaveLength(1);
+
+    const ninetyDays = await chartsResponse(
+      new Request('http://localhost/api/dashboard/charts?days=90'),
+    ).json();
+    const ninetyTotal = ninetyDays.daily.reduce(
+      (sum: number, day: { joined: number }) => sum + day.joined,
+      0,
+    );
+    const updatedCard = screen.getByRole('link', { name: /^회원/ });
+
+    await within(updatedCard).findByText(
+      new RegExp(`최근 90일 ${ninetyTotal.toLocaleString('ko-KR')} 명`),
+    );
+    expect(updatedCard.querySelector('dl')!.textContent).toBe(headline);
   });
 
   it('출처 도움말은 키보드 포커스로 지연·팀 계정 제외 기준을 보여 준다', async () => {

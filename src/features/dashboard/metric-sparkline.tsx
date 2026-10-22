@@ -22,7 +22,7 @@ export function MetricSparkline({
   return (
     <ChartContainer
       config={{ [metric]: { label, color: 'var(--primary)' } }}
-      className="mt-4 h-12 w-full"
+      className="h-12 w-full"
       aria-label={`${label} 기간별 추이`}>
       <LineChart
         accessibilityLayer={false}
