@@ -4,7 +4,7 @@ export type PaymentOrder = {
   orderId: string;
   member: MemberSummary;
   productId: string;
-  status: 'COMPLETED' | 'REFUNDED';
+  status: 'PENDING' | 'COMPLETED' | 'REFUNDED';
   priceKrw: number;
   creditAmount: number;
   completedAt: string;

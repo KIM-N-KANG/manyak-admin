@@ -392,7 +392,7 @@ export function ListScreen({ domain }: { domain: Domain }) {
           <td>{m.lastActiveAt ? dateTime(m.lastActiveAt) : '—'}</td>
           <td>
             <NumberValue value={m.chatCount} />
-            {m.periodChatCount !== undefined ? (
+            {m.periodChatCount != null ? (
               <span className="ml-2 text-xs text-muted-foreground">
                 (기간 {m.periodChatCount}개)
               </span>

@@ -79,6 +79,7 @@ export type OriginalDetail = OriginalListItem &
     OriginalPayload,
     | 'removeThumbnail'
     | 'thumbnailObjectKey'
+    | 'oneLineIntro'
     | 'description'
     | 'protagonistName'
     | 'characters'
@@ -86,6 +87,7 @@ export type OriginalDetail = OriginalListItem &
     | 'startSettings'
     | 'mainEvents'
   > & {
+    oneLineIntro: string | null;
     description: string | null;
     protagonistName: string | null;
     thumbnailModerationStatus: 'APPROVED' | 'PENDING' | 'REJECTED';
@@ -104,11 +106,11 @@ export type OriginalDetail = OriginalListItem &
       sortOrder: number;
     })[];
     characters: {
-      id: string;
+      id: string | null;
       name: string;
       description: string | null;
       images: {
-        id: string;
+        id: string | null;
         imageName: string;
         imageUrl: string;
         moderationStatus: 'APPROVED' | 'PENDING' | 'REJECTED';

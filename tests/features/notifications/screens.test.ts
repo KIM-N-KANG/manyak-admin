@@ -26,10 +26,12 @@ import { GET as template } from '@/app/api/notifications/templates/[key]/route';
 import { GET as storyDetail } from '@/app/api/stories/[id]/route';
 import { GET as storyList } from '@/app/api/stories/route';
 import { NoticeDetailScreen } from '@/features/notices/notice-detail-screen';
+import { NoticeFormScreen } from '@/features/notices/notice-form-screen';
 import { CampaignDetailScreen } from '@/features/notifications/campaign-detail-screen';
 import { CampaignFormScreen } from '@/features/notifications/campaign-form-screen';
 import { CampaignListScreen } from '@/features/notifications/campaign-list-screen';
 import { TemplateScreen } from '@/features/notifications/template-screen';
+import { ServerDataProvider } from '@/features/shared/data-source';
 import { stories } from '@/fixtures/entities';
 import { saveNotice } from '@/fixtures/notices';
 
@@ -348,4 +350,70 @@ describe('알림 화면의 BFF 연결', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(writes).toHaveLength(0);
   });
+});
+
+it('서버 모드에서는 지원하지 않는 스토리 이동 대상을 전송하지 않는다', async () => {
+  const view = render(
+    wrap(
+      createElement(
+        ServerDataProvider,
+        { value: true },
+        createElement(CampaignFormScreen, { storyId: stories[0].storyId }),
+      ),
+    ),
+  );
+
+  await screen.findByText(/스토리 이동 대상 지정은 준비 중입니다/);
+  expect(screen.queryByLabelText('이동 대상 스토리')).toBeNull();
+  expect(
+    vi
+      .mocked(fetch)
+      .mock.calls.every(([url]) => !String(url).startsWith('/api/stories')),
+  ).toBe(true);
+  fill(view.container);
+  await waitFor(() =>
+    expect(
+      screen
+        .getByRole('button', { name: '대상 확인 후 발송' })
+        .hasAttribute('disabled'),
+    ).toBe(false),
+  );
+  fireEvent.click(screen.getByRole('button', { name: '대상 확인 후 발송' }));
+  fireEvent.click(await screen.findByRole('button', { name: '확인' }));
+  await waitFor(() => expect(writes).toHaveLength(1));
+  expect(writes[0].body).not.toHaveProperty('storyId');
+});
+
+it('서버 캠페인 목록은 지원하는 상태 필터와 정렬만 제공한다', async () => {
+  render(
+    wrap(
+      createElement(
+        ServerDataProvider,
+        { value: true },
+        createElement(CampaignListScreen),
+      ),
+    ),
+  );
+  await screen.findByText('제목·본문 검색과 종류 필터는 준비 중입니다.');
+  expect(screen.queryByRole('searchbox')).toBeNull();
+  expect(screen.queryByLabelText('종류')).toBeNull();
+  await screen.findByRole('button', { name: /제목/ });
+  expect(screen.queryByRole('button', { name: /도달 회원/ })).toBeNull();
+  expect(screen.queryByRole('button', { name: /도달 기기/ })).toBeNull();
+});
+
+it('서버 공지의 null 본문은 편집 화면에서 빈 입력으로 표시한다', async () => {
+  const notice = saveNotice({
+    title: 'nullable 공지',
+    body: '본문',
+    reason: '작성',
+  });
+
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(Response.json({ ...notice, body: null })),
+  );
+  render(wrap(createElement(NoticeFormScreen, { id: notice.noticeId })));
+  await screen.findByRole('heading', { name: '공지 수정' });
+  expect((screen.getByLabelText('본문') as HTMLTextAreaElement).value).toBe('');
 });

@@ -4,8 +4,9 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { AdminShell } from '@/components/admin/admin-shell';
-import { isFixturePreview } from '@/features/auth/preview';
+import { isFixturePreview, isServerMode } from '@/features/auth/preview';
 import { readSession, sessionCookie } from '@/features/auth/session';
+import { ServerDataProvider } from '@/features/shared/data-source';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,5 +26,9 @@ export default async function AdminLayout({
 
   if (!session) redirect('/login');
 
-  return <AdminShell nickname={session.nickname}>{children}</AdminShell>;
+  return (
+    <ServerDataProvider value={isServerMode()}>
+      <AdminShell nickname={session.nickname}>{children}</AdminShell>
+    </ServerDataProvider>
+  );
 }
