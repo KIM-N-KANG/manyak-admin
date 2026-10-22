@@ -7,7 +7,8 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-10-22T04:09:32.257Z"
+    "receivedAt": "2026-10-22T16:17:28.650Z",
+    "revision": "41614b2"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -1423,6 +1424,104 @@
         }
       }
     },
+    "/api/v1/admin/credits/transactions": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "summary": "전체 이프 거래 내역",
+        "description": "팀 계정 제외를 적용하지 않아 대시보드의 지급·소진 합계와 다를 수 있습니다. 접속 기록은 남기지 않습니다.",
+        "operationId": "creditTransactions",
+        "parameters": [
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "granted|spent"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "asc|desc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageResponseAdminCreditTransactionResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/admin/credits/policies": {
       "get": {
         "tags": ["admin-credit-controller"],
@@ -1588,7 +1687,7 @@
           "body": {
             "type": "string"
           },
-          "default": {
+          "isDefault": {
             "type": "boolean"
           }
         }
@@ -2232,7 +2331,7 @@
             "type": "string",
             "format": "date-time"
           },
-          "admin": {
+          "isAdmin": {
             "type": "boolean"
           }
         }
@@ -3070,7 +3169,7 @@
             "type": ["integer", "null"],
             "format": "int64"
           },
-          "admin": {
+          "isAdmin": {
             "type": "boolean"
           }
         }
@@ -3125,7 +3224,7 @@
             "type": ["string", "null"],
             "format": "date-time"
           },
-          "admin": {
+          "isAdmin": {
             "type": "boolean"
           }
         }
@@ -3542,6 +3641,52 @@
           }
         }
       },
+      "AdminPageResponseAdminCreditTransactionResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCreditTransactionResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminCreditTransactionResponse": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "member": {
+            "$ref": "#/components/schemas/AdminMemberSummary"
+          }
+        }
+      },
       "AdminCreditPoliciesResponse": {
         "type": "object",
         "properties": {
@@ -3835,10 +3980,10 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "string": {
+          "container": {
             "type": "boolean"
           },
-          "container": {
+          "string": {
             "type": "boolean"
           },
           "floatingPointNumber": {
@@ -3849,23 +3994,6 @@
           },
           "integralNumber": {
             "type": "boolean"
-          },
-          "number": {
-            "type": "boolean"
-          },
-          "nodeType": {
-            "type": "string",
-            "enum": [
-              "ARRAY",
-              "BINARY",
-              "BOOLEAN",
-              "MISSING",
-              "NULL",
-              "NUMBER",
-              "OBJECT",
-              "POJO",
-              "STRING"
-            ]
           },
           "int": {
             "type": "boolean"
@@ -3885,6 +4013,20 @@
           "bigInteger": {
             "type": "boolean"
           },
+          "nodeType": {
+            "type": "string",
+            "enum": [
+              "ARRAY",
+              "BINARY",
+              "BOOLEAN",
+              "MISSING",
+              "NULL",
+              "NUMBER",
+              "OBJECT",
+              "POJO",
+              "STRING"
+            ]
+          },
           "valueNode": {
             "type": "boolean"
           },
@@ -3902,6 +4044,9 @@
             "type": "boolean"
           },
           "binary": {
+            "type": "boolean"
+          },
+          "number": {
             "type": "boolean"
           },
           "array": {

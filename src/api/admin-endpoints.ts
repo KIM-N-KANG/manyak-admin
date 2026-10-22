@@ -41,13 +41,6 @@ export const adminEndpoints: AdminEndpoint[] = [
       implemented: true,
       operation,
     })),
-  // OpenAPI 재생성 시 앞의 생성 연산이 먼저 매칭되어 서버 연결을 활성화한다.
-  {
-    browser: '/credits/transactions',
-    server: '/credits/transactions',
-    methods: ['GET'],
-    implemented: false,
-  },
   ...['/audit-logs/:id', '/originals/catalog', '/originals/images/:id'].map(
     (browser) => ({
       browser,

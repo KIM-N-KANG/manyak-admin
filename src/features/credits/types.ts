@@ -1,6 +1,6 @@
 import type { MemberSummary } from '@/features/shared/types';
 
-/** 전체 원장 목록 계약이다. 서버 OpenAPI 반영 후 생성 타입과 맞춘다. */
+/** 서버의 AdminCreditTransactionResponse와 공통 회원 요약 계약을 따른다. */
 export type CreditTransactionItem = {
   amount: number;
   reason: string;

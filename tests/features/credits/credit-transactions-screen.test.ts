@@ -41,7 +41,7 @@ beforeEach(() => {
       requested.push(url);
 
       return serverUnavailable
-        ? Response.json({ message: '서버 미구현' }, { status: 503 })
+        ? Response.json({ message: '서버 오류' }, { status: 500 })
         : GET(new Request(`http://localhost${url}`));
     }),
   );
@@ -66,7 +66,9 @@ it('원장 열·한국어 사유·음수·회원 링크와 필터를 유지하�
 
   const table = await screen.findByRole('table');
 
-  expect(requested[0]).toBe(`/api/credits/transactions?${navigation.search}`);
+  expect(requested[0]).toBe(
+    `/api/credits/transactions?${navigation.search}&order=desc`,
+  );
   expect(
     within(table)
       .getAllByRole('columnheader')
@@ -151,13 +153,18 @@ it('빈 결과를 표시한다', async () => {
     ),
   ).toBeTruthy();
   expect(screen.getByText('전체 0건')).toBeTruthy();
+  expect(requested[0]).toBe(
+    '/api/credits/transactions?date=2027-01-01&page=1&size=20&order=desc',
+  );
 });
 
-it('서버 연결 전에는 준비 중 오류와 재시도 동작을 표시한다', async () => {
+it('서버 오류를 표시하고 재시도로 복구한다', async () => {
   serverUnavailable = true;
   renderList();
   expect(await screen.findByRole('alert')).toBeTruthy();
-  expect(screen.getByText('이 기능은 서버 연결을 준비 중입니다.')).toBeTruthy();
+  expect(
+    screen.getByRole('heading', { name: '데이터를 불러오지 못했습니다' }),
+  ).toBeTruthy();
   expect(screen.queryByRole('table')).toBeNull();
   serverUnavailable = false;
   fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
@@ -167,4 +174,22 @@ it('서버 연결 전에는 준비 중 오류와 재시도 동작을 표시한�
 it('알 수 없는 사유도 한국어 기본 라벨로 표시한다', () => {
   expect(creditReasonLabel('FUTURE_REASON')).toBe('이프 변동');
   expect(creditReasonLabel('ADMIN_REVOKE')).toBe('관리자 회수');
+});
+
+it('필터 없는 첫 진입도 서버 OpenAPI 필수 페이지 쿼리를 포함한다', async () => {
+  navigation.search = '';
+  renderList();
+  await screen.findByRole('table');
+  expect(requested[0]).toBe(
+    '/api/credits/transactions?page=1&size=20&order=desc',
+  );
+});
+
+it('명시한 오름차순과 페이지 쿼리는 기본값으로 덮어쓰지 않는다', async () => {
+  navigation.search = 'order=asc&page=2&size=1';
+  renderList();
+  await screen.findByRole('table');
+  expect(requested[0]).toBe(
+    '/api/credits/transactions?order=asc&page=2&size=1',
+  );
 });

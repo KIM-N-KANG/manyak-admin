@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { adminEndpoints } from '@/api/admin-endpoints';
 import { GET as handle } from '@/app/api/admin-upstream/[...path]/route';
 import { sessionCookie } from '@/features/auth/session';
+import { proxy } from '@/proxy';
 
 const id = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 const cookie = `${sessionCookie}=${Buffer.from(JSON.stringify({ accessToken: 'forged-test-token', nickname: '테스트 관리자' })).toString('base64url')}`;
@@ -79,6 +80,11 @@ const cases: [string, string, string, unknown?][] = [
     'GET',
     '/audit-logs?action=MEMBER_SEARCHED&category=ACCESS',
     '/audit-logs?action=MEMBER_SEARCHED&category=ACCESS',
+  ],
+  [
+    'GET',
+    '/credits/transactions?direction=spent&date=2026-10-21&page=2&size=5&sort=createdAt&order=asc',
+    '/credits/transactions?direction=spent&date=2026-10-21&page=2&size=5&sort=createdAt&order=asc',
   ],
   ['GET', '/credits/policies', '/credits/policies'],
   [
@@ -387,17 +393,80 @@ it('공지 PATCH는 줄바꿈과 Unicode 공백 사이의 실제 글자를 허�
   ).toBe(200);
 });
 
-it('이프 거래는 OpenAPI 생성 전까지 업스트림을 호출하지 않고 503으로 응답한다', async () => {
-  const fetchMock = vi.fn();
+it('공개 이프 내역 경로를 server BFF로 rewrite하고 서버의 원장 페이지를 그대로 반환한다', async () => {
+  const body = {
+    items: [
+      {
+        amount: -30,
+        reason: 'CHAT_TURN',
+        createdAt: '2026-10-21T04:00:00Z',
+        member: {
+          memberId: id,
+          nickname: '회원',
+          status: 'ACTIVE',
+          isAdmin: false,
+          createdAt: '2026-10-01T00:00:00Z',
+        },
+      },
+    ],
+    page: 1,
+    size: 20,
+    totalElements: 1,
+    totalPages: 1,
+  };
+  const fetchMock = vi.fn().mockResolvedValue(Response.json(body));
 
   vi.stubGlobal('fetch', fetchMock);
 
-  const response = await invoke(
-    'GET',
-    '/credits/transactions?direction=granted&date=2026-10-21',
+  const incoming = new NextRequest(
+    'https://admin.example/api/credits/transactions?page=1&size=20&order=desc',
+    { headers: { Cookie: cookie } },
+  );
+  const rewritten = proxy(incoming).headers.get('x-middleware-rewrite');
+
+  expect(rewritten).toBe(
+    'https://admin.example/api/admin-upstream/credits/transactions?page=1&size=20&order=desc',
   );
 
-  expect(response.status).toBe(503);
-  expect(await response.json()).toMatchObject({ message: '서버 미구현' });
-  expect(fetchMock).not.toHaveBeenCalled();
+  const response = await handle(
+    new NextRequest(rewritten!, { headers: incoming.headers }),
+    { params: Promise.resolve({ path: ['credits', 'transactions'] }) },
+  );
+
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual(body);
+  expect(fetchMock).toHaveBeenCalledOnce();
+  expect(fetchMock.mock.calls[0][0]).toBe(
+    'https://upstream.example/api/v1/admin/credits/transactions?page=1&size=20&order=desc',
+  );
 });
+
+it.each([
+  '',
+  'page=0&size=20&order=desc',
+  'page=1&size=101&order=desc',
+  'page=1&size=20&order=desc&direction=refund',
+  'page=1&size=20&order=up',
+  'page=1.5&size=20&order=desc',
+  'page=1&size=20&size=30&order=desc',
+  'page=1&size=20&order=desc&memberId=3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+  'page=1&size=20&order=desc&unexpected=1',
+  'size=20&order=desc',
+  'page=1&order=desc',
+  'page=1&size=20',
+])(
+  '이프 내역의 잘못된 생성 계약 쿼리 %s는 업스트림 호출 전에 400이다',
+  async (query) => {
+    const fetchMock = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await invoke(
+      'GET',
+      `/credits/transactions${query ? `?${query}` : ''}`,
+    );
+
+    expect(response.status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  },
+);

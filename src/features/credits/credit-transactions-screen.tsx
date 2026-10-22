@@ -17,7 +17,11 @@ import { cn } from '@/lib/utils';
 
 export function CreditTransactionsScreen() {
   const { query, params, href, sort, order, changeSort } =
-    useManagementList<CreditTransactionItem>('/api/credits/transactions');
+    useManagementList<CreditTransactionItem>(
+      '/api/credits/transactions',
+      'createdAt',
+      { page: '1', size: '20', order: 'desc' },
+    );
 
   return (
     <>
