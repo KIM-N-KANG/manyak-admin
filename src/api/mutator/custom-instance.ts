@@ -75,6 +75,14 @@ export async function customInstance<T>(
   });
   const data = await parseResponseData(response);
 
+  if (
+    response.status === 401 &&
+    typeof window !== 'undefined' &&
+    window.location.pathname !== '/login'
+  ) {
+    window.location.replace('/login');
+  }
+
   if (!response.ok) {
     throw new FetchError('요청 처리에 실패했습니다.', response.status, data);
   }

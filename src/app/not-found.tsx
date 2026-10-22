@@ -18,7 +18,7 @@ export default function NotFound() {
         </p>
         <Button
           nativeButton={false}
-          render={<Link href="/" />}
+          render={<Link href="/dashboard" />}
           className="mt-6">
           관리자 홈으로
         </Button>

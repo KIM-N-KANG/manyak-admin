@@ -79,3 +79,19 @@ describe('BFF mutator', () => {
     });
   });
 });
+
+it('만료 401은 로그인으로 이동하면서 오류 채널을 유지한다', async () => {
+  const replace = vi.fn();
+
+  vi.stubGlobal('window', { location: { pathname: '/dashboard', replace } });
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockResolvedValue(Response.json({ code: 'EXPIRED' }, { status: 401 })),
+  );
+  await expect(customInstance('/api/members')).rejects.toMatchObject({
+    status: 401,
+  });
+  expect(replace).toHaveBeenCalledWith('/login');
+});
