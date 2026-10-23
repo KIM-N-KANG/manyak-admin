@@ -30,7 +30,7 @@ export function AnalyticsSection() {
     <Card
       role="region"
       aria-label="오늘 활성 사용자"
-      className="relative min-w-0 p-4">
+      className="relative min-h-56 min-w-0 p-4">
       <div className="flex items-center gap-2">
         <h3 className="text-sm text-muted-foreground">
           <Link
@@ -52,6 +52,7 @@ export function AnalyticsSection() {
       </div>
       <div className="relative z-10">
         <QueryState
+          variant="inline"
           pending={query.isPending}
           error={query.error}
           retry={query.refetch}

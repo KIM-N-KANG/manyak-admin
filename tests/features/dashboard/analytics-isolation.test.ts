@@ -69,6 +69,7 @@ vi.mock('@/components/ui/chart', () => ({
 let client: QueryClient;
 let failAnalytics: boolean;
 let failPlay: boolean;
+let failSummary: boolean;
 const requested: string[] = [];
 
 beforeEach(() => {
@@ -80,6 +81,7 @@ beforeEach(() => {
   requested.length = 0;
   failAnalytics = false;
   failPlay = false;
+  failSummary = false;
   client = new QueryClient({
     defaultOptions: {
       queries: {
@@ -102,7 +104,10 @@ beforeEach(() => {
           ? Response.json({ code: 'SERVICE_UNAVAILABLE' }, { status: 503 })
           : playResponse();
 
-      if (url.startsWith('/api/dashboard/summary')) return summaryResponse();
+      if (url.startsWith('/api/dashboard/summary'))
+        return failSummary
+          ? Response.json({ message: 'failure' }, { status: 500 })
+          : summaryResponse();
 
       if (url.startsWith('/api/dashboard/charts'))
         return chartsResponse(request);
@@ -151,6 +156,8 @@ describe('Amplitude 실패 격리', () => {
     const alert = await within(region).findByRole('alert');
 
     expect(alert.textContent).toContain('불러올 수 없음');
+    expect(alert.getAttribute('data-slot')).toBeNull();
+    expect(region.className).toContain('min-h-56');
     await screen.findByRole('region', { name: '일별 지표 추이' });
     expectDbMetricsVisible();
     expect(screen.getAllByRole('alert')).toHaveLength(1);
@@ -436,4 +443,26 @@ it('Play 503은 설치 카드에만 설치 지표 사용 불가를 표시하고 
   expect(
     screen.getByRole('region', { name: '앱 설치(Android)' }).textContent,
   ).toContain('설치 지표 사용 불가');
+});
+
+it('DB 요약 실패는 인라인 텍스트로 표시하고 같은 요청만 재시도한다', async () => {
+  failSummary = true;
+  render(dashboard());
+
+  const alert = await screen.findByRole('alert');
+
+  expect(alert.getAttribute('data-slot')).toBeNull();
+  expect(alert.querySelector('[data-slot="card"]')).toBeNull();
+  expect(alert.textContent).toContain('데이터 불러오기 실패');
+  await screen.findByRole('region', { name: '일별 지표 추이' });
+
+  const otherRequests = requested.filter((url) => !url.includes('/summary'));
+
+  failSummary = false;
+  fireEvent.click(within(alert).getByRole('button', { name: '다시 시도' }));
+  await screen.findByText('가입자', { selector: 'p' });
+  expect(requested.filter((url) => !url.includes('/summary'))).toEqual(
+    otherRequests,
+  );
+  expect(screen.queryByRole('alert')).toBeNull();
 });

@@ -134,10 +134,26 @@ it('다른 실패와 로딩도 카드 안에서 표시한다', () => {
   const view = render(createElement(PlayInstallsCard));
 
   expect(screen.getByRole('status').textContent).toContain('불러오는 중');
+
+  const cardClass = screen.getByRole('region', {
+    name: '앱 설치(Android)',
+  }).className;
+
+  expect(cardClass).toContain('min-h-56');
+  expect(screen.getByRole('status').getAttribute('data-slot')).toBeNull();
   state.pending = false;
   state.error = new FetchError('failure', 500, {});
   view.rerender(createElement(PlayInstallsCard));
   expect(screen.getByText('데이터 불러오기 실패')).toBeTruthy();
+  expect(
+    screen.getByRole('region', { name: '앱 설치(Android)' }).className,
+  ).toBe(cardClass);
+  expect(screen.getByRole('alert').getAttribute('data-slot')).toBeNull();
+  state.error = null;
+  view.rerender(createElement(PlayInstallsCard));
+  expect(
+    screen.getByRole('region', { name: '앱 설치(Android)' }).className,
+  ).toBe(cardClass);
 });
 it('fixture는 누적 설치와 마지막 활성 기기·기준일을 일치시킨다', async () => {
   const data = await GET().json();
