@@ -836,7 +836,11 @@ export const adminOperations = [
         required: true,
         schema: {
           type: 'object',
-          properties: { days: { type: 'integer', format: 'int32' } },
+          properties: {
+            days: { type: ['string', 'null'], enum: ['7', '30', '90'] },
+            from: { type: ['string', 'null'] },
+            to: { type: ['string', 'null'] },
+          },
         },
       },
     ],
@@ -850,10 +854,17 @@ export const adminOperations = [
     method: 'GET',
     parameters: [
       {
-        name: 'days',
+        name: 'query',
         in: 'query',
-        required: false,
-        schema: { type: 'integer', format: 'int32', default: 30 },
+        required: true,
+        schema: {
+          type: 'object',
+          properties: {
+            days: { type: ['string', 'null'], enum: ['7', '30', '90'] },
+            from: { type: ['string', 'null'] },
+            to: { type: ['string', 'null'] },
+          },
+        },
       },
     ],
     params: undefined,

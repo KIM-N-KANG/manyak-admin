@@ -31,14 +31,17 @@ import { playInstalls } from '@/fixtures/play-installs';
 
 const state = vi.hoisted(() => ({
   charts: undefined as DashboardCharts | undefined,
+  chartsPending: false,
+  chartsError: false,
+  search: 'days=7',
   summary: undefined as DashboardSummary | undefined,
   push: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/dashboard',
-  useSearchParams: () => new URLSearchParams('days=7'),
-  useRouter: () => ({ push: state.push }),
+  useSearchParams: () => new URLSearchParams(state.search),
+  useRouter: () => ({ push: state.push, replace: vi.fn() }),
 }));
 vi.mock('@/features/shared/use-api', () => ({
   useApi: (url: string) => ({
@@ -49,21 +52,30 @@ vi.mock('@/features/shared/use-api', () => ({
         : url.includes('/analytics')
           ? getDashboardAnalytics(7)
           : state.charts,
-    isPending: false,
-    isError: false,
-    error: null,
+    isPending: url.includes('/charts') && state.chartsPending,
+    isError: url.includes('/charts') && state.chartsError,
+    error:
+      url.includes('/charts') && state.chartsError
+        ? new Error('Charts unavailable')
+        : null,
     refetch: vi.fn(),
   }),
 }));
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-21T10:00:00Z'));
   state.charts = getDashboardCharts(7);
+  state.chartsPending = false;
+  state.chartsError = false;
+  state.search = 'days=7';
   state.summary = structuredClone(summary);
   state.push.mockReset();
 });
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 const point = (label: string, value: number): ChartPoint => ({
@@ -415,15 +427,15 @@ it('오늘 0과 누적을 함께 표시하고 KST 어제·기간 합계와 원 �
 
   expect(within(memberCard).getByText('1,234')).toBeTruthy();
   expect(
-    within(memberCard).getByText('최근 7일 6 명 · 어제 4 명'),
+    within(memberCard).getByText('최근 7일 합계 6명, 어제 4명'),
   ).toBeTruthy();
   expect(within(paymentCard).getByText('1,234,567')).toBeTruthy();
   expect(
-    within(paymentCard).getByText('최근 7일 13,345 원 · 어제 12,345 원'),
+    within(paymentCard).getByText('최근 7일 합계 13,345원, 어제 12,345원'),
   ).toBeTruthy();
 });
 
-it('어제 원장이 없는 경우 실제 0으로 채우지 않고 미확인 값을 표시한다', () => {
+it('선택 기간 안의 어제 원장이 없으면 불러오기 실패를 표시한다', () => {
   state.charts = {
     ...state.charts!,
     daily: state.charts!.daily.filter((day) => day.date !== '2026-10-20'),
@@ -432,5 +444,52 @@ it('어제 원장이 없는 경우 실제 0으로 채우지 않고 미확인 값
 
   const memberCard = screen.getByRole('link', { name: /^회원/ });
 
-  expect(within(memberCard).getByText(/어제 — 명/)).toBeTruthy();
+  expect(within(memberCard).getByText(/어제: 불러오기 실패$/)).toBeTruthy();
 });
+
+it.each([
+  [true, false, '불러오는 중'],
+  [false, true, '불러오기 실패'],
+] as const)(
+  '차트 값이 없으면 단위 없이 상태를 표시한다: %s, %s',
+  (pending, error, status) => {
+    state.charts = undefined;
+    state.chartsPending = pending;
+    state.chartsError = error;
+    render(createElement(DashboardScreen));
+
+    for (const label of ['회원', '채팅 시작', '이프 지급']) {
+      const card = screen.getByRole('link', { name: new RegExp(`^${label}`) });
+
+      expect(
+        within(card).getByText(`최근 7일 합계 ${status}, 어제: ${status}`),
+      ).toBeTruthy();
+    }
+  },
+);
+
+it.each(['success', 'pending', 'error'])(
+  '어제가 기간 밖이면 차트 상태와 무관하게 표시한다: %s',
+  (status) => {
+    state.search = 'from=2026-10-01&to=2026-10-10';
+    state.chartsPending = status === 'pending';
+    state.chartsError = status === 'error';
+    state.charts =
+      status === 'success' ? { ...state.charts!, daily: [] } : undefined;
+    render(createElement(DashboardScreen));
+
+    const memberCard = screen.getByRole('link', { name: /^회원/ });
+    const total =
+      status === 'success'
+        ? '0명'
+        : status === 'pending'
+          ? '불러오는 중'
+          : '불러오기 실패';
+
+    expect(
+      within(memberCard).getByText(
+        `2026-10-01 ~ 2026-10-10 합계 ${total}, 어제: 선택 기간 밖`,
+      ),
+    ).toBeTruthy();
+  },
+);

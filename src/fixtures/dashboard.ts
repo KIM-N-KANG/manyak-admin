@@ -1,4 +1,5 @@
 import { genreDepthTitle } from '@/features/dashboard/chart-data';
+import type { DateRange } from '@/features/dashboard/date-range';
 import type {
   ChartLink,
   DailyMetrics,
@@ -19,6 +20,7 @@ import {
   stories,
 } from '@/fixtures/entities';
 import { inPeriod, kstDate } from '@/fixtures/query';
+import { rangeDaily } from '@/fixtures/range-daily';
 
 const asOf = '2026-10-21T09:00:00Z';
 const today = kstDate(asOf);
@@ -82,8 +84,8 @@ export const summary: DashboardSummary = {
   },
 };
 
-const daily: DailyMetrics[] = Array.from({ length: 90 }, (_, i) => ({
-  date: new Date(Date.UTC(2026, 6, 24 + i)).toISOString().slice(0, 10),
+const daily: DailyMetrics[] = Array.from({ length: 366 }, (_, i) => ({
+  date: new Date(Date.UTC(2025, 9, 21 + i)).toISOString().slice(0, 10),
   joined: 0,
   chats: 0,
   turns: 0,
@@ -188,10 +190,24 @@ function percentile(values: number[], p: number) {
   return sorted[lo] + (sorted[Math.ceil(at)] - sorted[lo]) * (at - lo);
 }
 
-export function getDashboardCharts(days: number): DashboardCharts {
-  const selected = daily.slice(-days);
-  const from = selected[0].date;
-  const to = selected[selected.length - 1].date;
+export function getDashboardCharts(days: number | DateRange): DashboardCharts {
+  const selected =
+    typeof days === 'number'
+      ? daily.slice(-days)
+      : rangeDaily(daily, days, {
+          joined: 0,
+          chats: 0,
+          turns: 0,
+          stories: 0,
+          granted: 0,
+          spent: 0,
+          payments: 0,
+          revenue: 0,
+          attendance: 0,
+        });
+  const from = typeof days === 'number' ? selected[0].date : days.from;
+  const to =
+    typeof days === 'number' ? selected[selected.length - 1].date : days.to;
   const period = new URLSearchParams({ from, to });
   const periodChats = chats.filter((c) => inPeriod(c.startedAt, period));
   const counts = [...getChatCounts(from, to).values()];

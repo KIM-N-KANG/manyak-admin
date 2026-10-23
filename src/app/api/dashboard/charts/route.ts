@@ -1,16 +1,18 @@
 import { bffError } from '@/api/bff-error';
 import { productionDataSourceError } from '@/api/data-source-guard';
 import { getDashboardCharts } from '@/fixtures/dashboard';
+import { fixtureDashboardRange } from '@/fixtures/dashboard-range';
 
 export function GET(request: Request) {
   const configurationError = productionDataSourceError();
 
   if (configurationError) return configurationError;
 
-  const days = Number(new URL(request.url).searchParams.get('days') ?? '30');
+  try {
+    const range = fixtureDashboardRange(request, 'charts');
 
-  if (![7, 30, 90].includes(days))
-    return bffError(request, 400, '기간은 7, 30, 90일 중 선택하세요.', 'days');
-
-  return Response.json(getDashboardCharts(days));
+    return Response.json(getDashboardCharts(range));
+  } catch {
+    return bffError(request, 400, '기간 범위를 확인하세요.', 'from');
+  }
 }

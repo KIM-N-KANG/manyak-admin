@@ -622,16 +622,20 @@ export const InstallsResponse = zod.unknown();
 
 export const ChartsQueryParams = zod.object({
   request: zod.object({
-    days: zod.number().optional(),
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
   }),
 });
 
 export const ChartsResponse = zod.unknown();
 
-export const analyticsQueryDaysDefault = 30;
-
 export const AnalyticsQueryParams = zod.object({
-  days: zod.number().default(analyticsQueryDaysDefault),
+  query: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+  }),
 });
 
 export const AnalyticsResponse = zod.unknown();

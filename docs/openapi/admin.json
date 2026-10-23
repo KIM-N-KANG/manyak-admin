@@ -7,7 +7,8 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-10-22T18:46:34.126Z"
+    "receivedAt": "2026-10-23T06:31:14.028Z",
+    "revision": "28bbf1c"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -1522,13 +1523,11 @@
         "operationId": "analytics",
         "parameters": [
           {
-            "name": "days",
+            "name": "query",
             "in": "query",
-            "required": false,
+            "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 30
+              "$ref": "#/components/schemas/AdminChartsRequest"
             }
           }
         ],
@@ -4032,8 +4031,27 @@
         "type": "object",
         "properties": {
           "days": {
-            "type": "integer",
-            "format": "int32"
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "7",
+              "30",
+              "90"
+            ]
+          },
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -4636,10 +4654,22 @@
       "JsonNode": {
         "type": "object",
         "properties": {
+          "container": {
+            "type": "boolean"
+          },
           "string": {
             "type": "boolean"
           },
-          "container": {
+          "number": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "integralNumber": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
             "type": "boolean"
           },
           "nodeType": {
@@ -4691,18 +4721,6 @@
             "type": "boolean"
           },
           "binary": {
-            "type": "boolean"
-          },
-          "missingNode": {
-            "type": "boolean"
-          },
-          "integralNumber": {
-            "type": "boolean"
-          },
-          "floatingPointNumber": {
-            "type": "boolean"
-          },
-          "number": {
             "type": "boolean"
           },
           "array": {

@@ -471,3 +471,93 @@ it.each([
     expect(fetchMock).not.toHaveBeenCalled();
   },
 );
+
+it.each(['charts', 'analytics'])(
+  '공개 대시보드 %s 경로의 from·to를 생성 계약 검증 후 그대로 전달한다',
+  async (endpoint) => {
+    const query = 'from=2026-10-01&to=2026-10-22';
+    const body = { from: '2026-10-01', to: '2026-10-22', daily: [] };
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(body));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const incoming = new NextRequest(
+      `https://admin.example/api/dashboard/${endpoint}?${query}`,
+      { headers: { Cookie: cookie } },
+    );
+    const rewritten = proxy(incoming).headers.get('x-middleware-rewrite');
+
+    expect(rewritten).toBe(
+      `https://admin.example/api/admin-upstream/dashboard/${endpoint}?${query}`,
+    );
+
+    const response = await handle(
+      new NextRequest(rewritten!, { headers: incoming.headers }),
+      { params: Promise.resolve({ path: ['dashboard', endpoint] }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(body);
+    expect(fetchMock).toHaveBeenCalledOnce();
+
+    const [url, options] = fetchMock.mock.calls[0];
+    const upstream = new URL(url);
+
+    expect(url).toBe(
+      `https://upstream.example/api/v1/admin/dashboard/${endpoint}?${query}`,
+    );
+    expect(upstream.searchParams.has('days')).toBe(false);
+    expect(options.headers.get('Authorization')).toBe(
+      'Bearer forged-test-token',
+    );
+    expect(options.headers.has('Cookie')).toBe(false);
+  },
+);
+
+it.each(['charts', 'analytics'])(
+  '%s 범위의 서버 검증 오류와 서비스 실패를 그대로 반환한다',
+  async (endpoint) => {
+    for (const status of [400, 503]) {
+      const body = {
+        status,
+        code: status === 400 ? 'BAD_REQUEST' : 'SERVICE_UNAVAILABLE',
+        message: '서버 오류',
+      };
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(Response.json(body, { status }));
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      const response = await invoke(
+        'GET',
+        `/dashboard/${endpoint}?from=2026-10-22&to=2026-10-01`,
+      );
+
+      expect(response.status).toBe(status);
+      expect(await response.json()).toEqual(body);
+      expect(fetchMock).toHaveBeenCalledOnce();
+    }
+  },
+);
+
+it.each(['charts', 'analytics'])(
+  '%s의 생성 days enum·중복·알 수 없는 범위 쿼리를 업스트림 전에 거부한다',
+  async (endpoint) => {
+    for (const query of [
+      'days=14',
+      'days=7.0',
+      'from=2026-10-01&from=2026-10-02&to=2026-10-22',
+      'range=last30d',
+    ]) {
+      const fetchMock = vi.fn();
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      const response = await invoke('GET', `/dashboard/${endpoint}?${query}`);
+
+      expect(response.status).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    }
+  },
+);
