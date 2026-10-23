@@ -548,9 +548,7 @@ it('유입 앱 설치는 캠페인·기간과 독립적으로 Play만 요청하�
   expect(
     screen.getByLabelText('누적 기기 설치 수와 활성 기기 수 추이'),
   ).toBeTruthy();
-  expect(
-    screen.getByLabelText('일별 기기 설치 수와 일별 앱 삭제 수'),
-  ).toBeTruthy();
+  expect(screen.getByLabelText('일별 기기 설치 수와 앱 삭제 수')).toBeTruthy();
 });
 
 it('유입 앱 설치의 503은 Play 안내와 재시도로 표시한다', async () => {

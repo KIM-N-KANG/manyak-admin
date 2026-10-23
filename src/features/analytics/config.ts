@@ -38,7 +38,7 @@ export type AnalyticsScreenName = keyof typeof screens;
 export const funnels = [
   ['web-first-visit', 'Web 첫 접속'],
   ['android-first-visit', 'Android 첫 접속'],
-  ['story-creation', '스토리 제작'],
+  ['story-creation', '간편 제작'],
   ['story-detail-chat', '상세 진입 채팅'],
   ['guest-limit-login', '게스트 한도 로그인'],
 ] as const;
@@ -85,8 +85,8 @@ export function eventLabel(event: string, turnNumber?: number | null) {
     client_onboarding_createButton_clicked: '제작 버튼 클릭',
     client_storyCreate_storyGeneration_requested: '스토리라인 생성 요청',
     client_storyCreate_storylineOption_selected: '스토리라인 선택',
-    client_storyCreate_storyCompletion_requested: '스토리 완성 요청',
-    client_storyCreate_completed: '스토리 완성',
+    client_storyCreate_storyCompletion_requested: '간편 제작 요청',
+    client_storyCreate_completed: '간편 제작 완료',
     client_chat_messageInput_submitted: '채팅 메시지 전송',
     client_login_viewed: '로그인 화면 조회',
     client_storyDetail_viewed: '스토리 상세 조회',

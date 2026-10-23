@@ -345,7 +345,7 @@ export function AcquisitionContent({
               label: '스토리라인 생성 요청',
               value: n(t.storylineRequests, '회'),
             },
-            { label: '스토리 완성 요청', value: n(t.completionRequests, '회') },
+            { label: '간편 제작 요청', value: n(t.completionRequests, '회') },
             { label: '채팅 메시지 전송', value: n(t.chatMessages, '회') },
           ]}
         />
@@ -388,7 +388,7 @@ export function AcquisitionContent({
               })),
               series: pairSeries([
                 ['storylineRequests', '스토리라인 생성 요청'],
-                ['completionRequests', '스토리 완성 요청'],
+                ['completionRequests', '간편 제작 요청'],
               ]),
               unit: '회',
             },
@@ -518,6 +518,7 @@ export function ConversionContent({
       />
       <SeriesChart
         title="기준 턴별 도달률"
+        categoryLabel="기준 턴"
         rows={rows}
         series={owner}
         unit="%"
@@ -560,7 +561,7 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
     const errors = listedSeries([
       ['chatLoadError', '채팅 불러오기 오류'],
       ['storyListLoadError', '스토리 목록 불러오기 오류'],
-      ['storyCompleteError', '스토리 완성 오류'],
+      ['storyCompleteError', '간편 제작 오류'],
     ]);
     const signals = listedSeries([
       ['creditShortage', '이프 부족 안내'],

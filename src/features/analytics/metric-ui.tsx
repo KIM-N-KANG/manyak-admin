@@ -101,6 +101,7 @@ export function NumericTable({
 export type PlotRow = { date: string; [key: string]: string | number | null };
 export function SeriesChart({
   title,
+  categoryLabel = '날짜',
   rows,
   series,
   unit,
@@ -109,6 +110,7 @@ export function SeriesChart({
   grouped = false,
 }: {
   title: string;
+  categoryLabel?: string;
   rows: PlotRow[];
   series: Series[];
   unit: string;
@@ -256,7 +258,7 @@ export function SeriesChart({
       </ChartContainer>
       <NumericTable
         headers={[
-          '날짜',
+          categoryLabel,
           ...series.map((s) => `${s.label} (${unit})`),
           ...(href ? ['관련 목록'] : []),
         ]}

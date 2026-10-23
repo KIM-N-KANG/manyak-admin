@@ -44,10 +44,10 @@ export function PlayInstallsDetails() {
     <>
       <div className="mb-4 flex items-center gap-2">
         <h2 className="text-xl font-semibold">앱 설치</h2>
-        <HelpTooltip label="앱 설치 출처와 집계 안내" source="Play">
-          Play 보고서 출처 지표입니다. 보고서는 며칠 늦게 반영됩니다. 누적 기기
-          설치 수는 보고서 전체 기간의 일별 기기 설치 수를 합산한 값입니다.
-          보고일은 Play 기준 태평양 시간이며 페이지에서 선택한 기간은 이 탭에
+        <HelpTooltip label="앱 설치 출처와 집계 안내" source="Google Play">
+          Google Play 설치 보고서 출처 지표입니다. 보고서는 며칠 늦게 반영되고
+          날짜는 Play 기준 태평양 시간입니다. 누적 기기 설치 수는 보고서 전체
+          기간의 일별 기기 설치 수를 합산한 값입니다. 선택한 기간은 이 탭에
           적용되지 않습니다.
         </HelpTooltip>
       </div>
@@ -126,12 +126,12 @@ export function PlayInstallsDetails() {
             </div>
             <div>
               <h3 className="text-sm font-medium">
-                일별 기기 설치 수와 일별 앱 삭제 수
+                일별 기기 설치 수와 앱 삭제 수
               </h3>
               <ChartContainer
                 config={config}
                 className="mt-3 h-64 w-full"
-                aria-label="일별 기기 설치 수와 일별 앱 삭제 수">
+                aria-label="일별 기기 설치 수와 앱 삭제 수">
                 <BarChart
                   accessibilityLayer
                   data={data.daily.map((day) => ({
@@ -187,7 +187,7 @@ export function PlayInstallsDetails() {
             </div>
             <details>
               <summary className="cursor-pointer text-xs text-muted-foreground">
-                일별 설치 지표
+                전체 수치 표
               </summary>
               <div className="mt-3 max-h-64 overflow-auto">
                 <DataTable

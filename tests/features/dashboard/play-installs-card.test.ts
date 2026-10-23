@@ -80,7 +80,7 @@ it('누적·활성·Play 날짜와 지연 안내를 표시하고 확장하면 �
   expect(lines.querySelector('[stroke-dasharray="6 3"]')).toBeTruthy();
 
   const bars = view.container.querySelector(
-    '[aria-label="일별 기기 설치 수와 일별 앱 삭제 수"]',
+    '[aria-label="일별 기기 설치 수와 앱 삭제 수"]',
   )!;
 
   expect(bars.querySelector('.recharts-reference-line')).toBeTruthy();
@@ -99,7 +99,7 @@ it('누적·활성·Play 날짜와 지연 안내를 표시하고 확장하면 �
   expect(Number(positive.getAttribute('y'))).toBeLessThan(
     Number(negative.getAttribute('y')),
   );
-  expect(screen.getAllByText('일별 설치 지표')).toHaveLength(1);
+  expect(screen.getAllByText('전체 수치 표')).toHaveLength(1);
   expect(view.container.querySelectorAll('tbody tr')).toHaveLength(
     playInstalls.daily.length,
   );
