@@ -19,15 +19,13 @@ import type {
   TargetCount,
 } from '@/features/notifications/types';
 import { ConfirmDialog } from '@/features/originals/confirm-dialog';
-import { useServerData } from '@/features/shared/data-source';
 import type { Page } from '@/features/shared/types';
 import { useApi } from '@/features/shared/use-api';
 import type { Story } from '@/features/stories/types';
 
 export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
-  const serverData = useServerData();
   const [kind, setKind] = useState('MARKETING');
-  const [story, setStory] = useState(serverData ? '' : storyId);
+  const [story, setStory] = useState(storyId);
   const [search, setSearch] = useState('');
   const [immediate, setImmediate] = useState(true);
   const [draft, setDraft] = useState<CampaignCreateRequest | null>(null);
@@ -37,7 +35,6 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
   );
   const stories = useApi<Page<Story>>(
     `/api/stories?size=20&visibility=PUBLIC${search ? `&q=${encodeURIComponent(search)}` : ''}`,
-    !serverData,
   );
   const selected = useApi<Story>(
     `/api/stories/${encodeURIComponent(story)}`,
@@ -131,68 +128,57 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
               maxLength={300}
             />
           </label>
-          {serverData ? (
+          <div className="grid gap-3 rounded-md border p-4">
+            <label className="grid gap-2 text-sm">
+              홍보할 스토리 검색
+              <input
+                className="control"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                maxLength={50}
+              />
+            </label>
+            <QueryState
+              pending={stories.isPending}
+              error={stories.error}
+              retry={stories.refetch}
+            />
+            <label className="grid gap-2 text-sm">
+              이동 대상 스토리
+              <select
+                className="control"
+                value={story}
+                onChange={(e) => setStory(e.target.value)}>
+                <option value="">이동 대상 없음</option>
+                {story &&
+                !stories.data?.items.some((i) => i.storyId === story) ? (
+                  <option value={story}>{selected.data?.title ?? story}</option>
+                ) : null}
+                {stories.data?.items.map((i) => (
+                  <option key={i.storyId} value={i.storyId}>
+                    {i.title}
+                  </option>
+                ))}
+              </select>
+            </label>
             <p className="text-sm text-muted-foreground">
-              스토리 이동 대상 지정은 준비 중입니다. 현재는 이동 대상 없이
-              발송합니다.
+              발행 상태인 공개 스토리만 이동 대상으로 선택할 수 있습니다. 알림을
+              누르면 선택한 스토리로 이동합니다.
             </p>
-          ) : (
-            <div className="grid gap-3 rounded-md border p-4">
-              <label className="grid gap-2 text-sm">
-                홍보할 스토리 검색
-                <input
-                  className="control"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  maxLength={50}
-                />
-              </label>
-              <QueryState
-                pending={stories.isPending}
-                error={stories.error}
-                retry={stories.refetch}
-              />
-              <label className="grid gap-2 text-sm">
-                이동 대상 스토리
-                <select
-                  className="control"
-                  value={story}
-                  onChange={(e) => setStory(e.target.value)}>
-                  <option value="">이동 대상 없음</option>
-                  {story &&
-                  !stories.data?.items.some((i) => i.storyId === story) ? (
-                    <option value={story}>
-                      {selected.data?.title ?? story}
-                    </option>
-                  ) : null}
-                  {stories.data?.items.map((i) => (
-                    <option key={i.storyId} value={i.storyId}>
-                      {i.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <p className="text-sm text-muted-foreground">
-                발행 상태인 공개 스토리만 이동 대상으로 선택할 수 있습니다.
-                알림을 누르면 선택한 스토리로 이동합니다.
+            <QueryState
+              pending={!!story && selected.isPending}
+              error={story ? selected.error : null}
+              retry={selected.refetch}
+            />
+            {invalidStory ? (
+              <p role="alert" className="text-sm text-destructive">
+                이동 대상은 발행 상태인 공개 스토리만 선택할 수 있습니다.
               </p>
-              <QueryState
-                pending={!!story && selected.isPending}
-                error={story ? selected.error : null}
-                retry={selected.refetch}
-              />
-              {invalidStory ? (
-                <p role="alert" className="text-sm text-destructive">
-                  이동 대상은 발행 상태인 공개 스토리만 선택할 수 있습니다.
-                </p>
-              ) : null}
-              {story ? (
-                <TextLink href={`/stories/${story}`}>
-                  선택한 스토리 확인
-                </TextLink>
-              ) : null}
-            </div>
-          )}
+            ) : null}
+            {story ? (
+              <TextLink href={`/stories/${story}`}>선택한 스토리 확인</TextLink>
+            ) : null}
+          </div>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
