@@ -6,6 +6,8 @@ import { FetchError } from '@/api/mutator/custom-instance';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
+import { HelpTooltip } from './help-tooltip';
+
 export function PageHeading({
   title,
   help,
@@ -34,11 +36,13 @@ export function QueryState({
   error,
   retry,
   source,
+  variant = 'panel',
 }: {
   pending: boolean;
   error: Error | null;
   retry: () => unknown;
   source?: 'amplitude' | 'play';
+  variant?: 'panel' | 'inline';
 }) {
   const serverNotImplemented =
     error instanceof FetchError &&
@@ -50,35 +54,58 @@ export function QueryState({
 
   const unavailable = error instanceof FetchError && error.status === 503;
 
-  if (error)
+  if (error) {
+    const title = serverNotImplemented
+      ? '기능 준비 중'
+      : unavailable && source === 'amplitude'
+        ? 'Amplitude 지표를 불러올 수 없음'
+        : unavailable && source === 'play'
+          ? '설치 지표 사용 불가'
+          : '데이터 불러오기 실패';
+    const description = serverNotImplemented
+      ? '이 기능은 서버 연결을 준비 중입니다.'
+      : unavailable && source === 'amplitude'
+        ? '잠시 후 다시 시도해 주세요.'
+        : unavailable && source === 'play'
+          ? '잠시 후 다시 시도해 주세요. 문제가 계속되면 Play 설치 지표 설정과 보고서 상태를 확인해 주세요.'
+          : '잠시 후 다시 시도해 주세요. 문제가 계속되면 담당자에게 문의해 주세요.';
+
+    if (variant === 'inline')
+      return (
+        <div role="alert" className="mt-3 text-sm leading-5">
+          <div className="flex items-start gap-1">
+            <h2 className="min-w-0 font-medium break-words">{title}</h2>
+            <HelpTooltip label={`${title} 안내`}>{description}</HelpTooltip>
+          </div>
+          <button
+            type="button"
+            onClick={() => void retry()}
+            className="mt-1 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring">
+            다시 시도
+          </button>
+        </div>
+      );
+
     return (
       <Card role="alert">
-        <h2 className="font-semibold">
-          {serverNotImplemented
-            ? '기능 준비 중'
-            : unavailable && source === 'amplitude'
-              ? 'Amplitude 지표를 불러올 수 없음'
-              : unavailable && source === 'play'
-                ? '설치 지표 사용 불가'
-                : '데이터 불러오기 실패'}
-        </h2>
-        <p className="my-3 text-sm text-muted-foreground">
-          {serverNotImplemented
-            ? '이 기능은 서버 연결을 준비 중입니다.'
-            : unavailable && source === 'amplitude'
-              ? '잠시 후 다시 시도해 주세요.'
-              : unavailable && source === 'play'
-                ? '잠시 후 다시 시도해 주세요. 문제가 계속되면 Play 설치 지표 설정과 보고서 상태를 확인해 주세요.'
-                : '잠시 후 다시 시도해 주세요. 문제가 계속되면 담당자에게 문의해 주세요.'}
-        </p>
+        <h2 className="font-semibold">{title}</h2>
+        <p className="my-3 text-sm text-muted-foreground">{description}</p>
         <Button variant="outline" onClick={() => void retry()}>
           다시 시도
         </Button>
       </Card>
     );
+  }
 
   if (pending)
-    return (
+    return variant === 'inline' ? (
+      <div
+        role="status"
+        aria-live="polite"
+        className="mt-3 text-sm text-muted-foreground">
+        데이터를 불러오는 중입니다…
+      </div>
+    ) : (
       <Card
         role="status"
         aria-live="polite"
