@@ -403,6 +403,38 @@ export const Update2Body = zod.object({
 
 export const Update2Response = zod.unknown();
 
+export const SignupsQueryParams = zod.object({
+  days: zod.enum(['7', '30', '90']).optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+});
+
+export const SignupsResponse = zod.unknown();
+
+export const SessionsQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const SessionsResponse = zod.unknown();
+
+export const RetentionQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const RetentionResponse = zod.unknown();
+
+export const ActivityQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const ActivityResponse = zod.unknown();
+
 export const storiesQueryRequestSizeMax = 100;
 
 export const storiesQueryRequestOrderRegExp = new RegExp('asc|desc');
@@ -451,6 +483,31 @@ export const StoryParams = zod.object({
 });
 
 export const StoryResponse = zod.unknown();
+
+export const QualityQueryParams = zod.object({
+  platform: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const QualityResponse = zod.unknown();
+
+export const OptionsQueryParams = zod.object({
+  days: zod.enum(['7', '30', '90']).optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+});
+
+export const OptionsResponse = zod.unknown();
+
+export const AiCostQueryParams = zod.object({
+  days: zod.enum(['7', '30', '90']).optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+});
+
+export const AiCostResponse = zod.unknown();
 
 export const StatsQueryParams = zod.object({
   from: zod.iso.date().optional(),
@@ -669,6 +726,28 @@ export const CreditTransactionsQueryParams = zod.object({
 export const CreditTransactionsResponse = zod.unknown();
 
 export const PoliciesResponse = zod.unknown();
+
+export const ReachQueryParams = zod.object({
+  days: zod.enum(['7', '30', '90']).optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+});
+
+export const ReachResponse = zod.unknown();
+
+export const FunnelParams = zod.object({
+  funnel: zod.string(),
+});
+
+export const FunnelQueryParams = zod.object({
+  platform: zod.string().optional(),
+  storyId: zod.uuid().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const FunnelResponse = zod.unknown();
 
 export const chatsQueryRequestSizeMax = 100;
 

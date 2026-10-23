@@ -13,9 +13,11 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { FetchError } from '@/api/mutator/custom-instance';
 import { GET } from '@/app/api/dashboard/play-installs/route';
 import { PlayInstallsCard } from '@/features/dashboard/play-installs-card';
+import type { PlayInstalls } from '@/features/dashboard/types';
 import { playInstalls } from '@/fixtures/play-installs';
 
 const state = vi.hoisted(() => ({
+  data: null as PlayInstalls | null,
   error: null as Error | null,
   pending: false,
   retry: vi.fn(),
@@ -26,7 +28,8 @@ vi.mock('@/features/shared/use-api', () => ({
     expect(url).toBe('/api/dashboard/play-installs');
 
     return {
-      data: state.error || state.pending ? undefined : playInstalls,
+      data:
+        state.error || state.pending ? undefined : (state.data ?? playInstalls),
       error: state.error,
       isError: !!state.error,
       isPending: state.pending,
@@ -36,6 +39,7 @@ vi.mock('@/features/shared/use-api', () => ({
 }));
 afterEach(() => {
   cleanup();
+  state.data = null;
   state.error = null;
   state.pending = false;
   state.retry.mockReset();
@@ -78,7 +82,7 @@ it('누적·활성·Play 날짜와 지연 안내를 표시하고 확장하면 �
 
     expect(x === previous[0] || y === previous[1]).toBe(true);
   });
-  expect(lines.querySelector('[stroke-dasharray="4 3"]')).toBeTruthy();
+  expect(lines.querySelector('[stroke-dasharray="6 3"]')).toBeTruthy();
 
   const bars = view.container.querySelector(
     '[aria-label="일별 기기 설치 수와 일별 앱 삭제 수"]',
@@ -124,7 +128,7 @@ it('다른 실패와 로딩도 카드 안에서 표시한다', () => {
   state.pending = false;
   state.error = new FetchError('failure', 500, {});
   view.rerender(createElement(PlayInstallsCard));
-  expect(screen.getByText('설치 지표를 불러올 수 없음')).toBeTruthy();
+  expect(screen.getByText('데이터 불러오기 실패')).toBeTruthy();
 });
 it('fixture는 누적 설치와 마지막 활성 기기·기준일을 일치시킨다', async () => {
   const data = await GET().json();
@@ -139,4 +143,16 @@ it('fixture는 누적 설치와 마지막 활성 기기·기준일을 일치시�
   expect(data.totalInstalls).toBe(cumulative);
   expect(data.activeDevices).toBe(data.daily.at(-1).activeDevices);
   expect(data.asOf).toBe(data.daily.at(-1).date);
+});
+
+it('활성 기기의 null은 보고서 값 없음으로 표시하고 실제 0은 유지한다', () => {
+  state.data = structuredClone(playInstalls);
+  state.data.daily[0].activeDevices = null;
+  state.data.daily[1].activeDevices = 0;
+  render(createElement(PlayInstallsCard));
+  expect(screen.getByText('보고서 값 없음')).toBeTruthy();
+
+  const rows = screen.getAllByRole('row');
+
+  expect(rows[2].lastElementChild!.textContent).toBe('0');
 });

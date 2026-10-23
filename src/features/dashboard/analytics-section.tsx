@@ -12,9 +12,13 @@ import {
   YAxis,
 } from 'recharts';
 
-import { DataTable, dateTime, NumberValue } from '@/components/admin/data-ui';
+import {
+  DataTable,
+  dateTime,
+  NumberValue,
+  QueryState,
+} from '@/components/admin/data-ui';
 import { ExternalToolLink } from '@/components/admin/external-tool-link';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
   ChartContainer,
@@ -72,7 +76,7 @@ function AnalyticsSource() {
               className="z-50 max-w-80 rounded-sm border bg-popover p-3 text-xs leading-5 text-popover-foreground shadow-sm">
               Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다.
               팀 계정 코호트가 설정된 경우 해당 사용자는 제외합니다. 국가가
-              한국이거나 국가 정보가 없는 사용자 중, 플랫폼이 Web 또는 Android인
+              한국이거나 국가 정보가 없는 사용자 중 플랫폼이 Web 또는 Android인
               고유 사용자만 집계합니다. 같은 사람이 두 플랫폼에서 활동하면
               합계에는 한 번만 들어가므로 Web과 Android를 더한 값과 합계는 다를
               수 있습니다. Amplitude 사용자 수는 DB 회원 수와 다를 수 있습니다.
@@ -213,23 +217,28 @@ export function AnalyticsSection({
           있습니다.
         </p>
       </div>
-      {query.isError ? (
-        <Card role="alert">
-          <h3 className="font-semibold">Amplitude 지표를 불러올 수 없음</h3>
-          <p className="my-3 text-sm text-muted-foreground">
-            잠시 후 다시 시도해 주세요.
-          </p>
-          <Button variant="outline" onClick={() => void query.refetch()}>
-            다시 시도
-          </Button>
-        </Card>
-      ) : query.isPending ? (
-        <Card role="status" className="py-10 text-center text-muted-foreground">
-          Amplitude 지표를 불러오는 중입니다…
-        </Card>
-      ) : data ? (
+      <QueryState
+        pending={query.isPending}
+        error={query.error}
+        retry={query.refetch}
+        source="amplitude"
+      />
+      {data && !query.isError ? (
         <>
           <div className="space-y-5">
+            {data.pendingDates.length > 0 ? (
+              <div
+                role="status"
+                className="rounded-md border p-3 text-xs text-muted-foreground">
+                준비 중 날짜 {data.pendingDates.length}개. 60초 뒤 다시
+                요청합니다.
+                <details className="mt-2">
+                  <summary className="cursor-pointer">준비 중 날짜</summary>
+                  <p className="mt-2">{data.pendingDates.join(', ')}</p>
+                </details>
+              </div>
+            ) : null}
+
             <Card className="flex flex-col">
               <h3 className="text-sm text-muted-foreground">
                 오늘 활성 사용자
@@ -277,18 +286,6 @@ export function AnalyticsSection({
                 {dateTime(data.asOf)} KST 집계 기준
               </p>
             </Card>
-            {data.pendingDates.length > 0 ? (
-              <div
-                role="status"
-                className="rounded-md border p-3 text-xs text-muted-foreground">
-                준비 중 날짜 {data.pendingDates.length}개. 60초 뒤 다시
-                요청합니다.
-                <details className="mt-2">
-                  <summary className="cursor-pointer">준비 중 날짜</summary>
-                  <p className="mt-2">{data.pendingDates.join(', ')}</p>
-                </details>
-              </div>
-            ) : null}
             <AnalyticsTrend data={data} metric="activeUsers" />
             <AnalyticsTrend data={data} metric="newUsers" />
           </div>
@@ -307,18 +304,34 @@ export function AnalyticsSection({
                   '일별 신규 사용자 Web',
                   '일별 신규 사용자 Android',
                 ]}>
-                {data.daily.map((day) => (
-                  <tr key={day.date}>
-                    <td>{day.date}</td>
-                    {(['activeUsers', 'newUsers'] as const).flatMap((metric) =>
-                      platforms.map((platform) => (
-                        <td key={`${metric}-${platform}`}>
-                          <NumberValue value={day[metric][platform]} />
-                        </td>
-                      )),
-                    )}
-                  </tr>
-                ))}
+                {Array.from(
+                  new Set([
+                    ...data.daily.map((day) => day.date),
+                    ...data.pendingDates,
+                  ]),
+                )
+                  .sort()
+                  .map((date) => {
+                    const day = data.daily.find((item) => item.date === date);
+
+                    return (
+                      <tr key={date}>
+                        <td>{date}</td>
+                        {(['activeUsers', 'newUsers'] as const).flatMap(
+                          (metric) =>
+                            platforms.map((platform) => (
+                              <td key={`${metric}-${platform}`}>
+                                {day && !data.pendingDates.includes(date) ? (
+                                  <NumberValue value={day[metric][platform]} />
+                                ) : (
+                                  '준비 중'
+                                )}
+                              </td>
+                            )),
+                        )}
+                      </tr>
+                    );
+                  })}
               </DataTable>
             </div>
           </details>

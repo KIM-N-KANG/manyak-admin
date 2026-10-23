@@ -27,22 +27,23 @@ export function CreditTransactionsScreen() {
     <>
       <PageHeading
         title="이프 내역"
-        description="전체 회원의 이프 원장을 확인하세요."
+        description="전체 회원의 이프 원장을 확인해 주세요."
       />
       <p className="mb-4 text-sm text-muted-foreground">
-        팀 계정 거래도 포함하므로 팀 계정을 제외하는 대시보드 카드의 집계와 다를
-        수 있습니다. 전체에는 사용 취소·만료·회수 등 모든 사유가 포함됩니다.
+        팀 계정의 원장도 포함하므로 팀 계정을 제외하는 대시보드 카드의 집계와
+        다를 수 있습니다. 전체에는 AI 실패 환불, 만료, 회수 등 모든 사유가
+        포함됩니다.
       </p>
       <ListFilterForm label="이프 내역" searchEnabled={false}>
         <label className="flex flex-col gap-2 text-xs text-muted-foreground">
-          방향
+          이프 변동 유형
           <select
             name="direction"
             className="control"
             defaultValue={params.get('direction') ?? ''}>
             <option value="">전체</option>
-            <option value="granted">지급</option>
-            <option value="spent">소진</option>
+            <option value="granted">적립</option>
+            <option value="spent">소모</option>
           </select>
         </label>
         <label className="flex flex-col gap-2 text-xs text-muted-foreground">
@@ -67,7 +68,7 @@ export function CreditTransactionsScreen() {
               { label: '기록 시각 (KST)', key: 'createdAt' },
               '회원',
               '사유',
-              '수량 (이프)',
+              '변동량 (이프)',
             ]}
             sorting={{ key: sort, order, onSort: changeSort }}
             empty={!query.data.items.length}>

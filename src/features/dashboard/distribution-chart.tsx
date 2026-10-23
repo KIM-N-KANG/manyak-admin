@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/chart';
 import {
   chartNumber,
+  distributionNumber,
   genreDepthTitle,
   rankedPoints,
 } from '@/features/dashboard/chart-data';
@@ -59,7 +60,7 @@ function DistributionTooltip({
     <div className="rounded-md border bg-card px-3 py-2 text-xs shadow-sm">
       <p>{point.label}</p>
       <p className="mt-1 font-mono">
-        {chartNumber(point.value)} {unit}
+        {distributionNumber(point.value, unit)} {unit}
       </p>
     </div>
   );
@@ -74,7 +75,7 @@ function GenreBars({ distribution, onSelect }: ChartProps) {
     <>
       {omitted > 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          상위 30개 · 외 {omitted}개 장르는 아래 표에서 확인하세요.
+          상위 30개, 외 {omitted}개 장르는 아래 표에서 확인해 주세요.
         </p>
       ) : null}
       <div
@@ -212,7 +213,7 @@ function DonutCenter({
   return (
     <text x={cx} y={cy} textAnchor="middle" fill="var(--foreground)">
       <tspan x={cx} dy="-2" className="text-2xl font-semibold">
-        {chartNumber(guestPercent)}%
+        {distributionNumber(guestPercent, '%')}%
       </tspan>
       <tspan x={cx} dy="22" className="text-xs" fill="var(--muted-foreground)">
         게스트
@@ -232,7 +233,7 @@ function StartedAsDonut({ distribution, onSelect }: ChartProps) {
   if (!points.some((point) => point.value > 0))
     return (
       <p className="py-16 text-center text-sm text-muted-foreground">
-        집계된 채팅방이 없습니다.
+        집계된 채팅이 없습니다.
       </p>
     );
 
@@ -262,7 +263,7 @@ function StartedAsDonut({ distribution, onSelect }: ChartProps) {
               textAnchor={textAnchor}
               dominantBaseline="central"
               fill="var(--foreground)">
-              {name} {chartNumber(value)}%
+              {name} {distributionNumber(Number(value), '%')}%
             </text>
           )}
           isAnimationActive={false}
@@ -437,7 +438,7 @@ function SuccessMeters({ distribution, onSelect }: ChartProps) {
             </ChartContainer>
             {warning ? (
               <p className="text-xs text-warning-foreground">
-                <span aria-hidden="true">⚠</span> 성공률 95% 미만 · 확인이
+                <span aria-hidden="true">⚠</span> 성공률 95% 미만, 확인이
                 필요합니다.
               </p>
             ) : null}

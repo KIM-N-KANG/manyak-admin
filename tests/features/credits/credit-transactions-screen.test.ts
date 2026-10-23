@@ -73,8 +73,8 @@ it('원장 열·한국어 사유·음수·회원 링크와 필터를 유지하�
     within(table)
       .getAllByRole('columnheader')
       .map((node) => node.textContent),
-  ).toEqual(['기록 시각 (KST)↓', '회원', '사유', '수량 (이프)']);
-  expect(within(table).getAllByText('채팅 전송')).toHaveLength(2);
+  ).toEqual(['기록 시각 (KST)↓', '회원', '사유', '변동량 (이프)']);
+  expect(within(table).getAllByText('채팅 턴 소모')).toHaveLength(2);
   expect(within(table).getAllByText('-30')).toHaveLength(2);
 
   const row = within(table).getAllByRole('row')[1];
@@ -82,7 +82,7 @@ it('원장 열·한국어 사유·음수·회원 링크와 필터를 유지하�
 
   expect(memberLink.getAttribute('href')).toMatch(/^\/members\/[0-9a-f-]+$/);
   expect(row.textContent).toContain('2026. 10. 21. 오후 1:00');
-  expect(screen.getByText(/팀 계정 거래도 포함/)).toBeTruthy();
+  expect(screen.getByText(/팀 계정의 원장도 포함/)).toBeTruthy();
   expect(screen.queryByRole('searchbox')).toBeNull();
   expect(screen.queryByLabelText('memberId')).toBeNull();
 
@@ -99,7 +99,7 @@ it('원장 열·한국어 사유·음수·회원 링크와 필터를 유지하�
 
 it('방향·기록일 적용 시 첫 페이지로 이동하고 초기화는 필터를 지운다', () => {
   renderList();
-  fireEvent.change(screen.getByRole('combobox', { name: '방향' }), {
+  fireEvent.change(screen.getByRole('combobox', { name: '이프 변동 유형' }), {
     target: { value: 'granted' },
   });
   fireEvent.change(screen.getByLabelText('기록일 (KST)'), {
@@ -112,7 +112,7 @@ it('방향·기록일 적용 시 첫 페이지로 이동하고 초기화는 필�
   expect(
     screen.getByRole('link', { name: '초기화' }).getAttribute('href'),
   ).toBe('/credits/transactions');
-  fireEvent.change(screen.getByRole('combobox', { name: '방향' }), {
+  fireEvent.change(screen.getByRole('combobox', { name: '이프 변동 유형' }), {
     target: { value: '' },
   });
   fireEvent.change(screen.getByLabelText('기록일 (KST)'), {
@@ -130,7 +130,7 @@ it('양수는 부호와 초록색을 표시하고 기록 시각만 정렬한다'
 
   const table = await screen.findByRole('table');
 
-  expect(within(table).getByText('출석 체크 보상')).toBeTruthy();
+  expect(within(table).getByText('출석체크 보상')).toBeTruthy();
 
   const amount = within(table).getByText('250').closest('td')!;
 
@@ -163,7 +163,7 @@ it('서버 오류를 표시하고 재시도로 복구한다', async () => {
   renderList();
   expect(await screen.findByRole('alert')).toBeTruthy();
   expect(
-    screen.getByRole('heading', { name: '데이터를 불러오지 못했습니다' }),
+    screen.getByRole('heading', { name: '데이터 불러오기 실패' }),
   ).toBeTruthy();
   expect(screen.queryByRole('table')).toBeNull();
   serverUnavailable = false;

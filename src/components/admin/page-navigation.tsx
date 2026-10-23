@@ -45,7 +45,7 @@ export function PageNavigation({
     <div className="mt-5 space-y-3">
       <p className="text-center text-xs text-muted-foreground">
         전체 {totalElements.toLocaleString('ko-KR')}건
-        {totalPages > 0 ? ` · ${page}페이지 / ${totalPages}페이지` : null}
+        {totalPages > 0 ? `, ${page}페이지 / ${totalPages}페이지` : null}
       </p>
       <nav
         aria-label={label}

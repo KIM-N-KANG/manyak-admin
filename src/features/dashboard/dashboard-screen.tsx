@@ -49,15 +49,15 @@ const metrics: Record<MetricKey, { label: string; unit: string }> = {
   turns: { label: '턴', unit: '턴' },
   stories: { label: '스토리 생성', unit: '개' },
   granted: {
-    label: '이프 지급',
+    label: '이프 적립',
     unit: '이프',
   },
   spent: {
-    label: '이프 소진',
+    label: '이프 소모',
     unit: '이프',
   },
   payments: { label: '결제 건수', unit: '건' },
-  revenue: { label: '결제 금액', unit: '원' },
+  revenue: { label: '결제 금액 (환불 포함)', unit: '원' },
   attendance: { label: '출석 회원 수', unit: '명' },
 };
 
@@ -121,7 +121,7 @@ export function DashboardScreen() {
           'stories',
         ],
         [
-          '이프 지급',
+          '이프 적립',
           s.credits.grantedTotal,
           s.credits.grantedToday,
           '/credits/transactions?direction=granted',
@@ -129,7 +129,7 @@ export function DashboardScreen() {
           'granted',
         ],
         [
-          '이프 소진',
+          '이프 소모',
           s.credits.spentTotal,
           s.credits.spentToday,
           '/credits/transactions?direction=spent',
@@ -137,7 +137,7 @@ export function DashboardScreen() {
           'spent',
         ],
         [
-          '결제 이력',
+          '결제 건수',
           s.payments.completedTotal,
           s.payments.completedToday,
           paymentHistoryHref,
@@ -145,7 +145,7 @@ export function DashboardScreen() {
           'payments',
         ],
         [
-          '결제 금액',
+          '결제 금액 (환불 포함)',
           s.payments.amountKrwTotal,
           s.payments.amountKrwToday,
           '/payments',
@@ -159,7 +159,7 @@ export function DashboardScreen() {
     <>
       <PageHeading
         title="개요"
-        description="서비스의 흐름과 이용 현황을 확인하세요.">
+        description="서비스의 흐름과 이용 현황을 확인해 주세요.">
         <RangePicker range={range} />
       </PageHeading>
       <QueryState
@@ -227,7 +227,7 @@ export function DashboardScreen() {
               <div>
                 <h2 className="font-semibold">일별 추이</h2>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {c.from} — {c.to} · KST
+                  {c.from} ~ {c.to} (KST)
                 </p>
               </div>
               <label className="flex items-center gap-3 text-sm">
