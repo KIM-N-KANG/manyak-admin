@@ -60,7 +60,7 @@ export function MemberHistoryList({
             headers={
               kind === 'transactions'
                 ? ['시각', '사유', '변동 이프', '거래 후 잔액']
-                : ['출석일 (KST)', '지급 이프']
+                : ['출석일 (KST)', '적립 이프']
             }
             empty={!query.data.items.length}>
             {query.data.items.map((row, index) =>

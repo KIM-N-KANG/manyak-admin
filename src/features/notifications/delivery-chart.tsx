@@ -17,7 +17,10 @@ export function DeliveryChart({
     <ChartContainer
       className="h-72 w-full"
       config={{
-        deliveredMembers: { label: '도달 회원', color: 'var(--primary)' },
+        deliveredMembers: {
+          label: '도달 메시지 수 (건)',
+          color: 'var(--primary)',
+        },
       }}>
       <BarChart accessibilityLayer data={items}>
         <CartesianGrid vertical={false} />

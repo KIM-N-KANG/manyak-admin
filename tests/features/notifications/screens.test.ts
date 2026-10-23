@@ -146,7 +146,7 @@ describe('알림 화면의 BFF 연결', () => {
       fireEvent.click(
         screen.getByRole('checkbox', { name: '게시할 때 알림 보내기' }),
       );
-      fireEvent.change(screen.getByRole('combobox', { name: '알림 종류' }), {
+      fireEvent.change(screen.getByRole('combobox', { name: '알림 성격' }), {
         target: { value: kind },
       });
 
@@ -336,7 +336,7 @@ describe('알림 화면의 BFF 연결', () => {
   it('문구의 과거 시작 시각은 확인 다이얼로그 전에 거절한다', async () => {
     const view = render(wrap(createElement(TemplateScreen)));
 
-    await screen.findByRole('heading', { name: '출석 리마인더' });
+    await screen.findByRole('heading', { name: '출석 알림' });
     fireEvent.change(view.container.querySelector('[name=effectiveFrom]')!, {
       target: { value: '2000-01-01T10:00' },
     });

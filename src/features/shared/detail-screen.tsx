@@ -73,7 +73,7 @@ function StoryContent({ story: s }: { story: StoryDetail }) {
       <Section title="턴 유지율">
         <Card>
           <p className="mb-5 text-xs text-muted-foreground">
-            전체 채팅방 중 해당 턴 이상에 도달한 채팅방 비율
+            전체 채팅 중 해당 턴 이상에 도달한 채팅 비율
           </p>
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-5">
             {s.retention.map((r) => (
@@ -93,11 +93,11 @@ function StoryContent({ story: s }: { story: StoryDetail }) {
           </div>
         </Card>
       </Section>
-      <Section title="최근 채팅방">
+      <Section title="최근 채팅">
         <RelatedList kind="chats" scope={{ storyId: s.storyId }} />
         <div className="mt-3">
           <TextLink href={`/chats?storyId=${s.storyId}`}>
-            이 스토리의 채팅방 전체 →
+            이 스토리의 채팅 전체 →
           </TextLink>
         </div>
       </Section>
@@ -119,7 +119,7 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
             ['탈퇴 시각', m.deletedAt ? dateTime(m.deletedAt) : '—'],
             ['이프 잔액', <NumberValue key="b" value={m.creditBalance} />],
             ['만든 스토리', m.storyCount],
-            ['채팅방', m.chatCount],
+            ['채팅', m.chatCount],
           ]}
         />
         <div className="mt-6 border-t pt-6">
@@ -137,11 +137,11 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
           </TextLink>
         </p>
       </Section>
-      <Section title="채팅방">
+      <Section title="채팅">
         <RelatedList kind="chats" scope={{ memberId: m.memberId }} />
         <p className="mt-3">
           <TextLink href={`/chats?memberId=${m.memberId}`}>
-            채팅방 전체 →
+            채팅 전체 →
           </TextLink>
         </p>
       </Section>
@@ -219,7 +219,7 @@ function ChatContent({ chat: c }: { chat: ChatRoom }) {
       <Card>
         <DetailGrid
           items={[
-            ['채팅방 ID', c.chatId],
+            ['채팅 ID', c.chatId],
             [
               '스토리',
               <TextLink key="s" href={`/stories/${c.story.storyId}`}>
@@ -266,7 +266,7 @@ export function DetailScreen({
     stories: '스토리',
     members: '회원',
     payments: '결제',
-    chats: '채팅방',
+    chats: '채팅',
   };
 
   return (

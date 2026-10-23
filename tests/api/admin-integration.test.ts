@@ -38,6 +38,51 @@ const cases: [string, string, string, unknown?][] = [
   ],
   ['POST', `/notices/${id}/unpublish`, `/notices/${id}/unpublish`, reason],
   ['GET', '/dashboard/summary', '/dashboard/summary'],
+  [
+    'GET',
+    '/users/activity?from=2026-10-01&to=2026-10-21',
+    '/users/activity?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/users/retention?from=2026-10-01&to=2026-10-20',
+    '/users/retention?from=2026-10-01&to=2026-10-20',
+  ],
+  [
+    'GET',
+    '/users/sessions?from=2026-10-01&to=2026-10-21',
+    '/users/sessions?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/users/signups?from=2026-10-01&to=2026-10-21',
+    '/users/signups?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/conversion/funnels/web-first-visit?from=2026-10-01&to=2026-10-21',
+    '/conversion/funnels/web-first-visit?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/conversion/turn-reach?from=2026-10-01&to=2026-10-21',
+    '/conversion/turn-reach?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/quality/client?platform=web&from=2026-10-01&to=2026-10-21',
+    '/quality/client?platform=web&from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/quality/chat-options?from=2026-10-01&to=2026-10-21',
+    '/quality/chat-options?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/quality/ai-cost?from=2026-10-01&to=2026-10-21',
+    '/quality/ai-cost?from=2026-10-01&to=2026-10-21',
+  ],
   ['GET', '/campaigns', '/campaigns'],
   ['GET', '/campaigns/sources?days=7', '/campaigns/sources?days=7'],
   [

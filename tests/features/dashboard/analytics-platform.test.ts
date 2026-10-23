@@ -141,7 +141,9 @@ it('null과 준비 중 날짜는 가짜 0 없이 표시하고 차트의 누락 �
   expect(
     rows.find((row: { date: string }) => row.date === '2026-10-18'),
   ).toEqual({ date: '2026-10-18', total: null, web: null, android: null });
-  expect(screen.getAllByRole('row')).toHaveLength(data.daily.length + 1);
+  expect(screen.getAllByRole('row')).toHaveLength(
+    data.daily.length + data.pendingDates.length + 1,
+  );
 });
 it.each([{ pendingDates: [] as string[] }, { pendingDates: ['2026-10-18'] }])(
   '오늘 null 또는 준비 중 날짜 $pendingDates이면 60초 뒤 같은 범위를 재요청하고 준비되면 멈춘다',

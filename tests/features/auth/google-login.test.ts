@@ -114,7 +114,7 @@ it('서버 미구현 응답은 화면에 별도로 안내한다', () => {
       retry: vi.fn(),
     }),
   );
-  expect(screen.getByRole('alert').textContent).toContain('서버 미구현');
+  expect(screen.getByRole('alert').textContent).toContain('기능 준비 중');
   expect(screen.getByRole('alert').textContent).toContain(
     '서버 연결을 준비 중',
   );

@@ -21,3 +21,22 @@ export function chartNumber(value: unknown) {
     ? value.toLocaleString('ko-KR', { maximumFractionDigits: 1 })
     : String(value ?? '');
 }
+
+export function aiFeatureLabel(value: string) {
+  const labels: Record<string, string> = {
+    chat_response: 'AI 응답 생성',
+    choice_generation: '선택지 생성',
+    storyline_generation: '스토리라인 생성',
+    story_completion: '간편 제작',
+  };
+
+  return labels[value] ?? value;
+}
+export function distributionNumber(value: number, unit: string) {
+  return value.toLocaleString(
+    'ko-KR',
+    unit === '%'
+      ? { minimumFractionDigits: 1, maximumFractionDigits: 1 }
+      : { maximumFractionDigits: 1 },
+  );
+}

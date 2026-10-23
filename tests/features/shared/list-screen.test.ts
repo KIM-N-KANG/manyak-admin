@@ -86,7 +86,7 @@ const columns = {
   members: [
     ['가입일', 'createdAt'],
     ['최근 활동', 'lastActiveAt'],
-    ['채팅방 수', 'chatCount'],
+    ['채팅 수', 'chatCount'],
     ['이프 소모', 'creditsSpent'],
     ['결제액', 'paidKrw'],
   ],

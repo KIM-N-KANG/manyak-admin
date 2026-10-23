@@ -165,6 +165,14 @@ function distribution(
 ): Distribution {
   return {
     chartId,
+    category:
+      chartId === 'started-as' || chartId === 'member-chats'
+        ? 'users'
+        : chartId === 'characters'
+          ? 'content'
+          : chartId.startsWith('ai-')
+            ? 'ai-quality'
+            : 'engagement',
     title,
     description,
     unit,
@@ -260,7 +268,7 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
       distribution(
         'genre-depth',
         genreDepthTitle,
-        '채팅 시작일 기준 · 복수 장르는 각각 포함 · 평균 현재 턴',
+        '채팅 시작일 기준, 복수 장르는 각각 포함, 평균 현재 턴',
         '턴',
         [
           ...new Set(
@@ -285,7 +293,7 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
       distribution(
         'turns',
         '턴 수 분포',
-        '채팅 시작일 기준 · 구간별 채팅방 수',
+        '채팅 시작일 기준, 구간별 채팅 수',
         '개',
         [
           '0',
@@ -310,8 +318,8 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
       ),
       distribution(
         'started-as',
-        '채팅방 소유자 게스트·회원',
-        '현재 소유 회원 유무 기준 · 게스트 이관은 회원으로 집계',
+        '채팅 소유자 게스트와 회원',
+        '현재 소유 회원 유무 기준, 게스트 이관은 회원으로 집계',
         '%',
         ['게스트', '회원'],
         (_, i) =>
@@ -326,8 +334,8 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
       ),
       distribution(
         'member-chats',
-        '회원별 채팅방 생성 횟수',
-        '해당 기간에 채팅방을 만든 회원만 집계 · 가입일과 무관',
+        '회원별 채팅 생성 횟수',
+        '해당 기간에 채팅을 만든 회원만 집계, 가입일과 무관',
         '명',
         ['1개', '2개', '3~4개', '5~9개', '10개+'],
         (_, i) => counts.filter((count) => chatBucket(count) === i).length,
@@ -335,8 +343,8 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
       ),
       distribution(
         'first-message',
-        '첫 사용자 메시지까지 시간',
-        `900초 이하만 통계 · 초과 ${periodChats.filter((c) => c.firstMessageSeconds !== null && c.firstMessageSeconds > 900).length}개, 입력 없음 ${periodChats.filter((c) => c.firstMessageSeconds === null).length}개 제외`,
+        '첫 사용자 입력까지 걸린 시간',
+        `900초 이하만 통계, 초과 ${periodChats.filter((c) => c.firstMessageSeconds !== null && c.firstMessageSeconds > 900).length}개, 입력 없음 ${periodChats.filter((c) => c.firstMessageSeconds === null).length}개 제외`,
         '초',
         ['평균', 'P50', 'P75', 'P90'],
         (_, i) =>
@@ -345,8 +353,8 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
       ),
       distribution(
         'ai-latency',
-        '기능별 AI 호출 지연',
-        'AI 호출 생성일 기준 · 성공 호출 중 지연값이 있는 호출의 평균',
+        '기능별 AI 평균 호출 시간',
+        'AI 호출 생성일 기준, 성공 호출 중 지연값이 있는 호출의 평균',
         '초',
         features,
         (feature) =>
@@ -365,7 +373,7 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
       distribution(
         'ai-success',
         '기능별 AI 성공률',
-        'AI 호출 생성일 기준 · 완료 호출(성공+실패) 중 성공 · 미완료 제외',
+        'AI 호출 생성일 기준, 완료 호출(성공+실패) 중 성공, 미완료 제외',
         '%',
         features,
         (feature) => {
@@ -383,9 +391,9 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
       ),
       distribution(
         'characters',
-        '제작 세션 입력 인물 수',
-        '제작 세션 생성일 기준 · 주변 인물만 0~5명 · 오리지널 포함',
-        '세션',
+        '간편 제작별 입력 주변 인물 수',
+        '제작 세션 생성일 기준, 주변 인물만 0~5명, 오리지널 포함',
+        '건',
         ['0명', '1명', '2명', '3명', '4명', '5명'],
         (_, i) =>
           sessions.filter((s) => s.supportingCharacterCount === i).length,

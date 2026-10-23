@@ -5,6 +5,10 @@ export const navigation = [
     items: [
       ['/dashboard', '개요'],
       ['/dashboard/analytics', '분석'],
+      ['/analytics/acquisition', '유입'],
+      ['/analytics/users', '사용자'],
+      ['/analytics/conversion', '전환'],
+      ['/analytics/quality', '기능과 품질'],
     ],
   },
   {
@@ -14,7 +18,7 @@ export const navigation = [
       ['/members', '회원'],
       ['/stories', '스토리'],
       ['/originals', '오리지널'],
-      ['/chats', '채팅방'],
+      ['/chats', '채팅'],
       ['/payments', '결제'],
       ['/credits/transactions', '이프'],
       ['/notices', '공지'],

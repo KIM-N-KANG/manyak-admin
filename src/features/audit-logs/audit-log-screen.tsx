@@ -30,7 +30,7 @@ export function AuditLogListScreen() {
         {(
           [
             ['adminId', '처리자 회원 ID'],
-            ['action', '작업'],
+            ['action', '작업 이름'],
             ['targetType', '대상 종류'],
             ['targetId', '대상 ID'],
             ['from', '시작일'],
@@ -58,9 +58,9 @@ export function AuditLogListScreen() {
           <DataTable
             headers={[
               { label: '처리자', key: 'admin' },
-              { label: '구분', key: 'category' },
-              { label: '작업', key: 'action' },
-              { label: '대상', key: 'targetType' },
+              { label: '작업 분류', key: 'category' },
+              { label: '작업 이름', key: 'action' },
+              { label: '대상 종류', key: 'targetType' },
               '사유',
               { label: '시각', key: 'createdAt' },
             ]}
@@ -116,9 +116,9 @@ export function AuditLogDetailScreen({ id }: { id: string }) {
             <DetailGrid
               items={[
                 ['처리자', item.admin.nickname],
-                ['구분', item.category],
-                ['작업', item.action],
-                ['대상', `${item.targetType} · ${item.targetId}`],
+                ['작업 분류', item.category],
+                ['작업 이름', item.action],
+                ['대상 종류', `${item.targetType} · ${item.targetId}`],
                 ['사유', item.reason ?? '—'],
                 ['시각', dateTime(item.createdAt)],
                 ['요청 ID', item.requestId],

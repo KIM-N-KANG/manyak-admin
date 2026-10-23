@@ -45,6 +45,7 @@ export type ChartLink = {
 export type ChartPoint = { label: string; value: number; link: ChartLink };
 export type Distribution = {
   chartId: string;
+  category: 'users' | 'engagement' | 'content' | 'ai-quality';
   title: string;
   description: string;
   unit: string;
@@ -86,6 +87,6 @@ export interface PlayInstalls {
     installs: number;
     uninstalls: number;
     cumulativeInstalls: number;
-    activeDevices: number;
+    activeDevices: number | null;
   }[];
 }

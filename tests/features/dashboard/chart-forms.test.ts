@@ -89,6 +89,7 @@ const distribution = (
   unit = '개',
 ): Distribution => ({
   chartId,
+  category: 'engagement',
   title: `${chartId} 차트`,
   description: '테스트 설명',
   unit,
@@ -114,7 +115,7 @@ it('장르 상위 30개를 값 내림차순 세로 막대로 그리며 정렬 �
 
   expect(bars).toHaveLength(30);
   expect(
-    screen.getByText('상위 30개 · 외 5개 장르는 아래 표에서 확인하세요.'),
+    screen.getByText('상위 30개, 외 5개 장르는 아래 표에서 확인해 주세요.'),
   ).toBeTruthy();
 
   const scroll = screen.getByRole('region', {
@@ -208,9 +209,9 @@ it('게스트·회원 비율은 도넛 조각·퍼센트 라벨·범례·가운�
   const sectors = container.querySelectorAll('.recharts-pie-sector');
 
   expect(sectors).toHaveLength(2);
-  expect(screen.getByText('60%')).toBeTruthy();
-  expect(screen.getByText('게스트 60%')).toBeTruthy();
-  expect(screen.getByText('회원 40%')).toBeTruthy();
+  expect(screen.getByText('60.0%')).toBeTruthy();
+  expect(screen.getByText('게스트 60.0%')).toBeTruthy();
+  expect(screen.getByText('회원 40.0%')).toBeTruthy();
   expect(
     container.querySelector('.recharts-legend-wrapper')?.textContent,
   ).toContain('게스트');
@@ -221,12 +222,12 @@ it('게스트·회원 비율은 도넛 조각·퍼센트 라벨·범례·가운�
   expect(onSelect).toHaveBeenCalledWith(expect.objectContaining(member));
 });
 
-it('채팅방이 없는 비율에서는 가짜 도넛 대신 빈 상태를 표시한다', () => {
+it('채팅이 없는 비율에서는 가짜 도넛 대신 빈 상태를 표시한다', () => {
   const { container } = draw(
     distribution('started-as', [point('게스트', 0), point('회원', 0)], '%'),
   );
 
-  expect(screen.getByText('집계된 채팅방이 없습니다.')).toBeTruthy();
+  expect(screen.getByText('집계된 채팅이 없습니다.')).toBeTruthy();
   expect(container.querySelector('.recharts-pie-sector')).toBeNull();
 });
 
@@ -386,7 +387,7 @@ it('요약 카드에는 차트를 넣지 않고 바로 아래의 기존 일별 �
   expect(screen.getByText('일별 수치와 목록 이동')).toBeTruthy();
 });
 
-it('미리보기는 35개 장르 중 상위 30개와 나머지 안내·전체 표를 표시하고 이전 서버 제목도 바꿔 표시한다', () => {
+it('미리보기는 35개 장르 중 상위 30개와 나머지 안내·전체 표를 표시하고 서버 제목을 표시한다', () => {
   const genre = state.charts!.distributions.find(
     (item) => item.chartId === 'genre-depth',
   )!;
@@ -396,16 +397,14 @@ it('미리보기는 35개 장르 중 상위 30개와 나머지 안내·전체 �
   expect(rankedPoints(genre).every((point) => point.value > 0)).toBe(true);
   state.charts = {
     ...state.charts!,
-    distributions: [{ ...genre, title: '장르별 채팅 깊이' }],
+    distributions: [{ ...genre, title: '서버 장르 제목' }],
   };
 
   const { container } = render(createElement(DashboardAnalysisScreen));
 
+  expect(screen.getByRole('heading', { name: '서버 장르 제목' })).toBeTruthy();
   expect(
-    screen.getByRole('heading', { name: '장르별 평균 턴 수' }),
-  ).toBeTruthy();
-  expect(
-    screen.getByText('상위 30개 · 외 5개 장르는 아래 표에서 확인하세요.'),
+    screen.getByText('상위 30개, 외 5개 장르는 아래 표에서 확인해 주세요.'),
   ).toBeTruthy();
   expect(container.querySelectorAll('.recharts-bar-rectangle')).toHaveLength(
     30,
@@ -504,7 +503,7 @@ it.each([
     state.chartsError = error;
     render(createElement(DashboardScreen));
 
-    for (const label of ['회원', '채팅 시작', '이프 지급']) {
+    for (const label of ['회원', '채팅 시작', '이프 적립']) {
       const card = screen.getByRole('link', { name: new RegExp(`^${label}`) });
 
       expect(within(card).getByText(`최근 7일 합계 ${status}`)).toBeTruthy();
@@ -535,3 +534,29 @@ it.each(['success', 'pending', 'error'])(
     ).toBeTruthy();
   },
 );
+
+it('정본의 구역 순서와 서버 제목·설명을 유지하고 기능 표시 이름만 바꾼다', () => {
+  render(createElement(DashboardAnalysisScreen));
+
+  const categories = ['사용자', '채팅 참여', '콘텐츠', 'AI 품질'];
+
+  expect(
+    screen
+      .getAllByRole('region')
+      .filter((node) =>
+        categories.includes(node.getAttribute('aria-label') ?? ''),
+      )
+      .map((node) => node.getAttribute('aria-label')),
+  ).toEqual(categories);
+
+  for (const item of state.charts!.distributions) {
+    expect(screen.getByRole('heading', { name: item.title })).toBeTruthy();
+    expect(screen.getByText(item.description)).toBeTruthy();
+  }
+
+  expect(screen.getAllByText('간편 제작 →')).toHaveLength(2);
+  expect(screen.queryByText('story_completion →')).toBeNull();
+  expect(screen.getByRole('region', { name: '콘텐츠' }).textContent).toContain(
+    '값 (건)',
+  );
+});

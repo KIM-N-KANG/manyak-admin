@@ -178,7 +178,7 @@ describe('관리자 고정 데이터 BFF', () => {
     ).toBe(404);
   });
 
-  it('스토리 상세에서 채팅방·회원·스토리를 서로 연결하고 대화 필드를 반환하지 않는다', async () => {
+  it('스토리 상세에서 채팅·회원·스토리를 서로 연결하고 대화 필드를 반환하지 않는다', async () => {
     const list: Page<Story> = await stories(request('stories')).json();
     const detail: StoryDetail = await (
       await story(request('stories/detail'), {

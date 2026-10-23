@@ -137,7 +137,7 @@ export function StatsScreen() {
           </select>
         </label>
         <label className="grid gap-2 text-sm">
-          수신 유형
+          알림 성격
           <select
             name="kind"
             className="control"
@@ -169,7 +169,7 @@ export function StatsScreen() {
           </label>
           <Card className="mb-6">
             <h2 className="mb-4 font-semibold">
-              {group === 'date' ? '날짜별' : '종류별'} 도달 회원
+              {group === 'date' ? '날짜별' : '종류별'} 도달 메시지 수
             </h2>
             {rows.length ? (
               <DeliveryChart items={rows} />
@@ -183,7 +183,7 @@ export function StatsScreen() {
             headers={[
               group === 'date' ? 'KST 날짜' : '종류',
               '발송 요청',
-              '도달 회원',
+              '도달 메시지 수 (건)',
               '도달 기기',
               '실패 기기',
             ]}
@@ -205,8 +205,8 @@ export function StatsScreen() {
             ))}
           </DataTable>
           <p className="mt-4 text-sm text-muted-foreground">
-            발송 요청은 처리가 끝난 메시지 수입니다. 도달 회원은 도달 기기가
-            하나 이상인 메시지 수로, 기간 합계는 중복을 제거한 회원 수가
+            발송 요청은 처리가 끝난 메시지 수입니다. 도달 메시지 수은 도달
+            기기가 하나 이상인 메시지 수로, 기간 합계는 중복을 제거한 회원 수가
             아닙니다.
           </p>
         </>

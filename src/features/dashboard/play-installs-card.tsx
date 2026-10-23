@@ -12,9 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 
-import { FetchError } from '@/api/mutator/custom-instance';
-import { DataTable, NumberValue } from '@/components/admin/data-ui';
-import { Button } from '@/components/ui/button';
+import { DataTable, NumberValue, QueryState } from '@/components/admin/data-ui';
 import { Card } from '@/components/ui/card';
 import {
   ChartContainer,
@@ -40,8 +38,6 @@ const config = {
 export function PlayInstallsCard() {
   const query = useApi<PlayInstalls>('/api/dashboard/play-installs');
   const data = query.data;
-  const unavailable =
-    query.error instanceof FetchError && query.error.status === 503;
 
   return (
     <section aria-labelledby="play-installs-heading" className="mb-8 min-w-0">
@@ -49,30 +45,13 @@ export function PlayInstallsCard() {
         <h2 id="play-installs-heading" className="font-semibold">
           앱 설치(Android)
         </h2>
-        {query.isError ? (
-          <div role="status" className="mt-4">
-            <p className="font-medium">
-              {unavailable
-                ? '설치 지표 사용 불가'
-                : '설치 지표를 불러올 수 없음'}
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {unavailable
-                ? '잠시 후 다시 시도해 주세요. 문제가 계속되면 Play 설치 지표 설정과 보고서 상태를 확인해 주세요.'
-                : '잠시 후 다시 시도해 주세요.'}
-            </p>
-            <Button
-              variant="outline"
-              className="mt-3"
-              onClick={() => void query.refetch()}>
-              다시 시도
-            </Button>
-          </div>
-        ) : query.isPending ? (
-          <p role="status" className="mt-4 text-sm text-muted-foreground">
-            설치 지표를 불러오는 중입니다…
-          </p>
-        ) : data ? (
+        <QueryState
+          pending={query.isPending}
+          error={query.error}
+          retry={query.refetch}
+          source="play"
+        />
+        {data && !query.isError ? (
           <>
             <div className="mt-4 flex items-center gap-6">
               <div className="min-w-0 flex-1">
@@ -158,14 +137,14 @@ export function PlayInstallsCard() {
                             stroke={`var(--color-${key})`}
                             strokeWidth={2}
                             strokeDasharray={
-                              key === 'activeDevices' ? '4 3' : undefined
+                              key === 'activeDevices' ? '6 3' : undefined
                             }
                             dot={false}
                             activeDot={{ r: 4 }}
                             isAnimationActive={false}>
                             <LabelList
                               dataKey={(day: PlayInstalls['daily'][number]) =>
-                                day.date === data.asOf
+                                day.date === data.asOf && day[key] !== null
                                   ? `${key === 'cumulativeInstalls' ? '누적 기기 설치 수' : '활성 기기 수'} ${day[key].toLocaleString('ko-KR')}대`
                                   : null
                               }
@@ -268,7 +247,11 @@ export function PlayInstallsCard() {
                             ] as const
                           ).map((key) => (
                             <td key={key}>
-                              <NumberValue value={day[key]} />
+                              {day[key] === null ? (
+                                '보고서 값 없음'
+                              ) : (
+                                <NumberValue value={day[key]} />
+                              )}
                             </td>
                           ))}
                         </tr>

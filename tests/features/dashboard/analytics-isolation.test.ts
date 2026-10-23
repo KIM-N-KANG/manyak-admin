@@ -133,7 +133,9 @@ function dashboard() {
 
 function expectDbMetricsVisible() {
   expect(screen.getByText('회원', { selector: 'p' })).toBeTruthy();
-  expect(screen.getByText('결제 금액', { selector: 'p' })).toBeTruthy();
+  expect(
+    screen.getByText('결제 금액 (환불 포함)', { selector: 'p' }),
+  ).toBeTruthy();
   expect(screen.getByRole('heading', { name: '일별 추이' })).toBeTruthy();
   expect(screen.queryByRole('heading', { name: '이용 분포' })).toBeNull();
 }
@@ -288,11 +290,12 @@ describe('개요와 분석 화면 분리', () => {
       link.getAttribute('href'),
     );
 
-    expect(links).toEqual(
-      data.distributions.flatMap(
-        (distribution: { points: { link: ChartLink }[] }) =>
+    expect([...links].sort()).toEqual(
+      data.distributions
+        .flatMap((distribution: { points: { link: ChartLink }[] }) =>
           distribution.points.map((point) => getDistributionHref(point.link)),
-      ),
+        )
+        .sort(),
     );
     fireEvent.click(screen.getByRole('button', { name: '기간: 최근 7일' }));
     fireEvent.click(screen.getByRole('button', { name: '최근 90일' }));
@@ -329,8 +332,8 @@ describe('개요와 분석 화면 분리', () => {
     ).toBeTruthy();
 
     for (const [label, direction] of [
-      ['이프 지급', 'granted'],
-      ['이프 소진', 'spent'],
+      ['이프 적립', 'granted'],
+      ['이프 소모', 'spent'],
     ]) {
       expect(
         screen
