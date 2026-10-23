@@ -144,7 +144,7 @@ export function DataTable({
   emptyContent,
   sorting,
 }: {
-  headers: (string | { label: string; key: string })[];
+  headers: (string | { label: string; key?: string; help?: ReactNode })[];
   sorting?: { key: string; order: string; onSort: (key: string) => void };
   children: ReactNode;
   empty?: boolean;
@@ -187,6 +187,11 @@ export function DataTable({
                   ) : (
                     label
                   )}
+                  {typeof header !== 'string' && header.help ? (
+                    <span className="ml-1 inline-flex align-middle">
+                      {header.help}
+                    </span>
+                  ) : null}
                 </th>
               );
             })}

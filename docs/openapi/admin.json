@@ -7,8 +7,8 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-10-23T18:16:58.841Z",
-    "revision": "d52e820"
+    "receivedAt": "2026-10-23T18:58:38.632Z",
+    "revision": "4eb8776"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -656,7 +656,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/admin/members/{memberId}/suspension": {
@@ -1604,6 +1609,181 @@
         }
       }
     },
+    "/api/v1/admin/moderation/submissions": {
+      "get": {
+        "tags": [
+          "admin-moderation-controller"
+        ],
+        "operationId": "submissions",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "HELD",
+                "APPROVED",
+                "REJECTED",
+                "FAILED"
+              ]
+            }
+          },
+          {
+            "name": "memberId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "storyId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 50,
+              "minLength": 1
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "asc|desc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageResponseAdminSubmissionSummary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/moderation/submissions/{submissionId}": {
+      "get": {
+        "tags": [
+          "admin-moderation-controller"
+        ],
+        "operationId": "submission",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSubmissionDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/admin/moderation/holds": {
       "get": {
         "tags": [
@@ -1631,7 +1811,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/admin/members": {
@@ -4437,6 +4622,22 @@
             "items": {
               "type": "string"
             }
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "usdKrwRate": {
+            "type": "number"
+          },
+          "unmapped": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiCostUnmapped"
+            }
           }
         }
       },
@@ -4508,6 +4709,17 @@
               "number",
               "null"
             ]
+          }
+        }
+      },
+      "AiCostUnmapped": {
+        "type": "object",
+        "properties": {
+          "traceName": {
+            "type": "string"
+          },
+          "costKrw": {
+            "type": "number"
           }
         }
       },
@@ -4827,6 +5039,321 @@
           "creditsSpent": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "AdminPageResponseAdminSubmissionSummary": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminSubmissionSummary"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminSubmissionSummary": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CREATE",
+              "UPDATE"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "HELD",
+              "APPROVED",
+              "REJECTED",
+              "FAILED"
+            ]
+          },
+          "story": {
+            "$ref": "#/components/schemas/AdminSubmissionStory"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/AdminMemberSummary"
+          },
+          "issueCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "issueRules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "firstIssueReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "holdReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "attempt": {
+            "type": "integer",
+            "format": "int32",
+            "description": "선점과 재제출마다 증가하는 실행 구분 번호"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "heldAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminSubmissionStory": {
+        "type": "object",
+        "properties": {
+          "storyId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminSubmissionDetail": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CREATE",
+              "UPDATE"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "HELD",
+              "APPROVED",
+              "REJECTED",
+              "FAILED"
+            ]
+          },
+          "story": {
+            "$ref": "#/components/schemas/AdminSubmissionStory"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/AdminMemberSummary"
+          },
+          "issueCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "issueRules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "firstIssueReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "holdReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "attempt": {
+            "type": "integer",
+            "format": "int32",
+            "description": "선점과 재제출마다 증가하는 실행 구분 번호"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "heldAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "fields": {
+            "$ref": "#/components/schemas/AdminSubmissionFields"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModerationIssue"
+            }
+          },
+          "imageResults": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminSubmissionImageResult"
+            }
+          },
+          "retryCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminSubmissionFields": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "oneLineIntro": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "protagonistName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "visibility": {
+            "type": "string"
+          },
+          "characterNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ModerationIssue": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "rule": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminSubmissionImageResult": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "moderationStatus": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED",
+              "ERROR",
+              "PENDING"
+            ]
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -6939,9 +7466,6 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "string": {
-            "type": "boolean"
-          },
           "container": {
             "type": "boolean"
           },
@@ -7018,6 +7542,9 @@
             "type": "boolean"
           },
           "float": {
+            "type": "boolean"
+          },
+          "string": {
             "type": "boolean"
           },
           "embeddedValue": {
