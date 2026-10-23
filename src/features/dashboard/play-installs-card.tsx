@@ -28,10 +28,13 @@ import type { PlayInstalls } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
 const config = {
-  cumulativeInstalls: { label: '누적 설치', color: 'var(--primary)' },
-  activeDevices: { label: '활성 기기', color: 'var(--muted-foreground)' },
-  installs: { label: '설치', color: 'var(--primary)' },
-  uninstalls: { label: '삭제', color: 'var(--muted-foreground)' },
+  cumulativeInstalls: {
+    label: 'Android 누적 기기 설치 수',
+    color: 'var(--primary)',
+  },
+  activeDevices: { label: '활성 기기 수', color: 'var(--muted-foreground)' },
+  installs: { label: '일별 기기 설치 수', color: 'var(--primary)' },
+  uninstalls: { label: '일별 앱 삭제 수', color: 'var(--muted-foreground)' },
 };
 
 export function PlayInstallsCard() {
@@ -49,11 +52,13 @@ export function PlayInstallsCard() {
         {query.isError ? (
           <div role="status" className="mt-4">
             <p className="font-medium">
-              {unavailable ? '설정 안 됨' : '설치 지표를 불러올 수 없음'}
+              {unavailable
+                ? '설치 지표 사용 불가'
+                : '설치 지표를 불러올 수 없음'}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
               {unavailable
-                ? 'Play 설치 지표 설정 또는 보고서 연결을 확인해 주세요.'
+                ? '잠시 후 다시 시도해 주세요. 문제가 계속되면 Play 설치 지표 설정과 보고서 상태를 확인해 주세요.'
                 : '잠시 후 다시 시도해 주세요.'}
             </p>
             <Button
@@ -71,19 +76,21 @@ export function PlayInstallsCard() {
           <>
             <div className="mt-4 flex items-center gap-6">
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">누적 설치</p>
+                <p className="text-xs text-muted-foreground">
+                  Android 누적 기기 설치 수
+                </p>
                 <p className="mt-1 text-3xl font-semibold">
                   <NumberValue value={data.totalInstalls} />
                   <span className="ml-1 text-sm font-normal">대</span>
                 </p>
                 <p className="mt-3 text-sm">
-                  활성 기기 <NumberValue value={data.activeDevices} />대
+                  활성 기기 수 <NumberValue value={data.activeDevices} />대
                 </p>
               </div>
               <ChartContainer
                 config={config}
                 className="h-20 w-28 shrink-0"
-                aria-label="일별 앱 설치 작은 추이">
+                aria-label="일별 기기 설치 수 추이">
                 <LineChart accessibilityLayer data={data.daily}>
                   <ChartTooltip
                     cursor={<ChartCrosshair />}
@@ -102,23 +109,26 @@ export function PlayInstallsCard() {
               </ChartContainer>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              기준 {data.asOf} · Play 기준 날짜(태평양 시간)
+              집계 기준 날짜 {data.asOf} (Play 기준 태평양 시간)
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              보고서는 며칠 늦게 반영됩니다. 전체 기간 지표이며 페이지 기간
-              선택과 무관합니다.
+              보고서는 며칠 늦게 반영됩니다. 누적 기기 설치 수는 보고서 전체
+              기간의 일별 기기 설치 수를 합산한 값입니다. 페이지에서 선택한
+              기간은 이 카드에 적용되지 않습니다.
             </p>
             <details className="mt-4">
               <summary className="cursor-pointer text-sm text-primary-text">
-                설치·활성 기기 추이 보기
+                누적 기기 설치 수와 활성 기기 수 추이 보기
               </summary>
               <div className="mt-6 space-y-6">
                 <div>
-                  <h3 className="text-sm font-medium">누적 설치·활성 기기</h3>
+                  <h3 className="text-sm font-medium">
+                    누적 기기 설치 수와 활성 기기 수
+                  </h3>
                   <ChartContainer
                     config={config}
                     className="mt-3 h-64 w-full"
-                    aria-label="누적 설치·활성 기기 추이">
+                    aria-label="누적 기기 설치 수와 활성 기기 수 추이">
                     <LineChart
                       accessibilityLayer
                       data={data.daily}
@@ -156,7 +166,7 @@ export function PlayInstallsCard() {
                             <LabelList
                               dataKey={(day: PlayInstalls['daily'][number]) =>
                                 day.date === data.asOf
-                                  ? `${key === 'cumulativeInstalls' ? '누적' : '활성'} ${day[key].toLocaleString('ko-KR')}`
+                                  ? `${key === 'cumulativeInstalls' ? '누적 기기 설치 수' : '활성 기기 수'} ${day[key].toLocaleString('ko-KR')}대`
                                   : null
                               }
                               position="right"
@@ -172,11 +182,13 @@ export function PlayInstallsCard() {
                   </ChartContainer>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium">일별 설치·삭제</h3>
+                  <h3 className="text-sm font-medium">
+                    일별 기기 설치 수와 일별 앱 삭제 수
+                  </h3>
                   <ChartContainer
                     config={config}
                     className="mt-3 h-64 w-full"
-                    aria-label="일별 설치·삭제">
+                    aria-label="일별 기기 설치 수와 일별 앱 삭제 수">
                     <BarChart
                       accessibilityLayer
                       data={data.daily.map((day) => ({
@@ -232,16 +244,16 @@ export function PlayInstallsCard() {
                 </div>
                 <details>
                   <summary className="cursor-pointer text-xs text-muted-foreground">
-                    설치 일별 수치
+                    일별 설치 지표
                   </summary>
                   <div className="mt-3 max-h-64 overflow-auto">
                     <DataTable
                       headers={[
                         '날짜 (Play)',
-                        '설치',
-                        '삭제',
-                        '누적 설치',
-                        '활성 기기',
+                        '일별 기기 설치 수',
+                        '일별 앱 삭제 수',
+                        'Android 누적 기기 설치 수',
+                        '활성 기기 수',
                       ]}
                       empty={!data.daily.length}>
                       {data.daily.map((day) => (

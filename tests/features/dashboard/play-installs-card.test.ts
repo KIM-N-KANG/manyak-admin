@@ -44,17 +44,21 @@ it('누적·활성·Play 날짜와 지연 안내를 표시하고 확장하면 �
   const view = render(createElement(PlayInstallsCard));
 
   expect(
-    screen.getByText(`기준 ${playInstalls.asOf} · Play 기준 날짜(태평양 시간)`),
+    screen.getByText(
+      `집계 기준 날짜 ${playInstalls.asOf} (Play 기준 태평양 시간)`,
+    ),
   ).toBeTruthy();
   expect(screen.getByText(/며칠 늦게/)).toBeTruthy();
 
   const detail = view.container.querySelector('details')!;
 
-  fireEvent.click(screen.getByText('설치·활성 기기 추이 보기'));
+  fireEvent.click(
+    screen.getByText('누적 기기 설치 수와 활성 기기 수 추이 보기'),
+  );
   detail.open = true;
 
   const lines = view.container.querySelector(
-    '[aria-label="누적 설치·활성 기기 추이"]',
+    '[aria-label="누적 기기 설치 수와 활성 기기 수 추이"]',
   )!;
 
   await waitFor(() =>
@@ -76,7 +80,9 @@ it('누적·활성·Play 날짜와 지연 안내를 표시하고 확장하면 �
   });
   expect(lines.querySelector('[stroke-dasharray="4 3"]')).toBeTruthy();
 
-  const bars = view.container.querySelector('[aria-label="일별 설치·삭제"]')!;
+  const bars = view.container.querySelector(
+    '[aria-label="일별 기기 설치 수와 일별 앱 삭제 수"]',
+  )!;
 
   expect(bars.querySelector('.recharts-reference-line')).toBeTruthy();
 
@@ -94,18 +100,18 @@ it('누적·활성·Play 날짜와 지연 안내를 표시하고 확장하면 �
   expect(Number(positive.getAttribute('y'))).toBeLessThan(
     Number(negative.getAttribute('y')),
   );
-  expect(screen.getAllByText('설치 일별 수치')).toHaveLength(1);
+  expect(screen.getAllByText('일별 설치 지표')).toHaveLength(1);
   expect(view.container.querySelectorAll('tbody tr')).toHaveLength(
     playInstalls.daily.length,
   );
 });
-it('503이면 설정 안 됨을 표시하고 재시도한다', () => {
+it('503이면 설치 지표 사용 불가를 표시하고 재시도한다', () => {
   state.error = new FetchError('unavailable', 503, {
     code: 'SERVICE_UNAVAILABLE',
   });
   render(createElement(PlayInstallsCard));
-  expect(screen.getByText('설정 안 됨')).toBeTruthy();
-  expect(screen.queryByText('누적 설치')).toBeNull();
+  expect(screen.getByText('설치 지표 사용 불가')).toBeTruthy();
+  expect(screen.queryByText('Android 누적 기기 설치 수')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
   expect(state.retry).toHaveBeenCalledOnce();
 });

@@ -338,14 +338,14 @@ describe('개요와 분석 화면 분리', () => {
   });
 });
 
-it('Play 503은 설치 카드에만 설정 안 됨을 표시하고 DB·Amplitude를 유지한다', async () => {
+it('Play 503은 설치 카드에만 설치 지표 사용 불가를 표시하고 DB·Amplitude를 유지한다', async () => {
   failPlay = true;
   render(dashboard());
-  await screen.findByText('설정 안 됨');
+  await screen.findByText('설치 지표 사용 불가');
   await screen.findByRole('heading', { name: '오늘 활성 사용자' });
   await screen.findByRole('heading', { name: '일별 추이' });
   expectDbMetricsVisible();
   expect(
     screen.getByRole('region', { name: '앱 설치(Android)' }).textContent,
-  ).toContain('설정 안 됨');
+  ).toContain('설치 지표 사용 불가');
 });
