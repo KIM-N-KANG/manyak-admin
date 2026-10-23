@@ -678,6 +678,227 @@ export const AttendanceQueryParams = zod.object({
 
 export const AttendanceResponse = zod.unknown();
 
+export const MetricsQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+});
+
+export const MetricsResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  periodSeconds: zod.number().optional(),
+  ecs: zod
+    .union([
+      zod.object({
+        services: zod
+          .array(
+            zod.object({
+              name: zod.string().optional(),
+              runningTasks: zod.number().optional(),
+              desiredTasks: zod.number().optional(),
+              pendingTasks: zod.number().optional(),
+              cpu: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+              memory: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+            }),
+          )
+          .optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  alb: zod
+    .union([
+      zod.object({
+        requests: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        elb5xx: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        target5xx: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        responseTimeP95Ms: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  rds: zod
+    .union([
+      zod.object({
+        cpu: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        freeStorageBytes: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        connections: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        readLatencyMs: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        writeLatencyMs: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  redis: zod
+    .union([
+      zod.object({
+        nodes: zod
+          .array(
+            zod.object({
+              id: zod.string().optional(),
+              cpu: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+              memory: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+              connections: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+            }),
+          )
+          .optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  opensearch: zod
+    .union([
+      zod.object({
+        freeStorageBytes: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        jvmMemoryPressure: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+});
+
+export const tablesQueryLimitDefault = 20;
+export const tablesQueryLimitMax = 100;
+
+export const TablesQueryParams = zod.object({
+  limit: zod
+    .number()
+    .min(1)
+    .max(tablesQueryLimitMax)
+    .default(tablesQueryLimitDefault),
+});
+
+export const TablesResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  databaseBytes: zod.number().optional(),
+  tableCount: zod.number().optional(),
+  tables: zod
+    .array(
+      zod.object({
+        schema: zod.string().optional(),
+        name: zod.string().optional(),
+        totalBytes: zod.number().optional(),
+        tableBytes: zod.number().optional(),
+        indexBytes: zod.number().optional(),
+        estimatedRows: zod.number().optional(),
+      }),
+    )
+    .optional(),
+});
+
 export const SummaryResponse = zod.unknown();
 
 /**

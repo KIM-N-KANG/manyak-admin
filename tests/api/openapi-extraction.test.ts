@@ -86,3 +86,34 @@ it('관리자 경로와 순환 참조 DTO만 추출하고 입력·시각·서버
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+it('실제 인프라 와일드카드 응답의 생성 입력만 JSON으로 정규화하고 원본과 null 묶음을 보존한다', () => {
+  const script = `
+    import { readFileSync } from 'node:fs';
+    import transform from './scripts/transform-admin-openapi.mjs';
+    const original = JSON.parse(readFileSync('docs/openapi/admin.json', 'utf8'));
+    const input = JSON.stringify(original);
+    const generated = transform(original);
+    console.log(JSON.stringify({
+      unchanged: input === JSON.stringify(original),
+      original: original.paths['/api/v1/admin/infra/metrics'].get.responses['200'].content,
+      normalized: generated.paths['/api/v1/admin/infra/metrics'].get.responses['200'].content,
+      table: generated.paths['/api/v1/admin/infra/db-tables'].get.responses['200'].content,
+      schemasUnchanged: Object.keys(original.components.schemas).filter(name => name.startsWith('Infra')).every(name => JSON.stringify(original.components.schemas[name]) === JSON.stringify(generated.components.schemas[name])),
+    }));
+  `;
+  const result = JSON.parse(
+    execFileSync(process.execPath, ['--input-type=module', '-e', script], {
+      encoding: 'utf8',
+    }),
+  );
+
+  expect(result.unchanged).toBe(true);
+  expect(Object.keys(result.original)).toEqual(['*/*']);
+  expect(Object.keys(result.normalized)).toEqual(['application/json']);
+  expect(result.normalized['application/json']).toEqual(result.original['*/*']);
+  expect(result.table['application/json'].schema.$ref).toBe(
+    '#/components/schemas/InfraDatabaseResponse',
+  );
+  expect(result.schemasUnchanged).toBe(true);
+});

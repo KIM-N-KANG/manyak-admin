@@ -61,7 +61,11 @@ export function quickRange(name: RangeName, today = kstToday()): DateRange {
 
   return { from: date(start), to: date(end) };
 }
-export function getRangeError({ from, to }: DateRange, today = kstToday()) {
+export function getRangeError(
+  { from, to }: DateRange,
+  today = kstToday(),
+  maxDays = 366,
+) {
   const validDate = (v: string) =>
     /^\d{4}-\d{2}-\d{2}$/.test(v) &&
     Number.isFinite(Date.parse(v)) &&
@@ -74,8 +78,8 @@ export function getRangeError({ from, to }: DateRange, today = kstToday()) {
 
   if (to > today) return '끝 날짜는 오늘 또는 이전 날짜로 선택해 주세요.';
 
-  if ((Date.parse(to) - Date.parse(from)) / 86400000 >= 366)
-    return '시작 날짜와 끝 날짜를 포함해 366일 이내로 선택해 주세요.';
+  if ((Date.parse(to) - Date.parse(from)) / 86400000 >= maxDays)
+    return `시작 날짜와 끝 날짜를 포함해 ${maxDays}일 이내로 선택해 주세요.`;
 
   return null;
 }
