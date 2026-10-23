@@ -248,7 +248,9 @@ describe('Amplitude 실패 격리', () => {
 
     expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
     expect(tooltip.textContent).toContain('몇 분 늦게');
-    expect(tooltip.textContent).toContain('팀 계정을 제외');
+    expect(tooltip.textContent).toContain(
+      '팀 계정 코호트가 설정된 경우 해당 사용자는 제외합니다.',
+    );
   });
 });
 

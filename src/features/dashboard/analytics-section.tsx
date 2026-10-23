@@ -70,12 +70,12 @@ function AnalyticsSource() {
               id={descriptionId}
               role="tooltip"
               className="z-50 max-w-80 rounded-sm border bg-popover p-3 text-xs leading-5 text-popover-foreground shadow-sm">
-              Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있으며, 팀
-              계정을 제외한 기준입니다. country가 South Korea 또는 (none)이고
-              platform이 Web 또는 Android인 고유 사용자만 셉니다. 같은 사람이 두
-              플랫폼에서 활동하면 합계에는 한 번만 들어가므로 Web과 Android를
-              더한 값과 합계는 다를 수 있습니다. Amplitude 사용자 수는 DB 회원
-              수와 다를 수 있습니다.
+              Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다.
+              팀 계정 코호트가 설정된 경우 해당 사용자는 제외합니다. 국가가
+              한국이거나 국가 정보가 없는 사용자 중, 플랫폼이 Web 또는 Android인
+              고유 사용자만 집계합니다. 같은 사람이 두 플랫폼에서 활동하면
+              합계에는 한 번만 들어가므로 Web과 Android를 더한 값과 합계는 다를
+              수 있습니다. Amplitude 사용자 수는 DB 회원 수와 다를 수 있습니다.
             </Tooltip.Popup>
           </Tooltip.Positioner>
         </Tooltip.Portal>
@@ -294,7 +294,7 @@ export function AnalyticsSection({
           </div>
           <details className="mt-4 text-xs">
             <summary className="cursor-pointer text-muted-foreground">
-              Amplitude 일별 수치 · {data.from} — {data.to}
+              Amplitude 일별 수치 ({data.from} ~ {data.to}, KST)
             </summary>
             <div className="mt-3 max-h-64 overflow-auto">
               <DataTable
