@@ -40,6 +40,12 @@ const cases: [string, string, string, unknown?][] = [
   ['GET', '/dashboard/summary', '/dashboard/summary'],
   [
     'GET',
+    '/infra/metrics?from=2026-10-23&to=2026-10-23',
+    '/infra/metrics?from=2026-10-23&to=2026-10-23',
+  ],
+  ['GET', '/infra/db-tables?limit=20', '/infra/db-tables?limit=20'],
+  [
+    'GET',
     '/users/activity?from=2026-10-01&to=2026-10-21',
     '/users/activity?from=2026-10-01&to=2026-10-21',
   ],
@@ -355,6 +361,10 @@ it.each([
   ['POST', '/notices', { ...reason, title: [], body: '본문' }],
   ['POST', `/notices/${id}/publish`, { ...reason, notify: 'true' }],
   ['GET', '/members?page=0'],
+  ['GET', '/infra/db-tables?limit=0'],
+  ['GET', '/infra/db-tables?limit=101'],
+  ['GET', '/infra/db-tables?limit=1.5'],
+  ['GET', '/infra/db-tables?from=2026-10-23'],
   ['GET', '/members?page=1.5'],
   ['GET', '/members?page=0x10'],
   ['GET', '/members?page=1e2'],
@@ -789,3 +799,28 @@ it('세션 없는 캠페인 요청은 지원 쿼리여도 전달 전에 401이�
   expect(response.status).toBe(401);
   expect(fetchMock).not.toHaveBeenCalled();
 });
+
+it.each([
+  'from=bad&to=2026-10-23',
+  'from=2026-10-23',
+  'from=2026-01-01&to=2026-10-23',
+])(
+  '인프라 기간 의미 검증 %s는 실제 문자열 계약으로 전달하고 서버 400을 보존한다',
+  async (query) => {
+    const body = { message: '기간이 올바르지 않습니다.' };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json(body, { status: 400 }));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await invoke('GET', `/infra/metrics?${query}`);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual(body);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://upstream.example/api/v1/admin/infra/metrics?${query}`,
+    );
+  },
+);

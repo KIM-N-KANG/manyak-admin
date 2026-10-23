@@ -178,6 +178,19 @@ it('리텐션 탭은 선택 기간을 유지해 요청을 막고 어제까지 �
   );
   expect(screen.getAllByText('관찰 전').length).toBeGreaterThan(0);
 
+  fireEvent.click(screen.getByRole('button', { name: /기간:/ }));
+  expect(
+    screen.getByRole('button', { name: '오늘' }).hasAttribute('disabled'),
+  ).toBe(true);
+  expect(
+    screen.getByRole('button', { name: '어제' }).hasAttribute('disabled'),
+  ).toBe(false);
+  expect(screen.getByLabelText('끝 날짜').getAttribute('max')).toBe(
+    '2026-10-22',
+  );
+  fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+
   const count = requests.length;
 
   fireEvent.change(screen.getByRole('combobox', { name: '플랫폼' }), {

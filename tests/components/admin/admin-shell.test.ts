@@ -39,6 +39,7 @@ const entries = [
   ['/analytics/users', '사용자'],
   ['/analytics/conversion', '전환'],
   ['/analytics/quality', '기능과 품질'],
+  ['/analytics/infra', '인프라'],
   ['/members', '회원'],
   ['/stories', '스토리'],
   ['/originals', '오리지널'],
@@ -83,7 +84,7 @@ describe('관리자 메뉴 구조', () => {
       within(nav)
         .getByRole('region', { name: '대시보드' })
         .querySelectorAll('a'),
-    ).toHaveLength(6);
+    ).toHaveLength(7);
     expect(
       within(nav).getByRole('region', { name: '관리' }).querySelectorAll('a'),
     ).toHaveLength(8);

@@ -75,11 +75,7 @@ export function RangePicker({
   const trigger = useRef<HTMLButtonElement>(null);
   const today = kstToday();
   const lastDate = endDate ?? today;
-  const rangeError =
-    getRangeError(draft, lastDate) ??
-    ((Date.parse(draft.to) - Date.parse(draft.from)) / 86400000 >= maxDays
-      ? `시작 날짜와 끝 날짜를 포함해 ${maxDays}일 이내로 선택해 주세요.`
-      : null);
+  const rangeError = getRangeError(draft, lastDate, maxDays);
 
   return (
     <Popover.Root

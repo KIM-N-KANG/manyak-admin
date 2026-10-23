@@ -972,6 +972,39 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/infra/metrics',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'from',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
+    ],
+    params: undefined,
+    query: schemas.MetricsQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
+    path: '/api/v1/admin/infra/db-tables',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'limit',
+        in: 'query',
+        required: false,
+        schema: { type: 'integer', default: 20, maximum: 100, minimum: 1 },
+      },
+    ],
+    params: undefined,
+    query: schemas.TablesQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/dashboard/summary',
     method: 'GET',
     parameters: [],
