@@ -12,6 +12,7 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import { InfraChart } from '@/features/analytics/infra/infra-chart';
 import { DashboardAnalysisScreen } from '@/features/dashboard/analysis-screen';
 import {
   chartNumber,
@@ -28,6 +29,7 @@ import type {
 } from '@/features/dashboard/types';
 import { getDashboardAnalytics } from '@/fixtures/analytics';
 import { getDashboardCharts, summary } from '@/fixtures/dashboard';
+import { infraMetricsFixture } from '@/fixtures/infra';
 import { playInstalls } from '@/fixtures/play-installs';
 
 const state = vi.hoisted(() => ({
@@ -644,4 +646,71 @@ it('가입자 카드는 탈퇴 포함 누적과 오늘 값을 표시하고 전�
   fireEvent.keyDown(button, { key: 'Escape' });
   await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
   expect(document.activeElement).toBe(button);
+});
+
+it('인프라의 근접한 끝 값과 첫 입력 시간 라벨은 실제 SVG에서 최소 18px 간격을 유지한다', () => {
+  const data = infraMetricsFixture('2026-10-20', '2026-10-20');
+  const at = data.alb!.requests.at(-1)!.at;
+  const series = ['서버', 'AI', '알림'].map((label, i) => ({
+    key: `s${i}`,
+    label,
+    color: 'var(--primary)',
+    points: [{ at, value: 28 - i * 0.05 }],
+  }));
+  const view = render(
+    createElement(InfraChart, { title: 'CPU 사용률', data, series, unit: '%' }),
+  );
+  const labels = Array.from(
+    view.container.querySelectorAll('.chart-end-labels text'),
+  );
+
+  expect(labels).toHaveLength(3);
+  expect(labels.map((node) => node.textContent)).toContain('알림 27.9%');
+
+  const ys = labels
+    .map((node) => Number(node.getAttribute('y')))
+    .toSorted((a, b) => a - b);
+
+  expect(ys[1] - ys[0]).toBeGreaterThanOrEqual(18);
+  expect(ys[2] - ys[1]).toBeGreaterThanOrEqual(18);
+  expect(
+    view.container.querySelectorAll('.chart-end-labels line').length,
+  ).toBeGreaterThan(0);
+  view.unmount();
+
+  const { container } = draw(
+    distribution(
+      'first-message',
+      ['P50', 'P75', 'P90', '평균'].map((label) => point(label, 120)),
+      '초',
+    ),
+  );
+  const percentileLabels = Array.from(
+    container.querySelectorAll('.chart-end-labels text'),
+  );
+
+  expect(percentileLabels).toHaveLength(4);
+
+  const positions = percentileLabels
+    .map((node) => Number(node.getAttribute('y')))
+    .toSorted((a, b) => a - b);
+
+  for (let i = 1; i < positions.length; i++)
+    expect(positions[i] - positions[i - 1]).toBeGreaterThanOrEqual(18);
+});
+
+it('요약 카드 10개는 고정 최소 높이 없이 같은 행의 내용 높이에 맞춘다', () => {
+  render(createElement(DashboardScreen));
+
+  const grid = screen.getByRole('region', { name: '요약 지표' });
+
+  expect(grid.children).toHaveLength(10);
+  expect(grid.className).toContain('items-stretch');
+
+  for (const card of grid.children)
+    expect(card.className).not.toMatch(/(?:min-)?h-(?:\d|\[)/);
+
+  const dbLink = within(grid).getByRole('link', { name: /가입자.*누적/ });
+
+  expect(dbLink.className).toContain('h-full');
 });

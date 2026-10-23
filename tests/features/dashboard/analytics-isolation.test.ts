@@ -39,6 +39,9 @@ vi.mock('recharts', () => {
     createElement('div', null, children);
 
   return {
+    usePlotArea: () => undefined,
+    useXAxisScale: () => undefined,
+    useYAxisScale: () => undefined,
     AreaChart: Container,
     LineChart: Container,
     PieChart: Container,
@@ -157,7 +160,7 @@ describe('Amplitude 실패 격리', () => {
 
     expect(alert.textContent).toContain('불러올 수 없음');
     expect(alert.getAttribute('data-slot')).toBeNull();
-    expect(region.className).toContain('min-h-56');
+    expect(region.className).not.toMatch(/min-h-|h-56/);
     await screen.findByRole('region', { name: '일별 지표 추이' });
     expectDbMetricsVisible();
     expect(screen.getAllByRole('alert')).toHaveLength(1);

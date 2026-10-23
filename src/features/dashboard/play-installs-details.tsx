@@ -4,7 +4,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  LabelList,
   Line,
   LineChart,
   ReferenceLine,
@@ -23,6 +22,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
+import { ChartEndLabels } from '@/features/dashboard/chart-end-labels';
 import type { PlayInstalls } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
@@ -102,21 +102,31 @@ export function PlayInstallsDetails() {
                         }
                         dot={false}
                         activeDot={{ r: 4 }}
-                        isAnimationActive={false}>
-                        <LabelList
-                          dataKey={(day: PlayInstalls['daily'][number]) =>
-                            day.date === data.asOf && day[key] !== null
-                              ? `${key === 'cumulativeInstalls' ? '누적' : '활성'} ${day[key].toLocaleString('ko-KR')}대`
-                              : null
-                          }
-                          position="right"
-                          dy={key === 'cumulativeInstalls' ? -8 : 12}
-                          fill="var(--foreground)"
-                          fontSize={11}
-                        />
-                      </Line>
+                        isAnimationActive={false}
+                      />
                     ),
                   )}
+                  <ChartEndLabels
+                    labels={(
+                      ['cumulativeInstalls', 'activeDevices'] as const
+                    ).flatMap((key) => {
+                      const day = data.daily.find(
+                        (day) => day.date === data.asOf,
+                      );
+                      const value = day?.[key];
+
+                      return typeof value === 'number'
+                        ? [
+                            {
+                              id: key,
+                              x: data.asOf,
+                              y: value,
+                              text: `${key === 'cumulativeInstalls' ? '누적' : '활성'} ${value.toLocaleString('ko-KR')}대`,
+                            },
+                          ]
+                        : [];
+                    })}
+                  />
                   <ChartLegend
                     itemSorter={null}
                     content={<ChartLegendContent />}

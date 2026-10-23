@@ -29,6 +29,8 @@ import {
 } from '@/features/dashboard/chart-data';
 import type { ChartPoint, Distribution } from '@/features/dashboard/types';
 
+import { ChartEndLabels } from './chart-end-labels';
+
 type ChartProps = {
   distribution: Distribution;
   onSelect: (point: ChartPoint) => void;
@@ -299,28 +301,7 @@ function FirstMessagePlot({ distribution, onSelect }: ChartProps) {
 
     if (cx === undefined || cy === undefined || !point) return <g />;
 
-    const labelY = cy - 20 - index * 18;
-
-    return (
-      <g>
-        <line
-          x1={cx}
-          x2={cx}
-          y1={cy - 5}
-          y2={labelY + 5}
-          stroke="var(--border)"
-        />
-        <circle cx={cx} cy={cy} r={5} fill="var(--primary)" />
-        <text
-          x={cx}
-          y={labelY}
-          textAnchor="middle"
-          fill="var(--foreground)"
-          fontSize={11}>
-          {point.label} {chartNumber(point.value)}초
-        </text>
-      </g>
-    );
+    return <circle cx={cx} cy={cy} r={5} fill="var(--primary)" />;
   }
 
   return (
@@ -367,15 +348,18 @@ function FirstMessagePlot({ distribution, onSelect }: ChartProps) {
           shape="diamond"
           isAnimationActive={false}
           onClick={(_data, index) => onSelect(means[index])}
-          className="cursor-pointer">
-          <LabelList
-            dataKey="value"
-            position="bottom"
-            offset={12}
-            formatter={(value) => `평균 ${chartNumber(value)}초`}
-            fill="var(--foreground)"
-          />
-        </Scatter>
+          className="cursor-pointer"
+        />
+        <ChartEndLabels
+          labels={[...percentiles, ...means].map((point, index) => ({
+            id: point.label,
+            x: point.value,
+            y: 1,
+            centered: true,
+            offsetY: index < percentiles.length ? -20 - index * 18 : 24,
+            text: `${point.label} ${chartNumber(point.value)}초`,
+          }))}
+        />
         <ChartLegend
           formatter={(value) => (
             <span className="text-foreground">{value}</span>

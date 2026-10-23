@@ -21,6 +21,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
+import { ChartEndLabels } from '@/features/dashboard/chart-end-labels';
 
 import { infraNumber, infraValue, kstTime, tableName, timeRows } from './data';
 import type {
@@ -98,7 +99,7 @@ export function InfraChart({
               />
             }
           />
-          {series.map((item, index) => (
+          {series.map((item) => (
             <Line
               key={item.key}
               dataKey={item.key}
@@ -110,29 +111,32 @@ export function InfraChart({
               dot={false}
               activeDot={{ r: 4 }}
               connectNulls={false}
-              isAnimationActive={false}>
-              {series.length > 1 ? (
-                <LabelList
-                  dataKey={(
-                    row: { at: string } & Record<
-                      string,
-                      string | number | null
-                    >,
-                  ) =>
-                    Date.parse(row.at) ===
-                      Date.parse(item.points.at(-1)?.at ?? '') &&
-                    row[item.key] !== null
-                      ? `${item.label} ${number(Number(row[item.key]), unit)}`
-                      : null
-                  }
-                  position="right"
-                  dy={(index - (series.length - 1) / 2) * 16}
-                  fontSize={10}
-                  fill="var(--foreground)"
-                />
-              ) : null}
-            </Line>
+              isAnimationActive={false}
+            />
           ))}
+          {series.length > 1 ? (
+            <ChartEndLabels
+              labels={series.flatMap((item) => {
+                const row = rows.find(
+                  (row) =>
+                    Date.parse(row.at) ===
+                    Date.parse(item.points.at(-1)?.at ?? ''),
+                );
+                const value = row?.[item.key];
+
+                return row && typeof value === 'number'
+                  ? [
+                      {
+                        id: item.key,
+                        x: row.at,
+                        y: value,
+                        text: `${item.label} ${number(value, unit)}`,
+                      },
+                    ]
+                  : [];
+              })}
+            />
+          ) : null}
           {series.length > 1 ? (
             <ChartLegend
               itemSorter={null}

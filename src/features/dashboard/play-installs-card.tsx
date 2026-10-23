@@ -20,7 +20,7 @@ export function PlayInstallsCard() {
     <Card
       role="region"
       aria-label="앱 설치(Android)"
-      className="relative min-h-56 min-w-0 p-4">
+      className="relative min-w-0 p-4">
       <div className="flex items-center gap-2">
         <h3 className="text-sm text-muted-foreground">
           <Link
