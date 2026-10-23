@@ -150,7 +150,9 @@ export function SeriesChart({
       <CartesianGrid vertical={false} />
       <XAxis
         dataKey="date"
-        tickFormatter={(v) => String(v).slice(5)}
+        tickFormatter={(v) =>
+          categoryLabel === '날짜' ? String(v).slice(5) : String(v)
+        }
         minTickGap={30}
         tickLine={false}
       />
