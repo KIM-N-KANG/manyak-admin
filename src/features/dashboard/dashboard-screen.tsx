@@ -32,6 +32,7 @@ import {
   paymentHistoryHref,
 } from '@/features/dashboard/links';
 import { MetricSparkline } from '@/features/dashboard/metric-sparkline';
+import { PlayInstallsCard } from '@/features/dashboard/play-installs-card';
 import type {
   DashboardCharts,
   DashboardSummary,
@@ -251,7 +252,10 @@ export function DashboardScreen() {
           </div>
         </>
       ) : null}
-      <AnalyticsSection days={days} />
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <AnalyticsSection days={days} />
+        <PlayInstallsCard />
+      </div>
       <QueryState
         pending={charts.isPending}
         error={charts.error}

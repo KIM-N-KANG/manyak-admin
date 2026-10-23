@@ -38,6 +38,7 @@ const cases: [string, string, string, unknown?][] = [
   ],
   ['POST', `/notices/${id}/unpublish`, `/notices/${id}/unpublish`, reason],
   ['GET', '/dashboard/summary', '/dashboard/summary'],
+  ['GET', '/dashboard/play-installs', '/dashboard/play-installs'],
   ['GET', '/dashboard/charts?days=7', '/dashboard/charts?days=7'],
   ['GET', '/dashboard/analytics?days=30', '/dashboard/analytics?days=30'],
   [

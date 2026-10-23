@@ -65,3 +65,16 @@ export type DashboardAnalytics = {
   todayActiveUsers: number;
   daily: { date: string; activeUsers: number; newUsers: number }[];
 };
+
+export interface PlayInstalls {
+  totalInstalls: number;
+  activeDevices: number;
+  asOf: string;
+  daily: {
+    date: string;
+    installs: number;
+    uninstalls: number;
+    cumulativeInstalls: number;
+    activeDevices: number;
+  }[];
+}

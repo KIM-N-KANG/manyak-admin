@@ -15,6 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GET as analyticsResponse } from '@/app/api/dashboard/analytics/route';
 import { GET as chartsResponse } from '@/app/api/dashboard/charts/route';
+import { GET as playResponse } from '@/app/api/dashboard/play-installs/route';
 import { GET as summaryResponse } from '@/app/api/dashboard/summary/route';
 import { DashboardAnalysisScreen } from '@/features/dashboard/analysis-screen';
 import { DashboardScreen } from '@/features/dashboard/dashboard-screen';
@@ -66,6 +67,7 @@ vi.mock('@/components/ui/chart', () => ({
 
 let client: QueryClient;
 let failAnalytics: boolean;
+let failPlay: boolean;
 const requested: string[] = [];
 
 beforeEach(() => {
@@ -74,6 +76,7 @@ beforeEach(() => {
   navigation.push.mockReset();
   requested.length = 0;
   failAnalytics = false;
+  failPlay = false;
   client = new QueryClient({
     defaultOptions: {
       queries: {
@@ -90,6 +93,11 @@ beforeEach(() => {
       requested.push(url);
 
       const request = new Request(`http://localhost${url}`);
+
+      if (url.startsWith('/api/dashboard/play-installs'))
+        return failPlay
+          ? Response.json({ code: 'SERVICE_UNAVAILABLE' }, { status: 503 })
+          : playResponse();
 
       if (url.startsWith('/api/dashboard/summary')) return summaryResponse();
 
@@ -328,4 +336,16 @@ describe('개요와 분석 화면 분리', () => {
     ).toBe(true);
     expectDbMetricsVisible();
   });
+});
+
+it('Play 503은 설치 카드에만 설치 지표 사용 불가를 표시하고 DB·Amplitude를 유지한다', async () => {
+  failPlay = true;
+  render(dashboard());
+  await screen.findByText('설치 지표 사용 불가');
+  await screen.findByRole('heading', { name: '오늘 활성 사용자' });
+  await screen.findByRole('heading', { name: '일별 추이' });
+  expectDbMetricsVisible();
+  expect(
+    screen.getByRole('region', { name: '앱 설치(Android)' }).textContent,
+  ).toContain('설치 지표 사용 불가');
 });

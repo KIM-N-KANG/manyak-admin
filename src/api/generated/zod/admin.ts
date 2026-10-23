@@ -614,6 +614,12 @@ export const AttendanceResponse = zod.unknown();
 
 export const SummaryResponse = zod.unknown();
 
+/**
+ * Play 기준 날짜를 그대로 반환합니다. 보고서는 며칠 늦게 갱신되며 결과는 1시간 캐시합니다.
+ * @summary Play 설치 지표
+ */
+export const InstallsResponse = zod.unknown();
+
 export const ChartsQueryParams = zod.object({
   request: zod.object({
     days: zod.number().optional(),
