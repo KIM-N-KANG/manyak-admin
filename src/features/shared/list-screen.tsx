@@ -81,8 +81,10 @@ const turnBuckets = [
   '0턴',
   '1턴',
   '2턴',
-  '3~4턴',
-  '5~6턴',
+  '3턴',
+  '4턴',
+  '5턴',
+  '6턴',
   '7~9턴',
   '10~14턴',
   '15~19턴',
@@ -166,6 +168,11 @@ const configs: Record<Domain, { title: string; filters: Filter[] }> = {
   chats: {
     title: '채팅',
     filters: [
+      {
+        key: 'turnBucket',
+        label: '턴 구간',
+        options: turnBuckets.map((label, index) => [String(index), label]),
+      },
       {
         key: 'storyId',
         label: '스토리 ID',

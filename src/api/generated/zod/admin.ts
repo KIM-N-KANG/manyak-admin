@@ -755,7 +755,7 @@ export const chatsQueryRequestOrderRegExp = new RegExp('asc|desc');
 export const chatsQueryRequestQMax = 50;
 
 export const chatsQueryRequestTurnBucketMin = 0;
-export const chatsQueryRequestTurnBucketMax = 10;
+export const chatsQueryRequestTurnBucketMax = 12;
 
 export const ChatsQueryParams = zod.object({
   request: zod.object({
