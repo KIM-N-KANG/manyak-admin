@@ -250,10 +250,7 @@ function OriginalEditor({
           ← {id ? '오리지널 상세' : '오리지널 목록'}
         </TextLink>
       </div>
-      <PageHeading
-        title={id ? '오리지널 수정' : '새 오리지널'}
-        description="공식 계정 마냑의 콘텐츠입니다. 초안을 저장하거나 필수 항목을 완성해 공개하세요."
-      />
+      <PageHeading title={id ? '오리지널 수정' : '새 오리지널'} />
       <form onSubmit={submit} noValidate>
         <fieldset disabled={busy} className="space-y-6 disabled:opacity-70">
           <Card className="space-y-5">

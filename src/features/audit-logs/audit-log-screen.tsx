@@ -22,10 +22,7 @@ export function AuditLogListScreen() {
 
   return (
     <>
-      <PageHeading
-        title="감사 로그"
-        description="관리자의 조회와 변경 이력을 확인하세요."
-      />
+      <PageHeading title="감사 로그" />
       <ListFilterForm label="처리자·작업·사유 검색">
         {(
           [
@@ -100,9 +97,7 @@ export function AuditLogDetailScreen({ id }: { id: string }) {
 
   return (
     <>
-      <PageHeading
-        title="감사 로그 상세"
-        description="변경 전후 값과 요청 ID를 확인하세요.">
+      <PageHeading title="감사 로그 상세">
         <TextLink href="/audit-logs">목록으로</TextLink>
       </PageHeading>
       <QueryState

@@ -53,9 +53,7 @@ export function NoticeDetailScreen({ id }: { id: string }) {
 
   return (
     <>
-      <PageHeading
-        title="공지 상세"
-        description="내용과 알림 이력을 확인하고 게시 상태를 관리하세요.">
+      <PageHeading title="공지 상세">
         <TextLink href="/notices">목록으로</TextLink>
       </PageHeading>
       <QueryState

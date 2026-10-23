@@ -11,6 +11,7 @@ import type { DateRange, RangeName } from './date-range';
 import {
   getRangeError,
   kstToday,
+  quickRange,
   quickRanges,
   resolveRange,
 } from './date-range';
@@ -55,14 +56,28 @@ export function useDashboardRange() {
 }
 export function RangePicker({
   range,
+  maxDays = 366,
+  endDate,
 }: {
-  range: ReturnType<typeof useDashboardRange>;
+  range: DateRange & {
+    label: string;
+    name: RangeName | null;
+    select: (value: DateRange | RangeName) => void;
+    query?: string;
+  };
+  maxDays?: number;
+  endDate?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DateRange>(range);
   const trigger = useRef<HTMLButtonElement>(null);
   const today = kstToday();
-  const rangeError = getRangeError(draft, today);
+  const lastDate = endDate ?? today;
+  const rangeError =
+    getRangeError(draft, lastDate) ??
+    ((Date.parse(draft.to) - Date.parse(draft.from)) / 86400000 >= maxDays
+      ? `시작 날짜와 끝 날짜를 포함해 ${maxDays}일 이내로 선택해 주세요.`
+      : null);
 
   return (
     <Popover.Root
@@ -101,8 +116,15 @@ export function RangePicker({
                   <button
                     key={key}
                     type="button"
-                    className="rounded-sm px-3 py-1.5 text-left text-sm hover:bg-muted"
+                    className="rounded-sm px-3 py-1.5 text-left text-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
                     aria-pressed={range.name === key}
+                    disabled={
+                      quickRange(key, today).to > lastDate ||
+                      (Date.parse(quickRange(key, today).to) -
+                        Date.parse(quickRange(key, today).from)) /
+                        86400000 >=
+                        maxDays
+                    }
                     onClick={() => {
                       range.select(key);
                       setOpen(false);
@@ -127,7 +149,7 @@ export function RangePicker({
                     className="control mt-1 block"
                     type="date"
                     required
-                    max={draft.to || today}
+                    max={draft.to || lastDate}
                     value={draft.from}
                     onChange={(event) =>
                       setDraft({ ...draft, from: event.target.value })
@@ -141,7 +163,7 @@ export function RangePicker({
                     type="date"
                     required
                     min={draft.from}
-                    max={today}
+                    max={lastDate}
                     value={draft.to}
                     onChange={(event) =>
                       setDraft({ ...draft, to: event.target.value })
@@ -149,8 +171,8 @@ export function RangePicker({
                   />
                 </label>
                 <p className="max-w-56 text-xs text-muted-foreground">
-                  끝 날짜는 오늘까지 선택할 수 있으며 시작 날짜와 끝 날짜를
-                  포함해 최대 366일입니다.
+                  끝 날짜는 {lastDate}까지 선택할 수 있으며 시작 날짜와 끝
+                  날짜를 포함해 최대 {maxDays}일입니다.
                 </p>
                 {rangeError && (
                   <p role="alert" className="text-xs text-destructive">

@@ -2,6 +2,7 @@
 import { createElement } from 'react';
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -13,6 +14,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { FetchError } from '@/api/mutator/custom-instance';
 import { GET } from '@/app/api/dashboard/play-installs/route';
 import { PlayInstallsCard } from '@/features/dashboard/play-installs-card';
+import { PlayInstallsDetails } from '@/features/dashboard/play-installs-details';
 import type { PlayInstalls } from '@/features/dashboard/types';
 import { playInstalls } from '@/fixtures/play-installs';
 
@@ -45,21 +47,14 @@ afterEach(() => {
   state.retry.mockReset();
 });
 it('누적·활성·Play 날짜와 지연 안내를 표시하고 확장하면 계단선과 0 기준 상하 막대를 그린다', async () => {
-  const view = render(createElement(PlayInstallsCard));
+  const view = render(createElement(PlayInstallsDetails));
 
   expect(
     screen.getByText(
       `집계 기준 날짜 ${playInstalls.asOf} (Play 기준 태평양 시간)`,
     ),
   ).toBeTruthy();
-  expect(screen.getByText(/며칠 늦게/)).toBeTruthy();
-
-  const detail = view.container.querySelector('details')!;
-
-  fireEvent.click(
-    screen.getByText('누적 기기 설치 수와 활성 기기 수 추이 보기'),
-  );
-  detail.open = true;
+  expect(screen.queryByText(/며칠 늦게/)).toBeNull();
 
   const lines = view.container.querySelector(
     '[aria-label="누적 기기 설치 수와 활성 기기 수 추이"]',
@@ -85,7 +80,7 @@ it('누적·활성·Play 날짜와 지연 안내를 표시하고 확장하면 �
   expect(lines.querySelector('[stroke-dasharray="6 3"]')).toBeTruthy();
 
   const bars = view.container.querySelector(
-    '[aria-label="일별 기기 설치 수와 일별 앱 삭제 수"]',
+    '[aria-label="일별 기기 설치 수와 앱 삭제 수"]',
   )!;
 
   expect(bars.querySelector('.recharts-reference-line')).toBeTruthy();
@@ -104,7 +99,7 @@ it('누적·활성·Play 날짜와 지연 안내를 표시하고 확장하면 �
   expect(Number(positive.getAttribute('y'))).toBeLessThan(
     Number(negative.getAttribute('y')),
   );
-  expect(screen.getAllByText('일별 설치 지표')).toHaveLength(1);
+  expect(screen.getAllByText('전체 수치 표')).toHaveLength(1);
   expect(view.container.querySelectorAll('tbody tr')).toHaveLength(
     playInstalls.daily.length,
   );
@@ -149,10 +144,32 @@ it('활성 기기의 null은 보고서 값 없음으로 표시하고 실제 0은
   state.data = structuredClone(playInstalls);
   state.data.daily[0].activeDevices = null;
   state.data.daily[1].activeDevices = 0;
-  render(createElement(PlayInstallsCard));
+  render(createElement(PlayInstallsDetails));
   expect(screen.getByText('보고서 값 없음')).toBeTruthy();
 
   const rows = screen.getAllByRole('row');
 
   expect(rows[2].lastElementChild!.textContent).toBe('0');
+});
+
+it('설치 안내는 제목 옆 도움말에 포커스할 때 열고 기준 날짜는 본문에 유지한다', async () => {
+  render(createElement(PlayInstallsCard));
+  expect(screen.queryByText(/보고서는 며칠 늦게/)).toBeNull();
+  expect(
+    screen.getByText(
+      `집계 기준 날짜 ${playInstalls.asOf} (Play 기준 태평양 시간)`,
+    ),
+  ).toBeTruthy();
+
+  const button = screen.getByRole('button', {
+    name: '앱 설치(Android) 집계 안내',
+  });
+
+  act(() => button.focus());
+
+  const tooltip = await screen.findByRole('tooltip');
+
+  expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
+  expect(tooltip.textContent).toContain('보고서는 며칠 늦게');
+  expect(tooltip.textContent).toContain('기간은 이 카드에 적용되지 않습니다.');
 });

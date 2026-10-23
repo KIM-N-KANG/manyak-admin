@@ -2,6 +2,7 @@
 import { createElement } from 'react';
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -551,7 +552,10 @@ it('정본의 구역 순서와 서버 제목·설명을 유지하고 기능 표�
 
   for (const item of state.charts!.distributions) {
     expect(screen.getByRole('heading', { name: item.title })).toBeTruthy();
-    expect(screen.getByText(item.description)).toBeTruthy();
+    expect(screen.queryByText(item.description)).toBeNull();
+    expect(
+      screen.getByRole('button', { name: `${item.title} 집계 안내` }),
+    ).toBeTruthy();
   }
 
   expect(screen.getAllByText('간편 제작 →')).toHaveLength(2);
@@ -559,4 +563,23 @@ it('정본의 구역 순서와 서버 제목·설명을 유지하고 기능 표�
   expect(screen.getByRole('region', { name: '콘텐츠' }).textContent).toContain(
     '값 (건)',
   );
+});
+
+it('분포 설명은 본문에 없고 제목 옆 도움말에 포커스하면 응답 문구 그대로 열린다', async () => {
+  render(createElement(DashboardAnalysisScreen));
+
+  const item = state.charts!.distributions[0];
+
+  expect(screen.queryByText(item.description)).toBeNull();
+
+  const button = screen.getByRole('button', {
+    name: `${item.title} 집계 안내`,
+  });
+
+  act(() => button.focus());
+
+  const tooltip = await screen.findByRole('tooltip');
+
+  expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
+  expect(tooltip.textContent).toBe(item.description);
 });

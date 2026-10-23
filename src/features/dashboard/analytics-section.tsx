@@ -1,8 +1,5 @@
 'use client';
 
-import { useId } from 'react';
-
-import { Tooltip } from '@base-ui/react/tooltip';
 import {
   CartesianGrid,
   LabelList,
@@ -19,6 +16,7 @@ import {
   QueryState,
 } from '@/components/admin/data-ui';
 import { ExternalToolLink } from '@/components/admin/external-tool-link';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 import {
   ChartContainer,
@@ -51,40 +49,15 @@ const labels: Record<AnalyticsMetric, string> = {
 };
 
 function AnalyticsSource() {
-  const descriptionId = useId();
-
   return (
-    <Tooltip.Provider delay={150}>
-      <Tooltip.Root>
-        <Tooltip.Trigger
-          type="button"
-          aria-label="Amplitude 출처와 집계 안내"
-          aria-describedby={descriptionId}
-          className="inline-flex items-center gap-1.5 rounded-sm border bg-card px-2 py-1 text-xs text-muted-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
-          Amplitude{' '}
-          <span
-            aria-hidden="true"
-            className="flex size-3.5 items-center justify-center rounded-full border text-[10px]">
-            ?
-          </span>
-        </Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Positioner sideOffset={8}>
-            <Tooltip.Popup
-              id={descriptionId}
-              role="tooltip"
-              className="z-50 max-w-80 rounded-sm border bg-popover p-3 text-xs leading-5 text-popover-foreground shadow-sm">
-              Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다.
-              팀 계정 코호트가 설정된 경우 해당 사용자는 제외합니다. 국가가
-              한국이거나 국가 정보가 없는 사용자 중 플랫폼이 Web 또는 Android인
-              고유 사용자만 집계합니다. 같은 사람이 두 플랫폼에서 활동하면
-              합계에는 한 번만 들어가므로 Web과 Android를 더한 값과 합계는 다를
-              수 있습니다. Amplitude 사용자 수는 DB 회원 수와 다를 수 있습니다.
-            </Tooltip.Popup>
-          </Tooltip.Positioner>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    </Tooltip.Provider>
+    <HelpTooltip label="Amplitude 출처와 집계 안내" source="Amplitude">
+      Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 팀 계정
+      코호트가 설정된 경우 해당 사용자는 제외합니다. 국가가 한국이거나 국가
+      정보가 없는 사용자 중 플랫폼이 Web 또는 Android인 고유 사용자만
+      집계합니다. 같은 사람이 두 플랫폼에서 활동하면 합계에는 한 번만 들어가므로
+      Web과 Android를 더한 값과 합계는 다를 수 있습니다. Amplitude 사용자 수는
+      DB 회원 수와 다를 수 있습니다.
+    </HelpTooltip>
   );
 }
 
@@ -171,7 +144,7 @@ function AnalyticsTrend({
               />
             </Line>
           ))}
-          <ChartLegend content={<ChartLegendContent />} />
+          <ChartLegend itemSorter={null} content={<ChartLegendContent />} />
         </LineChart>
       </ChartContainer>
     </Card>
@@ -213,8 +186,7 @@ export function AnalyticsSection({
           <AnalyticsSource />
         </div>
         <p className="text-xs text-muted-foreground">
-          {label ?? `최근 ${days}일`} (KST). 집계가 몇 분 늦게 반영될 수
-          있습니다.
+          {label ?? `최근 ${days}일`} (KST)
         </p>
       </div>
       <QueryState
