@@ -46,7 +46,7 @@ afterEach(() => {
   state.pending = false;
   state.retry.mockReset();
 });
-it('누적·활성·Play 날짜와 지연 안내를 표시하고 확장하면 계단선과 0 기준 상하 막대를 그린다', async () => {
+it('상세 탭에 Play 날짜와 계단선 및 0 기준 상하 막대를 표시한다', async () => {
   const view = render(createElement(PlayInstallsDetails));
 
   expect(
@@ -104,6 +104,20 @@ it('누적·활성·Play 날짜와 지연 안내를 표시하고 확장하면 �
     playInstalls.daily.length,
   );
 });
+it('누적과 최신 보고일 설치 수를 표시하고 상세 화면으로 연결한다', () => {
+  const view = render(createElement(PlayInstallsCard));
+
+  expect(screen.getByText(String(playInstalls.totalInstalls))).toBeTruthy();
+  expect(
+    screen.getByText(`${playInstalls.asOf} 설치`).nextElementSibling!
+      .textContent,
+  ).toBe(`${playInstalls.daily.at(-1)!.installs}대`);
+  expect(
+    screen.getByRole('link', { name: '앱 설치(Android)' }).getAttribute('href'),
+  ).toBe('/analytics/acquisition?tab=installs');
+  expect(view.container.querySelector('svg')).toBeNull();
+  expect(screen.queryByText(/보고서는 며칠/)).toBeNull();
+});
 it('503이면 설치 지표 사용 불가를 표시하고 재시도한다', () => {
   state.error = new FetchError('unavailable', 503, {
     code: 'SERVICE_UNAVAILABLE',
@@ -152,17 +166,32 @@ it('활성 기기의 null은 보고서 값 없음으로 표시하고 실제 0은
   expect(rows[2].lastElementChild!.textContent).toBe('0');
 });
 
-it('설치 안내는 제목 옆 도움말에 포커스할 때 열고 기준 날짜는 본문에 유지한다', async () => {
+it('보고일 순서와 무관하게 최신 날짜의 0을 유지하고 보고서 누락은 0으로 만들지 않는다', () => {
+  state.data = {
+    ...playInstalls,
+    daily: [
+      { ...playInstalls.daily.at(-1)!, date: '2026-10-20', installs: 0 },
+      { ...playInstalls.daily[0], date: '2026-10-01', installs: 99 },
+    ],
+  };
+
+  const view = render(createElement(PlayInstallsCard));
+
+  expect(
+    screen.getByText('2026-10-20 설치').nextElementSibling!.textContent,
+  ).toBe('0대');
+  state.data = { ...state.data, daily: [] };
+  view.rerender(createElement(PlayInstallsCard));
+  expect(screen.getByText('보고서 값 없음')).toBeTruthy();
+});
+
+it('설치 안내는 제목 옆 도움말에 포커스할 때 열고 보고일은 본문에 유지한다', async () => {
   render(createElement(PlayInstallsCard));
   expect(screen.queryByText(/보고서는 며칠 늦게/)).toBeNull();
-  expect(
-    screen.getByText(
-      `집계 기준 날짜 ${playInstalls.asOf} (Play 기준 태평양 시간)`,
-    ),
-  ).toBeTruthy();
+  expect(screen.getByText(`${playInstalls.asOf} 설치`)).toBeTruthy();
 
   const button = screen.getByRole('button', {
-    name: '앱 설치(Android) 집계 안내',
+    name: '앱 설치(Android) 출처와 집계 안내',
   });
 
   act(() => button.focus());
@@ -170,6 +199,7 @@ it('설치 안내는 제목 옆 도움말에 포커스할 때 열고 기준 날�
   const tooltip = await screen.findByRole('tooltip');
 
   expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
+  expect(tooltip.textContent).toContain('Google Play 설치 보고서');
   expect(tooltip.textContent).toContain('보고서는 며칠 늦게');
   expect(tooltip.textContent).toContain('기간은 이 카드에 적용되지 않습니다.');
 });

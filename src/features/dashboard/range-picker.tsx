@@ -58,6 +58,7 @@ export function RangePicker({
   range,
   maxDays = 366,
   endDate,
+  disabled = false,
 }: {
   range: DateRange & {
     label: string;
@@ -67,6 +68,7 @@ export function RangePicker({
   };
   maxDays?: number;
   endDate?: string;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DateRange>(range);
@@ -81,7 +83,7 @@ export function RangePicker({
 
   return (
     <Popover.Root
-      open={open}
+      open={!disabled && open}
       onOpenChange={(value) => {
         setOpen(value);
 
@@ -93,6 +95,7 @@ export function RangePicker({
       }}>
       <Popover.Trigger
         ref={trigger}
+        disabled={disabled}
         className="control"
         aria-label={`기간: ${range.label}`}>
         {range.label} ▾

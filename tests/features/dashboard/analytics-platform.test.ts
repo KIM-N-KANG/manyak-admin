@@ -2,8 +2,15 @@
 import { createElement, type PropsWithChildren } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, render, screen, within } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { AnalyticsSection } from '@/features/dashboard/analytics-section';
 import type { DashboardAnalytics } from '@/features/dashboard/types';
@@ -38,6 +45,11 @@ vi.mock('@/components/ui/chart', () => ({
 
 const clients: QueryClient[] = [];
 
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-21T10:00:00Z'));
+});
+
 afterEach(() => {
   cleanup();
   clients.forEach((client) => client.clear());
@@ -61,10 +73,7 @@ function draw(fetchMock: ReturnType<typeof vi.fn>) {
     createElement(
       QueryClientProvider,
       { client },
-      createElement(AnalyticsSection, {
-        query: 'from=2026-10-15&to=2026-10-21',
-        label: '최근 7일',
-      }),
+      createElement(AnalyticsSection),
     ),
   );
 }
@@ -88,9 +97,11 @@ it('서버 합계를 크게 표시하고 Web·Android를 더해 합계를 재계
   const heading = await screen.findByRole('heading', {
     name: '오늘 활성 사용자',
   });
-  const card = within(heading.parentElement!);
+  const card = within(heading.closest('[role=region]')!);
 
-  expect(card.getByText('203').closest('p')!.className).toContain('text-3xl');
+  await card.findByText('203');
+
+  expect(card.getByText('203').closest('dd')!.className).toContain('text-3xl');
   expect(card.getByText('186')).toBeTruthy();
   expect(card.getByText('19')).toBeTruthy();
   expect(card.queryByText('205')).toBeNull();
@@ -110,45 +121,35 @@ it('준비된 0은 준비 중이 아니라 0으로 표시한다', async () => {
     name: '오늘 활성 사용자',
   });
 
-  expect(within(heading.parentElement!).getAllByText('0')).toHaveLength(3);
-  expect(within(heading.parentElement!).queryByText('준비 중')).toBeNull();
+  await waitFor(() =>
+    expect(
+      within(heading.closest('[role=region]')!).getAllByText('0', {
+        selector: 'span',
+      }),
+    ).toHaveLength(3),
+  );
+  expect(
+    within(heading.closest('[role=region]')!).queryByText('준비 중'),
+  ).toBeNull();
 });
-it('null과 준비 중 날짜는 가짜 0 없이 표시하고 차트의 누락 날짜는 공백으로 유지한다', async () => {
-  const data: DashboardAnalytics = {
+it('오늘 null은 가짜 0 없이 준비 중으로 표시하고 개요 차트는 만들지 않는다', async () => {
+  const data = {
     ...getDashboardAnalytics(7),
     todayActiveUsers: null,
     pendingDates: ['2026-10-18'],
   };
-
-  data.daily = data.daily.filter((day) => day.date !== '2026-10-18');
-
   const view = draw(vi.fn().mockResolvedValue(Response.json(data)));
-  const heading = await screen.findByRole('heading', {
-    name: '오늘 활성 사용자',
-  });
 
-  expect(within(heading.parentElement!).getAllByText('준비 중')).toHaveLength(
-    3,
-  );
-  expect(screen.getByText(/60초 뒤 다시/)).toBeTruthy();
-
-  const rows = JSON.parse(
-    view.container
-      .querySelector('[data-trend-rows]')!
-      .getAttribute('data-trend-rows')!,
-  );
-
-  expect(
-    rows.find((row: { date: string }) => row.date === '2026-10-18'),
-  ).toEqual({ date: '2026-10-18', total: null, web: null, android: null });
-  expect(screen.getAllByRole('row')).toHaveLength(
-    data.daily.length + data.pendingDates.length + 1,
-  );
+  await waitFor(() => expect(screen.getAllByText('준비 중')).toHaveLength(3));
+  expect(view.container.querySelector('[data-trend-rows]')).toBeNull();
+  expect(screen.queryByRole('table')).toBeNull();
 });
 it.each([{ pendingDates: [] as string[] }, { pendingDates: ['2026-10-18'] }])(
   '오늘 null 또는 준비 중 날짜 $pendingDates이면 60초 뒤 같은 범위를 재요청하고 준비되면 멈춘다',
   async ({ pendingDates }) => {
+    vi.useRealTimers();
     vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-21T10:00:00Z'));
 
     const ready = getDashboardAnalytics(7);
     const pending = {
@@ -178,7 +179,7 @@ it.each([{ pendingDates: [] as string[] }, { pendingDates: ['2026-10-18'] }])(
     expect(
       fetchMock.mock.calls.every(
         ([url]) =>
-          url === '/api/dashboard/analytics?from=2026-10-15&to=2026-10-21',
+          url === '/api/dashboard/analytics?from=2026-10-21&to=2026-10-21',
       ),
     ).toBe(true);
     expect(screen.queryByText(/60초 뒤 다시/)).toBeNull();

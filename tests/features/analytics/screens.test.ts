@@ -531,25 +531,42 @@ it('광고 캠페인의 대상 스토리는 기본값이면 query에서 생략�
   );
 });
 
-it('유입 앱 설치는 캠페인·기간과 독립적으로 Play만 요청하고 상세 차트를 표시한다', async () => {
-  nav.search =
-    'tab=play-installs&campaign=FIXTURE_UNAVAILABLE&from=2020-01-01&to=2026-10-23';
-  draw('acquisition');
-  await screen.findByText(
-    `집계 기준 날짜 ${playInstalls.asOf} (Play 기준 태평양 시간)`,
-  );
-  expect(requests).toEqual(['/api/dashboard/play-installs']);
-  expect(
-    screen.getByRole('tab', { name: '앱 설치' }).getAttribute('aria-selected'),
-  ).toBe('true');
-  expect(screen.queryByRole('button', { name: /^기간:/ })).toBeNull();
-  expect(screen.queryByRole('combobox', { name: '광고 캠페인' })).toBeNull();
-  expect(screen.queryByText('기간 확인 필요')).toBeNull();
-  expect(
-    screen.getByLabelText('누적 기기 설치 수와 활성 기기 수 추이'),
-  ).toBeTruthy();
-  expect(screen.getByLabelText('일별 기기 설치 수와 앱 삭제 수')).toBeTruthy();
-});
+it.each(['installs', 'play-installs'])(
+  '유입 앱 설치 %s는 캠페인·기간과 독립적으로 Play만 요청하고 상세 차트를 표시한다',
+  async (tab) => {
+    nav.search = `tab=${tab}&campaign=FIXTURE_UNAVAILABLE&from=2020-01-01&to=2026-10-23`;
+    draw('acquisition');
+    await screen.findByText(
+      `집계 기준 날짜 ${playInstalls.asOf} (Play 기준 태평양 시간)`,
+    );
+    expect(requests).toEqual(['/api/dashboard/play-installs']);
+    expect(
+      screen
+        .getByRole('tab', { name: '앱 설치' })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(
+      screen
+        .getByRole('button', { name: '기간: 전체 기간' })
+        .hasAttribute('disabled'),
+    ).toBe(true);
+    expect(screen.queryByRole('combobox', { name: '광고 캠페인' })).toBeNull();
+    expect(screen.queryByText('기간 확인 필요')).toBeNull();
+    expect(
+      screen.getByLabelText('누적 기기 설치 수와 활성 기기 수 추이'),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText('일별 기기 설치 수와 앱 삭제 수'),
+    ).toBeTruthy();
+    expect(screen.getByText('Google Play')).toBeTruthy();
+    expect(screen.getByText('전체 수치 표')).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: '캠페인 추이' }));
+    expect(nav.push).toHaveBeenCalledWith(
+      '/analytics/users?tab=trend&campaign=FIXTURE_UNAVAILABLE&from=2020-01-01&to=2026-10-23',
+      { scroll: false },
+    );
+  },
+);
 
 it('유입 앱 설치의 503은 Play 안내와 재시도로 표시한다', async () => {
   nav.search = 'tab=play-installs';
