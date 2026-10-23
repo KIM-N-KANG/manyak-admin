@@ -164,6 +164,7 @@ export function DashboardScreen() {
         <RangePicker range={range} />
       </PageHeading>
       <QueryState
+        variant="inline"
         pending={summary.isPending}
         error={summary.error}
         retry={summary.refetch}
@@ -182,10 +183,10 @@ export function DashboardScreen() {
               : missingValueStatus;
 
           return (
-            <div key={label} className="relative">
+            <div key={label} className="relative min-h-56">
               <Link
                 href={href}
-                className="flex h-full items-center gap-3 rounded-md border bg-card p-4 transition-colors hover:border-foreground-tertiary focus-visible:ring-2 focus-visible:ring-ring">
+                className="flex h-full items-start gap-3 rounded-md border bg-card p-4 transition-colors hover:border-foreground-tertiary focus-visible:ring-2 focus-visible:ring-ring">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-muted-foreground">{label}</p>
                   <dl>
