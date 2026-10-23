@@ -31,9 +31,9 @@ const config = {
     label: 'Android 누적 기기 설치 수',
     color: 'var(--primary)',
   },
-  activeDevices: { label: '활성 기기 수', color: 'var(--muted-foreground)' },
+  activeDevices: { label: '활성 기기 수', color: 'var(--chart-2)' },
   installs: { label: '일별 기기 설치 수', color: 'var(--primary)' },
-  uninstalls: { label: '일별 앱 삭제 수', color: 'var(--muted-foreground)' },
+  uninstalls: { label: '일별 앱 삭제 수', color: 'var(--chart-2)' },
 };
 
 export function PlayInstallsDetails() {

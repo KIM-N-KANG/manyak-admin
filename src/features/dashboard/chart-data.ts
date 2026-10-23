@@ -7,15 +7,21 @@ export const aiFeatures = [
   'storyline_generation',
   'story_completion',
 ] as const;
+export const MIN_GENRE_CHATS = 5;
 
 export const genreDepthTitle = '장르별 평균 턴 수';
 
 export function rankedPoints(distribution: Distribution): ChartPoint[] {
+  if (distribution.chartId === 'genre-depth')
+    return distribution.points
+      .filter((point) => (point.chats ?? 0) >= MIN_GENRE_CHATS)
+      .slice(0, 30);
+
   const sorted = distribution.points.toSorted(
     (a, b) => b.value - a.value || a.label.localeCompare(b.label, 'ko'),
   );
 
-  return distribution.chartId === 'genre-depth' ? sorted.slice(0, 30) : sorted;
+  return sorted;
 }
 
 export function periodAverage(values: number[]) {

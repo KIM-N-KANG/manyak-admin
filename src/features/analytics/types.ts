@@ -206,6 +206,7 @@ export type ChatOptionDay = {
   chats: number;
   withPersona: number;
   byModel: Record<string, number>;
+  turnsByModel: Record<string, number>;
 };
 export type ChatOptionResponse = {
   asOf: string;

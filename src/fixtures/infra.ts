@@ -59,6 +59,8 @@ export function infraMetricsFixture(
         pendingTasks: i === 0 ? 1 : 0,
         cpu: points(7 + i * 3, true),
         memory: points(40 + i * 5, true),
+        cpuMax: points(21 + i * 5, true),
+        memoryMax: points(55 + i * 5, true),
       })),
     },
     alb: {

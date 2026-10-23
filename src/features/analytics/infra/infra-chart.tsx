@@ -46,6 +46,23 @@ export function InfraChart({
   unit: InfraUnit;
 }) {
   const rows = timeRows(data, series, unit);
+  const maxRows = timeRows(
+    data,
+    series
+      .filter((s) => s.maxPoints)
+      .map((s) => ({ ...s, points: s.maxPoints! })),
+    unit,
+  );
+  const maxByTime = new Map(maxRows.map((row) => [row.at, row]));
+  const usageValue = (value: number | null, key: string, at: string) => {
+    const item = series.find((item) => item.key === key);
+    const max = maxByTime.get(at)?.[key];
+    const average = value === null ? '값 없음' : number(value, unit);
+
+    return item?.maxPoints
+      ? `${average} / ${typeof max === 'number' ? number(max, unit) : '값 없음'}`
+      : average;
+  };
   const config = Object.fromEntries(
     series.map((item) => [item.key, { label: item.label, color: item.color }]),
   );
@@ -90,10 +107,14 @@ export function InfraChart({
             content={
               <ChartTooltipContent
                 labelFormatter={(at) => `${kstTime(String(at))} KST`}
-                formatter={(value, key) => (
+                formatter={(value, key, item) => (
                   <span>
                     {config[String(key)]?.label ?? key}{' '}
-                    {number(Number(value), unit)}
+                    {usageValue(
+                      Number(value),
+                      String(item.dataKey),
+                      String(item.payload.at),
+                    )}
                   </span>
                 )}
               />
@@ -153,16 +174,23 @@ export function InfraChart({
         </summary>
         <div className="mt-3 max-h-64 overflow-auto">
           <DataTable
-            headers={['시각 (KST)', ...series.map((item) => item.label)]}
+            headers={[
+              '시각 (KST)',
+              ...series.map((item) =>
+                item.maxPoints ? `${item.label} (평균 / 최대)` : item.label,
+              ),
+            ]}
             empty={!rows.length}>
             {rows.map((row) => (
               <tr key={row.at}>
                 <td>{kstTime(row.at)}</td>
                 {series.map((item) => (
                   <td key={item.key}>
-                    {row[item.key] === null
-                      ? '값 없음'
-                      : number(Number(row[item.key]), unit)}
+                    {usageValue(
+                      row[item.key] === null ? null : Number(row[item.key]),
+                      item.key,
+                      row.at,
+                    )}
                   </td>
                 ))}
               </tr>

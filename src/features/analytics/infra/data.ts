@@ -48,9 +48,9 @@ export const serviceSeries = (
   color:
     (
       {
-        server: 'var(--primary)',
-        ai: 'var(--primary-text)',
-        notification: 'var(--muted-foreground)',
+        server: 'var(--chart-1)',
+        ai: 'var(--chart-2)',
+        notification: 'var(--chart-3)',
       } as Record<string, string>
     )[name] ?? 'var(--chart-3)',
   dash: ({ ai: '6 3', notification: '2 3' } as Record<string, string>)[name],
@@ -86,7 +86,7 @@ export function pairSeries(
     key,
     label,
     points,
-    color: second ? 'var(--muted-foreground)' : 'var(--primary)',
+    color: second ? 'var(--chart-2)' : 'var(--chart-1)',
     dash: second ? '6 3' : undefined,
   };
 }

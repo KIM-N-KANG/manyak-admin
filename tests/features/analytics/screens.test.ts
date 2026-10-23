@@ -58,11 +58,16 @@ vi.mock('@/components/ui/chart', () => ({
   ChartContainer: ({
     children,
     config,
+    initialDimension,
     ...props
-  }: PropsWithChildren<{ config?: unknown }>) =>
+  }: PropsWithChildren<{ config?: unknown; initialDimension?: unknown }>) =>
     createElement(
       'div',
-      { 'data-config': JSON.stringify(config), ...props },
+      {
+        ...props,
+        'data-config': JSON.stringify(config),
+        'data-initial-size': JSON.stringify(initialDimension),
+      },
       children,
     ),
   ChartTooltip: () => null,

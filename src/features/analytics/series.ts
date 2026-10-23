@@ -1,3 +1,5 @@
+import { modelLabel } from './config';
+
 export type Series = {
   key: string;
   label: string;
@@ -5,11 +7,9 @@ export type Series = {
   dash?: string;
 };
 
-const primary = 'var(--primary)';
 const muted = 'var(--muted-foreground)';
-const deep = 'var(--primary-text)';
 const dashes = [undefined, '6 3', '2 3', '8 3 2 3'];
-const colors = [primary, deep, muted, 'var(--chart-3)', 'var(--chart-5)'];
+const colors = Array.from({ length: 5 }, (_, i) => `var(--chart-${i + 1})`);
 
 function fixed(
   entries: [string, string][],
@@ -18,7 +18,7 @@ function fixed(
   return entries.map(([key, label], i) => ({
     key,
     label,
-    color: palette[i],
+    color: palette[i] ?? muted,
     dash: dashes[i % 4],
   }));
 }
@@ -31,7 +31,7 @@ export const seriesGroups = {
       ['android', 'Android'],
       ['unknown', '플랫폼 없음'],
     ],
-    [primary, muted, deep, 'var(--chart-3)'],
+    colors,
   ),
   ads: fixed([
     ['all', '전체'],
@@ -57,7 +57,7 @@ export const seriesGroups = {
       ['guest', '게스트'],
       ['member', '회원'],
     ],
-    [primary, muted, deep],
+    colors,
   ),
   input: fixed([
     ['block', '블럭 입력'],
@@ -75,5 +75,47 @@ export function listedSeries(entries: [string, string][]): Series[] {
   }));
 }
 export function pairSeries(entries: [string, string][]): Series[] {
-  return fixed(entries, [primary, muted]);
+  return fixed(entries, colors);
+}
+
+export function modelSeries(codes: string[]): Series[] {
+  const unique = [...new Set(codes)];
+  const unknown = unique
+    .filter((code) => !['AURORA', 'LITE', 'UNRECORDED'].includes(code))
+    .toSorted();
+  const ordered = ['AURORA', 'LITE', ...unknown, 'UNRECORDED'].filter((code) =>
+    unique.includes(code),
+  );
+  const modelColors = new Map([
+    ['AURORA', colors[0]],
+    ['LITE', colors[1]],
+  ]);
+
+  return ordered.map((key, index) => ({
+    key,
+    label: modelLabel(key),
+    color: modelColors.get(key) ?? muted,
+    dash: dashes[index % 4],
+  }));
+}
+
+const featureOrder = [
+  'chat_response',
+  'choice_generation',
+  'chat_image',
+  'storyline_generation',
+  'story_completion',
+];
+
+export function featureColor(code: string) {
+  const index = featureOrder.indexOf(code);
+
+  return index < 0 ? muted : colors[index];
+}
+export function featureSeries(entries: [string, string][]): Series[] {
+  return listedSeries(entries).map((series) => ({
+    ...series,
+    color: featureColor(series.key),
+    dash: dashes[Math.max(0, featureOrder.indexOf(series.key)) % 4],
+  }));
 }

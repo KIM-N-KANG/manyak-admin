@@ -7,8 +7,8 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-10-23T17:40:22.588Z",
-    "revision": "b266b03"
+    "receivedAt": "2026-10-23T18:16:58.841Z",
+    "revision": "d52e820"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -4392,6 +4392,13 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          "turnsByModel": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64"
+            }
           }
         }
       },
@@ -5429,6 +5436,18 @@
             "items": {
               "$ref": "#/components/schemas/InfraMetricPoint"
             }
+          },
+          "cpuMax": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "memoryMax": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
           }
         }
       },
@@ -5929,6 +5948,20 @@
           },
           "link": {
             "$ref": "#/components/schemas/AdminChartLink"
+          },
+          "chats": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "totalTurns": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
           }
         }
       },
@@ -6912,6 +6945,15 @@
           "container": {
             "type": "boolean"
           },
+          "floatingPointNumber": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "integralNumber": {
+            "type": "boolean"
+          },
           "nodeType": {
             "type": "string",
             "enum": [
@@ -6961,15 +7003,6 @@
             "type": "boolean"
           },
           "binary": {
-            "type": "boolean"
-          },
-          "floatingPointNumber": {
-            "type": "boolean"
-          },
-          "missingNode": {
-            "type": "boolean"
-          },
-          "integralNumber": {
             "type": "boolean"
           },
           "number": {

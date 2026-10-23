@@ -1,3 +1,4 @@
+import { TURN_THRESHOLDS } from '@/features/analytics/turn-thresholds';
 import type { ChatRoom } from '@/features/chats/types';
 import type {
   CreditTransaction,
@@ -155,7 +156,7 @@ export function getStoryDetail(storyId: string): StoryDetail | null {
   return story
     ? {
         ...story,
-        retention: [1, 3, 5, 10, 20].map((turn) => {
+        retention: TURN_THRESHOLDS.map((turn) => {
           const rooms = chats.filter((c) => c.story.storyId === storyId);
 
           return {
