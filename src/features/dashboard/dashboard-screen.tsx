@@ -18,6 +18,7 @@ import {
   QueryState,
   TextLink,
 } from '@/components/admin/data-ui';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 import {
   ChartContainer,
@@ -91,10 +92,10 @@ export function DashboardScreen() {
   const cards = s
     ? ([
         [
-          '회원',
+          '가입자',
           s.members.total,
           s.members.joinedToday,
-          '/members?excludeDeleted=true',
+          '/members',
           '명',
           'joined',
         ],
@@ -181,33 +182,44 @@ export function DashboardScreen() {
               : missingValueStatus;
 
           return (
-            <Link
-              href={href}
-              key={label}
-              className="flex items-center gap-3 rounded-md border bg-card p-4 transition-colors hover:border-foreground-tertiary focus-visible:ring-2 focus-visible:ring-ring">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-muted-foreground">{label}</p>
-                <dl>
-                  <div className="mt-3">
-                    <dt className="text-xs text-muted-foreground">누적</dt>
-                    <dd className="mt-1 flex flex-wrap items-baseline gap-x-1 text-2xl font-semibold tracking-tight break-all sm:text-3xl">
-                      <NumberValue value={total} />
-                      <span className="text-xs font-normal text-muted-foreground">
-                        {unit}
-                      </span>
-                    </dd>
-                  </div>
-                  <div className="mt-3 flex items-baseline gap-2 text-sm text-muted-foreground">
-                    <dt>오늘</dt>
-                    <dd>
-                      <NumberValue value={today} />
-                      <span className="ml-1">{unit}</span>
-                    </dd>
-                  </div>
-                </dl>
-                <p className="mt-2 text-xs leading-5 text-muted-foreground">{`${range.label} 합계 ${periodText}`}</p>
-              </div>
-            </Link>
+            <div key={label} className="relative">
+              <Link
+                href={href}
+                className="flex h-full items-center gap-3 rounded-md border bg-card p-4 transition-colors hover:border-foreground-tertiary focus-visible:ring-2 focus-visible:ring-ring">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-muted-foreground">{label}</p>
+                  <dl>
+                    <div className="mt-3">
+                      <dt className="text-xs text-muted-foreground">누적</dt>
+                      <dd className="mt-1 flex flex-wrap items-baseline gap-x-1 text-2xl font-semibold tracking-tight break-all sm:text-3xl">
+                        <NumberValue value={total} />
+                        <span className="text-xs font-normal text-muted-foreground">
+                          {unit}
+                        </span>
+                      </dd>
+                    </div>
+                    <div className="mt-3 flex items-baseline gap-2 text-sm text-muted-foreground">
+                      <dt>오늘</dt>
+                      <dd>
+                        <NumberValue value={today} />
+                        <span className="ml-1">{unit}</span>
+                      </dd>
+                    </div>
+                  </dl>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">{`${range.label} 합계 ${periodText}`}</p>
+                </div>
+              </Link>
+              {cardMetric === 'joined' && s ? (
+                <span className="absolute top-4 left-[4.25rem]">
+                  <HelpTooltip label="가입자 집계 안내">
+                    탈퇴한 회원을 포함한 누적 가입자 수입니다. 현재 회원{' '}
+                    {s.members.active.toLocaleString('ko-KR')}명, 누적 탈퇴{' '}
+                    {s.members.withdrawn.toLocaleString('ko-KR')}명이며 팀
+                    계정은 제외합니다.
+                  </HelpTooltip>
+                </span>
+              ) : null}
+            </div>
           );
         })}
         <AnalyticsSection />

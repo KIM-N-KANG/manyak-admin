@@ -36,7 +36,9 @@ export const summary: DashboardSummary = {
   asOf,
   todayStartsAt: '2026-10-20T15:00:00Z',
   members: {
-    total: members.filter((m) => m.status !== 'DELETED').length,
+    total: members.length,
+    active: members.filter((m) => m.status !== 'DELETED').length,
+    withdrawn: members.filter((m) => m.status === 'DELETED').length,
     joinedToday: members.filter((m) => isToday(m.createdAt)).length,
   },
   chats: {

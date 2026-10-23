@@ -263,7 +263,7 @@ export function UserContent({
         items={[
           {
             label: '신규 가입자',
-            value: n(d.daily.at(-1)?.cumulativeSignups ?? 0, '명'),
+            value: n(sum('total'), '명'),
           },
           {
             label: '가입 경로',
@@ -289,7 +289,7 @@ export function UserContent({
             href: memberHref,
           },
           {
-            title: '누적 신규 가입자',
+            title: '누적 가입자',
             rows: dailyRows(d, (day) => ({ value: day.cumulativeSignups })),
             series: single('value', '전체'),
             unit: '명',

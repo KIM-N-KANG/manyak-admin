@@ -457,7 +457,7 @@ it('누적을 대표 숫자, 오늘 0과 기간 합계를 보조로 표시하고
     ...state.summary!,
     asOf: '2026-10-20T15:03:00Z',
     todayStartsAt: '2026-10-20T15:00:00Z',
-    members: { total: 1234, joinedToday: 0 },
+    members: { total: 1234, active: 1200, withdrawn: 34, joinedToday: 0 },
     payments: {
       ...state.summary!.payments,
       amountKrwTotal: 1234567,
@@ -466,7 +466,7 @@ it('누적을 대표 숫자, 오늘 0과 기간 합계를 보조로 표시하고
   };
   render(createElement(DashboardScreen));
 
-  const memberCard = screen.getByRole('link', { name: /^회원/ });
+  const memberCard = screen.getByRole('link', { name: /^가입자/ });
   const paymentCard = screen.getByRole('link', { name: /^결제 금액/ });
 
   for (const card of [memberCard, paymentCard]) {
@@ -497,7 +497,7 @@ it.each([
     state.chartsError = error;
     render(createElement(DashboardScreen));
 
-    for (const label of ['회원', '채팅 시작', '이프 적립']) {
+    for (const label of ['가입자', '채팅 시작', '이프 적립']) {
       const card = screen.getByRole('link', { name: new RegExp(`^${label}`) });
 
       expect(within(card).getByText(`최근 7일 합계 ${status}`)).toBeTruthy();
@@ -515,7 +515,7 @@ it.each(['success', 'pending', 'error'])(
       status === 'success' ? { ...state.charts!, daily: [] } : undefined;
     render(createElement(DashboardScreen));
 
-    const memberCard = screen.getByRole('link', { name: /^회원/ });
+    const memberCard = screen.getByRole('link', { name: /^가입자/ });
     const total =
       status === 'success'
         ? '0명'
@@ -575,4 +575,36 @@ it('분포 설명은 본문에 없고 제목 옆 도움말에 포커스하면 �
 
   expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
   expect(tooltip.textContent).toBe(item.description);
+});
+
+it('가입자 카드는 탈퇴 포함 누적과 오늘 값을 표시하고 전체 집계 문구를 포커스 도움말로 제공한다', async () => {
+  state.summary!.members = {
+    total: 1300,
+    active: 1240,
+    withdrawn: 60,
+    joinedToday: 12,
+  };
+  render(createElement(DashboardScreen));
+
+  const card = screen.getByRole('link', { name: /^가입자/ });
+
+  expect(card.getAttribute('href')).toBe('/members');
+  expect(within(card).getByText('1,300')).toBeTruthy();
+  expect(within(card).getByText('12')).toBeTruthy();
+  expect(screen.queryByRole('tooltip')).toBeNull();
+
+  const button = screen.getByRole('button', { name: '가입자 집계 안내' });
+
+  expect(button.closest('a')).toBeNull();
+  act(() => button.focus());
+
+  const tooltip = await screen.findByRole('tooltip');
+
+  expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
+  expect(tooltip.textContent).toBe(
+    '탈퇴한 회원을 포함한 누적 가입자 수입니다. 현재 회원 1,240명, 누적 탈퇴 60명이며 팀 계정은 제외합니다.',
+  );
+  fireEvent.keyDown(button, { key: 'Escape' });
+  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+  expect(document.activeElement).toBe(button);
 });

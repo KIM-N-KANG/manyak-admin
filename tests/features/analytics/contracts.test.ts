@@ -13,7 +13,10 @@ import {
   defaultPeriod,
 } from '@/features/analytics/range';
 import { seriesGroups } from '@/features/analytics/series';
-import { campaignCatalog } from '@/fixtures/metrics';
+import type { SignupResponse } from '@/features/analytics/types';
+import { summary } from '@/fixtures/dashboard';
+import { members } from '@/fixtures/entities';
+import { campaignCatalog, metricFixture } from '@/fixtures/metrics';
 import { metricsRoute } from '@/fixtures/metrics-route';
 
 const today = '2026-10-23';
@@ -162,4 +165,25 @@ it('14개 fixture BFF는 생성 스키마로 요청을 받고 실제 응답 계�
       )
     ).status,
   ).toBe(503);
+});
+
+it('가입 fixture는 탈퇴를 포함하고 기간을 바꿔도 같은 날의 서비스 누계가 일치한다', () => {
+  const query = new URLSearchParams('from=2026-10-15&to=2026-10-23');
+  const seven = metricFixture('/users/signups', query) as SignupResponse;
+  const single = metricFixture(
+    '/users/signups',
+    new URLSearchParams('from=2026-10-23&to=2026-10-23'),
+  ) as SignupResponse;
+
+  expect(summary.members.total).toBe(members.length);
+  expect(summary.members.total).toBe(
+    summary.members.active + summary.members.withdrawn,
+  );
+  expect(summary.members.withdrawn).toBeGreaterThan(0);
+  expect(seven.daily[0].cumulativeSignups).toBeGreaterThan(
+    seven.daily[0].signups.total,
+  );
+  expect(seven.daily.at(-1)?.cumulativeSignups).toBe(summary.members.total);
+  expect(single.daily[0].cumulativeSignups).toBe(summary.members.total);
+  expect(single.daily[0].signups.total).toBe(0);
 });
