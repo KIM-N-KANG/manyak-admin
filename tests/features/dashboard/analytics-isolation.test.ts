@@ -132,7 +132,7 @@ function dashboard() {
 }
 
 function expectDbMetricsVisible() {
-  expect(screen.getByText('회원', { selector: 'p' })).toBeTruthy();
+  expect(screen.getByText('가입자', { selector: 'p' })).toBeTruthy();
   expect(
     screen.getByText('결제 금액 (환불 포함)', { selector: 'p' }),
   ).toBeTruthy();
@@ -182,7 +182,7 @@ describe('Amplitude 실패 격리', () => {
       '/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
     );
 
-    const memberCard = await screen.findByRole('link', { name: /^회원/ });
+    const memberCard = await screen.findByRole('link', { name: /^가입자/ });
     const headline = memberCard.querySelector('dl')!.textContent;
     const sevenDays = await chartsResponse(
       new Request(
@@ -226,7 +226,7 @@ describe('Amplitude 실패 격리', () => {
       (sum: number, day: { joined: number }) => sum + day.joined,
       0,
     );
-    const updatedCard = screen.getByRole('link', { name: /^회원/ });
+    const updatedCard = screen.getByRole('link', { name: /^가입자/ });
 
     await within(updatedCard).findByText(
       new RegExp(`최근 90일 합계 ${ninetyTotal.toLocaleString('ko-KR')}명`),

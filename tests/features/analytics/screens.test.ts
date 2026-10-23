@@ -9,6 +9,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import { setTimeout as realDelay } from 'node:timers/promises';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -19,6 +20,7 @@ import type {
   ActivityResponse,
   CampaignAnalyticsResponse,
   ChatOptionResponse,
+  SignupResponse,
 } from '@/features/analytics/types';
 import { metricFixture } from '@/fixtures/metrics';
 import { playInstalls } from '@/fixtures/play-installs';
@@ -589,4 +591,63 @@ it('유입 앱 설치의 503은 Play 안내와 재시도로 표시한다', async
   expect(screen.getByRole('button', { name: '다시 시도' })).toBeTruthy();
   expect(screen.queryByText('Amplitude 지표를 불러올 수 없음')).toBeNull();
   expect(requests).toEqual(['/api/dashboard/play-installs']);
+});
+
+it('누적 가입자는 서비스 시작부터 받은 1293~1300을 표시하고 신규 가입 요약은 기간 합계다', async () => {
+  nav.search = 'tab=signups&from=2026-10-17&to=2026-10-23';
+
+  const data = metricFixture(
+    '/users/signups',
+    new URLSearchParams(nav.search),
+  ) as SignupResponse;
+
+  data.daily = data.daily.map((day, i) => ({
+    ...day,
+    signups: {
+      total: i === 6 ? 2 : 1,
+      google: i === 6 ? 2 : 1,
+      kakao: 0,
+      other: 0,
+    },
+    cumulativeSignups: i === 6 ? 1300 : 1293 + i,
+  }));
+  vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+  draw('users');
+
+  await screen.findByRole('heading', { name: '누적 가입자' });
+  expect(
+    screen.queryByRole('heading', { name: '누적 신규 가입자' }),
+  ).toBeNull();
+
+  const chart = screen.getByRole('heading', {
+    name: '누적 가입자',
+  }).parentElement!;
+  const rows = JSON.parse(
+    chart.querySelector('[data-rows]')!.getAttribute('data-rows')!,
+  );
+
+  expect(rows[0].value).toBe(1293);
+  expect(rows.at(-1).value).toBe(1300);
+
+  const summary = screen.getAllByRole('heading', {
+    name: '신규 가입자',
+    level: 3,
+  })[0].parentElement!;
+
+  expect(within(summary).getByText('8명')).toBeTruthy();
+  expect(
+    within(chart)
+      .getAllByRole('link', { name: '회원 목록 →' })[0]
+      .getAttribute('href'),
+  ).toBe('/members?from=2026-10-17&to=2026-10-17');
+
+  const help = screen.getByRole('button', { name: '서버 DB 출처와 집계 안내' });
+
+  act(() => help.focus());
+  expect((await screen.findByRole('tooltip')).textContent).toBe(
+    '서버 DB 출처 지표입니다. 팀 계정은 제외합니다. 가입 경로는 처음 연결한 소셜 계정 기준입니다. 누적 가입자는 서비스 시작부터 센 값이며 탈퇴한 회원을 포함합니다.',
+  );
+  expect(vi.mocked(fetch).mock.calls.at(-1)?.[0]).toBe(
+    '/api/users/signups?from=2026-10-17&to=2026-10-23',
+  );
 });

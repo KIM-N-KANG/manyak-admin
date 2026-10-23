@@ -1,6 +1,8 @@
 import { chartDates, shiftDate } from '@/features/analytics/range';
 import type * as T from '@/features/analytics/types';
 import { kstToday } from '@/features/dashboard/date-range';
+import { members } from '@/fixtures/entities';
+import { kstDate } from '@/fixtures/query';
 
 const id = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 
@@ -139,12 +141,27 @@ export function metricFixture(path: string, query: URLSearchParams) {
   if (path === '/users/signups')
     return {
       ...base,
-      daily: dates.map((date, i) => ({
-        date,
-        signups: { total: 10, google: 6, kakao: 3, other: 1 },
-        cumulativeSignups: (i + 1) * 10,
-        migratedFromGuest: i % 3,
-      })),
+      daily: dates.map((date, i) => {
+        const joined = members.filter(
+          (member) => kstDate(member.createdAt) === date,
+        );
+        const google = Math.floor(joined.length * 0.6);
+        const kakao = Math.floor(joined.length * 0.3);
+
+        return {
+          date,
+          signups: {
+            total: joined.length,
+            google,
+            kakao,
+            other: joined.length - google - kakao,
+          },
+          cumulativeSignups: members.filter(
+            (member) => kstDate(member.createdAt) <= date,
+          ).length,
+          migratedFromGuest: Math.min(joined.length, i % 3),
+        };
+      }),
     } satisfies T.SignupResponse;
 
   if (path === '/quality/client')

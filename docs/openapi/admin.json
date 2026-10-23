@@ -7,8 +7,8 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-10-23T15:18:22.809Z",
-    "revision": "9538df4"
+    "receivedAt": "2026-10-23T16:03:53.942Z",
+    "revision": "5086a8d"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -5645,6 +5645,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "active": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "withdrawn": {
+            "type": "integer",
+            "format": "int64"
+          },
           "joinedToday": {
             "type": "integer",
             "format": "int64"
@@ -6901,6 +6909,15 @@
           "container": {
             "type": "boolean"
           },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "integralNumber": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
+            "type": "boolean"
+          },
           "nodeType": {
             "type": "string",
             "enum": [
@@ -6952,16 +6969,7 @@
           "binary": {
             "type": "boolean"
           },
-          "missingNode": {
-            "type": "boolean"
-          },
-          "integralNumber": {
-            "type": "boolean"
-          },
           "number": {
-            "type": "boolean"
-          },
-          "floatingPointNumber": {
             "type": "boolean"
           },
           "array": {

@@ -33,7 +33,15 @@ describe('관리자 고정 데이터 BFF', () => {
     ]);
     expect(data.members.total).toBeGreaterThan(1000);
     expect(data.chats.startedToday).toBeGreaterThan(100);
-    expect(Object.keys(data.members)).toEqual(['total', 'joinedToday']);
+    expect(Object.keys(data.members)).toEqual([
+      'total',
+      'active',
+      'withdrawn',
+      'joinedToday',
+    ]);
+    expect(data.members.total).toBe(
+      data.members.active + data.members.withdrawn,
+    );
     expect(Object.keys(data.payments)).toEqual([
       'completedTotal',
       'completedToday',
