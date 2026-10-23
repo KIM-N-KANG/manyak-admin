@@ -3,6 +3,7 @@ import { createElement } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -82,7 +83,7 @@ it('원장 열·한국어 사유·음수·회원 링크와 필터를 유지하�
 
   expect(memberLink.getAttribute('href')).toMatch(/^\/members\/[0-9a-f-]+$/);
   expect(row.textContent).toContain('2026. 10. 21. 오후 1:00');
-  expect(screen.getByText(/팀 계정의 원장도 포함/)).toBeTruthy();
+  expect(screen.queryByText(/팀 계정의 원장도 포함/)).toBeNull();
   expect(screen.queryByRole('searchbox')).toBeNull();
   expect(screen.queryByLabelText('memberId')).toBeNull();
 
@@ -192,4 +193,19 @@ it('명시한 오름차순과 페이지 쿼리는 기본값으로 덮어쓰지 �
   expect(requested[0]).toBe(
     '/api/credits/transactions?order=asc&page=2&size=1',
   );
+});
+
+it('이프 안내는 제목 옆 물음표에 포커스할 때만 표시하고 설명 ID를 연결한다', async () => {
+  renderList();
+  expect(screen.queryByText(/팀 계정의 원장도 포함/)).toBeNull();
+
+  const button = screen.getByRole('button', { name: '이프 내역 집계 안내' });
+
+  act(() => button.focus());
+
+  const tooltip = await screen.findByRole('tooltip');
+
+  expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
+  expect(tooltip.textContent).toContain('팀 계정의 원장도 포함');
+  expect(tooltip.textContent).toContain('모든 사유가 포함됩니다.');
 });

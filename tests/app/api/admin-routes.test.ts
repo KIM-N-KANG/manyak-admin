@@ -33,7 +33,15 @@ describe('관리자 고정 데이터 BFF', () => {
     ]);
     expect(data.members.total).toBeGreaterThan(1000);
     expect(data.chats.startedToday).toBeGreaterThan(100);
-    expect(Object.keys(data.members)).toEqual(['total', 'joinedToday']);
+    expect(Object.keys(data.members)).toEqual([
+      'total',
+      'active',
+      'withdrawn',
+      'joinedToday',
+    ]);
+    expect(data.members.total).toBe(
+      data.members.active + data.members.withdrawn,
+    );
     expect(Object.keys(data.payments)).toEqual([
       'completedTotal',
       'completedToday',
@@ -130,7 +138,7 @@ describe('관리자 고정 데이터 BFF', () => {
     expect(orders.items[0].status).toBe('REFUNDED');
 
     const rooms: Page<ChatRoom> = await chats(
-      request('chats?turnBucket=10&startedAs=GUEST&sort=turnCount'),
+      request('chats?turnBucket=12&startedAs=GUEST&sort=turnCount'),
     ).json();
 
     expect(rooms.items.length).toBeGreaterThan(0);
@@ -146,7 +154,7 @@ describe('관리자 고정 데이터 BFF', () => {
     'payments?from=2026-02-30',
     'payments?from=2026-10-21&to=2026-10-20',
     'members?status=UNKNOWN',
-    'chats?turnBucket=99',
+    'chats?turnBucket=13',
   ])('잘못된 필터는 400을 반환한다: %s', (path) => {
     const get = path.startsWith('stories')
       ? stories

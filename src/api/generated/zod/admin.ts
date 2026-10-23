@@ -77,19 +77,27 @@ export const Delete2Body = zod.object({
 
 export const Delete2Response = zod.unknown();
 
-export const list1QueryPageDefault = 1;
-export const list1QuerySizeDefault = 20;
-export const list1QuerySortDefault = `createdAt`;
-export const list1QueryOrderDefault = `desc`;
+export const list1QueryQuerySizeMax = 100;
+
+export const list1QueryQueryOrderRegExp = new RegExp('asc|desc');
+export const list1QueryQueryQMax = 50;
 
 export const List1QueryParams = zod.object({
-  status: zod
-    .enum(['SCHEDULED', 'SENDING', 'SENT', 'CANCELED', 'FAILED'])
-    .optional(),
-  page: zod.number().default(list1QueryPageDefault),
-  size: zod.number().default(list1QuerySizeDefault),
-  sort: zod.string().default(list1QuerySortDefault),
-  order: zod.string().default(list1QueryOrderDefault),
+  query: zod.object({
+    page: zod.number().min(1).optional(),
+    size: zod.number().min(1).max(list1QueryQuerySizeMax).optional(),
+    cursor: zod.string().nullish(),
+    limit: zod.string().nullish(),
+    sort: zod.string().nullish(),
+    order: zod.string().regex(list1QueryQueryOrderRegExp).optional(),
+    q: zod.string().min(1).max(list1QueryQueryQMax).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+    status: zod
+      .enum(['SCHEDULED', 'SENDING', 'SENT', 'CANCELED', 'FAILED'])
+      .nullish(),
+    kind: zod.enum(['SERVICE', 'MARKETING']).nullish(),
+  }),
 });
 
 export const List1Response = zod.unknown();
@@ -108,6 +116,7 @@ export const Create2Body = zod.object({
   body: zod.string().min(create2BodyBodyMin).max(create2BodyBodyMax),
   scheduledAt: zod.iso.datetime({ offset: true }).nullish(),
   reason: zod.string().min(create2BodyReasonMin).max(create2BodyReasonMax),
+  storyId: zod.uuid().nullish(),
 });
 
 export const Create2Response = zod.void();
@@ -669,6 +678,227 @@ export const AttendanceQueryParams = zod.object({
 
 export const AttendanceResponse = zod.unknown();
 
+export const MetricsQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+});
+
+export const MetricsResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  periodSeconds: zod.number().optional(),
+  ecs: zod
+    .union([
+      zod.object({
+        services: zod
+          .array(
+            zod.object({
+              name: zod.string().optional(),
+              runningTasks: zod.number().optional(),
+              desiredTasks: zod.number().optional(),
+              pendingTasks: zod.number().optional(),
+              cpu: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+              memory: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+            }),
+          )
+          .optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  alb: zod
+    .union([
+      zod.object({
+        requests: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        elb5xx: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        target5xx: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        responseTimeP95Ms: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  rds: zod
+    .union([
+      zod.object({
+        cpu: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        freeStorageBytes: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        connections: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        readLatencyMs: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        writeLatencyMs: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  redis: zod
+    .union([
+      zod.object({
+        nodes: zod
+          .array(
+            zod.object({
+              id: zod.string().optional(),
+              cpu: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+              memory: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+              connections: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+            }),
+          )
+          .optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  opensearch: zod
+    .union([
+      zod.object({
+        freeStorageBytes: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        jvmMemoryPressure: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+});
+
+export const tablesQueryLimitDefault = 20;
+export const tablesQueryLimitMax = 100;
+
+export const TablesQueryParams = zod.object({
+  limit: zod
+    .number()
+    .min(1)
+    .max(tablesQueryLimitMax)
+    .default(tablesQueryLimitDefault),
+});
+
+export const TablesResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  databaseBytes: zod.number().optional(),
+  tableCount: zod.number().optional(),
+  tables: zod
+    .array(
+      zod.object({
+        schema: zod.string().optional(),
+        name: zod.string().optional(),
+        totalBytes: zod.number().optional(),
+        tableBytes: zod.number().optional(),
+        indexBytes: zod.number().optional(),
+        estimatedRows: zod.number().optional(),
+      }),
+    )
+    .optional(),
+});
+
 export const SummaryResponse = zod.unknown();
 
 /**
@@ -755,7 +985,7 @@ export const chatsQueryRequestOrderRegExp = new RegExp('asc|desc');
 export const chatsQueryRequestQMax = 50;
 
 export const chatsQueryRequestTurnBucketMin = 0;
-export const chatsQueryRequestTurnBucketMax = 10;
+export const chatsQueryRequestTurnBucketMax = 12;
 
 export const ChatsQueryParams = zod.object({
   request: zod.object({

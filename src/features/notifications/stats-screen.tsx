@@ -99,10 +99,7 @@ export function StatsScreen() {
 
   return (
     <>
-      <PageHeading
-        title="발송 통계"
-        description="KST 날짜 기준으로 완료된 발송 결과를 조회하세요."
-      />
+      <PageHeading title="발송 통계" />
       <form
         key={params.toString() + String(q.data?.from)}
         action={apply}

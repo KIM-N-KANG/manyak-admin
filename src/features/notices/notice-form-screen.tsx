@@ -46,9 +46,7 @@ function NoticeForm({ notice }: { notice?: Notice }) {
 
   return (
     <>
-      <PageHeading
-        title={notice ? '공지 수정' : '새 공지'}
-        description="저장 후 상세 화면에서 알림 여부를 선택하고 게시하세요.">
+      <PageHeading title={notice ? '공지 수정' : '새 공지'}>
         <TextLink href={notice ? `/notices/${notice.noticeId}` : '/notices'}>
           돌아가기
         </TextLink>

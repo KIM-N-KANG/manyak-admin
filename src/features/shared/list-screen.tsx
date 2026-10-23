@@ -81,8 +81,10 @@ const turnBuckets = [
   '0턴',
   '1턴',
   '2턴',
-  '3~4턴',
-  '5~6턴',
+  '3턴',
+  '4턴',
+  '5턴',
+  '6턴',
   '7~9턴',
   '10~14턴',
   '15~19턴',
@@ -104,13 +106,9 @@ const dates: Filter[] = [
   { key: 'from', label: '시작일 (KST)', type: 'date' },
   { key: 'to', label: '종료일 (KST)', type: 'date' },
 ];
-const configs: Record<
-  Domain,
-  { title: string; description: string; filters: Filter[] }
-> = {
+const configs: Record<Domain, { title: string; filters: Filter[] }> = {
   stories: {
     title: '스토리',
-    description: '공개 상태와 이용 현황을 살펴보고 스토리 상세로 이동하세요.',
     filters: [
       {
         key: 'scope',
@@ -141,7 +139,6 @@ const configs: Record<
   },
   members: {
     title: '회원',
-    description: '회원 상태와 이용 내역을 확인하세요.',
     filters: [
       {
         key: 'status',
@@ -156,7 +153,6 @@ const configs: Record<
   },
   payments: {
     title: '결제',
-    description: '결제 완료와 환불 주문을 확인하세요. 금액은 원화 기준입니다.',
     filters: [
       {
         key: 'status',
@@ -171,8 +167,12 @@ const configs: Record<
   },
   chats: {
     title: '채팅',
-    description: '대화 원문을 포함하지 않는 채팅 이용 정보입니다.',
     filters: [
+      {
+        key: 'turnBucket',
+        label: '턴 구간',
+        options: turnBuckets.map((label, index) => [String(index), label]),
+      },
       {
         key: 'storyId',
         label: '스토리 ID',
@@ -410,7 +410,7 @@ export function ListScreen({ domain }: { domain: Domain }) {
 
   return (
     <>
-      <PageHeading title={config.title} description={config.description}>
+      <PageHeading title={config.title}>
         {domain === 'payments' && (
           <ExternalToolLink href={externalLinks.groble}>
             그로블에서 보기

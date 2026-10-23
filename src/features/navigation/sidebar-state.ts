@@ -9,6 +9,7 @@ export const navigation = [
       ['/analytics/users', '사용자'],
       ['/analytics/conversion', '전환'],
       ['/analytics/quality', '기능과 품질'],
+      ['/analytics/infra', '인프라'],
     ],
   },
   {

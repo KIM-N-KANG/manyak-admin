@@ -6,9 +6,9 @@
     "version": "v1"
   },
   "x-source": {
-    "input": "/tmp/knk-admin-orch/metrics-375e481-openapi.json",
-    "receivedAt": "2026-10-23T09:34:52.338Z",
-    "revision": "375e481"
+    "input": "https://dev-api.manyak.app/v3/api-docs",
+    "receivedAt": "2026-10-23T16:03:53.942Z",
+    "revision": "5086a8d"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -203,56 +203,11 @@
         "operationId": "list_1",
         "parameters": [
           {
-            "name": "status",
+            "name": "query",
             "in": "query",
-            "required": false,
+            "required": true,
             "schema": {
-              "type": "string",
-              "enum": [
-                "SCHEDULED",
-                "SENDING",
-                "SENT",
-                "CANCELED",
-                "FAILED"
-              ]
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 1
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "createdAt"
-            }
-          },
-          {
-            "name": "order",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "desc"
+              "$ref": "#/components/schemas/AdminCampaignListRequest"
             }
           }
         ],
@@ -1818,6 +1773,87 @@
         }
       }
     },
+    "/api/v1/admin/infra/metrics": {
+      "get": {
+        "tags": [
+          "infra-metrics-controller"
+        ],
+        "operationId": "metrics",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfraMetricsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/infra/db-tables": {
+      "get": {
+        "tags": [
+          "infra-metrics-controller"
+        ],
+        "operationId": "tables",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfraDatabaseResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/admin/dashboard/summary": {
       "get": {
         "tags": [
@@ -2769,6 +2805,87 @@
           "reason"
         ]
       },
+      "AdminCampaignListRequest": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1
+          },
+          "cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "limit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "order": {
+            "type": "string",
+            "pattern": "asc|desc"
+          },
+          "q": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "SCHEDULED",
+              "SENDING",
+              "SENT",
+              "CANCELED",
+              "FAILED"
+            ]
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "SERVICE",
+              "MARKETING"
+            ]
+          }
+        }
+      },
       "AdminCampaignPageResponse": {
         "type": "object",
         "properties": {
@@ -2880,6 +2997,13 @@
           "failedDevices": {
             "type": "integer",
             "format": "int64"
+          },
+          "storyId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -2907,6 +3031,13 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 0
+          },
+          "storyId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           }
         },
         "required": [
@@ -5184,6 +5315,301 @@
           }
         }
       },
+      "InfraMetricsResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ecs": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InfraEcsMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "alb": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InfraAlbMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rds": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InfraRdsMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "redis": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InfraRedisMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "opensearch": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InfraSearchMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "InfraEcsMetrics": {
+        "type": "object",
+        "properties": {
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraServiceMetrics"
+            }
+          }
+        }
+      },
+      "InfraServiceMetrics": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "runningTasks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "desiredTasks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingTasks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cpu": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "memory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          }
+        }
+      },
+      "InfraMetricPoint": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "value": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "InfraAlbMetrics": {
+        "type": "object",
+        "properties": {
+          "requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "elb5xx": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "target5xx": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "responseTimeP95Ms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          }
+        }
+      },
+      "InfraRdsMetrics": {
+        "type": "object",
+        "properties": {
+          "cpu": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "freeStorageBytes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "connections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "readLatencyMs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "writeLatencyMs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          }
+        }
+      },
+      "InfraRedisMetrics": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraRedisNode"
+            }
+          }
+        }
+      },
+      "InfraRedisNode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "cpu": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "memory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "connections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          }
+        }
+      },
+      "InfraSearchMetrics": {
+        "type": "object",
+        "properties": {
+          "freeStorageBytes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "jvmMemoryPressure": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          }
+        }
+      },
+      "InfraDatabaseResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "databaseBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tableCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraTableSize"
+            }
+          }
+        }
+      },
+      "InfraTableSize": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "totalBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tableBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "indexBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "estimatedRows": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "AdminDashboardSummaryResponse": {
         "type": "object",
         "properties": {
@@ -5216,6 +5642,14 @@
         "type": "object",
         "properties": {
           "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "active": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "withdrawn": {
             "type": "integer",
             "format": "int64"
           },
@@ -5883,7 +6317,7 @@
               "null"
             ],
             "format": "int32",
-            "maximum": 10,
+            "maximum": 12,
             "minimum": 0
           },
           "hasFirstMessage": {
@@ -6469,19 +6903,19 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "container": {
-            "type": "boolean"
-          },
           "string": {
             "type": "boolean"
           },
-          "floatingPointNumber": {
+          "container": {
             "type": "boolean"
           },
           "missingNode": {
             "type": "boolean"
           },
           "integralNumber": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
             "type": "boolean"
           },
           "nodeType": {

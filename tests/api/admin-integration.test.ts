@@ -40,6 +40,12 @@ const cases: [string, string, string, unknown?][] = [
   ['GET', '/dashboard/summary', '/dashboard/summary'],
   [
     'GET',
+    '/infra/metrics?from=2026-10-23&to=2026-10-23',
+    '/infra/metrics?from=2026-10-23&to=2026-10-23',
+  ],
+  ['GET', '/infra/db-tables?limit=20', '/infra/db-tables?limit=20'],
+  [
+    'GET',
     '/users/activity?from=2026-10-01&to=2026-10-21',
     '/users/activity?from=2026-10-01&to=2026-10-21',
   ],
@@ -210,14 +216,20 @@ const cases: [string, string, string, unknown?][] = [
   ],
   [
     'GET',
-    '/notifications/campaigns?status=SENT&page=2&size=10',
-    '/push/campaigns?status=SENT&page=2&size=10',
+    '/notifications/campaigns?status=SENT&page=2&size=10&q=test&kind=MARKETING&sort=deliveredMembers&order=asc',
+    '/push/campaigns?status=SENT&page=2&size=10&q=test&kind=MARKETING&sort=deliveredMembers&order=asc',
   ],
   [
     'POST',
     '/notifications/campaigns',
     '/push/campaigns',
-    { ...reason, title: '제목', body: '본문' },
+    {
+      ...reason,
+      title: '제목',
+      body: '본문',
+      storyId: id,
+      scheduledAt: '2030-10-24T01:00:00Z',
+    },
   ],
   ['GET', `/notifications/campaigns/${id}`, `/push/campaigns/${id}`],
   [
@@ -349,6 +361,10 @@ it.each([
   ['POST', '/notices', { ...reason, title: [], body: '본문' }],
   ['POST', `/notices/${id}/publish`, { ...reason, notify: 'true' }],
   ['GET', '/members?page=0'],
+  ['GET', '/infra/db-tables?limit=0'],
+  ['GET', '/infra/db-tables?limit=101'],
+  ['GET', '/infra/db-tables?limit=1.5'],
+  ['GET', '/infra/db-tables?from=2026-10-23'],
   ['GET', '/members?page=1.5'],
   ['GET', '/members?page=0x10'],
   ['GET', '/members?page=1e2'],
@@ -359,7 +375,7 @@ it.each([
   ['GET', '/members?unexpected=1'],
   ['GET', '/stories?memberId=invalid'],
   ['GET', '/stories?supportingCharacterCount=6'],
-  ['GET', '/chats?turnBucket=11'],
+  ['GET', '/chats?turnBucket=13'],
   ['GET', '/dashboard/analytics?days=abc'],
   ['GET', '/notifications/campaigns?status=UNKNOWN'],
   ['GET', '/notifications/delivery-stats?from=bad'],
@@ -657,3 +673,154 @@ it('개요 분석의 플랫폼 객체·null·준비 중 날짜를 변환 없이 
     expect(fetchMock).toHaveBeenCalledOnce();
   }
 });
+
+it.each(['deliveredMembers', 'deliveredDevices', 'failedDevices'])(
+  '캠페인 %s 정렬·검색·종류는 생성 검증 후 rewrite와 인증을 거쳐 그대로 전달한다',
+  async (sort) => {
+    const query = new URLSearchParams({
+      q: '주말 행사',
+      kind: 'MARKETING',
+      sort,
+      order: 'desc',
+      page: '2',
+      size: '20',
+    });
+    const path = `/notifications/campaigns?${query}`;
+    const incoming = new NextRequest(`https://admin.example/api${path}`, {
+      headers: { Cookie: cookie },
+    });
+    const rewritten = proxy(incoming).headers.get('x-middleware-rewrite');
+
+    expect(new URL(rewritten!).pathname).toBe(
+      '/api/admin-upstream/notifications/campaigns',
+    );
+
+    const upstreamBody = {
+      items: [
+        {
+          campaignId: id,
+          storyId: id,
+          deliveredMembers: 12,
+          deliveredDevices: 15,
+          failedDevices: 0,
+        },
+      ],
+      page: 2,
+      size: 20,
+      totalElements: 21,
+      totalPages: 2,
+    };
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(upstreamBody));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await handle(
+      new NextRequest(rewritten!, { headers: { Cookie: cookie } }),
+      { params: Promise.resolve({ path: ['notifications', 'campaigns'] }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(upstreamBody);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://upstream.example/api/v1/admin/push/campaigns?${query}`,
+    );
+    expect(fetchMock.mock.calls[0][1].headers.get('Authorization')).toBe(
+      'Bearer forged-test-token',
+    );
+  },
+);
+
+it.each([
+  ['GET', '/notifications/campaigns?kind=UNKNOWN', undefined],
+  ['GET', '/notifications/campaigns?q=', undefined],
+  ['GET', `/notifications/campaigns?q=${'a'.repeat(51)}`, undefined],
+  ['GET', '/notifications/campaigns?kind=SERVICE&kind=MARKETING', undefined],
+  [
+    'POST',
+    '/notifications/campaigns',
+    { ...reason, title: '제목', body: '본문', storyId: 'invalid' },
+  ],
+])(
+  '캠페인 정본 밖 %s %s는 업스트림 전에 400이다',
+  async (method, path, body) => {
+    const fetchMock = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+    expect((await invoke(method, path, body)).status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  },
+);
+
+it.each([11, 12])(
+  '갱신된 채팅 turnBucket %s는 생성 계약으로 검증해 전달한다',
+  async (turnBucket) => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ items: [] }));
+
+    vi.stubGlobal('fetch', fetchMock);
+    expect(
+      (await invoke('GET', `/chats?turnBucket=${turnBucket}`)).status,
+    ).toBe(200);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://upstream.example/api/v1/admin/chats?turnBucket=${turnBucket}`,
+    );
+  },
+);
+
+it('캠페인 sort는 실제 OpenAPI의 문자열 계약으로 전달하고 서버의 허용 값 오류를 보존한다', async () => {
+  const body = { message: '지원하지 않는 정렬입니다.' };
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(Response.json(body, { status: 400 }));
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  const response = await invoke('GET', '/notifications/campaigns?sort=unknown');
+
+  expect(response.status).toBe(400);
+  expect(await response.json()).toEqual(body);
+  expect(fetchMock).toHaveBeenCalledOnce();
+  expect(fetchMock.mock.calls[0][0]).toBe(
+    'https://upstream.example/api/v1/admin/push/campaigns?sort=unknown',
+  );
+});
+
+it('세션 없는 캠페인 요청은 지원 쿼리여도 전달 전에 401이다', async () => {
+  const fetchMock = vi.fn();
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  const request = new NextRequest(
+    'https://admin.example/api/admin-upstream/notifications/campaigns?q=test&kind=MARKETING',
+  );
+  const response = await handle(request, {
+    params: Promise.resolve({ path: ['notifications', 'campaigns'] }),
+  });
+
+  expect(response.status).toBe(401);
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it.each([
+  'from=bad&to=2026-10-23',
+  'from=2026-10-23',
+  'from=2026-01-01&to=2026-10-23',
+])(
+  '인프라 기간 의미 검증 %s는 실제 문자열 계약으로 전달하고 서버 400을 보존한다',
+  async (query) => {
+    const body = { message: '기간이 올바르지 않습니다.' };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json(body, { status: 400 }));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await invoke('GET', `/infra/metrics?${query}`);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual(body);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://upstream.example/api/v1/admin/infra/metrics?${query}`,
+    );
+  },
+);

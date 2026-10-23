@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   CartesianGrid,
   Line,
@@ -18,6 +18,7 @@ import {
   QueryState,
   TextLink,
 } from '@/components/admin/data-ui';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 import {
   ChartContainer,
@@ -61,38 +62,40 @@ const metrics: Record<MetricKey, { label: string; unit: string }> = {
   attendance: { label: '출석 회원 수', unit: '명' },
 };
 
+const axisNumber = new Intl.NumberFormat('ko-KR', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+const dailyMetrics = [
+  'joined',
+  'chats',
+  'turns',
+  'stories',
+  'granted',
+  'spent',
+  'payments',
+  'revenue',
+] as const;
+
 export function DashboardScreen() {
-  const params = useSearchParams();
   const router = useRouter();
-  const pathname = usePathname();
   const range = useDashboardRange();
-  const rawMetric = params.get('metric') ?? 'joined';
-  const metric: MetricKey = Object.hasOwn(metrics, rawMetric)
-    ? (rawMetric as MetricKey)
-    : 'joined';
   const summary = useApi<DashboardSummary>('/api/dashboard/summary');
   const charts = useApi<DashboardCharts>(
     `/api/dashboard/charts?${range.query}`,
   );
 
-  function update(key: string, value: string) {
-    const q = new URLSearchParams(params);
-
-    q.set(key, value);
-    router.push(`${pathname}?${q}`);
-  }
-
   const s = summary.data;
   const c = charts.data;
   const missingValueStatus = charts.isPending ? '불러오는 중' : '불러오기 실패';
-  const average = periodAverage(c?.daily.map((day) => day[metric]) ?? []);
   const cards = s
     ? ([
         [
-          '회원',
+          '가입자',
           s.members.total,
           s.members.joinedToday,
-          '/members?excludeDeleted=true',
+          '/members',
           '명',
           'joined',
         ],
@@ -157,9 +160,7 @@ export function DashboardScreen() {
 
   return (
     <>
-      <PageHeading
-        title="개요"
-        description="서비스의 흐름과 이용 현황을 확인해 주세요.">
+      <PageHeading title="개요">
         <RangePicker range={range} />
       </PageHeading>
       <QueryState
@@ -167,169 +168,174 @@ export function DashboardScreen() {
         error={summary.error}
         retry={summary.refetch}
       />
-      {s ? (
-        <>
-          <section
-            aria-label="요약 지표"
-            className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {cards.map(([label, total, today, href, unit, cardMetric]) => {
-              const periodTotal = c?.daily.reduce(
-                (sum, day) => sum + day[cardMetric],
-                0,
-              );
-              const periodText =
-                periodTotal !== undefined
-                  ? `${periodTotal.toLocaleString('ko-KR')}${unit}`
-                  : missingValueStatus;
+      <section
+        aria-label="요약 지표"
+        className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        {cards.map(([label, total, today, href, unit, cardMetric]) => {
+          const periodTotal = c?.daily.reduce(
+            (sum, day) => sum + day[cardMetric],
+            0,
+          );
+          const periodText =
+            periodTotal !== undefined
+              ? `${periodTotal.toLocaleString('ko-KR')}${unit}`
+              : missingValueStatus;
 
-              return (
-                <Link
-                  href={href}
-                  key={label}
-                  className="flex items-center gap-3 rounded-md border bg-card p-4 transition-colors hover:border-foreground-tertiary focus-visible:ring-2 focus-visible:ring-ring">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-muted-foreground">{label}</p>
-                    <dl>
-                      <div className="mt-3">
-                        <dt className="text-xs text-muted-foreground">누적</dt>
-                        <dd className="mt-1 flex flex-wrap items-baseline gap-x-1 text-2xl font-semibold tracking-tight break-all sm:text-3xl">
-                          <NumberValue value={total} />
-                          <span className="text-xs font-normal text-muted-foreground">
-                            {unit}
-                          </span>
-                        </dd>
-                      </div>
-                      <div className="mt-3 flex items-baseline gap-2 text-sm text-muted-foreground">
-                        <dt>오늘</dt>
-                        <dd>
-                          <NumberValue value={today} />
-                          <span className="ml-1">{unit}</span>
-                        </dd>
-                      </div>
-                    </dl>
-                    <p className="mt-2 text-xs leading-5 text-muted-foreground">{`${range.label} 합계 ${periodText}`}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </section>
-        </>
-      ) : null}
+          return (
+            <div key={label} className="relative">
+              <Link
+                href={href}
+                className="flex h-full items-center gap-3 rounded-md border bg-card p-4 transition-colors hover:border-foreground-tertiary focus-visible:ring-2 focus-visible:ring-ring">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-muted-foreground">{label}</p>
+                  <dl>
+                    <div className="mt-3">
+                      <dt className="text-xs text-muted-foreground">누적</dt>
+                      <dd className="mt-1 flex flex-wrap items-baseline gap-x-1 text-2xl font-semibold tracking-tight break-all sm:text-3xl">
+                        <NumberValue value={total} />
+                        <span className="text-xs font-normal text-muted-foreground">
+                          {unit}
+                        </span>
+                      </dd>
+                    </div>
+                    <div className="mt-3 flex items-baseline gap-2 text-sm text-muted-foreground">
+                      <dt>오늘</dt>
+                      <dd>
+                        <NumberValue value={today} />
+                        <span className="ml-1">{unit}</span>
+                      </dd>
+                    </div>
+                  </dl>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">{`${range.label} 합계 ${periodText}`}</p>
+                </div>
+              </Link>
+              {cardMetric === 'joined' && s ? (
+                <span className="absolute top-4 left-[4.25rem]">
+                  <HelpTooltip label="가입자 집계 안내">
+                    탈퇴한 회원을 포함한 누적 가입자 수입니다. 현재 회원{' '}
+                    {s.members.active.toLocaleString('ko-KR')}명, 누적 탈퇴{' '}
+                    {s.members.withdrawn.toLocaleString('ko-KR')}명이며 팀
+                    계정은 제외합니다.
+                  </HelpTooltip>
+                </span>
+              ) : null}
+            </div>
+          );
+        })}
+        <AnalyticsSection />
+        <PlayInstallsCard />
+      </section>
       <QueryState
         pending={charts.isPending}
         error={charts.error}
         retry={charts.refetch}
       />
       {c ? (
-        <>
-          <Card className="mb-8">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h2 className="font-semibold">일별 추이</h2>
+        <section
+          aria-label="일별 지표 추이"
+          className="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {dailyMetrics.map((metric) => {
+            const average = periodAverage(c.daily.map((day) => day[metric]));
+
+            return (
+              <Card key={metric} className="min-w-0">
+                <h2 className="font-semibold">{metrics[metric].label}</h2>
                 <p className="mt-2 text-xs text-muted-foreground">
                   {c.from} ~ {c.to} (KST)
                 </p>
-              </div>
-              <label className="flex items-center gap-3 text-sm">
-                지표
-                <select
-                  className="control"
-                  value={metric}
-                  onChange={(e) => update('metric', e.target.value)}>
-                  {Object.entries(metrics).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <ChartContainer
-              config={{
-                [metric]: {
-                  label: metrics[metric].label,
-                  color: 'var(--primary)',
-                },
-              }}
-              className="mt-8 h-[300px] w-full"
-              aria-label={`${metrics[metric].label} 일별 추이`}>
-              <LineChart
-                accessibilityLayer
-                data={c.daily}
-                onClick={(state) => {
-                  const i = state.activeTooltipIndex;
-                  const date = c.daily[Number(i)]?.date;
-
-                  if (i !== null && date) {
-                    router.push(getDailyMetricHref(metric, date));
-                  }
-                }}>
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={(v) => String(v).slice(5)}
-                  tickLine={false}
-                  axisLine={false}
-                  minTickGap={32}
-                />
-                <YAxis width={52} tickLine={false} axisLine={false} />
-                <ChartTooltip
-                  cursor={<ChartCrosshair />}
-                  isAnimationActive={false}
-                  content={<ChartTooltipContent />}
-                />
-                <ReferenceLine
-                  y={average}
-                  stroke="var(--muted-foreground)"
-                  strokeDasharray="4 4"
-                  label={{
-                    value: `기간 평균 ${chartNumber(average)}`,
-                    position: 'insideTopRight',
-                    fill: 'var(--muted-foreground)',
-                    fontSize: 11,
+                <p className="mt-1 text-xs text-muted-foreground">
+                  기간 평균 {chartNumber(average)}
+                  {metrics[metric].unit}
+                </p>
+                <ChartContainer
+                  config={{
+                    [metric]: {
+                      label: metrics[metric].label,
+                      color: 'var(--primary)',
+                    },
                   }}
-                />
-                <Line
-                  type="linear"
-                  dataKey={metric}
-                  stroke={`var(--color-${metric})`}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                  isAnimationActive={false}
-                />
-              </LineChart>
-            </ChartContainer>
-            <details className="mt-4">
-              <summary className="cursor-pointer text-xs text-muted-foreground">
-                일별 수치와 목록 이동
-              </summary>
-              <div className="mt-4 max-h-64 overflow-auto">
-                <DataTable
-                  headers={['날짜', metrics[metric].label, '관련 목록']}>
-                  {c.daily.map((d) => (
-                    <tr key={d.date}>
-                      <td>{d.date}</td>
-                      <td>
-                        <NumberValue value={d[metric]} /> {metrics[metric].unit}
-                      </td>
-                      <td>
-                        <TextLink href={getDailyMetricHref(metric, d.date)}>
-                          목록 →
+                  className="mt-5 h-[200px] w-full"
+                  aria-label={`${metrics[metric].label} 일별 추이`}>
+                  <LineChart
+                    accessibilityLayer
+                    data={c.daily}
+                    margin={{ top: 20, right: 8, bottom: 0, left: 0 }}
+                    onClick={(state) => {
+                      const i = state.activeTooltipIndex;
+                      const date = c.daily[Number(i)]?.date;
+
+                      if (i !== null && i !== undefined && date)
+                        router.push(getDailyMetricHref(metric, date));
+                    }}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(v) => String(v).slice(5)}
+                      tickLine={false}
+                      axisLine={false}
+                      minTickGap={32}
+                    />
+                    <YAxis
+                      width={52}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(v) => axisNumber.format(Number(v))}
+                    />
+                    <ChartTooltip
+                      cursor={<ChartCrosshair />}
+                      isAnimationActive={false}
+                      content={<ChartTooltipContent />}
+                    />
+                    <ReferenceLine
+                      y={average}
+                      stroke="var(--muted-foreground)"
+                      strokeDasharray="4 4"
+                    />
+                    <Line
+                      type="linear"
+                      dataKey={metric}
+                      stroke={`var(--color-${metric})`}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                      isAnimationActive={false}
+                    />
+                  </LineChart>
+                </ChartContainer>
+              </Card>
+            );
+          })}
+          <details className="col-span-full">
+            <summary className="cursor-pointer text-xs text-muted-foreground">
+              일별 수치와 목록 이동
+            </summary>
+            <div className="mt-4 max-h-64 overflow-auto">
+              <DataTable
+                headers={[
+                  '날짜',
+                  ...dailyMetrics.map(
+                    (metric) =>
+                      `${metrics[metric].label} (${metrics[metric].unit})`,
+                  ),
+                ]}>
+                {c.daily.map((day) => (
+                  <tr key={day.date}>
+                    <td>{day.date}</td>
+                    {dailyMetrics.map((metric) => (
+                      <td key={metric}>
+                        <TextLink href={getDailyMetricHref(metric, day.date)}>
+                          <NumberValue value={day[metric]} />{' '}
+                          {metrics[metric].unit} →
                         </TextLink>
                       </td>
-                    </tr>
-                  ))}
-                </DataTable>
-              </div>
-            </details>
-          </Card>
-        </>
+                    ))}
+                  </tr>
+                ))}
+              </DataTable>
+            </div>
+          </details>
+        </section>
       ) : null}
-      <div className="grid min-w-0 grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <AnalyticsSection query={range.query} label={range.label} />
-        <PlayInstallsCard />
-      </div>
     </>
   );
 }

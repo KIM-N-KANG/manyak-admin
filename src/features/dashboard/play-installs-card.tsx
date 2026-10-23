@@ -1,269 +1,76 @@
 'use client';
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  LabelList,
-  Line,
-  LineChart,
-  ReferenceLine,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import Link from 'next/link';
 
-import { DataTable, NumberValue, QueryState } from '@/components/admin/data-ui';
+import { NumberValue, QueryState } from '@/components/admin/data-ui';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
-import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
 import type { PlayInstalls } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
-const config = {
-  cumulativeInstalls: {
-    label: 'Android 누적 기기 설치 수',
-    color: 'var(--primary)',
-  },
-  activeDevices: { label: '활성 기기 수', color: 'var(--muted-foreground)' },
-  installs: { label: '일별 기기 설치 수', color: 'var(--primary)' },
-  uninstalls: { label: '일별 앱 삭제 수', color: 'var(--muted-foreground)' },
-};
-
 export function PlayInstallsCard() {
   const query = useApi<PlayInstalls>('/api/dashboard/play-installs');
-  const data = query.data;
+  const data = query.isError ? undefined : query.data;
+  const latest = data?.daily.reduce<PlayInstalls['daily'][number] | undefined>(
+    (last, day) => (!last || day.date > last.date ? day : last),
+    undefined,
+  );
 
   return (
-    <section aria-labelledby="play-installs-heading" className="mb-8 min-w-0">
-      <Card className="min-w-0">
-        <h2 id="play-installs-heading" className="font-semibold">
-          앱 설치(Android)
-        </h2>
+    <Card
+      role="region"
+      aria-label="앱 설치(Android)"
+      className="relative min-w-0 p-4">
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm text-muted-foreground">
+          <Link
+            href="/analytics/acquisition?tab=installs"
+            className="after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring">
+            앱 설치(Android)
+          </Link>
+        </h3>
+        <span className="relative z-10">
+          <HelpTooltip label="앱 설치(Android) 출처와 집계 안내">
+            Google Play 설치 보고서 출처 지표입니다. 보고서는 며칠 늦게 반영되고
+            날짜는 Play 기준 태평양 시간입니다. 누적 기기 설치 수는 보고서 전체
+            기간의 일별 기기 설치 수를 합산한 값입니다. 페이지에서 선택한 기간은
+            이 카드에 적용되지 않습니다.
+          </HelpTooltip>
+        </span>
+      </div>
+      <div className="relative z-10">
         <QueryState
           pending={query.isPending}
           error={query.error}
           retry={query.refetch}
           source="play"
         />
-        {data && !query.isError ? (
-          <>
-            <div className="mt-4 flex items-center gap-6">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">
-                  Android 누적 기기 설치 수
-                </p>
-                <p className="mt-1 text-3xl font-semibold">
-                  <NumberValue value={data.totalInstalls} />
-                  <span className="ml-1 text-sm font-normal">대</span>
-                </p>
-                <p className="mt-3 text-sm">
-                  활성 기기 수 <NumberValue value={data.activeDevices} />대
-                </p>
-              </div>
-              <ChartContainer
-                config={config}
-                className="h-20 w-28 shrink-0"
-                aria-label="일별 기기 설치 수 추이">
-                <LineChart accessibilityLayer data={data.daily}>
-                  <ChartTooltip
-                    cursor={<ChartCrosshair />}
-                    isAnimationActive={false}
-                    content={<ChartTooltipContent />}
-                  />
-                  <Line
-                    dataKey="installs"
-                    type="linear"
-                    stroke="var(--primary)"
-                    strokeWidth={2}
-                    dot={false}
-                    isAnimationActive={false}
-                  />
-                </LineChart>
-              </ChartContainer>
-            </div>
-            <p className="mt-4 text-xs text-muted-foreground">
-              집계 기준 날짜 {data.asOf} (Play 기준 태평양 시간)
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              보고서는 며칠 늦게 반영됩니다. 누적 기기 설치 수는 보고서 전체
-              기간의 일별 기기 설치 수를 합산한 값입니다. 페이지에서 선택한
-              기간은 이 카드에 적용되지 않습니다.
-            </p>
-            <details className="mt-4">
-              <summary className="cursor-pointer text-sm text-primary-text">
-                누적 기기 설치 수와 활성 기기 수 추이 보기
-              </summary>
-              <div className="mt-6 space-y-6">
-                <div>
-                  <h3 className="text-sm font-medium">
-                    누적 기기 설치 수와 활성 기기 수
-                  </h3>
-                  <ChartContainer
-                    config={config}
-                    className="mt-3 h-64 w-full"
-                    aria-label="누적 기기 설치 수와 활성 기기 수 추이">
-                    <LineChart
-                      accessibilityLayer
-                      data={data.daily}
-                      margin={{ top: 20, right: 80, left: 0, bottom: 0 }}>
-                      <CartesianGrid vertical={false} />
-                      <XAxis
-                        dataKey="date"
-                        tickFormatter={(value) => String(value).slice(5)}
-                        minTickGap={24}
-                      />
-                      <YAxis width={40} unit="대" />
-                      <ChartTooltip
-                        cursor={<ChartCrosshair />}
-                        isAnimationActive={false}
-                        content={<ChartTooltipContent />}
-                      />
-                      {(['cumulativeInstalls', 'activeDevices'] as const).map(
-                        (key) => (
-                          <Line
-                            key={key}
-                            dataKey={key}
-                            type={
-                              key === 'cumulativeInstalls'
-                                ? 'stepAfter'
-                                : 'linear'
-                            }
-                            stroke={`var(--color-${key})`}
-                            strokeWidth={2}
-                            strokeDasharray={
-                              key === 'activeDevices' ? '6 3' : undefined
-                            }
-                            dot={false}
-                            activeDot={{ r: 4 }}
-                            isAnimationActive={false}>
-                            <LabelList
-                              dataKey={(day: PlayInstalls['daily'][number]) =>
-                                day.date === data.asOf && day[key] !== null
-                                  ? `${key === 'cumulativeInstalls' ? '누적 기기 설치 수' : '활성 기기 수'} ${day[key].toLocaleString('ko-KR')}대`
-                                  : null
-                              }
-                              position="right"
-                              dy={key === 'cumulativeInstalls' ? -8 : 12}
-                              fill="var(--foreground)"
-                              fontSize={11}
-                            />
-                          </Line>
-                        ),
-                      )}
-                      <ChartLegend content={<ChartLegendContent />} />
-                    </LineChart>
-                  </ChartContainer>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium">
-                    일별 기기 설치 수와 일별 앱 삭제 수
-                  </h3>
-                  <ChartContainer
-                    config={config}
-                    className="mt-3 h-64 w-full"
-                    aria-label="일별 기기 설치 수와 일별 앱 삭제 수">
-                    <BarChart
-                      accessibilityLayer
-                      data={data.daily.map((day) => ({
-                        ...day,
-                        uninstalls: -day.uninstalls,
-                      }))}
-                      stackOffset="sign">
-                      <CartesianGrid vertical={false} />
-                      <XAxis
-                        dataKey="date"
-                        tickFormatter={(value) => String(value).slice(5)}
-                        minTickGap={24}
-                      />
-                      <YAxis
-                        width={40}
-                        tickFormatter={(value) =>
-                          Math.abs(Number(value)).toLocaleString('ko-KR')
-                        }
-                        unit="대"
-                      />
-                      <ReferenceLine y={0} stroke="var(--foreground)" />
-                      <ChartTooltip
-                        isAnimationActive={false}
-                        content={
-                          <ChartTooltipContent
-                            formatter={(value, name) => (
-                              <span>
-                                {config[name as keyof typeof config]?.label}{' '}
-                                {Math.abs(Number(value)).toLocaleString(
-                                  'ko-KR',
-                                )}
-                                대
-                              </span>
-                            )}
-                          />
-                        }
-                      />
-                      <Bar
-                        dataKey="installs"
-                        stackId="daily"
-                        fill="var(--primary)"
-                        isAnimationActive={false}
-                      />
-                      <Bar
-                        dataKey="uninstalls"
-                        stackId="daily"
-                        fill="var(--muted-foreground)"
-                        isAnimationActive={false}
-                      />
-                      <ChartLegend content={<ChartLegendContent />} />
-                    </BarChart>
-                  </ChartContainer>
-                </div>
-                <details>
-                  <summary className="cursor-pointer text-xs text-muted-foreground">
-                    일별 설치 지표
-                  </summary>
-                  <div className="mt-3 max-h-64 overflow-auto">
-                    <DataTable
-                      headers={[
-                        '날짜 (Play)',
-                        '일별 기기 설치 수',
-                        '일별 앱 삭제 수',
-                        'Android 누적 기기 설치 수',
-                        '활성 기기 수',
-                      ]}
-                      empty={!data.daily.length}>
-                      {data.daily.map((day) => (
-                        <tr key={day.date}>
-                          <td>{day.date}</td>
-                          {(
-                            [
-                              'installs',
-                              'uninstalls',
-                              'cumulativeInstalls',
-                              'activeDevices',
-                            ] as const
-                          ).map((key) => (
-                            <td key={key}>
-                              {day[key] === null ? (
-                                '보고서 값 없음'
-                              ) : (
-                                <NumberValue value={day[key]} />
-                              )}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </DataTable>
-                  </div>
-                </details>
-              </div>
-            </details>
-          </>
-        ) : null}
-      </Card>
-    </section>
+      </div>
+      {data ? (
+        <dl>
+          <div className="mt-3">
+            <dt className="text-xs text-muted-foreground">누적</dt>
+            <dd className="mt-1 text-2xl font-semibold tracking-tight break-all sm:text-3xl">
+              <NumberValue value={data.totalInstalls} />
+              <span className="ml-1 text-xs font-normal text-muted-foreground">
+                대
+              </span>
+            </dd>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2 text-sm text-muted-foreground">
+            <dt>{latest?.date ?? data.asOf} 설치</dt>
+            <dd>
+              {latest ? (
+                <>
+                  <NumberValue value={latest.installs} />대
+                </>
+              ) : (
+                '보고서 값 없음'
+              )}
+            </dd>
+          </div>
+        </dl>
+      ) : null}
+    </Card>
   );
 }

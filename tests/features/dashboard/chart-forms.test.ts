@@ -2,6 +2,7 @@
 import { createElement } from 'react';
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -286,9 +287,9 @@ it('요약 카드에는 차트를 넣지 않고 바로 아래의 기존 일별 �
   const summary = screen.getByRole('region', { name: '요약 지표' });
   const cards = within(summary).getAllByRole('link');
 
-  expect(cards).toHaveLength(8);
+  expect(cards).toHaveLength(10);
   expect(summary.className).toContain('sm:grid-cols-2');
-  expect(summary.className).toContain('xl:grid-cols-4');
+  expect(summary.className).toContain('xl:grid-cols-5');
 
   for (const card of cards) expect(card.querySelector('svg')).toBeNull();
 
@@ -298,36 +299,51 @@ it('요약 카드에는 차트를 넣지 않고 바로 아래의 기존 일별 �
   expect(summary.textContent).not.toContain('어제');
   expect(container.textContent).not.toContain('오늘은 KST 자정부터');
 
-  const trendHeading = screen.getByRole('heading', { name: '일별 추이' });
-  const analyticsHeading = screen.getByRole('heading', {
-    name: 'Amplitude 사용자 지표',
-  });
+  const trendHeading = screen.getByRole('region', { name: '일별 지표 추이' });
 
+  expect(
+    screen.queryByRole('heading', { name: 'Amplitude 사용자 지표' }),
+  ).toBeNull();
   expect(
     summary.compareDocumentPosition(trendHeading) &
       Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
   expect(
-    trendHeading.compareDocumentPosition(analyticsHeading) &
-      Node.DOCUMENT_POSITION_FOLLOWING,
-  ).toBeTruthy();
+    within(summary)
+      .getByRole('link', { name: '오늘 활성 사용자' })
+      .getAttribute('href'),
+  ).toBe('/analytics/users?tab=activity');
+  expect(
+    within(summary)
+      .getByRole('link', { name: '앱 설치(Android)' })
+      .getAttribute('href'),
+  ).toBe('/analytics/acquisition?tab=installs');
 
-  const selectable = Array.from(
-    screen.getByRole('combobox', { name: '지표' }).querySelectorAll('option'),
-  ).map((option) => option.value);
+  expect(screen.queryByRole('combobox', { name: '지표' })).toBeNull();
 
-  expect(selectable).toEqual(
-    expect.arrayContaining([
-      'joined',
-      'chats',
-      'turns',
-      'stories',
-      'granted',
-      'spent',
-      'payments',
-      'revenue',
-    ]),
-  );
+  const trends = within(trendHeading).getAllByRole('heading');
+
+  expect(trends.map((node) => node.textContent)).toEqual([
+    '가입',
+    '채팅 시작',
+    '턴',
+    '스토리 생성',
+    '이프 적립',
+    '이프 소모',
+    '결제 건수',
+    '결제 금액 (환불 포함)',
+  ]);
+  expect(trendHeading.className).toContain('xl:grid-cols-4');
+
+  for (const chart of trendHeading.querySelectorAll('[data-slot="chart"]')) {
+    expect(chart.querySelectorAll('.recharts-yAxis')).toHaveLength(1);
+    expect(chart.querySelectorAll('.recharts-line-curve')).toHaveLength(1);
+    expect(
+      chart
+        .querySelector('.recharts-reference-line-line')
+        ?.getAttribute('stroke-dasharray'),
+    ).toBe('4 4');
+  }
 
   const daily = container.querySelector('[aria-label="가입 일별 추이"]')!;
 
@@ -341,50 +357,28 @@ it('요약 카드에는 차트를 넣지 않고 바로 아래의 기존 일별 �
       .querySelector('.recharts-reference-line-line')
       ?.getAttribute('stroke-dasharray'),
   ).toBe('4 4');
-  expect(daily.textContent).toContain(
+  expect(daily.closest('[data-slot=card]')!.textContent).toContain(
     `기간 평균 ${chartNumber(periodAverage(state.charts!.daily.map((day) => day.joined)))}`,
   );
 
-  const analytics = screen.getByRole('region', {
-    name: 'Amplitude 사용자 지표',
-  });
+  expect(container.querySelectorAll('.recharts-line-curve')).toHaveLength(8);
+  expect(screen.queryByText(/Amplitude 일별 수치/)).toBeNull();
+  expect(screen.queryByLabelText('일별 기기 설치 수와 앱 삭제 수')).toBeNull();
 
-  expect(analytics.querySelectorAll('.recharts-line')).toHaveLength(6);
-  expect(analytics.querySelectorAll('.recharts-label-list')).toHaveLength(6);
+  const tableDetails = screen
+    .getByText('일별 수치와 목록 이동')
+    .closest('details')!;
 
-  const last = getDashboardAnalytics(7).daily.at(-1)!;
-
-  expect(analytics.textContent).toContain(
-    `합계 ${chartNumber(last.activeUsers.total)}`,
+  expect(trendHeading.querySelectorAll('details')).toHaveLength(1);
+  expect(tableDetails.hasAttribute('open')).toBe(false);
+  expect(within(tableDetails).getAllByRole('columnheader')).toHaveLength(9);
+  expect(within(tableDetails).getAllByRole('row')).toHaveLength(
+    state.charts!.daily.length + 1,
   );
-  expect(analytics.textContent).toContain(
-    `합계 ${chartNumber(last.newUsers.total)}`,
-  );
 
-  expect(
-    analytics.querySelector('.recharts-legend-wrapper')?.textContent,
-  ).toContain('Web');
-
-  for (const plot of analytics.querySelectorAll('.recharts-line-chart')) {
-    const curves = plot.querySelectorAll('.recharts-line-curve');
-
-    expect(
-      Array.from(curves).map((line) => line.getAttribute('stroke')),
-    ).toEqual([
-      'var(--color-total)',
-      'var(--color-web)',
-      'var(--color-android)',
-    ]);
-    expect(curves[1].getAttribute('stroke-dasharray')).toBe('6 3');
-    expect(curves[2].getAttribute('stroke-dasharray')).toBe('2 3');
-    expect(plot.querySelectorAll('.recharts-yAxis')).toHaveLength(1);
-    expect(plot.querySelector('.recharts-legend-wrapper')!.textContent).toBe(
-      '합계WebAndroid',
-    );
+  for (const row of within(tableDetails).getAllByRole('row').slice(1)) {
+    expect(within(row).getAllByRole('link')).toHaveLength(8);
   }
-
-  expect(screen.getByText(/Amplitude 일별 수치/)).toBeTruthy();
-  expect(screen.getByText('일별 수치와 목록 이동')).toBeTruthy();
 });
 
 it('미리보기는 35개 장르 중 상위 30개와 나머지 안내·전체 표를 표시하고 서버 제목을 표시한다', () => {
@@ -463,7 +457,7 @@ it('누적을 대표 숫자, 오늘 0과 기간 합계를 보조로 표시하고
     ...state.summary!,
     asOf: '2026-10-20T15:03:00Z',
     todayStartsAt: '2026-10-20T15:00:00Z',
-    members: { total: 1234, joinedToday: 0 },
+    members: { total: 1234, active: 1200, withdrawn: 34, joinedToday: 0 },
     payments: {
       ...state.summary!.payments,
       amountKrwTotal: 1234567,
@@ -472,7 +466,7 @@ it('누적을 대표 숫자, 오늘 0과 기간 합계를 보조로 표시하고
   };
   render(createElement(DashboardScreen));
 
-  const memberCard = screen.getByRole('link', { name: /^회원/ });
+  const memberCard = screen.getByRole('link', { name: /^가입자/ });
   const paymentCard = screen.getByRole('link', { name: /^결제 금액/ });
 
   for (const card of [memberCard, paymentCard]) {
@@ -503,7 +497,7 @@ it.each([
     state.chartsError = error;
     render(createElement(DashboardScreen));
 
-    for (const label of ['회원', '채팅 시작', '이프 적립']) {
+    for (const label of ['가입자', '채팅 시작', '이프 적립']) {
       const card = screen.getByRole('link', { name: new RegExp(`^${label}`) });
 
       expect(within(card).getByText(`최근 7일 합계 ${status}`)).toBeTruthy();
@@ -521,7 +515,7 @@ it.each(['success', 'pending', 'error'])(
       status === 'success' ? { ...state.charts!, daily: [] } : undefined;
     render(createElement(DashboardScreen));
 
-    const memberCard = screen.getByRole('link', { name: /^회원/ });
+    const memberCard = screen.getByRole('link', { name: /^가입자/ });
     const total =
       status === 'success'
         ? '0명'
@@ -551,7 +545,10 @@ it('정본의 구역 순서와 서버 제목·설명을 유지하고 기능 표�
 
   for (const item of state.charts!.distributions) {
     expect(screen.getByRole('heading', { name: item.title })).toBeTruthy();
-    expect(screen.getByText(item.description)).toBeTruthy();
+    expect(screen.queryByText(item.description)).toBeNull();
+    expect(
+      screen.getByRole('button', { name: `${item.title} 집계 안내` }),
+    ).toBeTruthy();
   }
 
   expect(screen.getAllByText('간편 제작 →')).toHaveLength(2);
@@ -559,4 +556,55 @@ it('정본의 구역 순서와 서버 제목·설명을 유지하고 기능 표�
   expect(screen.getByRole('region', { name: '콘텐츠' }).textContent).toContain(
     '값 (건)',
   );
+});
+
+it('분포 설명은 본문에 없고 제목 옆 도움말에 포커스하면 응답 문구 그대로 열린다', async () => {
+  render(createElement(DashboardAnalysisScreen));
+
+  const item = state.charts!.distributions[0];
+
+  expect(screen.queryByText(item.description)).toBeNull();
+
+  const button = screen.getByRole('button', {
+    name: `${item.title} 집계 안내`,
+  });
+
+  act(() => button.focus());
+
+  const tooltip = await screen.findByRole('tooltip');
+
+  expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
+  expect(tooltip.textContent).toBe(item.description);
+});
+
+it('가입자 카드는 탈퇴 포함 누적과 오늘 값을 표시하고 전체 집계 문구를 포커스 도움말로 제공한다', async () => {
+  state.summary!.members = {
+    total: 1300,
+    active: 1240,
+    withdrawn: 60,
+    joinedToday: 12,
+  };
+  render(createElement(DashboardScreen));
+
+  const card = screen.getByRole('link', { name: /^가입자/ });
+
+  expect(card.getAttribute('href')).toBe('/members');
+  expect(within(card).getByText('1,300')).toBeTruthy();
+  expect(within(card).getByText('12')).toBeTruthy();
+  expect(screen.queryByRole('tooltip')).toBeNull();
+
+  const button = screen.getByRole('button', { name: '가입자 집계 안내' });
+
+  expect(button.closest('a')).toBeNull();
+  act(() => button.focus());
+
+  const tooltip = await screen.findByRole('tooltip');
+
+  expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
+  expect(tooltip.textContent).toBe(
+    '탈퇴한 회원을 포함한 누적 가입자 수입니다. 현재 회원 1,240명, 누적 탈퇴 60명이며 팀 계정은 제외합니다.',
+  );
+  fireEvent.keyDown(button, { key: 'Escape' });
+  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+  expect(document.activeElement).toBe(button);
 });
