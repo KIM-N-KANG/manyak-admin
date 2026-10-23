@@ -714,6 +714,22 @@ export const MetricsResponse = zod.object({
                   }),
                 )
                 .optional(),
+              cpuMax: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+              memoryMax: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
             }),
           )
           .optional(),

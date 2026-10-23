@@ -25,6 +25,10 @@ it('정본의 고정 데이터를 생성 스키마로 검증한다', () => {
   vi.setSystemTime(new Date('2026-10-23T03:00:00Z'));
   expect(MetricsResponse.safeParse(infraMetricsFixture()).success).toBe(true);
   expect(
+    MetricsResponse.parse(infraMetricsFixture()).ecs?.services?.[0].cpuMax
+      ?.length,
+  ).toBeGreaterThan(0);
+  expect(
     MetricsResponse.safeParse(infraMetricsFixture(undefined, undefined, true))
       .success,
   ).toBe(true);
@@ -89,13 +93,13 @@ it('서비스 순서·색·모양과 알 수 없는 이름, Redis 순서를 유�
       ],
     }).map((x) => serviceName(x.name)),
   ).toEqual(['서버', 'AI', '알림', 'worker']);
-  expect(serviceSeries('server', []).color).toBe('var(--primary)');
+  expect(serviceSeries('server', []).color).toBe('var(--chart-1)');
   expect(serviceSeries('ai', [])).toMatchObject({
-    color: 'var(--primary-text)',
+    color: 'var(--chart-2)',
     dash: '6 3',
   });
   expect(serviceSeries('notification', [])).toMatchObject({
-    color: 'var(--muted-foreground)',
+    color: 'var(--chart-3)',
     dash: '2 3',
   });
   expect(listedSeries('n', '노드 002', [], 1)).toMatchObject({
@@ -115,7 +119,7 @@ it('빈 구간은 null로 채워 선을 끊고 서버가 준 실제 0은 그대�
       {
         key: 'cpu',
         label: 'CPU',
-        color: 'var(--primary)',
+        color: 'var(--chart-1)',
         points: [
           { at: '2026-10-22T15:00:00Z', value: 0 },
           { at: '2026-10-22T15:10:00Z', value: 8 },

@@ -22,7 +22,15 @@ import {
   SummaryCards,
 } from './metric-ui';
 import { chartDates } from './range';
-import { listedSeries, pairSeries, type Series, seriesGroups } from './series';
+import {
+  featureSeries,
+  listedSeries,
+  modelSeries,
+  pairSeries,
+  type Series,
+  seriesGroups,
+} from './series';
+import { TurnReachChart } from './turn-reach-chart';
 import type * as T from './types';
 
 const single = (key: string, label: string) => pairSeries([[key, label]]);
@@ -476,49 +484,11 @@ export function ConversionContent({
   }
 
   const d = data as T.TurnReachResponse;
-  const owner = seriesGroups.owner;
-  const rows = [1, 5, 10, 20].map(
-    (turn) =>
-      Object.fromEntries([
-        ['date', `${turn}턴`],
-        ...owner.map((s) => {
-          const segment = d.segments.find(
-            (row) =>
-              row.segment === s.key.toUpperCase() || row.segment === s.key,
-          );
-
-          return [
-            s.key,
-            segment?.chats
-              ? (segment.reached.find((p) => p.turn === turn)?.rate ?? null)
-              : null,
-          ];
-        }),
-      ]) as PlotRow,
-  );
   const g = d.guestToMember;
 
   return (
     <>
-      <SummaryCards
-        items={owner.map((s) => ({
-          label: `${s.label} 채팅 수`,
-          value: n(
-            d.segments.find((row) => row.segment.toLowerCase() === s.key)
-              ?.chats ?? 0,
-            '개',
-          ),
-        }))}
-      />
-      <SeriesChart
-        title="기준 턴별 도달률"
-        categoryLabel="기준 턴"
-        rows={rows}
-        series={owner}
-        unit="%"
-        grouped
-        emptyLabel="채팅 없음"
-      />
+      <TurnReachChart data={d} />
       <SummaryCards
         items={[
           {
@@ -527,24 +497,6 @@ export function ConversionContent({
             detail: `5턴 이상 ${n(g.chatsReached5, '개')}, 6턴 이상 ${n(g.chatsReached6, '개')}`,
           },
         ]}
-      />
-      <NumericTable
-        headers={['구분', '채팅 수', '기준 턴', '도달 채팅 수', '도달률']}
-        rows={owner.flatMap((s) => {
-          const row = d.segments.find(
-            (row) => row.segment.toLowerCase() === s.key,
-          );
-
-          return row
-            ? row.reached.map((p) => [
-                s.label,
-                n(row.chats, '개'),
-                `${p.turn}턴`,
-                n(p.chats, '개'),
-                row.chats ? percent(p.rate) : '채팅 없음',
-              ])
-            : [];
-        })}
       />
     </>
   );
@@ -629,9 +581,20 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
     const d = data as T.ChatOptionResponse;
     const chats = d.daily.reduce((s, row) => s + row.chats, 0),
       persona = d.daily.reduce((s, row) => s + row.withPersona, 0);
-    const models = [
-      ...new Set(d.daily.flatMap((row) => Object.keys(row.byModel))),
-    ].sort();
+    const codes = [
+      ...new Set(
+        d.daily.flatMap((row) => [
+          ...Object.keys(row.byModel),
+          ...Object.keys(row.turnsByModel),
+        ]),
+      ),
+    ];
+    const models = modelSeries(codes);
+    const turns = d.daily.reduce(
+      (sum, row) =>
+        sum + Object.values(row.turnsByModel).reduce((a, b) => a + b, 0),
+      0,
+    );
 
     return (
       <>
@@ -643,8 +606,20 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
               value: n(persona, '개'),
               detail: percent(ratio(persona, chats), '채팅 없음'),
             },
+            { label: '턴 수', value: n(turns, '턴') },
           ]}
         />
+        <div className="mb-3 flex justify-end">
+          <HelpTooltip label="채팅 옵션 모델 집계 기준">
+            <ul className="list-disc space-y-1 pl-4">
+              <li>
+                채팅 수는 채팅에 지금 선택된 모델 기준이고 턴 수는 그 턴을
+                실제로 만든 모델 기준입니다.
+              </li>
+              <li>게스트 턴은 라이트로 셉니다.</li>
+            </ul>
+          </HelpTooltip>
+        </div>
         <Charts
           items={[
             {
@@ -663,22 +638,39 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
               title: '모델별 채팅 수',
               rows: dailyRows(d, (day) =>
                 Object.fromEntries(
-                  models.map((model) => [model, day.byModel[model] ?? 0]),
+                  models.map(({ key }) => [key, day.byModel[key] ?? 0]),
                 ),
               ),
-              series: listedSeries(
-                models.map((model) => [model, modelLabel(model)]),
+              series: models.filter(({ key }) =>
+                d.daily.some((day) => key in day.byModel),
               ),
               unit: '개',
+            },
+            {
+              title: '모델별 턴 수',
+              rows: dailyRows(d, (day) =>
+                Object.fromEntries(
+                  models.map(({ key }) => [key, day.turnsByModel[key] ?? 0]),
+                ),
+              ),
+              series: models.filter(({ key }) =>
+                d.daily.some((day) => key in day.turnsByModel),
+              ),
+              unit: '턴',
             },
           ]}
         />
         <NumericTable
           title="모델별 비중"
-          headers={['모델', '채팅 수', '비중']}
-          rows={models.map((model) => {
+          headers={['모델', '채팅 수', '채팅 비중', '턴 수', '턴 비중']}
+          rows={models.map(({ key: model }) => {
             const count = d.daily.reduce(
               (s, row) => s + (row.byModel[model] ?? 0),
+              0,
+            );
+
+            const modelTurns = d.daily.reduce(
+              (sum, row) => sum + (row.turnsByModel[model] ?? 0),
               0,
             );
 
@@ -686,6 +678,8 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
               modelLabel(model),
               n(count, '개'),
               percent(ratio(count, chats), '채팅 없음'),
+              n(modelTurns, '턴'),
+              percent(ratio(modelTurns, turns), '턴 없음'),
             ];
           })}
         />
@@ -759,7 +753,7 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
                 ]),
               ),
             ),
-            series: listedSeries(
+            series: featureSeries(
               aiFeatures.map((feature) => [feature, aiFeatureLabel(feature)]),
             ),
             unit: '원',

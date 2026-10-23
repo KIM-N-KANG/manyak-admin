@@ -75,7 +75,7 @@ function StoryContent({ story: s }: { story: StoryDetail }) {
           <p className="mb-5 text-xs text-muted-foreground">
             전체 채팅 중 해당 턴 이상에 도달한 채팅 비율
           </p>
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-5">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 xl:grid-cols-6">
             {s.retention.map((r) => (
               <div key={r.turn}>
                 <p className="text-sm text-muted-foreground">{r.turn}턴 도달</p>

@@ -44,7 +44,13 @@ export type ChartLink = {
   list: 'stories' | 'chats' | 'members';
   params: Record<string, string>;
 };
-export type ChartPoint = { label: string; value: number; link: ChartLink };
+export type ChartPoint = {
+  label: string;
+  value: number;
+  link: ChartLink;
+  chats?: number;
+  totalTurns?: number;
+};
 export type Distribution = {
   chartId: string;
   category: 'users' | 'engagement' | 'content' | 'ai-quality';

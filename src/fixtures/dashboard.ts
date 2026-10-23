@@ -262,31 +262,41 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
     to,
     daily: selected,
     distributions: [
-      distribution(
-        'genre-depth',
-        genreDepthTitle,
-        '채팅 시작일 기준, 복수 장르는 각각 포함, 평균 현재 턴',
-        '턴',
-        [
+      {
+        chartId: 'genre-depth',
+        category: 'engagement',
+        title: genreDepthTitle,
+        description: '채팅 시작일 기준, 복수 장르는 각각 포함, 평균 현재 턴',
+        unit: '턴',
+        points: [
           ...new Set(
             stories.flatMap((story) =>
-              story.genre.split(',').map((genre) => genre.trim()),
+              story.genre.split(',').map((g) => g.trim()),
             ),
           ),
-        ],
-        (label) =>
-          average(
-            periodChats
-              .filter((c) =>
-                c.story.genre
-                  .split(',')
-                  .map((g) => g.trim())
-                  .includes(label),
-              )
-              .map((c) => c.turnCount),
+        ]
+          .map((label) => {
+            const matched = periodChats.filter((c) =>
+              c.story.genre
+                .split(',')
+                .map((g) => g.trim())
+                .includes(label),
+            );
+            const totalTurns = matched.reduce((sum, c) => sum + c.turnCount, 0);
+
+            return {
+              label,
+              chats: matched.length,
+              totalTurns,
+              value: matched.length ? totalTurns / matched.length : 0,
+              link: link('stories', { genre: label }, 'chat'),
+            };
+          })
+          .filter((point) => point.chats > 0)
+          .toSorted(
+            (a, b) => b.value - a.value || a.label.localeCompare(b.label, 'ko'),
           ),
-        (label) => link('stories', { genre: label }, 'chat'),
-      ),
+      },
       distribution(
         'turns',
         '턴 수 분포',

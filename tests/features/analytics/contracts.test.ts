@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { readFileSync } from 'node:fs';
 import { afterEach, expect, it, vi } from 'vitest';
 
 import {
@@ -76,10 +77,10 @@ it('5-1 비율·표시 이름은 0과 null, 100% 초과와 새 코드를 구분�
     'unknown',
   ]);
   expect(seriesGroups.platform.map((s) => [s.key, s.color, s.dash])).toEqual([
-    ['all', 'var(--primary)', undefined],
-    ['web', 'var(--muted-foreground)', '6 3'],
-    ['android', 'var(--primary-text)', '2 3'],
-    ['unknown', 'var(--chart-3)', '8 3 2 3'],
+    ['all', 'var(--chart-1)', undefined],
+    ['web', 'var(--chart-2)', '6 3'],
+    ['android', 'var(--chart-3)', '2 3'],
+    ['unknown', 'var(--chart-4)', '8 3 2 3'],
   ]);
 });
 it('5-1 준비 중 재요청은 날짜 또는 MAU null이 남을 때만 60초이다', () => {
@@ -186,4 +187,16 @@ it('가입 fixture는 탈퇴를 포함하고 기간을 바꿔도 같은 날의 �
   expect(seven.daily.at(-1)?.cumulativeSignups).toBe(summary.members.total);
   expect(single.daily[0].cumulativeSignups).toBe(summary.members.total);
   expect(single.daily[0].signups.total).toBe(0);
+});
+
+it('범주색 다섯 개는 정본의 서로 다른 색상이며 UI 토큰과 구분된다', () => {
+  const css = readFileSync('src/app/globals.css', 'utf8');
+
+  ['#01A76B', '#3B6FD4', '#E07A1F', '#8B5CD6', '#D9467A'].forEach(
+    (color, index) => {
+      expect(css.toLowerCase()).toContain(
+        `--chart-${index + 1}: ${color.toLowerCase()};`,
+      );
+    },
+  );
 });

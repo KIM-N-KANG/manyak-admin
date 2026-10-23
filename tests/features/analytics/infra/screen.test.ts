@@ -179,9 +179,9 @@ it('기본 오늘 범위의 서비스·요청과 태스크·합계를 표시하�
   const chart = screen.getByLabelText('CPU 사용률');
 
   expect(JSON.parse(chart.getAttribute('data-config')!)).toEqual({
-    service_0: { label: '서버', color: 'var(--primary)' },
-    service_1: { label: 'AI', color: 'var(--primary-text)' },
-    service_2: { label: '알림', color: 'var(--muted-foreground)' },
+    service_0: { label: '서버', color: 'var(--chart-1)' },
+    service_1: { label: 'AI', color: 'var(--chart-2)' },
+    service_2: { label: '알림', color: 'var(--chart-3)' },
   });
   expect(
     chart.querySelector('[data-y-domain]')!.getAttribute('data-y-domain'),

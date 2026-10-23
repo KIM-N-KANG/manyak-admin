@@ -4195,7 +4195,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminRetention"
-            }
+            },
+            "description": "기준 턴 1, 2, 3, 4, 5, 6, 7, 10, 15, 20, 30, 50의 항목 12개이며 오름차순이다."
           },
           "recentChats": {
             "type": "array",
@@ -4392,6 +4393,14 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          "turnsByModel": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "AI 응답 생성일 기준 모델별 턴 수이다. 삭제된 채팅의 턴도 포함한다."
           }
         }
       },
@@ -5429,6 +5438,18 @@
             "items": {
               "$ref": "#/components/schemas/InfraMetricPoint"
             }
+          },
+          "cpuMax": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "memoryMax": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
           }
         }
       },
@@ -5929,6 +5950,16 @@
           },
           "link": {
             "$ref": "#/components/schemas/AdminChartLink"
+          },
+          "chats": {
+            "type": "integer",
+            "format": "int64",
+            "description": "genre-depth의 장르별 채팅 수이다."
+          },
+          "totalTurns": {
+            "type": "integer",
+            "format": "int64",
+            "description": "genre-depth의 장르별 총 턴 수이다."
           }
         }
       },
@@ -6115,7 +6146,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ReachPoint"
-            }
+            },
+            "description": "기준 턴 1, 2, 3, 4, 5, 6, 7, 10, 15, 20, 30, 50의 항목 12개이며 오름차순이다."
           }
         }
       },
@@ -7009,5 +7041,19 @@
         "bearerFormat": "JWT"
       }
     }
+  },
+  "x-contract-overlay": {
+    "issue": "KNK-1776",
+    "source": "ADMIN WEB fed4b2a·96f8d39, BACKEND 4-2-4·4-2-6·4-2-29·4-2-31·4-2-33",
+    "fields": [
+      "AdminChartPoint.chats",
+      "AdminChartPoint.totalTurns",
+      "ChatOptionDay.turnsByModel",
+      "InfraServiceMetrics.cpuMax",
+      "InfraServiceMetrics.memoryMax",
+      "ReachSegment.reached",
+      "story detail retention"
+    ],
+    "note": "서버 반영 후 실제 dev OpenAPI와 대조하여 제거한다."
   }
 }
