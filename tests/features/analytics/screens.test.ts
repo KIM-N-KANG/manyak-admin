@@ -18,6 +18,7 @@ import { AnalyticsScreen } from '@/features/analytics/analytics-screen';
 import type { AnalyticsScreenName } from '@/features/analytics/config';
 import type {
   ActivityResponse,
+  AiCostResponse,
   CampaignAnalyticsResponse,
   ChatOptionResponse,
   SignupResponse,
@@ -54,8 +55,16 @@ vi.mock('recharts', () => {
   };
 });
 vi.mock('@/components/ui/chart', () => ({
-  ChartContainer: ({ children, ...props }: PropsWithChildren) =>
-    createElement('div', props, children),
+  ChartContainer: ({
+    children,
+    config,
+    ...props
+  }: PropsWithChildren<{ config?: unknown }>) =>
+    createElement(
+      'div',
+      { 'data-config': JSON.stringify(config), ...props },
+      children,
+    ),
   ChartTooltip: () => null,
   ChartTooltipContent: () => null,
   ChartLegend: () => null,
@@ -654,3 +663,99 @@ it('누적 가입자는 서비스 시작부터 받은 1293~1300을 표시하고 
     '/api/users/signups?from=2026-10-17&to=2026-10-23',
   );
 });
+
+it.each([48, 72])(
+  '실시간 이미지 장당 %s원은 비용에 포함되고 토큰 세 칸은 해당 없음이다',
+  async (unitCost) => {
+    nav.search = 'tab=ai-cost&from=2026-10-23&to=2026-10-23';
+
+    const data = metricFixture(
+      '/quality/ai-cost',
+      new URLSearchParams(nav.search),
+    ) as AiCostResponse;
+
+    data.chatImageUnitCostKrw = unitCost;
+    data.daily[0].byFeature = [
+      {
+        feature: 'chat_response',
+        model: 'AURORA',
+        calls: 1,
+        callsWithoutTokens: 0,
+        inputTokens: 1000,
+        outputTokens: 500,
+        costKrw: 3,
+      },
+      {
+        feature: 'chat_image',
+        model: null,
+        calls: 3,
+        callsWithoutTokens: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+        costKrw: 3 * unitCost,
+      },
+    ];
+    data.totals = {
+      costKrw: 3 + 3 * unitCost,
+      costPerTurnKrw: 3,
+      costPerStoryKrw: null,
+    };
+    data.unpricedModels = [];
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+    draw('quality');
+    await screen.findByText('총 AI 비용');
+    expect(screen.getByText(`${3 + 3 * unitCost}원`)).toBeTruthy();
+    expect(
+      within(
+        screen.getByRole('heading', { name: '턴당 원가' }).parentElement!,
+      ).getByText('3원'),
+    ).toBeTruthy();
+    expect(screen.queryByText(/모델 정보가 없는 호출/)).toBeNull();
+    expect(screen.queryByText(/토큰 수가 기록되지 않은 호출/)).toBeNull();
+
+    const table = screen.getByText('비용 표').parentElement!;
+    const row = Array.from(table.querySelectorAll('tbody tr')).find((row) =>
+      row.textContent?.includes('실시간 이미지 생성'),
+    )!;
+
+    expect(within(row as HTMLElement).getAllByText('해당 없음')).toHaveLength(
+      3,
+    );
+    expect(
+      within(row as HTMLElement).getByText(`${3 * unitCost}원`),
+    ).toBeTruthy();
+
+    const chart = screen.getByRole('heading', {
+      name: '기능별 일별 비용',
+    }).parentElement!;
+    const rows = JSON.parse(
+      chart.querySelector('[data-rows]')!.getAttribute('data-rows')!,
+    );
+    const config = JSON.parse(
+      chart.querySelector('[data-config]')!.getAttribute('data-config')!,
+    );
+
+    expect(rows[0].chat_image).toBe(3 * unitCost);
+    expect(
+      Object.values(config).map((s: unknown) => (s as { label: string }).label),
+    ).toEqual([
+      'AI 응답 생성',
+      '선택지 생성',
+      '실시간 이미지 생성',
+      '스토리라인 생성',
+      '간편 제작',
+    ]);
+    expect(
+      Object.values(config).map((s: unknown) => (s as { color: string }).color),
+    ).toEqual([1, 2, 3, 4, 5].map((i) => `var(--chart-${i})`));
+
+    const help = screen.getByRole('button', {
+      name: '서버 DB 출처와 집계 안내',
+    });
+
+    act(() => help.focus());
+    expect((await screen.findByRole('tooltip')).textContent).toBe(
+      `서버 DB 출처 지표입니다. 팀 계정의 호출도 포함합니다. 성공한 호출만 집계합니다. 실시간 이미지는 장당 ${unitCost}원으로 계산하며 턴당 원가와 스토리당 원가에는 넣지 않습니다. 표지와 인물 이미지 생성 비용은 포함하지 않습니다.`,
+    );
+  },
+);

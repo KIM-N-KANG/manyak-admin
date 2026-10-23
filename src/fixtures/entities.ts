@@ -272,7 +272,7 @@ export const aiCalls = [
   ...chats.map((chat, index) => ({
     chatId: chat.chatId,
     storyId: chat.story.storyId,
-    feature: index % 2 ? 'chat_response' : 'choice_generation',
+    feature: ['chat_response', 'choice_generation', 'chat_image'][index % 3],
     createdAt: chat.lastActiveAt,
     status:
       index % 17 === 0 ? 'FAILED' : index % 19 === 0 ? 'STARTED' : 'SUCCEEDED',

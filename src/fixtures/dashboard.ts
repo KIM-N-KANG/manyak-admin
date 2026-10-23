@@ -1,4 +1,4 @@
-import { genreDepthTitle } from '@/features/dashboard/chart-data';
+import { aiFeatures, genreDepthTitle } from '@/features/dashboard/chart-data';
 import type { DateRange } from '@/features/dashboard/date-range';
 import type {
   ChartLink,
@@ -242,12 +242,7 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
 
     return { list, params: Object.fromEntries(q) };
   };
-  const features = [
-    'chat_response',
-    'choice_generation',
-    'storyline_generation',
-    'story_completion',
-  ];
+
   const aiLink = (feature: string, latency: boolean) =>
     link(
       ['storyline_generation', 'story_completion'].includes(feature)
@@ -360,7 +355,7 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
         '기능별 AI 평균 호출 시간',
         'AI 호출 생성일 기준, 성공 호출 중 지연값이 있는 호출의 평균',
         '초',
-        features,
+        [...aiFeatures],
         (feature) =>
           average(
             calls
@@ -379,7 +374,7 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
         '기능별 AI 성공률',
         'AI 호출 생성일 기준, 완료 호출(성공+실패) 중 성공, 미완료 제외',
         '%',
-        features,
+        [...aiFeatures],
         (feature) => {
           const finished = calls.filter(
             (c) => c.feature === feature && c.status !== 'STARTED',

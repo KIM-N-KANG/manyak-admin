@@ -15,12 +15,15 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { InfraChart } from '@/features/analytics/infra/infra-chart';
 import { DashboardAnalysisScreen } from '@/features/dashboard/analysis-screen';
 import {
+  aiFeatureLabel,
+  aiFeatures,
   chartNumber,
   periodAverage,
   rankedPoints,
 } from '@/features/dashboard/chart-data';
 import { DashboardScreen } from '@/features/dashboard/dashboard-screen';
 import { DistributionChart } from '@/features/dashboard/distribution-chart';
+import { getDistributionHref } from '@/features/dashboard/links';
 import type {
   ChartPoint,
   DashboardCharts,
@@ -713,4 +716,72 @@ it('요약 카드 10개는 고정 최소 높이 없이 같은 행의 내용 높�
   const dbLink = within(grid).getByRole('link', { name: /가입자.*누적/ });
 
   expect(dbLink.className).toContain('h-full');
+});
+
+it('AI 품질은 기능 다섯 개의 고정 순서와 색을 유지하며 실시간 이미지 막대는 채팅 목록으로 이동한다', () => {
+  const source = state.charts!.distributions.find(
+    (d) => d.chartId === 'ai-success',
+  )!;
+
+  source.points.reverse();
+  render(createElement(DashboardAnalysisScreen));
+
+  const card = screen
+    .getByRole('heading', { name: source.title })
+    .closest('[data-slot="card"]')!;
+  const charts = Array.from(card.querySelectorAll('[data-slot="chart"]'));
+
+  expect(charts).toHaveLength(5);
+  expect(charts.map((c) => c.getAttribute('aria-label'))).toEqual(
+    aiFeatures.map((key) => `${aiFeatureLabel(key)} 성공률`),
+  );
+  charts.forEach((chart, i) =>
+    expect(chart.querySelector('style')!.textContent).toContain(
+      `var(--chart-${i + 1})`,
+    ),
+  );
+  fireEvent.click(charts[2].querySelector('.recharts-bar-rectangle')!);
+
+  const link = source.points.find((p) => p.label === 'chat_image')!.link;
+
+  expect(link.list).toBe('chats');
+  expect(link.params.aiFeature).toBe('chat_image');
+  expect(state.push).toHaveBeenCalledWith(getDistributionHref(link));
+});
+
+it('AI 지연도 값 순위 대신 다섯 기능 순서·색을 쓰고 이미지 호출일 링크를 보존한다', () => {
+  const source = state.charts!.distributions.find(
+    (d) => d.chartId === 'ai-latency',
+  )!;
+
+  source.points.reverse();
+  render(createElement(DashboardAnalysisScreen));
+
+  const card = screen
+    .getByRole('heading', { name: source.title })
+    .closest('[data-slot="card"]')!;
+  const ticks = card.querySelectorAll('.recharts-cartesian-axis-tick-value');
+  const bars = card.querySelectorAll('.recharts-bar-rectangle');
+
+  expect(
+    Array.from(ticks)
+      .map((t) => t.textContent)
+      .filter((label) => aiFeatures.map(aiFeatureLabel).includes(label ?? '')),
+  ).toEqual(aiFeatures.map(aiFeatureLabel));
+  expect(bars).toHaveLength(5);
+  expect(
+    Array.from(bars).map((bar) =>
+      bar.querySelector('path')?.getAttribute('fill'),
+    ),
+  ).toEqual([1, 2, 3, 4, 5].map((i) => `var(--chart-${i})`));
+  fireEvent.click(bars[2]);
+
+  const link = source.points.find((p) => p.label === 'chat_image')!.link;
+
+  expect(link.params).toMatchObject({
+    aiFeature: 'chat_image',
+    aiStatus: 'SUCCEEDED',
+    hasLatency: 'true',
+  });
+  expect(state.push).toHaveBeenCalledWith(getDistributionHref(link));
 });

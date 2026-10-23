@@ -3,7 +3,7 @@
 import { DataTable } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
-import { aiFeatureLabel } from '@/features/dashboard/chart-data';
+import { aiFeatureLabel, aiFeatures } from '@/features/dashboard/chart-data';
 
 import {
   approximation,
@@ -26,12 +26,6 @@ import { listedSeries, pairSeries, type Series, seriesGroups } from './series';
 import type * as T from './types';
 
 const single = (key: string, label: string) => pairSeries([[key, label]]);
-const features = [
-  'chat_response',
-  'choice_generation',
-  'storyline_generation',
-  'story_completion',
-];
 
 export function dailyRows<D extends { date: string }>(
   data: { from: string; to: string; daily: D[]; pendingDates?: string[] },
@@ -704,9 +698,11 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
     day.byFeature.map((item) => ({ date: day.date, ...item })),
   );
   const missingModels = items
-      .filter((item) => item.model === null)
+      .filter((item) => item.feature !== 'chat_image' && item.model === null)
       .reduce((s, row) => s + row.calls, 0),
-    missingTokens = items.reduce((s, row) => s + row.callsWithoutTokens, 0);
+    missingTokens = items
+      .filter((item) => item.feature !== 'chat_image')
+      .reduce((s, row) => s + row.callsWithoutTokens, 0);
 
   return (
     <>
@@ -752,7 +748,7 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
             title: '기능별 일별 비용',
             rows: dailyRows(d, (day) =>
               Object.fromEntries(
-                features.map((feature) => [
+                aiFeatures.map((feature) => [
                   feature,
                   day.byFeature
                     .filter(
@@ -764,7 +760,7 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
               ),
             ),
             series: listedSeries(
-              features.map((feature) => [feature, aiFeatureLabel(feature)]),
+              aiFeatures.map((feature) => [feature, aiFeatureLabel(feature)]),
             ),
             unit: '원',
           },
@@ -787,14 +783,20 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
           aiFeatureLabel(row.feature),
           row.model ?? '모델 정보 없음',
           n(row.calls, '회'),
-          row.inputTokens.toLocaleString('ko-KR'),
-          row.outputTokens.toLocaleString('ko-KR'),
+          row.feature === 'chat_image'
+            ? '해당 없음'
+            : row.inputTokens.toLocaleString('ko-KR'),
+          row.feature === 'chat_image'
+            ? '해당 없음'
+            : row.outputTokens.toLocaleString('ko-KR'),
           row.costKrw === null
             ? row.model
               ? '단가 없음'
               : '모델 정보 없음'
             : n(row.costKrw, '원'),
-          n(row.callsWithoutTokens, '회'),
+          row.feature === 'chat_image'
+            ? '해당 없음'
+            : n(row.callsWithoutTokens, '회'),
         ])}
       />
     </>

@@ -224,6 +224,7 @@ export type AiCostItem = {
   costKrw: number | null;
 };
 export type AiCostResponse = {
+  chatImageUnitCostKrw: number;
   asOf: string;
   from: string;
   to: string;

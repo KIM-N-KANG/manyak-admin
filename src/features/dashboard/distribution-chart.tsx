@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Label,
   LabelList,
   type LabelProps,
@@ -22,9 +23,11 @@ import {
   ChartTooltip,
 } from '@/components/ui/chart';
 import {
+  aiFeatureColor,
   chartNumber,
   distributionNumber,
   genreDepthTitle,
+  orderedAiPoints,
   rankedPoints,
 } from '@/features/dashboard/chart-data';
 import type { ChartPoint, Distribution } from '@/features/dashboard/types';
@@ -135,7 +138,9 @@ function GenreBars({ distribution, onSelect }: ChartProps) {
 }
 
 function HorizontalBars({ distribution, onSelect }: ChartProps) {
-  const points = rankedPoints(distribution);
+  const ranked = rankedPoints(distribution);
+  const points =
+    distribution.chartId === 'ai-latency' ? orderedAiPoints(ranked) : ranked;
 
   return (
     <ChartContainer
@@ -170,6 +175,11 @@ function HorizontalBars({ distribution, onSelect }: ChartProps) {
           isAnimationActive={false}
           className="cursor-pointer"
           onClick={(_data, index) => onSelect(points[index])}>
+          {distribution.chartId === 'ai-latency'
+            ? points.map((point) => (
+                <Cell key={point.label} fill={aiFeatureColor(point)} />
+              ))
+            : null}
           <LabelList
             dataKey="value"
             position="right"
@@ -373,7 +383,7 @@ function FirstMessagePlot({ distribution, onSelect }: ChartProps) {
 function SuccessMeters({ distribution, onSelect }: ChartProps) {
   return (
     <div className="mt-5 space-y-5">
-      {distribution.points.map((point) => {
+      {orderedAiPoints(distribution.points).map((point) => {
         const warning = point.value < 95;
 
         return (
@@ -391,9 +401,7 @@ function SuccessMeters({ distribution, onSelect }: ChartProps) {
               config={{
                 value: {
                   label: '성공률',
-                  color: warning
-                    ? 'var(--warning-foreground)'
-                    : 'var(--primary)',
+                  color: aiFeatureColor(point),
                 },
               }}
               className="h-8 w-full"

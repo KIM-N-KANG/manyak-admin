@@ -824,3 +824,18 @@ it.each([
     );
   },
 );
+
+it('실시간 이미지 채팅 필터를 생성 검증하고 인증과 호출일을 그대로 전달한다', async () => {
+  const fetchMock = vi.fn().mockResolvedValue(Response.json({ items: [] }));
+  const query =
+    'aiFeature=chat_image&aiStatus=FINISHED&aiFrom=2026-10-21&aiTo=2026-10-23';
+
+  vi.stubGlobal('fetch', fetchMock);
+  expect((await invoke('GET', `/chats?${query}`)).status).toBe(200);
+  expect(fetchMock.mock.calls[0][0]).toBe(
+    `https://upstream.example/api/v1/admin/chats?${query}`,
+  );
+  expect(fetchMock.mock.calls[0][1].headers.get('Authorization')).toBe(
+    'Bearer forged-test-token',
+  );
+});
