@@ -244,7 +244,7 @@ components:
 
 ### Brand assets
 
-- 사이드바 상단과 로그인 화면은 웹과 같은 `ManyakLogo`만 사용한다. 사이드바 로고는 가로 가운데 정렬하고 상하 여백은 20px로 둔다. 로고 옆에 ‘관리자’ 텍스트나 배지를 덧붙이지 않는다. 로고는 manyak-web의 `src/components/layout/manyak-logo.tsx`를 그대로 복사한 `src/components/admin/manyak-logo.tsx`이며, 심볼과 도형 워드마크를 포함한 89×32 SVG다. 로고의 모든 선·면은 `currentColor`로 마냑 브랜드 초록을 따른다. ‘마냑’을 일반 텍스트로 대체하거나 원래 글꼴을 추정하지 않는다.
+- 사이드바 상단과 로그인 화면은 공용 `ManyakLogo`를 사용한다. 웹에서 가져온 마냑 심볼·워드마크 오른쪽에 학교안심 둥근미소 Bold로 변환한 ‘관리자’ SVG path를 배치한다. 마냑은 브랜드 초록, 관리자는 muted #4D4D4D를 사용하며 글자 높이·굵기와 기준선을 맞춘다. 전체는 174×32이고 사이드바 224px에서 좌우 25px, 상하 20px 여백을 유지한다. 런타임 폰트 요청은 없고 접근성 이름은 ‘마냑 관리자’다.
 - SVG의 `role="img"`, `aria-label="마냑"`을 그대로 노출해 로고 이름은 ‘마냑’으로 한 번만 읽힌다. 조합용 wrapper·추가 접근성 이름·‘관리자’ 전용 타이포그래피는 사용하지 않는다. 문서 제목과 메타데이터의 ‘마냑 관리자’ 표기는 유지한다.
 - 파비콘은 글자 없는 초록 심볼 그대로의 투명 배경을 사용한다. App Router의 `src/app/icon.svg`는 `public/logo/manyak-symbol-green.svg`와 같고, `src/app/favicon.ico`는 같은 심볼의 16·32·48px PNG 프레임으로 구성한다. 모든 ICO 프레임은 8비트 RGBA로 인코딩한다. PWA·Apple용 `public/icons/`와 layout 아이콘 메타데이터는 유지한다.
 - 목록 표는 정렬 가능한 머리글 버튼과 현재 정렬 열의 방향 화살표·`aria-sort`를 사용한다. 목록 아래 중앙에는 이전·다음과 처음·끝·현재 주변 번호를 배치하며, 생략 구간은 …로 표시한다. 현재 페이지는 짙은 초록 배경·흰 글자와 `aria-current="page"`로 구분하고 경계 이동은 비활성화한다.
@@ -272,6 +272,7 @@ Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafaf
 
 ### Brand & Accent
 
+- **관리자 워드마크**: 사이드바와 로그인은 공용 `ManyakLogo`의 174×32 SVG를 사용한다. 마냑 로고 오른쪽에 학교안심 둥근미소 Bold의 ‘관리자’를 28px 기준 윤곽선(실제 글자 높이 약 25px, 기준선 y=24.5)으로 배치하고 `muted-foreground`를 적용한다. 런타임 폰트 요청 없이 SVG path로 표시하며 접근성 이름은 ‘마냑 관리자’다.
 - **Manyak Green** (`{colors.primary}` — #01A76B): 로고·차트·아이콘·포커스의 기준색이다. CSS에서는 `oklch(0.6398 0.1458 159.17)`을 사용한다. 흰색과 대비는 3.12:1이므로 작은 글자나 흰 글자의 버튼 배경에는 사용하지 않는다.
 - **Text Green** (`{colors.primary-text}` / `{colors.link}` — #017A4E): 작은 링크와 활성 메뉴의 전경, 주요 버튼·현재 페이지의 배경이다. 흰색 대비 5.39:1, 연한 메뉴 배경 #E6F6EF 대비 4.82:1, 캔버스 #FAFAFA 대비 5.17:1로 일반 글자 기준 4.5:1을 만족한다. 대비는 WCAG sRGB 상대 휘도 식으로 계산한다.
 - **Deep / Soft Green**: 링크·버튼 hover는 `{colors.link-deep}` (#01613E), 강조 배경은 `{colors.link-soft}` (#E6F6EF)이다.
