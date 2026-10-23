@@ -715,6 +715,44 @@ export const ChatParams = zod.object({
 
 export const ChatResponse = zod.unknown();
 
+export const CatalogResponse = zod.unknown();
+
+export const SourcesQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const SourcesResponse = zod.unknown();
+
+export const Story1QueryParams = zod.object({
+  storyId: zod.uuid().optional(),
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const Story1Response = zod.unknown();
+
+export const CreationQueryParams = zod.object({
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const CreationResponse = zod.unknown();
+
+export const Analytics1QueryParams = zod.object({
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const Analytics1Response = zod.unknown();
+
 export const auditLogsQueryRequestSizeMax = 100;
 
 export const auditLogsQueryRequestOrderRegExp = new RegExp('asc|desc');

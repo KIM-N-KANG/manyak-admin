@@ -22,6 +22,7 @@ describe('Amplitude 지표 BFF', () => {
         'to',
         'todayActiveUsers',
         'daily',
+        'pendingDates',
       ]);
       expect(data.daily).toHaveLength(days);
       expect(data.from).toBe(data.daily[0].date);
@@ -31,14 +32,23 @@ describe('Amplitude 지표 BFF', () => {
           timeZone: 'Asia/Seoul',
         }),
       );
-      expect(data.todayActiveUsers).toBe(data.daily.at(-1)!.activeUsers);
+      expect(data.todayActiveUsers).toEqual(data.daily.at(-1)!.activeUsers);
       data.daily.forEach((day, index) => {
         expect(Object.keys(day)).toEqual(['date', 'activeUsers', 'newUsers']);
-        expect(Number.isInteger(day.activeUsers)).toBe(true);
-        expect(day.activeUsers).toBeGreaterThanOrEqual(0);
-        expect(Number.isInteger(day.newUsers)).toBe(true);
-        expect(day.newUsers).toBeGreaterThanOrEqual(0);
-        expect(day.newUsers).toBeLessThanOrEqual(day.activeUsers);
+
+        for (const platform of ['total', 'web', 'android'] as const) {
+          expect(Number.isInteger(day.activeUsers[platform])).toBe(true);
+          expect(day.activeUsers[platform]).toBeGreaterThanOrEqual(0);
+          expect(Number.isInteger(day.newUsers[platform])).toBe(true);
+          expect(day.newUsers[platform]).toBeGreaterThanOrEqual(0);
+          expect(day.newUsers[platform]).toBeLessThanOrEqual(
+            day.activeUsers[platform],
+          );
+        }
+
+        expect(day.activeUsers.web + day.activeUsers.android).toBeGreaterThan(
+          day.activeUsers.total,
+        );
 
         if (index)
           expect(
@@ -54,7 +64,7 @@ describe('Amplitude 지표 BFF', () => {
     const long: DashboardAnalytics = await GET(request('?days=90')).json();
 
     expect(data.daily).toEqual(long.daily.slice(-30));
-    expect(data.todayActiveUsers).toBe(long.todayActiveUsers);
+    expect(data.todayActiveUsers).toEqual(long.todayActiveUsers);
   });
 
   it.each(['0', '-7', '8', '365', 'invalid', ''])(

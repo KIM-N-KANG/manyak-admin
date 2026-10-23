@@ -312,19 +312,40 @@ it('개요 카드 8개의 스파크라인과 일별 2px 선·평균 점선을 �
     name: 'Amplitude 사용자 지표',
   });
 
-  expect(analytics.querySelectorAll('.recharts-line')).toHaveLength(2);
-  expect(analytics.querySelectorAll('.recharts-label-list')).toHaveLength(2);
+  expect(analytics.querySelectorAll('.recharts-line')).toHaveLength(6);
+  expect(analytics.querySelectorAll('.recharts-label-list')).toHaveLength(6);
 
   const last = getDashboardAnalytics(7).daily.at(-1)!;
 
   expect(analytics.textContent).toContain(
-    `활성 ${chartNumber(last.activeUsers)}`,
+    `합계 ${chartNumber(last.activeUsers.total)}`,
   );
-  expect(analytics.textContent).toContain(`신규 ${chartNumber(last.newUsers)}`);
+  expect(analytics.textContent).toContain(
+    `합계 ${chartNumber(last.newUsers.total)}`,
+  );
 
   expect(
     analytics.querySelector('.recharts-legend-wrapper')?.textContent,
-  ).toContain('활성');
+  ).toContain('Web');
+
+  for (const plot of analytics.querySelectorAll('.recharts-line-chart')) {
+    const curves = plot.querySelectorAll('.recharts-line-curve');
+
+    expect(
+      Array.from(curves).map((line) => line.getAttribute('stroke')),
+    ).toEqual([
+      'var(--color-total)',
+      'var(--color-web)',
+      'var(--color-android)',
+    ]);
+    expect(curves[1].getAttribute('stroke-dasharray')).toBe('6 3');
+    expect(curves[2].getAttribute('stroke-dasharray')).toBe('2 3');
+    expect(plot.querySelectorAll('.recharts-yAxis')).toHaveLength(1);
+    expect(plot.querySelector('.recharts-legend-wrapper')!.textContent).toBe(
+      '합계WebAndroid',
+    );
+  }
+
   expect(screen.getByText(/Amplitude 일별 수치/)).toBeTruthy();
   expect(screen.getByText('일별 수치와 목록 이동')).toBeTruthy();
 });

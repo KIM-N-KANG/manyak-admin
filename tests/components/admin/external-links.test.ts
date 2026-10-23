@@ -117,8 +117,15 @@ it('Amplitude 카드에서 계약에 없는 URL 필드를 추가하지 않고 �
     asOf: '2026-10-21T00:00:00Z',
     from: '2026-10-21',
     to: '2026-10-21',
-    todayActiveUsers: 1,
-    daily: [{ date: '2026-10-21', activeUsers: 1, newUsers: 1 }],
+    todayActiveUsers: { total: 1, web: 1, android: 0 },
+    pendingDates: [],
+    daily: [
+      {
+        date: '2026-10-21',
+        activeUsers: { total: 1, web: 1, android: 0 },
+        newUsers: { total: 1, web: 1, android: 0 },
+      },
+    ],
   };
   render(createElement(AnalyticsSection, { days: '7' }));
   assertExternal('Amplitude에서 보기', externalLinks.amplitude);
