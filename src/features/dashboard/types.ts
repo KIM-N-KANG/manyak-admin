@@ -48,8 +48,8 @@ export type ChartPoint = {
   label: string;
   value: number;
   link: ChartLink;
-  chats?: number;
-  totalTurns?: number;
+  chats?: number | null;
+  totalTurns?: number | null;
 };
 export type Distribution = {
   chartId: string;
