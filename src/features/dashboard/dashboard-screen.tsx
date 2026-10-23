@@ -171,7 +171,7 @@ export function DashboardScreen() {
       />
       <section
         aria-label="요약 지표"
-        className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        className="mb-8 grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {cards.map(([label, total, today, href, unit, cardMetric]) => {
           const periodTotal = c?.daily.reduce(
             (sum, day) => sum + day[cardMetric],
@@ -183,7 +183,7 @@ export function DashboardScreen() {
               : missingValueStatus;
 
           return (
-            <div key={label} className="relative min-h-56">
+            <div key={label} className="relative">
               <Link
                 href={href}
                 className="flex h-full items-start gap-3 rounded-md border bg-card p-4 transition-colors hover:border-foreground-tertiary focus-visible:ring-2 focus-visible:ring-ring">

@@ -28,6 +28,9 @@ vi.mock('recharts', () => {
     createElement('div', null, children);
 
   return {
+    usePlotArea: () => undefined,
+    useXAxisScale: () => undefined,
+    useYAxisScale: () => undefined,
     LineChart: ({ children, data }: PropsWithChildren<{ data: unknown }>) =>
       createElement('div', { 'data-points': JSON.stringify(data) }, children),
     BarChart: ({ children, data }: PropsWithChildren<{ data: unknown }>) =>
