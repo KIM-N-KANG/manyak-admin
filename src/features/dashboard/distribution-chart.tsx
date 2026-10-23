@@ -327,7 +327,7 @@ function FirstMessagePlot({ distribution, onSelect }: ChartProps) {
     <ChartContainer
       config={{
         percentiles: { label: '백분위', color: 'var(--primary)' },
-        mean: { label: '평균 (마름모)', color: 'var(--muted-foreground)' },
+        mean: { label: '평균', color: 'var(--muted-foreground)' },
       }}
       className="mt-5 h-[220px] w-full"
       aria-label={distribution.title}>
@@ -360,7 +360,8 @@ function FirstMessagePlot({ distribution, onSelect }: ChartProps) {
           className="cursor-pointer"
         />
         <Scatter
-          name="평균 (마름모)"
+          name="평균"
+          legendType="diamond"
           data={means}
           fill="var(--muted-foreground)"
           shape="diamond"
