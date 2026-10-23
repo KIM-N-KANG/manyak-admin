@@ -110,19 +110,37 @@ function TextCondition({
 function TabHeading({
   screen,
   tab,
+  chatImageUnitCostKrw,
 }: {
   screen: AnalyticsScreenName;
   tab: string;
+  chatImageUnitCostKrw?: number;
 }) {
   const db = ['signups', 'turn-reach', 'chat-options', 'ai-cost'].includes(tab);
   const source = db ? '서버 DB' : 'Amplitude';
-  const help = sourceHelp[tab as keyof typeof sourceHelp] ?? sourceHelp[screen];
+  const template =
+    sourceHelp[tab as keyof typeof sourceHelp] ?? sourceHelp[screen];
+  const help =
+    tab === 'ai-cost'
+      ? typeof chatImageUnitCostKrw === 'number'
+        ? template.replace(
+            '{장당 원가}',
+            chatImageUnitCostKrw.toLocaleString('ko-KR', {
+              maximumFractionDigits: 2,
+            }),
+          )
+        : undefined
+      : template;
   const title = screens[screen].tabs.find(([key]) => key === tab)?.[1] ?? '';
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
       <h2 className="text-xl font-semibold">{title}</h2>
-      <Source source={source} help={help} />
+      {help ? (
+        <Source source={source} help={help} />
+      ) : (
+        <span className="text-xs text-muted-foreground">{source}</span>
+      )}
     </div>
   );
 }
@@ -156,6 +174,7 @@ function MetricsTab({
   const data = query.data as
     | {
         asOf: string;
+        chatImageUnitCostKrw?: number;
         pendingDates?: string[];
         campaign?: string;
         storyId?: string | null;
@@ -166,7 +185,13 @@ function MetricsTab({
 
   return (
     <>
-      <TabHeading screen={screen} tab={tab} />
+      <TabHeading
+        screen={screen}
+        tab={tab}
+        chatImageUnitCostKrw={
+          query.isError ? undefined : data?.chatImageUnitCostKrw
+        }
+      />
       <QueryState
         pending={query.isPending}
         error={query.error}

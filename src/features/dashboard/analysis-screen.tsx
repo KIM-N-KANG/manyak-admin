@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import {
   aiFeatureLabel,
   distributionNumber,
+  orderedAiPoints,
 } from '@/features/dashboard/chart-data';
 import { DistributionChart } from '@/features/dashboard/distribution-chart';
 import { getDistributionHref } from '@/features/dashboard/links';
@@ -30,7 +31,10 @@ function DistributionCard({
 }) {
   const distribution = {
     ...response,
-    points: response.points.map((point) => ({
+    points: (['ai-latency', 'ai-success'].includes(response.chartId)
+      ? orderedAiPoints(response.points)
+      : response.points
+    ).map((point) => ({
       ...point,
       label: aiFeatureLabel(point.label),
     })),

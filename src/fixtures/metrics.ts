@@ -204,15 +204,25 @@ export function metricFixture(path: string, query: URLSearchParams) {
     return {
       ...base,
       currency: 'KRW',
+      chatImageUnitCostKrw: 48,
       unpricedModels: ['UNPRICED'],
       totals: {
-        costKrw: dates.length * 6,
+        costKrw: dates.length * 150,
         costPerTurnKrw: 3,
         costPerStoryKrw: null,
       },
       daily: dates.map((date) => ({
         date,
         byFeature: [
+          {
+            feature: 'chat_image',
+            model: null,
+            calls: 3,
+            callsWithoutTokens: 0,
+            inputTokens: 0,
+            outputTokens: 0,
+            costKrw: 144,
+          },
           {
             feature: 'chat_response',
             model: 'AURORA',

@@ -1,5 +1,13 @@
 import type { ChartPoint, Distribution } from '@/features/dashboard/types';
 
+export const aiFeatures = [
+  'chat_response',
+  'choice_generation',
+  'chat_image',
+  'storyline_generation',
+  'story_completion',
+] as const;
+
 export const genreDepthTitle = '장르별 평균 턴 수';
 
 export function rankedPoints(distribution: Distribution): ChartPoint[] {
@@ -26,6 +34,7 @@ export function aiFeatureLabel(value: string) {
   const labels: Record<string, string> = {
     chat_response: 'AI 응답 생성',
     choice_generation: '선택지 생성',
+    chat_image: '실시간 이미지 생성',
     storyline_generation: '스토리라인 생성',
     story_completion: '간편 제작',
   };
@@ -39,4 +48,23 @@ export function distributionNumber(value: number, unit: string) {
       ? { minimumFractionDigits: 1, maximumFractionDigits: 1 }
       : { maximumFractionDigits: 1 },
   );
+}
+
+export function aiFeatureIndex(point: ChartPoint) {
+  const feature = point.link.params.aiFeature ?? point.label;
+  const index = aiFeatures.findIndex(
+    (key) => key === feature || aiFeatureLabel(key) === feature,
+  );
+
+  return index < 0 ? aiFeatures.length : index;
+}
+export function orderedAiPoints(points: ChartPoint[]) {
+  return points.toSorted((a, b) => aiFeatureIndex(a) - aiFeatureIndex(b));
+}
+export function aiFeatureColor(point: ChartPoint) {
+  const index = aiFeatureIndex(point);
+
+  return index < aiFeatures.length
+    ? `var(--chart-${index + 1})`
+    : 'var(--muted-foreground)';
 }
