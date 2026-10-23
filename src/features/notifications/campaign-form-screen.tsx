@@ -91,9 +91,7 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
 
   return (
     <>
-      <PageHeading
-        title="새 캠페인"
-        description="대상 수와 문구를 확인한 뒤 예약하거나 즉시 발송하세요.">
+      <PageHeading title="새 캠페인">
         <TextLink href="/notifications/campaigns">목록으로</TextLink>
       </PageHeading>
       <Card>

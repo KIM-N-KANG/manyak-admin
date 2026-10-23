@@ -285,8 +285,7 @@ export function DetailScreen({
                 ? d.nickname
                 : `${titles[domain]} 상세`
             : `${titles[domain]} 상세`
-        }
-        description="공개 식별자로 연결된 운영 정보를 확인하세요.">
+        }>
         {domain === 'payments' && (
           <ExternalToolLink href={externalLinks.groble}>
             그로블에서 보기

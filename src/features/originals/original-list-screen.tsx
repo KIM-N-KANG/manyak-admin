@@ -47,9 +47,7 @@ export function OriginalListScreen() {
 
   return (
     <>
-      <PageHeading
-        title="오리지널"
-        description="공식 계정 마냑의 오리지널 스토리를 관리하세요.">
+      <PageHeading title="오리지널">
         <Link href="/originals/new" className={buttonVariants()}>
           새 오리지널
         </Link>

@@ -22,9 +22,7 @@ export function NoticeListScreen() {
 
   return (
     <>
-      <PageHeading
-        title="공지"
-        description="공지의 작성과 게시, 알림 요청을 관리하세요.">
+      <PageHeading title="공지">
         <Link href="/notices/new" className={buttonVariants()}>
           새 공지
         </Link>

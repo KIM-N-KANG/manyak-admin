@@ -157,9 +157,7 @@ export function DashboardScreen() {
 
   return (
     <>
-      <PageHeading
-        title="개요"
-        description="서비스의 흐름과 이용 현황을 확인해 주세요.">
+      <PageHeading title="개요">
         <RangePicker range={range} />
       </PageHeading>
       <QueryState

@@ -8,6 +8,7 @@ import {
   QueryState,
   TextLink,
 } from '@/components/admin/data-ui';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 import {
   aiFeatureLabel,
@@ -43,10 +44,14 @@ function DistributionCard({
           ? 'min-w-0 xl:col-span-2'
           : 'min-w-0'
       }>
-      <h2 className="font-semibold">{distribution.title}</h2>
-      <p className="mt-2 min-h-10 text-xs leading-5 text-muted-foreground">
-        {distribution.description}
-      </p>
+      <div className="flex items-center gap-2">
+        <h2 className="font-semibold">{distribution.title}</h2>
+        {distribution.description ? (
+          <HelpTooltip label={`${distribution.title} 집계 안내`}>
+            {distribution.description}
+          </HelpTooltip>
+        ) : null}
+      </div>
       <DistributionChart
         distribution={distribution}
         onSelect={(point) => router.push(getDistributionHref(point.link))}
@@ -94,9 +99,7 @@ export function DashboardAnalysisScreen() {
 
   return (
     <>
-      <PageHeading
-        title="분석"
-        description="이용 분포를 살펴보고 관련 목록으로 이동해 주세요.">
+      <PageHeading title="분석">
         <RangePicker range={range} />
       </PageHeading>
       <QueryState
@@ -107,10 +110,16 @@ export function DashboardAnalysisScreen() {
       {charts.data ? (
         <>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold tracking-tight">이용 분포</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold tracking-tight">
+                이용 분포
+              </h2>
+              <HelpTooltip label="이용 분포 탐색 안내">
+                차트 항목이나 수치를 누르면 관련 목록으로 이동합니다.
+              </HelpTooltip>
+            </div>
             <span className="text-xs text-muted-foreground">
-              {charts.data.from} ~ {charts.data.to} (KST). 차트 항목이나 수치를
-              누르면 관련 목록으로 이동합니다.
+              {charts.data.from} ~ {charts.data.to} (KST)
             </span>
           </div>
           {distributionCategories.map(([category, label]) => (

@@ -69,9 +69,7 @@ export function OriginalDetailScreen({ id }: { id: string }) {
       />
       {data ? (
         <>
-          <PageHeading
-            title={preview(data.title) || '(제목 없는 초안)'}
-            description={`공식 계정 ${data.owner.nickname} · ${data.status === 'DRAFT' ? '초안' : '발행'} · ${dateTime(data.updatedAt)} 수정`}>
+          <PageHeading title={preview(data.title) || '(제목 없는 초안)'}>
             <div className="flex flex-wrap gap-2">
               <Link href={`/originals/${id}/edit`} className={buttonVariants()}>
                 수정
@@ -119,6 +117,11 @@ export function OriginalDetailScreen({ id }: { id: string }) {
               )}
               <div>
                 <Status value={data.visibility} />
+                <p className="mt-3 text-sm text-muted-foreground">
+                  공식 계정 {data.owner.nickname} ·{' '}
+                  {data.status === 'DRAFT' ? '초안' : '발행'} ·{' '}
+                  {dateTime(data.updatedAt)} 수정
+                </p>
                 <p className="mt-4 text-sm text-muted-foreground">
                   {data.genres.join(' · ')}
                 </p>

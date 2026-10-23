@@ -25,9 +25,7 @@ export function CampaignListScreen() {
 
   return (
     <>
-      <PageHeading
-        title="캠페인"
-        description="공지와 광고 캠페인의 예약·발송 결과를 확인하세요.">
+      <PageHeading title="캠페인">
         <Link href="/notifications/campaigns/new" className={buttonVariants()}>
           새 캠페인
         </Link>

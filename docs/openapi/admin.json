@@ -6,8 +6,8 @@
     "version": "v1"
   },
   "x-source": {
-    "input": "/tmp/knk-admin-orch/metrics-375e481-openapi.json",
-    "receivedAt": "2026-10-23T09:34:52.338Z",
+    "input": "/tmp/knk-admin-orch/analytics-current-openapi.json",
+    "receivedAt": "2026-10-23T10:04:47.365Z",
     "revision": "375e481"
   },
   "paths": {

@@ -36,9 +36,7 @@ export function CampaignDetailScreen({ id }: { id: string }) {
 
   return (
     <>
-      <PageHeading
-        title="캠페인 상세"
-        description="대상부터 실제 도달까지 단계를 나누어 확인하세요.">
+      <PageHeading title="캠페인 상세">
         <TextLink href="/notifications/campaigns">목록으로</TextLink>
       </PageHeading>
       <QueryState pending={q.isPending} error={q.error} retry={q.refetch} />

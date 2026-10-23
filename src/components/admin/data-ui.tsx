@@ -8,11 +8,11 @@ import { Card } from '@/components/ui/card';
 
 export function PageHeading({
   title,
-  description,
+  help,
   children,
 }: {
   title: string;
-  description: string;
+  help?: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -22,8 +22,8 @@ export function PageHeading({
           <h1 className="text-[32px] leading-10 font-semibold tracking-[-1.28px]">
             {title}
           </h1>
+          {help}
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
       </div>
       {children}
     </div>

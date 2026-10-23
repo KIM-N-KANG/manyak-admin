@@ -22,10 +22,7 @@ export function TemplateScreen() {
 
   return (
     <>
-      <PageHeading
-        title="문구 템플릿"
-        description="시나리오의 현재 문구와 예약된 변경을 관리하세요."
-      />
+      <PageHeading title="문구 템플릿" />
       <QueryState pending={q.isPending} error={q.error} retry={q.refetch} />
       {q.data ? <TemplateEditor template={q.data} /> : null}
     </>
