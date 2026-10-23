@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { GET as chatList } from '@/app/api/chats/route';
+import { GET as creditList } from '@/app/api/credits/transactions/route';
 import { GET as chartResponse } from '@/app/api/dashboard/charts/route';
 import { GET as summaryResponse } from '@/app/api/dashboard/summary/route';
 import { GET as memberDetail } from '@/app/api/members/[id]/route';
-import { GET as transactionList } from '@/app/api/members/[id]/transactions/route';
 import { GET as memberList } from '@/app/api/members/route';
 import { GET as paymentList } from '@/app/api/payments/route';
 import { GET as storyList } from '@/app/api/stories/route';
 import type { ChatRoom } from '@/features/chats/types';
+import type { CreditTransactionItem } from '@/features/credits/types';
 import { getDistributionHref } from '@/features/dashboard/links';
 import {
   getDailyMetricHref,
@@ -75,7 +76,7 @@ const mean = (values: number[]) =>
 
 // 지급·소진 사유는 ADMIN 2-4의 원장 집계 계약을 따른다.
 function matches(
-  transaction: CreditTransaction,
+  transaction: Pick<CreditTransaction, 'amount' | 'reason' | 'createdAt'>,
   day: string,
   direction: 'granted' | 'spent',
 ) {
@@ -217,7 +218,7 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
   });
 
   it.each([7, 90])(
-    '%i일 회원 생성 횟수는 가입일과 무관하게 기간 채팅방으로 분류한다',
+    '%i일 회원 생성 횟수는 가입일과 무관하게 기간 채팅으로 분류한다',
     async (days) => {
       const data = await charts(days);
       const rooms = await all<ChatRoom>(
@@ -335,49 +336,32 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
   });
 
   it.each(['granted', 'spent'] as const)(
-    '%s 일별 링크는 회원별 상세 원장의 날짜·금액 방향·사유와 일치한다',
+    '%s 일별 링크는 거래 원장의 날짜·금액 방향·사유와 일치한다',
     async (direction) => {
       const data = await charts(7);
       const day = data.daily.find((d) => d.date === '2026-10-21')!;
       const href = getDailyMetricHref(direction, day.date);
       const url = new URL(href, 'http://localhost');
 
-      expect(url.searchParams.get('creditDirection')).toBe(direction);
+      expect(url.pathname).toBe('/credits/transactions');
+      expect(url.searchParams.get('direction')).toBe(direction);
+      expect(url.searchParams.get('date')).toBe(day.date);
 
-      const selected = await all<MemberListItem>(href, memberList);
-      const amounts: number[] = [];
+      const selected = await all<CreditTransactionItem>(href, creditList);
 
-      for (const member of selected) {
-        const memberData = (await (
-          await transactionList(
-            request(`/members/${member.memberId}/transactions`),
-            { params: Promise.resolve({ id: member.memberId }) },
-          )
-        ).json()) as Page<CreditTransaction>;
-        const rows = memberData.items.filter((t) =>
-          matches(t, day.date, direction),
-        );
-
-        expect(rows.length).toBeGreaterThan(0);
-        amounts.push(...rows.map((t) => Math.abs(t.amount)));
-      }
-
-      expect(total(amounts)).toBe(day[direction]);
-
-      const third = '00000001-0000-4000-8000-000000000003';
-
+      expect(selected.length).toBeGreaterThan(0);
+      expect(selected.every((row) => matches(row, day.date, direction))).toBe(
+        true,
+      );
+      expect(total(selected.map((row) => Math.abs(row.amount)))).toBe(
+        day[direction],
+      );
       expect(
-        (
-          (await (
-            await transactionList(request(`/members/${third}/transactions`), {
-              params: Promise.resolve({ id: third }),
-            })
-          ).json()) as Page<CreditTransaction>
-        ).items.some((t) => t.reason === 'REFUND'),
-      ).toBe(true);
-      expect(selected.some((m) => m.memberId === third)).toBe(false);
+        selected.some(
+          (row) => row.reason === 'REFUND' || row.reason === 'EXPIRE',
+        ),
+      ).toBe(false);
     },
-    20000,
   );
 
   it('KST 자정 전후 거래를 구분하고 환불·만료를 지급·소진에 포함하지 않는다', async () => {
@@ -401,7 +385,7 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
     ).toHaveLength(0);
   });
 
-  it('회원 목록·상세의 전체 chatCount는 실제 채팅방 수를 공유하고 0개 회원은 횟수 구간에서 제외한다', async () => {
+  it('회원 목록·상세의 전체 chatCount는 실제 채팅 수를 공유하고 0개 회원은 횟수 구간에서 제외한다', async () => {
     for (const id of [
       '00000001-0000-4000-8000-000000000004',
       '00000001-0000-4000-8000-000000000005',

@@ -8,11 +8,17 @@ import { useApi } from '@/features/shared/use-api';
 export function useManagementList<T>(
   endpoint: string,
   defaultSort = 'createdAt',
+  queryDefaults: Record<string, string> = {},
 ) {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const query = useApi<Page<T>>(`${endpoint}?${params}`);
+  const apiParams = new URLSearchParams(params);
+
+  for (const [key, value] of Object.entries(queryDefaults))
+    if (!apiParams.has(key)) apiParams.set(key, value);
+
+  const query = useApi<Page<T>>(`${endpoint}?${apiParams}`);
   const sort = params.get('sort') ?? defaultSort;
   const order = params.get('order') ?? 'desc';
 

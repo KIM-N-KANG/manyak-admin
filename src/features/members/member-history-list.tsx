@@ -9,6 +9,7 @@ import {
   QueryState,
 } from '@/components/admin/data-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
+import { creditReasonLabel } from '@/features/credits/reason-label';
 import type {
   AttendanceRecord,
   CreditTransaction,
@@ -36,7 +37,7 @@ export function MemberHistoryList({
   const query = useApi<Page<CreditTransaction | AttendanceRecord>>(
     `/api/members/${encodeURIComponent(memberId)}/${kind}?${apiParams}`,
   );
-  const title = kind === 'transactions' ? '이프 거래 내역' : '출석 기록';
+  const title = kind === 'transactions' ? '이프 내역' : '출석 기록';
 
   function href(page: number) {
     const next = new URLSearchParams(params);
@@ -59,14 +60,14 @@ export function MemberHistoryList({
             headers={
               kind === 'transactions'
                 ? ['시각', '사유', '변동 이프', '거래 후 잔액']
-                : ['출석일 (KST)', '지급 이프']
+                : ['출석일 (KST)', '적립 이프']
             }
             empty={!query.data.items.length}>
             {query.data.items.map((row, index) =>
               'createdAt' in row ? (
                 <tr key={`${row.createdAt}-${index}`}>
                   <td>{dateTime(row.createdAt)}</td>
-                  <td>{row.reason}</td>
+                  <td>{creditReasonLabel(row.reason)}</td>
                   <td>
                     {row.amount > 0 ? '+' : ''}
                     <NumberValue value={row.amount} />

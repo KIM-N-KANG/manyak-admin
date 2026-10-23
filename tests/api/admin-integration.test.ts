@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { adminEndpoints } from '@/api/admin-endpoints';
 import { GET as handle } from '@/app/api/admin-upstream/[...path]/route';
 import { sessionCookie } from '@/features/auth/session';
+import { proxy } from '@/proxy';
 
 const id = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 const cookie = `${sessionCookie}=${Buffer.from(JSON.stringify({ accessToken: 'forged-test-token', nickname: '테스트 관리자' })).toString('base64url')}`;
@@ -37,6 +38,69 @@ const cases: [string, string, string, unknown?][] = [
   ],
   ['POST', `/notices/${id}/unpublish`, `/notices/${id}/unpublish`, reason],
   ['GET', '/dashboard/summary', '/dashboard/summary'],
+  [
+    'GET',
+    '/users/activity?from=2026-10-01&to=2026-10-21',
+    '/users/activity?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/users/retention?from=2026-10-01&to=2026-10-20',
+    '/users/retention?from=2026-10-01&to=2026-10-20',
+  ],
+  [
+    'GET',
+    '/users/sessions?from=2026-10-01&to=2026-10-21',
+    '/users/sessions?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/users/signups?from=2026-10-01&to=2026-10-21',
+    '/users/signups?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/conversion/funnels/web-first-visit?from=2026-10-01&to=2026-10-21',
+    '/conversion/funnels/web-first-visit?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/conversion/turn-reach?from=2026-10-01&to=2026-10-21',
+    '/conversion/turn-reach?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/quality/client?platform=web&from=2026-10-01&to=2026-10-21',
+    '/quality/client?platform=web&from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/quality/chat-options?from=2026-10-01&to=2026-10-21',
+    '/quality/chat-options?from=2026-10-01&to=2026-10-21',
+  ],
+  [
+    'GET',
+    '/quality/ai-cost?from=2026-10-01&to=2026-10-21',
+    '/quality/ai-cost?from=2026-10-01&to=2026-10-21',
+  ],
+  ['GET', '/campaigns', '/campaigns'],
+  ['GET', '/campaigns/sources?days=7', '/campaigns/sources?days=7'],
+  [
+    'GET',
+    '/campaigns/analytics?campaign=test&days=7',
+    '/campaigns/analytics?campaign=test&days=7',
+  ],
+  [
+    'GET',
+    '/campaigns/funnels/creation?days=7',
+    '/campaigns/funnels/creation?days=7',
+  ],
+  [
+    'GET',
+    `/campaigns/funnels/story-detail?storyId=${id}&days=7`,
+    `/campaigns/funnels/story-detail?storyId=${id}&days=7`,
+  ],
+  ['GET', '/dashboard/play-installs', '/dashboard/play-installs'],
   ['GET', '/dashboard/charts?days=7', '/dashboard/charts?days=7'],
   ['GET', '/dashboard/analytics?days=30', '/dashboard/analytics?days=30'],
   [
@@ -79,6 +143,11 @@ const cases: [string, string, string, unknown?][] = [
     'GET',
     '/audit-logs?action=MEMBER_SEARCHED&category=ACCESS',
     '/audit-logs?action=MEMBER_SEARCHED&category=ACCESS',
+  ],
+  [
+    'GET',
+    '/credits/transactions?direction=spent&date=2026-10-21&page=2&size=5&sort=createdAt&order=asc',
+    '/credits/transactions?direction=spent&date=2026-10-21&page=2&size=5&sort=createdAt&order=asc',
   ],
   ['GET', '/credits/policies', '/credits/policies'],
   [
@@ -385,4 +454,206 @@ it('공지 PATCH는 줄바꿈과 Unicode 공백 사이의 실제 글자를 허�
       })
     ).status,
   ).toBe(200);
+});
+
+it('공개 이프 내역 경로를 server BFF로 rewrite하고 서버의 원장 페이지를 그대로 반환한다', async () => {
+  const body = {
+    items: [
+      {
+        amount: -30,
+        reason: 'CHAT_TURN',
+        createdAt: '2026-10-21T04:00:00Z',
+        member: {
+          memberId: id,
+          nickname: '회원',
+          status: 'ACTIVE',
+          isAdmin: false,
+          createdAt: '2026-10-01T00:00:00Z',
+        },
+      },
+    ],
+    page: 1,
+    size: 20,
+    totalElements: 1,
+    totalPages: 1,
+  };
+  const fetchMock = vi.fn().mockResolvedValue(Response.json(body));
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  const incoming = new NextRequest(
+    'https://admin.example/api/credits/transactions?page=1&size=20&order=desc',
+    { headers: { Cookie: cookie } },
+  );
+  const rewritten = proxy(incoming).headers.get('x-middleware-rewrite');
+
+  expect(rewritten).toBe(
+    'https://admin.example/api/admin-upstream/credits/transactions?page=1&size=20&order=desc',
+  );
+
+  const response = await handle(
+    new NextRequest(rewritten!, { headers: incoming.headers }),
+    { params: Promise.resolve({ path: ['credits', 'transactions'] }) },
+  );
+
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual(body);
+  expect(fetchMock).toHaveBeenCalledOnce();
+  expect(fetchMock.mock.calls[0][0]).toBe(
+    'https://upstream.example/api/v1/admin/credits/transactions?page=1&size=20&order=desc',
+  );
+});
+
+it.each([
+  '',
+  'page=0&size=20&order=desc',
+  'page=1&size=101&order=desc',
+  'page=1&size=20&order=desc&direction=refund',
+  'page=1&size=20&order=up',
+  'page=1.5&size=20&order=desc',
+  'page=1&size=20&size=30&order=desc',
+  'page=1&size=20&order=desc&memberId=3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+  'page=1&size=20&order=desc&unexpected=1',
+  'size=20&order=desc',
+  'page=1&order=desc',
+  'page=1&size=20',
+])(
+  '이프 내역의 잘못된 생성 계약 쿼리 %s는 업스트림 호출 전에 400이다',
+  async (query) => {
+    const fetchMock = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await invoke(
+      'GET',
+      `/credits/transactions${query ? `?${query}` : ''}`,
+    );
+
+    expect(response.status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  },
+);
+
+it.each(['charts', 'analytics'])(
+  '공개 대시보드 %s 경로의 from·to를 생성 계약 검증 후 그대로 전달한다',
+  async (endpoint) => {
+    const query = 'from=2026-10-01&to=2026-10-22';
+    const body = { from: '2026-10-01', to: '2026-10-22', daily: [] };
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(body));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const incoming = new NextRequest(
+      `https://admin.example/api/dashboard/${endpoint}?${query}`,
+      { headers: { Cookie: cookie } },
+    );
+    const rewritten = proxy(incoming).headers.get('x-middleware-rewrite');
+
+    expect(rewritten).toBe(
+      `https://admin.example/api/admin-upstream/dashboard/${endpoint}?${query}`,
+    );
+
+    const response = await handle(
+      new NextRequest(rewritten!, { headers: incoming.headers }),
+      { params: Promise.resolve({ path: ['dashboard', endpoint] }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(body);
+    expect(fetchMock).toHaveBeenCalledOnce();
+
+    const [url, options] = fetchMock.mock.calls[0];
+    const upstream = new URL(url);
+
+    expect(url).toBe(
+      `https://upstream.example/api/v1/admin/dashboard/${endpoint}?${query}`,
+    );
+    expect(upstream.searchParams.has('days')).toBe(false);
+    expect(options.headers.get('Authorization')).toBe(
+      'Bearer forged-test-token',
+    );
+    expect(options.headers.has('Cookie')).toBe(false);
+  },
+);
+
+it.each(['charts', 'analytics'])(
+  '%s 범위의 서버 검증 오류와 서비스 실패를 그대로 반환한다',
+  async (endpoint) => {
+    for (const status of [400, 503]) {
+      const body = {
+        status,
+        code: status === 400 ? 'BAD_REQUEST' : 'SERVICE_UNAVAILABLE',
+        message: '서버 오류',
+      };
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(Response.json(body, { status }));
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      const response = await invoke(
+        'GET',
+        `/dashboard/${endpoint}?from=2026-10-22&to=2026-10-01`,
+      );
+
+      expect(response.status).toBe(status);
+      expect(await response.json()).toEqual(body);
+      expect(fetchMock).toHaveBeenCalledOnce();
+    }
+  },
+);
+
+it.each(['charts', 'analytics'])(
+  '%s의 생성 days enum·중복·알 수 없는 범위 쿼리를 업스트림 전에 거부한다',
+  async (endpoint) => {
+    for (const query of [
+      'days=14',
+      'days=7.0',
+      'from=2026-10-01&from=2026-10-02&to=2026-10-22',
+      'range=last30d',
+    ]) {
+      const fetchMock = vi.fn();
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      const response = await invoke('GET', `/dashboard/${endpoint}?${query}`);
+
+      expect(response.status).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    }
+  },
+);
+
+it('개요 분석의 플랫폼 객체·null·준비 중 날짜를 변환 없이 전달한다', async () => {
+  for (const todayActiveUsers of [
+    null,
+    { total: 203, web: 186, android: 19 },
+  ]) {
+    const body = {
+      asOf: '2026-10-23T05:00:00Z',
+      from: '2026-10-20',
+      to: '2026-10-22',
+      todayActiveUsers,
+      pendingDates: ['2026-10-21'],
+      daily: [
+        {
+          date: '2026-10-20',
+          activeUsers: { total: 198, web: 181, android: 19 },
+          newUsers: { total: 27, web: 25, android: 2 },
+        },
+      ],
+    };
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(body));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await invoke(
+      'GET',
+      '/dashboard/analytics?from=2026-10-20&to=2026-10-22',
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(body);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  }
 });

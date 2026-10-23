@@ -29,6 +29,11 @@ vi.mock('@/features/shared/use-api', () => ({
 vi.mock('recharts', () => ({
   AreaChart: ({ children }: PropsWithChildren) =>
     createElement('div', null, children),
+  LineChart: ({ children }: PropsWithChildren) =>
+    createElement('div', null, children),
+  Line: ({ children }: PropsWithChildren) =>
+    createElement('div', null, children),
+  LabelList: () => null,
   Area: () => null,
   CartesianGrid: () => null,
   XAxis: () => null,
@@ -37,6 +42,8 @@ vi.mock('recharts', () => ({
 vi.mock('@/components/ui/chart', () => ({
   ChartContainer: ({ children }: PropsWithChildren) =>
     createElement('div', null, children),
+  ChartLegend: () => null,
+  ChartLegendContent: () => null,
   ChartTooltip: () => null,
   ChartTooltipContent: () => null,
 }));
@@ -54,7 +61,7 @@ function assertExternal(label: string, href: string) {
   expect(link.querySelector('svg[aria-hidden="true"]')).toBeTruthy();
 }
 
-it('외부 도구는 아코디언으로 접고 펼치며 닉네임 위에 배치한다', () => {
+it('외부 도구 버튼은 닉네임 위에 있으며 팝오버로 링크를 연다', () => {
   render(createElement(AdminShell, { nickname: '운영자' }, '본문'));
 
   const trigger = screen.getByRole('button', { name: '외부 도구' });
@@ -85,9 +92,7 @@ it('외부 도구는 아코디언으로 접고 펼치며 닉네임 위에 배치
   ).toEqual(['Amplitude', 'OpenSearch 로그', 'Sentry', 'Langfuse', '그로블']);
 
   expect(
-    screen
-      .getByRole('link', { name: '그로블' })
-      .compareDocumentPosition(screen.getByText('운영자')) &
+    trigger.compareDocumentPosition(screen.getByText('운영자')) &
       Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
   fireEvent.click(trigger);
@@ -112,8 +117,15 @@ it('Amplitude 카드에서 계약에 없는 URL 필드를 추가하지 않고 �
     asOf: '2026-10-21T00:00:00Z',
     from: '2026-10-21',
     to: '2026-10-21',
-    todayActiveUsers: 1,
-    daily: [{ date: '2026-10-21', activeUsers: 1, newUsers: 1 }],
+    todayActiveUsers: { total: 1, web: 1, android: 0 },
+    pendingDates: [],
+    daily: [
+      {
+        date: '2026-10-21',
+        activeUsers: { total: 1, web: 1, android: 0 },
+        newUsers: { total: 1, web: 1, android: 0 },
+      },
+    ],
   };
   render(createElement(AnalyticsSection, { days: '7' }));
   assertExternal('Amplitude에서 보기', externalLinks.amplitude);

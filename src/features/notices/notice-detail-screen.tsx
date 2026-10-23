@@ -128,7 +128,7 @@ export function NoticeDetailScreen({ id }: { id: string }) {
                   {notify ? (
                     <>
                       <label className="grid gap-2 text-sm">
-                        알림 종류
+                        알림 성격
                         <select
                           className="control"
                           value={kind}

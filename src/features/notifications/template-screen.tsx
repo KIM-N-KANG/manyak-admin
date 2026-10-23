@@ -75,7 +75,7 @@ function TemplateEditor({ template }: { template: Template }) {
   return (
     <>
       <Card>
-        <h2 className="text-xl font-semibold">출석 리마인더</h2>
+        <h2 className="text-xl font-semibold">출석 알림</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           attendance_reminder · 광고성 ·{' '}
           {template.effective.isDefault ? '기본 문구' : '변경 문구'}

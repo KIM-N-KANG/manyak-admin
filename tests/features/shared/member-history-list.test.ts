@@ -57,7 +57,9 @@ it.each(['transactions', 'attendance'] as const)(
       ),
     );
 
-    const pagination = await screen.findByRole('navigation');
+    const pagination = await screen.findByRole('navigation', {
+      name: `${kind === 'transactions' ? '이프 내역' : '출석 기록'} 페이지`,
+    });
     const request = new URL(requested[0], 'http://localhost');
 
     expect(request.searchParams.toString()).toBe('page=2&size=1');

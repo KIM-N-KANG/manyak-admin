@@ -33,10 +33,12 @@ export function QueryState({
   pending,
   error,
   retry,
+  source,
 }: {
   pending: boolean;
   error: Error | null;
   retry: () => unknown;
+  source?: 'amplitude' | 'play';
 }) {
   const serverNotImplemented =
     error instanceof FetchError &&
@@ -46,18 +48,28 @@ export function QueryState({
     'message' in error.data &&
     error.data.message === '서버 미구현';
 
+  const unavailable = error instanceof FetchError && error.status === 503;
+
   if (error)
     return (
       <Card role="alert">
         <h2 className="font-semibold">
           {serverNotImplemented
-            ? '서버 미구현'
-            : '데이터를 불러오지 못했습니다'}
+            ? '기능 준비 중'
+            : unavailable && source === 'amplitude'
+              ? 'Amplitude 지표를 불러올 수 없음'
+              : unavailable && source === 'play'
+                ? '설치 지표 사용 불가'
+                : '데이터 불러오기 실패'}
         </h2>
         <p className="my-3 text-sm text-muted-foreground">
           {serverNotImplemented
             ? '이 기능은 서버 연결을 준비 중입니다.'
-            : '주소와 필터를 확인한 뒤 다시 시도하세요.'}
+            : unavailable && source === 'amplitude'
+              ? '잠시 후 다시 시도해 주세요.'
+              : unavailable && source === 'play'
+                ? '잠시 후 다시 시도해 주세요. 문제가 계속되면 Play 설치 지표 설정과 보고서 상태를 확인해 주세요.'
+                : '잠시 후 다시 시도해 주세요. 문제가 계속되면 담당자에게 문의해 주세요.'}
         </p>
         <Button variant="outline" onClick={() => void retry()}>
           다시 시도

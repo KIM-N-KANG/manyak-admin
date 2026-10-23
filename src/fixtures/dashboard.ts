@@ -1,3 +1,5 @@
+import { genreDepthTitle } from '@/features/dashboard/chart-data';
+import type { DateRange } from '@/features/dashboard/date-range';
 import type {
   ChartLink,
   DailyMetrics,
@@ -18,6 +20,7 @@ import {
   stories,
 } from '@/fixtures/entities';
 import { inPeriod, kstDate } from '@/fixtures/query';
+import { rangeDaily } from '@/fixtures/range-daily';
 
 const asOf = '2026-10-21T09:00:00Z';
 const today = kstDate(asOf);
@@ -81,8 +84,8 @@ export const summary: DashboardSummary = {
   },
 };
 
-const daily: DailyMetrics[] = Array.from({ length: 90 }, (_, i) => ({
-  date: new Date(Date.UTC(2026, 6, 24 + i)).toISOString().slice(0, 10),
+const daily: DailyMetrics[] = Array.from({ length: 366 }, (_, i) => ({
+  date: new Date(Date.UTC(2025, 9, 21 + i)).toISOString().slice(0, 10),
   joined: 0,
   chats: 0,
   turns: 0,
@@ -162,6 +165,14 @@ function distribution(
 ): Distribution {
   return {
     chartId,
+    category:
+      chartId === 'started-as' || chartId === 'member-chats'
+        ? 'users'
+        : chartId === 'characters'
+          ? 'content'
+          : chartId.startsWith('ai-')
+            ? 'ai-quality'
+            : 'engagement',
     title,
     description,
     unit,
@@ -187,10 +198,24 @@ function percentile(values: number[], p: number) {
   return sorted[lo] + (sorted[Math.ceil(at)] - sorted[lo]) * (at - lo);
 }
 
-export function getDashboardCharts(days: number): DashboardCharts {
-  const selected = daily.slice(-days);
-  const from = selected[0].date;
-  const to = selected[selected.length - 1].date;
+export function getDashboardCharts(days: number | DateRange): DashboardCharts {
+  const selected =
+    typeof days === 'number'
+      ? daily.slice(-days)
+      : rangeDaily(daily, days, {
+          joined: 0,
+          chats: 0,
+          turns: 0,
+          stories: 0,
+          granted: 0,
+          spent: 0,
+          payments: 0,
+          revenue: 0,
+          attendance: 0,
+        });
+  const from = typeof days === 'number' ? selected[0].date : days.from;
+  const to =
+    typeof days === 'number' ? selected[selected.length - 1].date : days.to;
   const period = new URLSearchParams({ from, to });
   const periodChats = chats.filter((c) => inPeriod(c.startedAt, period));
   const counts = [...getChatCounts(from, to).values()];
@@ -242,8 +267,8 @@ export function getDashboardCharts(days: number): DashboardCharts {
     distributions: [
       distribution(
         'genre-depth',
-        '장르별 채팅 깊이',
-        '채팅 시작일 기준 · 복수 장르는 각각 포함 · 평균 현재 턴',
+        genreDepthTitle,
+        '채팅 시작일 기준, 복수 장르는 각각 포함, 평균 현재 턴',
         '턴',
         [
           ...new Set(
@@ -268,7 +293,7 @@ export function getDashboardCharts(days: number): DashboardCharts {
       distribution(
         'turns',
         '턴 수 분포',
-        '채팅 시작일 기준 · 구간별 채팅방 수',
+        '채팅 시작일 기준, 구간별 채팅 수',
         '개',
         [
           '0',
@@ -293,8 +318,8 @@ export function getDashboardCharts(days: number): DashboardCharts {
       ),
       distribution(
         'started-as',
-        '채팅방 소유자 게스트·회원',
-        '현재 소유 회원 유무 기준 · 게스트 이관은 회원으로 집계',
+        '채팅 소유자 게스트와 회원',
+        '현재 소유 회원 유무 기준, 게스트 이관은 회원으로 집계',
         '%',
         ['게스트', '회원'],
         (_, i) =>
@@ -309,8 +334,8 @@ export function getDashboardCharts(days: number): DashboardCharts {
       ),
       distribution(
         'member-chats',
-        '회원별 채팅방 생성 횟수',
-        '해당 기간에 채팅방을 만든 회원만 집계 · 가입일과 무관',
+        '회원별 채팅 생성 횟수',
+        '해당 기간에 채팅을 만든 회원만 집계, 가입일과 무관',
         '명',
         ['1개', '2개', '3~4개', '5~9개', '10개+'],
         (_, i) => counts.filter((count) => chatBucket(count) === i).length,
@@ -318,8 +343,8 @@ export function getDashboardCharts(days: number): DashboardCharts {
       ),
       distribution(
         'first-message',
-        '첫 사용자 메시지까지 시간',
-        `900초 이하만 통계 · 초과 ${periodChats.filter((c) => c.firstMessageSeconds !== null && c.firstMessageSeconds > 900).length}개, 입력 없음 ${periodChats.filter((c) => c.firstMessageSeconds === null).length}개 제외`,
+        '첫 사용자 입력까지 걸린 시간',
+        `900초 이하만 통계, 초과 ${periodChats.filter((c) => c.firstMessageSeconds !== null && c.firstMessageSeconds > 900).length}개, 입력 없음 ${periodChats.filter((c) => c.firstMessageSeconds === null).length}개 제외`,
         '초',
         ['평균', 'P50', 'P75', 'P90'],
         (_, i) =>
@@ -328,8 +353,8 @@ export function getDashboardCharts(days: number): DashboardCharts {
       ),
       distribution(
         'ai-latency',
-        '기능별 AI 호출 지연',
-        'AI 호출 생성일 기준 · 성공 호출 중 지연값이 있는 호출의 평균',
+        '기능별 AI 평균 호출 시간',
+        'AI 호출 생성일 기준, 성공 호출 중 지연값이 있는 호출의 평균',
         '초',
         features,
         (feature) =>
@@ -348,7 +373,7 @@ export function getDashboardCharts(days: number): DashboardCharts {
       distribution(
         'ai-success',
         '기능별 AI 성공률',
-        'AI 호출 생성일 기준 · 완료 호출(성공+실패) 중 성공 · 미완료 제외',
+        'AI 호출 생성일 기준, 완료 호출(성공+실패) 중 성공, 미완료 제외',
         '%',
         features,
         (feature) => {
@@ -366,9 +391,9 @@ export function getDashboardCharts(days: number): DashboardCharts {
       ),
       distribution(
         'characters',
-        '제작 세션 입력 인물 수',
-        '제작 세션 생성일 기준 · 주변 인물만 0~5명 · 오리지널 포함',
-        '세션',
+        '간편 제작별 입력 주변 인물 수',
+        '제작 세션 생성일 기준, 주변 인물만 0~5명, 오리지널 포함',
+        '건',
         ['0명', '1명', '2명', '3명', '4명', '5명'],
         (_, i) =>
           sessions.filter((s) => s.supportingCharacterCount === i).length,

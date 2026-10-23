@@ -3,22 +3,47 @@
 import { useId } from 'react';
 
 import { Tooltip } from '@base-ui/react/tooltip';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import {
+  CartesianGrid,
+  LabelList,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
-import { DataTable, dateTime, NumberValue } from '@/components/admin/data-ui';
+import {
+  DataTable,
+  dateTime,
+  NumberValue,
+  QueryState,
+} from '@/components/admin/data-ui';
 import { ExternalToolLink } from '@/components/admin/external-tool-link';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import type { DashboardAnalytics } from '@/features/dashboard/types';
+import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
+import { chartNumber } from '@/features/dashboard/chart-data';
+import type {
+  DashboardAnalytics,
+  DashboardPlatformCounts,
+} from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 import { externalLinks } from '@/lib/external-links';
 
 type AnalyticsMetric = 'activeUsers' | 'newUsers';
+
+const platforms = ['total', 'web', 'android'] as const;
+const platformConfig = {
+  total: { label: '합계', color: 'var(--primary)' },
+  web: { label: 'Web', color: 'var(--muted-foreground)' },
+  android: { label: 'Android', color: 'var(--primary-text)' },
+};
 
 const labels: Record<AnalyticsMetric, string> = {
   activeUsers: '일별 활성 사용자 (DAU)',
@@ -49,9 +74,12 @@ function AnalyticsSource() {
               id={descriptionId}
               role="tooltip"
               className="z-50 max-w-80 rounded-sm border bg-popover p-3 text-xs leading-5 text-popover-foreground shadow-sm">
-              Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있으며, 팀
-              계정을 제외한 기준입니다. Amplitude 사용자 수는 DB 회원 수와 다를
-              수 있습니다.
+              Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다.
+              팀 계정 코호트가 설정된 경우 해당 사용자는 제외합니다. 국가가
+              한국이거나 국가 정보가 없는 사용자 중 플랫폼이 Web 또는 Android인
+              고유 사용자만 집계합니다. 같은 사람이 두 플랫폼에서 활동하면
+              합계에는 한 번만 들어가므로 Web과 Android를 더한 값과 합계는 다를
+              수 있습니다. Amplitude 사용자 수는 DB 회원 수와 다를 수 있습니다.
             </Tooltip.Popup>
           </Tooltip.Positioner>
         </Tooltip.Portal>
@@ -61,22 +89,37 @@ function AnalyticsSource() {
 }
 
 function AnalyticsTrend({
-  daily,
+  data,
   metric,
 }: {
-  daily: DashboardAnalytics['daily'];
+  data: DashboardAnalytics;
   metric: AnalyticsMetric;
 }) {
+  const byDate = new Map(data.daily.map((day) => [day.date, day[metric]]));
+  const count = (Date.parse(data.to) - Date.parse(data.from)) / 86400000 + 1;
+  const rows = Array.from({ length: count }, (_, index) => {
+    const date = new Date(Date.parse(data.from) + index * 86400000)
+      .toISOString()
+      .slice(0, 10);
+
+    return {
+      date,
+      ...(byDate.get(date) ?? { total: null, web: null, android: null }),
+    };
+  });
+  const lastDate = data.daily.at(-1)?.date;
+
   return (
     <Card className="min-w-0">
       <h3 className="font-semibold">{labels[metric]}</h3>
       <ChartContainer
-        config={{
-          [metric]: { label: labels[metric], color: 'var(--primary)' },
-        }}
-        className="mt-6 h-[200px] w-full"
+        config={platformConfig}
+        className="mt-6 h-[240px] w-full"
         aria-label={`${labels[metric]} 추이`}>
-        <AreaChart accessibilityLayer data={daily}>
+        <LineChart
+          accessibilityLayer
+          data={rows}
+          margin={{ top: 20, right: 90, bottom: 8, left: 0 }}>
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="date"
@@ -85,24 +128,76 @@ function AnalyticsTrend({
             axisLine={false}
             minTickGap={24}
           />
-          <YAxis width={36} tickLine={false} axisLine={false} />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          <Area
-            type="monotone"
-            dataKey={metric}
-            stroke="var(--primary)"
-            fill="var(--primary)"
-            fillOpacity={0.08}
+          <YAxis width={40} tickLine={false} axisLine={false} unit="명" />
+          <ChartTooltip
+            cursor={<ChartCrosshair />}
+            isAnimationActive={false}
+            content={<ChartTooltipContent />}
           />
-        </AreaChart>
+          {platforms.map((platform, index) => (
+            <Line
+              key={platform}
+              name={platformConfig[platform].label}
+              type="linear"
+              dataKey={platform}
+              stroke={`var(--color-${platform})`}
+              strokeWidth={2}
+              strokeDasharray={
+                platform === 'web'
+                  ? '6 3'
+                  : platform === 'android'
+                    ? '2 3'
+                    : undefined
+              }
+              dot={false}
+              activeDot={{ r: 4 }}
+              connectNulls={false}
+              isAnimationActive={false}>
+              <LabelList
+                dataKey={(
+                  point: { date: string } & Record<
+                    keyof DashboardPlatformCounts,
+                    number | null
+                  >,
+                ) =>
+                  point.date === lastDate && point[platform] !== null
+                    ? `${platformConfig[platform].label} ${chartNumber(point[platform]!)}`
+                    : null
+                }
+                position="right"
+                dy={(index - 1) * 14}
+                fill="var(--foreground)"
+                fontSize={11}
+              />
+            </Line>
+          ))}
+          <ChartLegend content={<ChartLegendContent />} />
+        </LineChart>
       </ChartContainer>
     </Card>
   );
 }
 
-export function AnalyticsSection({ days }: { days: string }) {
+export function AnalyticsSection({
+  days,
+  query: rangeQuery,
+  label,
+}: {
+  days?: string;
+  query?: string;
+  label?: string;
+}) {
   const query = useApi<DashboardAnalytics>(
-    `/api/dashboard/analytics?days=${days}`,
+    `/api/dashboard/analytics?${rangeQuery ?? `days=${days}`}`,
+    true,
+    {
+      refetchInterval: ({ state }) =>
+        state.data &&
+        (state.data.pendingDates.length > 0 ||
+          state.data.todayActiveUsers === null)
+          ? 60000
+          : false,
+    },
   );
   const data = query.data;
 
@@ -118,36 +213,70 @@ export function AnalyticsSection({ days }: { days: string }) {
           <AnalyticsSource />
         </div>
         <p className="text-xs text-muted-foreground">
-          최근 {days}일 · KST · 집계가 몇 분 늦을 수 있습니다
+          {label ?? `최근 ${days}일`} (KST). 집계가 몇 분 늦게 반영될 수
+          있습니다.
         </p>
       </div>
-      {query.isError ? (
-        <Card role="alert">
-          <h3 className="font-semibold">Amplitude 지표를 불러올 수 없음</h3>
-          <p className="my-3 text-sm text-muted-foreground">
-            잠시 후 다시 시도해 주세요.
-          </p>
-          <Button variant="outline" onClick={() => void query.refetch()}>
-            다시 시도
-          </Button>
-        </Card>
-      ) : query.isPending ? (
-        <Card role="status" className="py-10 text-center text-muted-foreground">
-          Amplitude 지표를 불러오는 중입니다…
-        </Card>
-      ) : data ? (
+      <QueryState
+        pending={query.isPending}
+        error={query.error}
+        retry={query.refetch}
+        source="amplitude"
+      />
+      {data && !query.isError ? (
         <>
-          <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
-            <Card className="flex flex-col lg:col-span-2 xl:col-span-1">
+          <div className="space-y-5">
+            {data.pendingDates.length > 0 ? (
+              <div
+                role="status"
+                className="rounded-md border p-3 text-xs text-muted-foreground">
+                준비 중 날짜 {data.pendingDates.length}개. 60초 뒤 다시
+                요청합니다.
+                <details className="mt-2">
+                  <summary className="cursor-pointer">준비 중 날짜</summary>
+                  <p className="mt-2">{data.pendingDates.join(', ')}</p>
+                </details>
+              </div>
+            ) : null}
+
+            <Card className="flex flex-col">
               <h3 className="text-sm text-muted-foreground">
                 오늘 활성 사용자
               </h3>
-              <p className="mt-4 text-3xl font-semibold tracking-tight">
-                <NumberValue value={data.todayActiveUsers} />
-                <span className="ml-1 text-sm font-normal text-muted-foreground">
-                  명
-                </span>
+              <p className="mt-4 text-xs text-muted-foreground">합계</p>
+              <p className="mt-1 text-3xl font-semibold tracking-tight">
+                {data.todayActiveUsers === null ? (
+                  <span role="status">준비 중</span>
+                ) : (
+                  <>
+                    <NumberValue value={data.todayActiveUsers.total} />
+                    <span className="ml-1 text-sm font-normal text-muted-foreground">
+                      명
+                    </span>
+                  </>
+                )}
               </p>
+              <dl className="mt-4 flex gap-6 text-sm">
+                {(['web', 'android'] as const).map((platform) => (
+                  <div key={platform}>
+                    <dt className="text-xs text-muted-foreground">
+                      {platformConfig[platform].label}
+                    </dt>
+                    <dd className="mt-1 font-semibold">
+                      {data.todayActiveUsers === null ? (
+                        '준비 중'
+                      ) : (
+                        <>
+                          <NumberValue
+                            value={data.todayActiveUsers[platform]}
+                          />
+                          명
+                        </>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
               <ExternalToolLink
                 href={externalLinks.amplitude}
                 className="mt-3 text-xs">
@@ -157,27 +286,52 @@ export function AnalyticsSection({ days }: { days: string }) {
                 {dateTime(data.asOf)} KST 집계 기준
               </p>
             </Card>
-            <AnalyticsTrend daily={data.daily} metric="activeUsers" />
-            <AnalyticsTrend daily={data.daily} metric="newUsers" />
+            <AnalyticsTrend data={data} metric="activeUsers" />
+            <AnalyticsTrend data={data} metric="newUsers" />
           </div>
           <details className="mt-4 text-xs">
             <summary className="cursor-pointer text-muted-foreground">
-              Amplitude 일별 수치 · {data.from} — {data.to}
+              Amplitude 일별 수치 ({data.from} ~ {data.to}, KST)
             </summary>
             <div className="mt-3 max-h-64 overflow-auto">
               <DataTable
-                headers={['날짜 (KST)', '활성 사용자 (DAU)', '신규 사용자']}>
-                {data.daily.map((day) => (
-                  <tr key={day.date}>
-                    <td>{day.date}</td>
-                    <td>
-                      <NumberValue value={day.activeUsers} />
-                    </td>
-                    <td>
-                      <NumberValue value={day.newUsers} />
-                    </td>
-                  </tr>
-                ))}
+                headers={[
+                  '날짜 (KST)',
+                  '일별 활성 사용자 (DAU) 합계',
+                  '일별 활성 사용자 Web',
+                  '일별 활성 사용자 Android',
+                  '일별 신규 사용자 합계',
+                  '일별 신규 사용자 Web',
+                  '일별 신규 사용자 Android',
+                ]}>
+                {Array.from(
+                  new Set([
+                    ...data.daily.map((day) => day.date),
+                    ...data.pendingDates,
+                  ]),
+                )
+                  .sort()
+                  .map((date) => {
+                    const day = data.daily.find((item) => item.date === date);
+
+                    return (
+                      <tr key={date}>
+                        <td>{date}</td>
+                        {(['activeUsers', 'newUsers'] as const).flatMap(
+                          (metric) =>
+                            platforms.map((platform) => (
+                              <td key={`${metric}-${platform}`}>
+                                {day && !data.pendingDates.includes(date) ? (
+                                  <NumberValue value={day[metric][platform]} />
+                                ) : (
+                                  '준비 중'
+                                )}
+                              </td>
+                            )),
+                        )}
+                      </tr>
+                    );
+                  })}
               </DataTable>
             </div>
           </details>

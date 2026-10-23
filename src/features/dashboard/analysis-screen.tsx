@@ -1,119 +1,103 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { useRouter } from 'next/navigation';
 
-import { PageHeading, QueryState, TextLink } from '@/components/admin/data-ui';
+import {
+  DataTable,
+  PageHeading,
+  QueryState,
+  TextLink,
+} from '@/components/admin/data-ui';
 import { Card } from '@/components/ui/card';
 import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
+  aiFeatureLabel,
+  distributionNumber,
+} from '@/features/dashboard/chart-data';
+import { DistributionChart } from '@/features/dashboard/distribution-chart';
 import { getDistributionHref } from '@/features/dashboard/links';
+import {
+  RangePicker,
+  useDashboardRange,
+} from '@/features/dashboard/range-picker';
 import type { DashboardCharts, Distribution } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
-function DistributionCard({ distribution }: { distribution: Distribution }) {
+function DistributionCard({
+  distribution: response,
+}: {
+  distribution: Distribution;
+}) {
+  const distribution = {
+    ...response,
+    points: response.points.map((point) => ({
+      ...point,
+      label: aiFeatureLabel(point.label),
+    })),
+  };
   const router = useRouter();
-  const color = 'var(--primary)';
 
   return (
-    <Card className="min-w-0">
+    <Card
+      className={
+        distribution.chartId === 'genre-depth'
+          ? 'min-w-0 xl:col-span-2'
+          : 'min-w-0'
+      }>
       <h2 className="font-semibold">{distribution.title}</h2>
       <p className="mt-2 min-h-10 text-xs leading-5 text-muted-foreground">
         {distribution.description}
       </p>
-      <ChartContainer
-        config={{ value: { label: distribution.unit, color } }}
-        className="mt-5 h-[220px] w-full"
-        aria-label={distribution.title}>
-        <BarChart
-          accessibilityLayer
-          data={distribution.points}
-          onClick={(state) => {
-            const i = state.activeTooltipIndex;
-
-            if (i !== null && i !== undefined && distribution.points[Number(i)])
-              router.push(
-                getDistributionHref(distribution.points[Number(i)].link),
-              );
-          }}>
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey="label"
-            tickLine={false}
-            axisLine={false}
-            tickFormatter={(v) =>
-              String(v).startsWith('2026-') ? String(v).slice(5) : String(v)
-            }
-            minTickGap={10}
-          />
-          <YAxis width={36} tickLine={false} axisLine={false} />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          <Bar
-            dataKey="value"
-            fill="var(--color-value)"
-            radius={[3, 3, 0, 0]}
-            className="cursor-pointer"
-          />
-        </BarChart>
-      </ChartContainer>
+      <DistributionChart
+        distribution={distribution}
+        onSelect={(point) => router.push(getDistributionHref(point.link))}
+      />
       <details className="mt-4 text-xs">
         <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
           수치 및 관련 목록
         </summary>
-        <ul className="mt-3 space-y-2">
-          {distribution.points.map((p) => (
-            <li key={p.label} className="flex justify-between gap-3">
-              <TextLink href={getDistributionHref(p.link)}>
-                {p.label} →
-              </TextLink>
-              <span>
-                {p.value.toLocaleString('ko-KR')} {distribution.unit}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-3 max-h-80 overflow-auto">
+          <DataTable
+            headers={['구분 및 관련 목록', `값 (${distribution.unit})`]}
+            empty={!distribution.points.length}>
+            {distribution.points.map((point) => (
+              <tr key={point.label}>
+                <td>
+                  <TextLink href={getDistributionHref(point.link)}>
+                    {point.label} →
+                  </TextLink>
+                </td>
+                <td>
+                  {distributionNumber(point.value, distribution.unit)}{' '}
+                  {distribution.unit}
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        </div>
       </details>
     </Card>
   );
 }
 
+export const distributionCategories = [
+  ['users', '사용자'],
+  ['engagement', '채팅 참여'],
+  ['content', '콘텐츠'],
+  ['ai-quality', 'AI 품질'],
+] as const;
+
 export function DashboardAnalysisScreen() {
-  const params = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const days = ['7', '30', '90'].includes(params.get('days') ?? '')
-    ? params.get('days')!
-    : '30';
-  const charts = useApi<DashboardCharts>(`/api/dashboard/charts?days=${days}`);
-
-  function updateDays(value: string) {
-    const query = new URLSearchParams(params);
-
-    query.set('days', value);
-    router.push(`${pathname}?${query}`);
-  }
+  const range = useDashboardRange();
+  const charts = useApi<DashboardCharts>(
+    `/api/dashboard/charts?${range.query}`,
+  );
 
   return (
     <>
       <PageHeading
         title="분석"
-        description="이용 분포를 살펴보고 관련 목록으로 이동하세요.">
-        <label className="flex items-center gap-3 text-sm">
-          기간
-          <select
-            className="control"
-            value={days}
-            onChange={(event) => updateDays(event.target.value)}>
-            {[7, 30, 90].map((value) => (
-              <option key={value} value={value}>
-                최근 {value}일
-              </option>
-            ))}
-          </select>
-        </label>
+        description="이용 분포를 살펴보고 관련 목록으로 이동해 주세요.">
+        <RangePicker range={range} />
       </PageHeading>
       <QueryState
         pending={charts.isPending}
@@ -125,18 +109,25 @@ export function DashboardAnalysisScreen() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xl font-semibold tracking-tight">이용 분포</h2>
             <span className="text-xs text-muted-foreground">
-              {charts.data.from} — {charts.data.to} · KST · 막대 또는 수치를
-              눌러 목록으로 이동
+              {charts.data.from} ~ {charts.data.to} (KST). 차트 항목이나 수치를
+              누르면 관련 목록으로 이동합니다.
             </span>
           </div>
-          <div className="grid gap-5 xl:grid-cols-2">
-            {charts.data.distributions.map((distribution) => (
-              <DistributionCard
-                key={distribution.chartId}
-                distribution={distribution}
-              />
-            ))}
-          </div>
+          {distributionCategories.map(([category, label]) => (
+            <section key={category} aria-label={label} className="mb-8">
+              <h2 className="mb-4 text-lg font-semibold">{label}</h2>
+              <div className="grid gap-5 xl:grid-cols-2">
+                {charts.data.distributions
+                  .filter((item) => item.category === category)
+                  .map((distribution) => (
+                    <DistributionCard
+                      key={distribution.chartId}
+                      distribution={distribution}
+                    />
+                  ))}
+              </div>
+            </section>
+          ))}
         </>
       ) : null}
     </>

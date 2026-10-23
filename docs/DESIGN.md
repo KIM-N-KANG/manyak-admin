@@ -244,13 +244,13 @@ components:
 
 ### Brand assets
 
-- 사이드바 상단과 로그인 화면은 웹과 같은 `ManyakLogo`만 사용한다. 사이드바 로고는 가로 가운데 정렬하고 상하 여백은 20px로 둔다. 로고 옆에 ‘관리자’ 텍스트나 배지를 덧붙이지 않는다. 로고는 manyak-web의 `src/components/layout/manyak-logo.tsx`를 그대로 복사한 `src/components/admin/manyak-logo.tsx`이며, 심볼과 도형 워드마크를 포함한 89×32 SVG다. 로고의 모든 선·면은 `currentColor`로 마냑 브랜드 초록을 따른다. ‘마냑’을 일반 텍스트로 대체하거나 원래 글꼴을 추정하지 않는다.
-- SVG의 `role="img"`, `aria-label="마냑"`을 그대로 노출해 로고 이름은 ‘마냑’으로 한 번만 읽힌다. 조합용 wrapper·추가 접근성 이름·‘관리자’ 전용 타이포그래피는 사용하지 않는다. 문서 제목과 메타데이터의 ‘마냑 관리자’ 표기는 유지한다.
+- 사이드바 상단과 로그인 화면은 공용 `ManyakLogo`를 사용한다. 웹에서 가져온 마냑 심볼·워드마크 오른쪽에 학교안심 둥근미소 Bold로 변환한 ‘관리자’ SVG path를 배치한다. 마냑은 브랜드 초록, 관리자는 muted #4D4D4D를 사용하며 글자 높이·굵기와 기준선을 맞춘다. 전체는 174×32이고 사이드바 224px에서 좌우 25px, 상하 20px 여백을 유지한다. 런타임 폰트 요청은 없고 접근성 이름은 ‘마냑 관리자’다.
+- SVG의 `role="img"`, `aria-label="마냑 관리자"`를 노출해 조합 로고 이름을 한 번만 읽힌다. 조합용 wrapper·추가 접근성 이름·‘관리자’ 전용 타이포그래피는 사용하지 않는다. 문서 제목과 메타데이터의 ‘마냑 관리자’ 표기는 유지한다.
 - 파비콘은 글자 없는 초록 심볼 그대로의 투명 배경을 사용한다. App Router의 `src/app/icon.svg`는 `public/logo/manyak-symbol-green.svg`와 같고, `src/app/favicon.ico`는 같은 심볼의 16·32·48px PNG 프레임으로 구성한다. 모든 ICO 프레임은 8비트 RGBA로 인코딩한다. PWA·Apple용 `public/icons/`와 layout 아이콘 메타데이터는 유지한다.
 - 목록 표는 정렬 가능한 머리글 버튼과 현재 정렬 열의 방향 화살표·`aria-sort`를 사용한다. 목록 아래 중앙에는 이전·다음과 처음·끝·현재 주변 번호를 배치하며, 생략 구간은 …로 표시한다. 현재 페이지는 짙은 초록 배경·흰 글자와 `aria-current="page"`로 구분하고 경계 이동은 비활성화한다.
 - 관리자 화면은 별도 상단 헤더 바나 워크스페이스 경로, 영문 eyebrow 표기를 두지 않는다. 사이드바 하단에 관리자 닉네임과 로그아웃을 표시한다. 비운영 fixture 미리보기에서는 닉네임을 ‘미리보기’로 표시하고 로그아웃 대신 작은 회색 글씨로 ‘고정 데이터 미리보기’를 표시한다. 페이지 제목 옆에는 환경 표시를 중복하지 않는다. 아래 영문 분석의 eyebrow 예시는 관리자 화면에 적용하지 않는다.
 - 사이드바는 ‘대시보드·관리·알림’ 세 구역의 아코디언이다. 상위 버튼은 Hugeicons 아이콘·굵은 구역명·회전 화살표를 표시하고, 이동 없이 펼침만 바꾸며 `aria-expanded`와 `aria-controls`로 관계를 알린다. 하위 메뉴는 아이콘 없이 보통 굵기로 표시하고 들여쓰기·왼쪽 세로 안내선으로 묶는다. 현재 페이지 구역은 항상 펼치고 나머지 구역의 상태는 localStorage에 보존한다. 접힌 영역은 접근성 트리와 탭 이동에서 제외한다. 애니메이션은 150ms이며 reduced-motion에서는 끈다. 개요는 숫자 카드·일별 추이·Amplitude, 분석은 분포 차트를 담는다. 메뉴는 번호 없이 이름만 표시한다. 활성 항목은 연한 초록 배경(#E6F6EF)과 짙은 초록 전경(#017A4E)을 사용한다. 개요와 분석은 각각 활성 상태를 판별하며, 상세 화면에서는 해당 관리 메뉴를 활성화한다. 준비 중 화면은 제목과 설명 한 줄만 두고 큰 빈 카드를 배치하지 않는다.
-- 닉네임 위의 ‘외부 도구’ 아코디언은 기존 메뉴와 같은 글자·포커스·들여쓰기·안내선을 사용한다. Amplitude·OpenSearch 로그·Sentry·Langfuse·그로블 링크에는 외부 링크 아이콘을 표시하고 새 탭에서 연다.
+- 닉네임 위의 ‘외부 도구’ 버튼은 작은 팝오버를 연다. 데스크톱(1024px 이상)은 버튼 오른쪽에서 아래쪽을 맞추고, 사이드바가 상단으로 바뀌는 모바일은 버튼 아래에서 왼쪽을 맞춘다. 화살표는 열림 여부와 무관하게 데스크톱에서 오른쪽(▸), 모바일에서 아래(▾)를 가리킨다. 열림 상태는 버튼의 활성 배경·전경색으로 표시한다. 팝오버는 224px 너비의 흰 카드·얇은 테두리·작은 그림자를 사용하고 화면 경계에서는 위치를 보정한다. Amplitude·OpenSearch 로그·Sentry·Langfuse·그로블 순서로 외부 링크 아이콘과 함께 표시하고 새 탭에서 연다. 바깥 클릭·Esc·버튼 재클릭으로 닫고 버튼으로 포커스를 돌려준다. `aria-expanded`와 `aria-controls`는 열림 상태와 팝오버 관계를 알린다. 닫힌 링크는 접근성 트리와 탭 이동에서 제외한다. 열고 닫을 때 불투명도와 4px 이동에 150ms 전환을 적용하며, reduced-motion에서는 전환과 이동을 끈다.
 
 Typography does the heavy lifting. **Pretendard** sets the display headline in tightly-tracked weight-600 (the hero h1 runs -2.4px letter-spacing), and **system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`)** appears as small uppercase eyebrows labeling sections like a technical spec sheet. Buttons split into two shapes by context: the marketing CTAs are fully rounded brand-green **pills** (`{rounded.pill}` — 100px, "Start Deploying" / "Get a Demo"), while nav and in-app controls use a tight 6px square (`{rounded.sm}`, "Sign Up" / "Log In"). The contrast between the rounded marketing pill and the square app button is itself a deliberate signal of which surface you're on.
 
@@ -259,7 +259,7 @@ Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafaf
 **Key Characteristics:**
 
 - A single near-black ink (`{colors.ink}`) carries headings, body, and borders on a near-white canvas (`{colors.canvas}`) — near-zero chromatic chrome.
-- 마냑 초록은 주요 동작과 활성 상태에 사용하고, 차트는 마냑 초록 한 색으로 통일하며 같은 색의 명도·투명도·선 스타일로만 계열을 구분한다. 레거시 Vercel 그라디언트는 참고 자료로만 남기며 관리자 화면에 추가하지 않는다.
+- 마냑 초록은 주요 동작과 활성 상태에 사용하고, 차트는 마냑 초록을 주색으로 쓰고 비교 계열은 회색·점선으로 구분하며 성공률 경고에는 기존 경고색을 사용한다. 레거시 Vercel 그라디언트는 참고 자료로만 남기며 관리자 화면에 추가하지 않는다.
 - Two button shapes by context: rounded brand-green **pills** (`{rounded.pill}`) for marketing CTAs, tight 6px squares (`{rounded.sm}`) for nav/app controls.
 - Pretendard for tightly-tracked display type (`{typography.display-xl}` at -2.4px), system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`) for uppercase technical eyebrows (`{typography.mono-eyebrow}`).
 - Hairline-bordered white cards (`{colors.hairline}` on `{colors.canvas-elevated}`) in precise grids; depth via 1px border + whisper shadow, never heavy elevation.
@@ -272,11 +272,32 @@ Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafaf
 
 ### Brand & Accent
 
+- **관리자 워드마크**: 사이드바와 로그인은 공용 `ManyakLogo`의 174×32 SVG를 사용한다. 마냑 로고 오른쪽에 학교안심 둥근미소 Bold의 ‘관리자’를 28px 기준 윤곽선(실제 글자 높이 약 25px, 기준선 y=24.5)으로 배치하고 `muted-foreground`를 적용한다. 런타임 폰트 요청 없이 SVG path로 표시하며 접근성 이름은 ‘마냑 관리자’다.
 - **Manyak Green** (`{colors.primary}` — #01A76B): 로고·차트·아이콘·포커스의 기준색이다. CSS에서는 `oklch(0.6398 0.1458 159.17)`을 사용한다. 흰색과 대비는 3.12:1이므로 작은 글자나 흰 글자의 버튼 배경에는 사용하지 않는다.
 - **Text Green** (`{colors.primary-text}` / `{colors.link}` — #017A4E): 작은 링크와 활성 메뉴의 전경, 주요 버튼·현재 페이지의 배경이다. 흰색 대비 5.39:1, 연한 메뉴 배경 #E6F6EF 대비 4.82:1, 캔버스 #FAFAFA 대비 5.17:1로 일반 글자 기준 4.5:1을 만족한다. 대비는 WCAG sRGB 상대 휘도 식으로 계산한다.
 - **Deep / Soft Green**: 링크·버튼 hover는 `{colors.link-deep}` (#01613E), 강조 배경은 `{colors.link-soft}` (#E6F6EF)이다.
 - **Ink** (`{colors.ink}` — #171717): 제목과 가장 진한 본문에 사용한다. 주요 버튼과 로고의 색으로 사용하지 않는다.
-- **Chart palette**: 모든 막대·선·영역은 `--primary`의 마냑 초록을 사용한다. `--chart-1`은 primary 100%, `--chart-2`~`--chart-5`는 같은 초록의 80%·60%·40%·20% 투명도 단계다. 한 차트에서 여러 계열이 필요하면 이 단계나 실선·점선만 사용하고 다른 색상은 쓰지 않는다. 축·라벨·툴팁·수치 목록으로 색상 외에도 지표를 구분한다.
+- **Chart palette**: 주계열은 `--primary`의 마냑 초록, 비교 계열은 회색(`--muted-foreground`), 95% 미만 성공률은 경고색(`--warning-foreground`)을 사용한다. `--chart-1`은 primary 100%, `--chart-2`~`--chart-5`는 같은 초록의 80%·60%·40%·20% 투명도 단계다. 여러 계열은 범례·직접 라벨과 실선·점선으로도 구분한다. 축·라벨·툴팁·수치 목록으로 색상 외에도 지표를 구분한다.
+
+### 관리자 차트
+
+차트 형태는 서버의 `chartId`로 선택하며 응답과 집계 정의를 바꾸지 않는다. 단위가 다른 지표는 차트를 나누고 이중 y축은 쓰지 않는다. 단일 계열은 제목으로 식별하고, 비교 계열에는 범례와 직접 라벨을 표시한다. 모든 차트에 호버 툴팁을 제공하고 선에는 십자선을 표시한다. 막대·점·도넛 조각 클릭과 details 안 전체 수치 표의 링크는 기존 목록 이동을 유지한다. 데이터 전환 애니메이션은 꺼 reduced-motion에서도 움직임 없이 값을 읽을 수 있게 한다. 관리자는 라이트 모드만 사용한다.
+
+| 위치 / chartId                    | 형태와 표시                                                                                                                    | 선택 이유                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| 개요 요약 카드 8개                | 넓은 화면 2행 4열, 큰 누적 대표 숫자·작은 오늘 줄·선택 기간 합계, 카드 안 차트 없음                                            | 누적을 먼저 읽고 오늘·선택 기간 수치를 보조로 비교       |
+| 개요 일별 추이                    | 2px 선, 호버 때만 점, 기간 평균 점선                                                                                           | 추이와 평균 대비 높낮이                                  |
+| Amplitude                         | 활성·신규 별도 차트, 각각 합계(초록 실선)→Web(회색 긴 점선)→Android(진초록 짧은 점선), 범례·끝점 라벨·단일 y축                 | 같은 단위의 사용자 비교                                  |
+| genre-depth                       | 장르별 평균 턴 수: 값 내림차순 상위 30개 세로 막대, 위 값 라벨·-40도 장르명·막대 수에 따른 최소 폭·가로 스크롤, 제외 개수 안내 | 순위 비교와 많은 장르명 읽기, 평균값이므로 파레토선 없음 |
+| turns / member-chats / characters | 구간 순서 유지, 간격이 좁은 히스토그램                                                                                         | 분포 모양 비교                                           |
+| started-as                        | 게스트·회원 도넛, 가운데 게스트 %, 조각 %·범례, 조각 사이 2px                                                                  | 두 범주의 부분과 전체 비교                               |
+| first-message                     | 같은 초 축 위 P50·P75·P90 점 연결, 평균은 회색 마름모, 값 라벨                                                                 | 분포의 위치와 퍼짐 비교                                  |
+| ai-latency                        | 값 내림차순 가로 막대                                                                                                          | 긴 기능명과 지연 비교                                    |
+| ai-success                        | 0~100 미터·% 값, 95% 미만은 경고색·아이콘·문구                                                                                 | 한도 대비 성공률 확인                                    |
+
+개요 기간 선택기는 페이지 상단에 둔다. 요약 카드 8개는 넓은 화면(xl 이상)에서 2행 4열, sm 이상에서 4행 2열, 작은 화면에서 1열로 표시한다. 누적을 큰 대표 숫자, 오늘을 작은 보조 줄로 표시하고 선택 기간 합계는 charts.daily를 따른다. 카드의 스파크라인과 어제 줄·갱신 기준 보조 설명은 제거한다. 카드 바로 아래의 기존 ‘일별 추이’ 지표 선택형 차트로 카드 8개 지표의 추이를 통합하고 중복 작은 차트는 두지 않는다. 단일 축·고정 primary 색, 기간 평균 점선·툴팁·일별 목록 이동을 유지하며 Amplitude·Play는 그 아래에 둔다. 결제 금액은 원 단위 천 단위 구분을 사용하고 실제 0은 0으로 표시한다. 선택 기간 값을 아직 받지 못했거나 실패하면 해당 상태를 표시한다.
+
+알림 도달 차트는 기존 형태를 유지한다.
 
 ### Surface
 
@@ -460,7 +481,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 
 ### Inputs & Forms
 
-회원·스토리·오리지널·채팅방·결제·공지·감사 로그·캠페인 목록은 검색과 필터를 한 카드·한 폼에 둔다. 검색 입력은 첫 칸에서 가장 넓게 배치하고 안내는 placeholder로 제공한다. Enter와 적용 버튼은 작성 중인 q와 필터를 함께 제출하고 페이지를 1로 돌린다. 초기화는 전체 쿼리를 비운다. 기본 버튼·입력·select 높이는 36px이며 좌우 여백은 버튼 12px, 입력 10px이다. 사이드바 구역 버튼은 데스크톱에서 36px, 모바일에서 44px 터치 높이를 유지한다. 결과가 없으면 검색어와 지우기 동작을 표 안에 표시한다. 회원 상세 거래·출석 표도 각각 독립적인 숫자 페이지를 사용하며, 거래는 시각·사유·변동 이프·거래 후 잔액만 표시한다.
+회원·스토리·오리지널·채팅·결제·공지·감사 로그·캠페인 목록은 검색과 필터를 한 카드·한 폼에 둔다. 검색 입력은 첫 칸에서 가장 넓게 배치하고 안내는 placeholder로 제공한다. Enter와 적용 버튼은 작성 중인 q와 필터를 함께 제출하고 페이지를 1로 돌린다. 초기화는 전체 쿼리를 비운다. 기본 버튼·입력·select 높이는 36px이며 좌우 여백은 버튼 12px, 입력 10px이다. 사이드바 구역 버튼은 데스크톱에서 36px, 모바일에서 44px 터치 높이를 유지한다. 결과가 없으면 검색어와 지우기 동작을 표 안에 표시한다. 회원 상세 거래·출석 표도 각각 독립적인 숫자 페이지를 사용하며, 거래는 시각·사유·변동 이프·거래 후 잔액만 표시한다.
 
 **`text-input`** — default form field
 
@@ -509,7 +530,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 ### Do
 
 - Keep the canvas near-white (`{colors.canvas}`) and let near-black ink (`{colors.ink}`) carry headings and borders. Use Manyak Green for primary CTAs.
-- 브랜드 색과 로고는 마냑을 따른다. 주요 동작·링크·포커스·활성 메뉴는 초록, 차트는 같은 초록의 투명도 단계와 선 스타일만 사용한다.
+- 브랜드 색과 로고는 마냑을 따른다. 주요 동작·링크·포커스·활성 메뉴는 초록, 차트는 초록 주계열과 회색 비교 계열을 사용하고 성공률 경고는 경고색·아이콘·문구로 함께 표시한다.
 - Use the two button shapes by context: brand-green pill (`{components.button-primary}`) for marketing CTAs, 6px square (`{components.button-primary-sm}`) for nav/app.
 - Define cards and inputs with a 1px hairline (`{colors.hairline}`) before any shadow — flat is the default.
 - Set display headings in Pretendard 600 with tight negative tracking; label sections with uppercase system monospace (`ui-monospace, SFMono-Regular, Menlo, monospace`) eyebrows (`{typography.mono-eyebrow}`).
@@ -523,3 +544,20 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 - Don't set body copy in pure black (`#000000`) — the brand's ink is #171717 and body steps to `{colors.body}`.
 - Don't add a second decorative system — the mesh gradient is the only flourish; everything else is ink on white.
 - Don't loosen the display tracking — large Pretendard headings carry tight negative letter-spacing by design.
+
+Play 설치 지표는 개요의 Amplitude 영역 옆에 앱 설치(Android) 카드로 표시한다. 누적 기기 설치·활성 기기·일별 설치 작은 추이와 기준일을 제공한다. 날짜는 Play 원천의 태평양 날짜를 변환 없이 표시하며 보고서 반영 지연과 페이지 기간 선택에 영향받지 않는 전체 기간 지표임을 안내한다. 펼친 상세에는 누적 설치 계단선과 활성 기기 일반 선을 같은 축에 표시하고 범례·끝 수치·십자선 툴팁을 제공한다. 별도 일별 차트는 0 기준으로 설치를 위쪽 기본색, 삭제를 아래쪽 회색 막대로 표시하며 툴팁과 원장 표의 삭제 수치는 양수로 표시한다. 모션은 끄고 수치 표를 유지한다. `/api/dashboard/play-installs` 요청 실패는 이 카드에 격리하며 503에는 '설치 지표 사용 불가'과 재시도를 표시한다. 서버가 미설정과 원천 장애 모두 SERVICE_UNAVAILABLE로 응답하므로 상세 상태는 구분하지 않는다.
+
+개요와 분석은 공용 기간 선택기를 사용한다. 기존 외부 도구 팝오버의 Base UI 포커스 처리와 150ms 전환 스타일을 재사용한다. 왼쪽에는 오늘·어제·최근 7/14/30/90일·이번 주·지난주·이번 달·지난달·최근 6개월·최근 1년 빠른 범위, 오른쪽에는 시작·끝 날짜와 적용 버튼을 둔다. KST 오늘까지 양끝 포함 최대 366일을 허용한다. 빠른 범위는 URL `range`로 저장해 방문 시 다시 계산하고, 직접 선택은 `from`·`to`로 저장한다. 기존 `days` 링크는 대응하는 빠른 범위로 변환한다. API에는 계산된 `from`·`to`만 보내며 요약 카드 기간 합계와 아래 DB·Amplitude 차트가 함께 바뀐다. 오늘·누적 수치는 summary를 유지한다.
+
+개요 Amplitude의 오늘 활성 사용자는 서버의 합계를 크게 표시하고 Web·Android를 함께 표시한다. 같은 사용자가 두 플랫폼에서 활동할 수 있어 두 값을 더해 합계를 만들지 않는다. 오늘 값이 null이면 세 값 모두 ‘준비 중’, 준비된 0은 0으로 표시한다. 일별 활성·신규 사용자 차트는 합계→Web→Android 순서와 색·선 모양을 고정하고 지표별로 분리한다. 누락 날짜는 0이나 연결선으로 채우지 않으며 수치 표에는 받은 날짜의 세 값을 모두 표시하고 준비 중 날짜도 행으로 두어 ‘준비 중’을 표시한다. 준비 중 날짜가 있거나 오늘 값이 null이면 Amplitude 쿼리만 60초마다 같은 범위로 재요청하고 모두 준비되면 멈춘다. 도움말에는 South Korea 또는 (none), Web 또는 Android, 팀 계정 제외 기준과 플랫폼 합계의 중복 제거를 안내한다.
+
+
+### 관리자 웹 용어와 분석 구역
+
+화면 계약은 하네스 `docs/domain/ADMIN/WEB/`를 따른다. 대시보드 메뉴는 개요, 분석, 유입, 사용자, 전환, 기능과 품질 순서이며 유입 경로는 `/analytics/acquisition`이다. 관리 메뉴의 채팅 저장 단위는 ‘채팅’, 원장 메뉴는 ‘이프’, 화면 제목은 ‘이프 내역’이다. 원장 필터는 ‘이프 변동 유형’의 적립과 소모를 사용하며 관리자 직접 작업의 지급과 회수 이름은 유지한다. 사유 이름은 `src/features/credits/reason-label.ts`에서 관리한다.
+
+개요 카드의 이프 지표는 ‘이프 적립’, ‘이프 소모’, 결제 지표는 ‘결제 건수’, ‘결제 금액 (환불 포함)’이다. 기간 범위는 `YYYY-MM-DD ~ YYYY-MM-DD (KST)`로 표시한다. 화면 문구는 em dash와 가운뎃점 나열을 쓰지 않는다.
+
+분석 화면은 응답의 category로 사용자(users), 채팅 참여(engagement), 콘텐츠(content), AI 품질(ai-quality) 구역을 순서대로 표시한다. 제목과 설명은 응답을 그대로 사용한다. 장르 카드는 구역의 두 열을 모두 차지하며 기존 상위 30개 세로 막대와 전체 표를 유지한다. AI 기능의 표시 이름만 변환하고 차트와 표의 링크 값은 유지한다. 분포의 백분율은 이미 0~100 값이므로 곱하지 않고 소수 한 자리로 표시한다.
+
+공통 실패는 ‘데이터 불러오기 실패’와 담당자 문의 안내, 서버 미구현은 ‘기능 준비 중’, Amplitude 503은 ‘Amplitude 지표를 불러올 수 없음’, Play 503은 ‘설치 지표 사용 불가’를 표시한다. 재시도는 해당 영역의 요청만 다시 보낸다. Play 일별 활성 기기의 null은 ‘보고서 값 없음’으로 표시하며 선을 잇거나 0으로 바꾸지 않는다.

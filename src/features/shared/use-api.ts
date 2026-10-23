@@ -1,12 +1,17 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 
 import { customInstance } from '@/api/mutator/custom-instance';
 import { adminResponseValues } from '@/features/shared/response-values';
 
-export function useApi<T>(url: string, enabled = true) {
-  return useQuery({
+export function useApi<T>(
+  url: string,
+  enabled = true,
+  options: Pick<UseQueryOptions<T>, 'refetchInterval'> = {},
+) {
+  return useQuery<T>({
+    ...options,
     queryKey: [url],
     enabled,
     queryFn: async ({ signal }) => {

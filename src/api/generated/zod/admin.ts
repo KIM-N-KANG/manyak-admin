@@ -403,6 +403,38 @@ export const Update2Body = zod.object({
 
 export const Update2Response = zod.unknown();
 
+export const SignupsQueryParams = zod.object({
+  days: zod.enum(['7', '30', '90']).optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+});
+
+export const SignupsResponse = zod.unknown();
+
+export const SessionsQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const SessionsResponse = zod.unknown();
+
+export const RetentionQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const RetentionResponse = zod.unknown();
+
+export const ActivityQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const ActivityResponse = zod.unknown();
+
 export const storiesQueryRequestSizeMax = 100;
 
 export const storiesQueryRequestOrderRegExp = new RegExp('asc|desc');
@@ -451,6 +483,31 @@ export const StoryParams = zod.object({
 });
 
 export const StoryResponse = zod.unknown();
+
+export const QualityQueryParams = zod.object({
+  platform: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const QualityResponse = zod.unknown();
+
+export const OptionsQueryParams = zod.object({
+  days: zod.enum(['7', '30', '90']).optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+});
+
+export const OptionsResponse = zod.unknown();
+
+export const AiCostQueryParams = zod.object({
+  days: zod.enum(['7', '30', '90']).optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+});
+
+export const AiCostResponse = zod.unknown();
 
 export const StatsQueryParams = zod.object({
   from: zod.iso.date().optional(),
@@ -614,23 +671,83 @@ export const AttendanceResponse = zod.unknown();
 
 export const SummaryResponse = zod.unknown();
 
+/**
+ * Play 기준 날짜를 그대로 반환합니다. 보고서는 며칠 늦게 갱신되며 결과는 1시간 캐시합니다.
+ * @summary Play 설치 지표
+ */
+export const InstallsResponse = zod.unknown();
+
 export const ChartsQueryParams = zod.object({
   request: zod.object({
-    days: zod.number().optional(),
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
   }),
 });
 
 export const ChartsResponse = zod.unknown();
 
-export const analyticsQueryDaysDefault = 30;
-
 export const AnalyticsQueryParams = zod.object({
-  days: zod.number().default(analyticsQueryDaysDefault),
+  query: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+  }),
 });
 
 export const AnalyticsResponse = zod.unknown();
 
+/**
+ * 팀 계정 제외를 적용하지 않아 대시보드의 지급·소진 합계와 다를 수 있습니다. 접속 기록은 남기지 않습니다.
+ * @summary 전체 이프 거래 내역
+ */
+export const creditTransactionsQueryDirectionRegExp = new RegExp(
+  'granted|spent',
+);
+
+export const creditTransactionsQuerySizeMax = 100;
+
+export const creditTransactionsQueryOrderRegExp = new RegExp('asc|desc');
+
+export const CreditTransactionsQueryParams = zod.object({
+  direction: zod
+    .string()
+    .regex(creditTransactionsQueryDirectionRegExp)
+    .optional(),
+  date: zod.string().optional(),
+  page: zod.number().min(1),
+  size: zod.number().min(1).max(creditTransactionsQuerySizeMax),
+  cursor: zod.string().optional(),
+  limit: zod.string().optional(),
+  sort: zod.string().optional(),
+  order: zod.string().regex(creditTransactionsQueryOrderRegExp),
+});
+
+export const CreditTransactionsResponse = zod.unknown();
+
 export const PoliciesResponse = zod.unknown();
+
+export const ReachQueryParams = zod.object({
+  days: zod.enum(['7', '30', '90']).optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+});
+
+export const ReachResponse = zod.unknown();
+
+export const FunnelParams = zod.object({
+  funnel: zod.string(),
+});
+
+export const FunnelQueryParams = zod.object({
+  platform: zod.string().optional(),
+  storyId: zod.uuid().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const FunnelResponse = zod.unknown();
 
 export const chatsQueryRequestSizeMax = 100;
 
@@ -676,6 +793,44 @@ export const ChatParams = zod.object({
 });
 
 export const ChatResponse = zod.unknown();
+
+export const CatalogResponse = zod.unknown();
+
+export const SourcesQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const SourcesResponse = zod.unknown();
+
+export const Story1QueryParams = zod.object({
+  storyId: zod.uuid().optional(),
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const Story1Response = zod.unknown();
+
+export const CreationQueryParams = zod.object({
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const CreationResponse = zod.unknown();
+
+export const Analytics1QueryParams = zod.object({
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const Analytics1Response = zod.unknown();
 
 export const auditLogsQueryRequestSizeMax = 100;
 

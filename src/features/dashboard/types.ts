@@ -45,6 +45,7 @@ export type ChartLink = {
 export type ChartPoint = { label: string; value: number; link: ChartLink };
 export type Distribution = {
   chartId: string;
+  category: 'users' | 'engagement' | 'content' | 'ai-quality';
   title: string;
   description: string;
   unit: string;
@@ -58,10 +59,34 @@ export type DashboardCharts = {
   distributions: Distribution[];
 };
 
+export type DashboardPlatformCounts = {
+  total: number;
+  web: number;
+  android: number;
+};
+
 export type DashboardAnalytics = {
   asOf: string;
   from: string;
   to: string;
-  todayActiveUsers: number;
-  daily: { date: string; activeUsers: number; newUsers: number }[];
+  todayActiveUsers: DashboardPlatformCounts | null;
+  pendingDates: string[];
+  daily: {
+    date: string;
+    activeUsers: DashboardPlatformCounts;
+    newUsers: DashboardPlatformCounts;
+  }[];
 };
+
+export interface PlayInstalls {
+  totalInstalls: number;
+  activeDevices: number;
+  asOf: string;
+  daily: {
+    date: string;
+    installs: number;
+    uninstalls: number;
+    cumulativeInstalls: number;
+    activeDevices: number | null;
+  }[];
+}
