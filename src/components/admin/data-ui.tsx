@@ -41,7 +41,7 @@ export function QueryState({
   pending: boolean;
   error: Error | null;
   retry: () => unknown;
-  source?: 'amplitude' | 'play';
+  source?: 'amplitude' | 'play' | 'langfuse';
   variant?: 'panel' | 'inline';
 }) {
   const serverNotImplemented =
@@ -61,14 +61,18 @@ export function QueryState({
         ? 'Amplitude 지표를 불러올 수 없음'
         : unavailable && source === 'play'
           ? '설치 지표 사용 불가'
-          : '데이터 불러오기 실패';
+          : unavailable && source === 'langfuse'
+            ? 'AI 비용을 불러올 수 없음'
+            : '데이터 불러오기 실패';
     const description = serverNotImplemented
       ? '이 기능은 서버 연결을 준비 중입니다.'
       : unavailable && source === 'amplitude'
         ? '잠시 후 다시 시도해 주세요.'
         : unavailable && source === 'play'
           ? '잠시 후 다시 시도해 주세요. 문제가 계속되면 Play 설치 지표 설정과 보고서 상태를 확인해 주세요.'
-          : '잠시 후 다시 시도해 주세요. 문제가 계속되면 담당자에게 문의해 주세요.';
+          : unavailable && source === 'langfuse'
+            ? '잠시 후 다시 시도해 주세요. 문제가 계속되면 서버의 Langfuse 설정을 확인해 주세요.'
+            : '잠시 후 다시 시도해 주세요. 문제가 계속되면 담당자에게 문의해 주세요.';
 
     if (variant === 'inline')
       return (
