@@ -27,6 +27,7 @@ import type {
 } from '@/features/dashboard/types';
 import { getDashboardAnalytics } from '@/fixtures/analytics';
 import { getDashboardCharts, summary } from '@/fixtures/dashboard';
+import { playInstalls } from '@/fixtures/play-installs';
 
 const state = vi.hoisted(() => ({
   charts: undefined as DashboardCharts | undefined,
@@ -41,11 +42,13 @@ vi.mock('next/navigation', () => ({
 }));
 vi.mock('@/features/shared/use-api', () => ({
   useApi: (url: string) => ({
-    data: url.includes('/summary')
-      ? state.summary
-      : url.includes('/analytics')
-        ? getDashboardAnalytics(7)
-        : state.charts,
+    data: url.includes('/play-installs')
+      ? playInstalls
+      : url.includes('/summary')
+        ? state.summary
+        : url.includes('/analytics')
+          ? getDashboardAnalytics(7)
+          : state.charts,
     isPending: false,
     isError: false,
     error: null,

@@ -818,6 +818,15 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/dashboard/play-installs',
+    method: 'GET',
+    parameters: [],
+    params: undefined,
+    query: undefined,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/dashboard/charts',
     method: 'GET',
     parameters: [

@@ -7,13 +7,14 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-10-22T16:17:28.650Z",
-    "revision": "41614b2"
+    "receivedAt": "2026-10-22T18:46:34.126Z"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
       "get": {
-        "tags": ["admin-push-controller"],
+        "tags": [
+          "admin-push-controller"
+        ],
         "operationId": "template",
         "parameters": [
           {
@@ -39,7 +40,9 @@
         }
       },
       "put": {
-        "tags": ["admin-push-controller"],
+        "tags": [
+          "admin-push-controller"
+        ],
         "operationId": "upsert",
         "parameters": [
           {
@@ -75,7 +78,9 @@
         }
       },
       "delete": {
-        "tags": ["admin-push-controller"],
+        "tags": [
+          "admin-push-controller"
+        ],
         "operationId": "reset",
         "parameters": [
           {
@@ -113,7 +118,9 @@
     },
     "/api/v1/admin/credits/policies/{policyKey}": {
       "put": {
-        "tags": ["admin-credit-controller"],
+        "tags": [
+          "admin-credit-controller"
+        ],
         "operationId": "upsert_1",
         "parameters": [
           {
@@ -149,7 +156,9 @@
         }
       },
       "delete": {
-        "tags": ["admin-credit-controller"],
+        "tags": [
+          "admin-credit-controller"
+        ],
         "operationId": "delete_2",
         "parameters": [
           {
@@ -187,7 +196,9 @@
     },
     "/api/v1/admin/push/campaigns": {
       "get": {
-        "tags": ["admin-push-controller"],
+        "tags": [
+          "admin-push-controller"
+        ],
         "operationId": "list_1",
         "parameters": [
           {
@@ -196,7 +207,13 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["SCHEDULED", "SENDING", "SENT", "CANCELED", "FAILED"]
+              "enum": [
+                "SCHEDULED",
+                "SENDING",
+                "SENT",
+                "CANCELED",
+                "FAILED"
+              ]
             }
           },
           {
@@ -252,7 +269,9 @@
         }
       },
       "post": {
-        "tags": ["admin-push-controller"],
+        "tags": [
+          "admin-push-controller"
+        ],
         "operationId": "create_2",
         "requestBody": {
           "content": {
@@ -280,7 +299,9 @@
     },
     "/api/v1/admin/push/campaigns/{campaignId}/retry": {
       "post": {
-        "tags": ["admin-push-controller"],
+        "tags": [
+          "admin-push-controller"
+        ],
         "operationId": "retry",
         "parameters": [
           {
@@ -319,7 +340,9 @@
     },
     "/api/v1/admin/push/campaigns/{campaignId}/cancel": {
       "post": {
-        "tags": ["admin-push-controller"],
+        "tags": [
+          "admin-push-controller"
+        ],
         "operationId": "cancel",
         "parameters": [
           {
@@ -358,7 +381,9 @@
     },
     "/api/v1/admin/originals": {
       "get": {
-        "tags": ["admin-original-controller"],
+        "tags": [
+          "admin-original-controller"
+        ],
         "operationId": "list_2",
         "parameters": [
           {
@@ -388,7 +413,9 @@
         }
       },
       "post": {
-        "tags": ["admin-original-controller"],
+        "tags": [
+          "admin-original-controller"
+        ],
         "operationId": "create_3",
         "requestBody": {
           "content": {
@@ -406,7 +433,9 @@
     },
     "/api/v1/admin/originals/{storyId}/images/presign": {
       "post": {
-        "tags": ["admin-original-controller"],
+        "tags": [
+          "admin-original-controller"
+        ],
         "operationId": "presign_1",
         "parameters": [
           {
@@ -445,7 +474,9 @@
     },
     "/api/v1/admin/originals/images/presign": {
       "post": {
-        "tags": ["admin-original-controller"],
+        "tags": [
+          "admin-original-controller"
+        ],
         "operationId": "presignDraft",
         "requestBody": {
           "content": {
@@ -473,7 +504,9 @@
     },
     "/api/v1/admin/notices": {
       "get": {
-        "tags": ["admin-notice-controller"],
+        "tags": [
+          "admin-notice-controller"
+        ],
         "operationId": "list_3",
         "parameters": [
           {
@@ -504,7 +537,9 @@
         ]
       },
       "post": {
-        "tags": ["admin-notice-controller"],
+        "tags": [
+          "admin-notice-controller"
+        ],
         "operationId": "create_4",
         "requestBody": {
           "content": {
@@ -537,7 +572,9 @@
     },
     "/api/v1/admin/notices/{noticeId}/unpublish": {
       "post": {
-        "tags": ["admin-notice-controller"],
+        "tags": [
+          "admin-notice-controller"
+        ],
         "operationId": "unpublish",
         "parameters": [
           {
@@ -581,7 +618,9 @@
     },
     "/api/v1/admin/notices/{noticeId}/publish": {
       "post": {
-        "tags": ["admin-notice-controller"],
+        "tags": [
+          "admin-notice-controller"
+        ],
         "operationId": "publish",
         "parameters": [
           {
@@ -625,7 +664,9 @@
     },
     "/api/v1/admin/moderation/holds/{submissionId}/release": {
       "post": {
-        "tags": ["admin-moderation-controller"],
+        "tags": [
+          "admin-moderation-controller"
+        ],
         "operationId": "release",
         "parameters": [
           {
@@ -664,7 +705,9 @@
     },
     "/api/v1/admin/members/{memberId}/suspension": {
       "post": {
-        "tags": ["admin-suspension-controller"],
+        "tags": [
+          "admin-suspension-controller"
+        ],
         "operationId": "suspend",
         "parameters": [
           {
@@ -701,7 +744,9 @@
         }
       },
       "delete": {
-        "tags": ["admin-suspension-controller"],
+        "tags": [
+          "admin-suspension-controller"
+        ],
         "operationId": "unsuspend",
         "parameters": [
           {
@@ -740,7 +785,9 @@
     },
     "/api/v1/admin/credits/adjustments": {
       "post": {
-        "tags": ["admin-credit-controller"],
+        "tags": [
+          "admin-credit-controller"
+        ],
         "operationId": "adjust",
         "requestBody": {
           "content": {
@@ -768,7 +815,9 @@
     },
     "/api/v1/admin/auth/login/google": {
       "post": {
-        "tags": ["admin-auth-controller"],
+        "tags": [
+          "admin-auth-controller"
+        ],
         "operationId": "login",
         "requestBody": {
           "content": {
@@ -796,7 +845,9 @@
     },
     "/api/v1/admin/originals/{storyId}": {
       "get": {
-        "tags": ["admin-original-controller"],
+        "tags": [
+          "admin-original-controller"
+        ],
         "operationId": "detail",
         "parameters": [
           {
@@ -817,7 +868,9 @@
         }
       },
       "patch": {
-        "tags": ["admin-original-controller"],
+        "tags": [
+          "admin-original-controller"
+        ],
         "operationId": "update_1",
         "parameters": [
           {
@@ -846,7 +899,9 @@
     },
     "/api/v1/admin/notices/{noticeId}": {
       "get": {
-        "tags": ["admin-notice-controller"],
+        "tags": [
+          "admin-notice-controller"
+        ],
         "operationId": "detail_1",
         "parameters": [
           {
@@ -878,7 +933,9 @@
         ]
       },
       "delete": {
-        "tags": ["admin-notice-controller"],
+        "tags": [
+          "admin-notice-controller"
+        ],
         "operationId": "delete_4",
         "parameters": [
           {
@@ -913,7 +970,9 @@
         ]
       },
       "patch": {
-        "tags": ["admin-notice-controller"],
+        "tags": [
+          "admin-notice-controller"
+        ],
         "operationId": "update_2",
         "parameters": [
           {
@@ -957,7 +1016,9 @@
     },
     "/api/v1/admin/stories": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "stories",
         "parameters": [
           {
@@ -985,7 +1046,9 @@
     },
     "/api/v1/admin/stories/{storyId}": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "story",
         "parameters": [
           {
@@ -1014,7 +1077,9 @@
     },
     "/api/v1/admin/push/delivery-stats": {
       "get": {
-        "tags": ["admin-push-delivery-controller"],
+        "tags": [
+          "admin-push-delivery-controller"
+        ],
         "operationId": "stats",
         "parameters": [
           {
@@ -1056,7 +1121,10 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["SERVICE", "MARKETING"]
+              "enum": [
+                "SERVICE",
+                "MARKETING"
+              ]
             }
           }
         ],
@@ -1076,7 +1144,9 @@
     },
     "/api/v1/admin/push/campaigns/{campaignId}": {
       "get": {
-        "tags": ["admin-push-controller"],
+        "tags": [
+          "admin-push-controller"
+        ],
         "operationId": "detail_3",
         "parameters": [
           {
@@ -1105,7 +1175,9 @@
     },
     "/api/v1/admin/push/campaigns/target-count": {
       "get": {
-        "tags": ["admin-push-controller"],
+        "tags": [
+          "admin-push-controller"
+        ],
         "operationId": "targetCount",
         "parameters": [
           {
@@ -1114,7 +1186,10 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["SERVICE", "MARKETING"]
+              "enum": [
+                "SERVICE",
+                "MARKETING"
+              ]
             }
           }
         ],
@@ -1134,7 +1209,9 @@
     },
     "/api/v1/admin/payments/orders": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "payments",
         "parameters": [
           {
@@ -1162,7 +1239,9 @@
     },
     "/api/v1/admin/payments/orders/{orderId}": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "payment",
         "parameters": [
           {
@@ -1191,7 +1270,9 @@
     },
     "/api/v1/admin/moderation/holds": {
       "get": {
-        "tags": ["admin-moderation-controller"],
+        "tags": [
+          "admin-moderation-controller"
+        ],
         "operationId": "holds",
         "parameters": [
           {
@@ -1219,7 +1300,9 @@
     },
     "/api/v1/admin/members": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "members",
         "parameters": [
           {
@@ -1247,7 +1330,9 @@
     },
     "/api/v1/admin/members/{memberId}": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "member",
         "parameters": [
           {
@@ -1276,7 +1361,9 @@
     },
     "/api/v1/admin/members/{memberId}/transactions": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "transactions",
         "parameters": [
           {
@@ -1313,7 +1400,9 @@
     },
     "/api/v1/admin/members/{memberId}/attendance": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "attendance",
         "parameters": [
           {
@@ -1350,7 +1439,9 @@
     },
     "/api/v1/admin/dashboard/summary": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "summary",
         "responses": {
           "200": {
@@ -1366,9 +1457,38 @@
         }
       }
     },
+    "/api/v1/admin/dashboard/play-installs": {
+      "get": {
+        "tags": [
+          "admin-play-installs-controller"
+        ],
+        "summary": "Play 설치 지표",
+        "description": "Play 기준 날짜를 그대로 반환합니다. 보고서는 며칠 늦게 갱신되며 결과는 1시간 캐시합니다.",
+        "operationId": "installs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayInstallsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/admin/dashboard/charts": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "charts",
         "parameters": [
           {
@@ -1396,7 +1516,9 @@
     },
     "/api/v1/admin/dashboard/analytics": {
       "get": {
-        "tags": ["admin-analytics-controller"],
+        "tags": [
+          "admin-analytics-controller"
+        ],
         "operationId": "analytics",
         "parameters": [
           {
@@ -1426,7 +1548,9 @@
     },
     "/api/v1/admin/credits/transactions": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "summary": "전체 이프 거래 내역",
         "description": "팀 계정 제외를 적용하지 않아 대시보드의 지급·소진 합계와 다를 수 있습니다. 접속 기록은 남기지 않습니다.",
         "operationId": "creditTransactions",
@@ -1524,7 +1648,9 @@
     },
     "/api/v1/admin/credits/policies": {
       "get": {
-        "tags": ["admin-credit-controller"],
+        "tags": [
+          "admin-credit-controller"
+        ],
         "operationId": "policies",
         "responses": {
           "200": {
@@ -1542,7 +1668,9 @@
     },
     "/api/v1/admin/chats": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "chats",
         "parameters": [
           {
@@ -1570,7 +1698,9 @@
     },
     "/api/v1/admin/chats/{chatId}": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "chat",
         "parameters": [
           {
@@ -1599,7 +1729,9 @@
     },
     "/api/v1/admin/audit-logs": {
       "get": {
-        "tags": ["admin-read-controller"],
+        "tags": [
+          "admin-read-controller"
+        ],
         "operationId": "auditLogs",
         "parameters": [
           {
@@ -1627,7 +1759,9 @@
     },
     "/api/v1/admin/originals/{storyId}/thumbnail": {
       "delete": {
-        "tags": ["admin-original-controller"],
+        "tags": [
+          "admin-original-controller"
+        ],
         "operationId": "deleteThumbnail_1",
         "parameters": [
           {
@@ -1706,7 +1840,10 @@
             "format": "date-time"
           },
           "effectiveUntil": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "active": {
@@ -1728,11 +1865,17 @@
             "minLength": 0
           },
           "effectiveFrom": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "effectiveUntil": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "reason": {
@@ -1741,7 +1884,11 @@
             "minLength": 0
           }
         },
-        "required": ["body", "reason", "title"]
+        "required": [
+          "body",
+          "reason",
+          "title"
+        ]
       },
       "AdminPushReasonRequest": {
         "type": "object",
@@ -1752,7 +1899,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "AdminCreditPolicyRequest": {
         "type": "object",
@@ -1762,7 +1911,10 @@
             "format": "int64"
           },
           "effectiveUntil": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "reason": {
@@ -1771,7 +1923,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "AdminCreditPolicyResponse": {
         "type": "object",
@@ -1811,7 +1965,10 @@
             "format": "int64"
           },
           "effectiveUntil": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "updatedAt": {
@@ -1829,7 +1986,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "AdminCampaignPageResponse": {
         "type": "object",
@@ -1867,7 +2026,10 @@
           },
           "kind": {
             "type": "string",
-            "enum": ["SERVICE", "MARKETING"]
+            "enum": [
+              "SERVICE",
+              "MARKETING"
+            ]
           },
           "title": {
             "type": "string"
@@ -1881,26 +2043,47 @@
           },
           "status": {
             "type": "string",
-            "enum": ["SCHEDULED", "SENDING", "SENT", "CANCELED", "FAILED"]
+            "enum": [
+              "SCHEDULED",
+              "SENDING",
+              "SENT",
+              "CANCELED",
+              "FAILED"
+            ]
           },
           "noticeId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "targetCount": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32"
           },
           "sentCount": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32"
           },
           "startedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "finishedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "createdAt": {
@@ -1935,7 +2118,10 @@
             "minLength": 0
           },
           "scheduledAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "reason": {
@@ -1944,26 +2130,42 @@
             "minLength": 0
           }
         },
-        "required": ["body", "reason", "title"]
+        "required": [
+          "body",
+          "reason",
+          "title"
+        ]
       },
       "ImagePresignRequest": {
         "type": "object",
         "description": "이미지 업로드용 presigned URL 발급 요청",
         "properties": {
           "kind": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "업로드 대상. 객체 키 prefix가 갈린다",
-            "enum": ["COVER", "CHARACTER"],
+            "enum": [
+              "COVER",
+              "CHARACTER"
+            ],
             "example": "COVER"
           },
           "contentType": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "image/jpeg · image/png · image/webp 중 하나",
             "example": "image/webp",
             "minLength": 1
           },
           "contentLength": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64",
             "description": "바이트 크기(1~5,242,880). 클라이언트는 이 값 그대로 PUT해야 한다",
             "example": 204800,
@@ -1971,7 +2173,11 @@
             "minimum": 1
           }
         },
-        "required": ["contentLength", "contentType", "kind"]
+        "required": [
+          "contentLength",
+          "contentType",
+          "kind"
+        ]
       },
       "ImagePresignResponse": {
         "type": "object",
@@ -1998,13 +2204,22 @@
         "type": "object",
         "properties": {
           "q": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 50,
             "minLength": 1
           },
           "status": {
-            "type": ["string", "null"],
-            "enum": ["DRAFT", "PUBLISHED"]
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ]
           },
           "page": {
             "type": "integer",
@@ -2025,10 +2240,16 @@
             "pattern": "asc|desc"
           },
           "cursor": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "limit": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -2070,18 +2291,30 @@
             "type": "string"
           },
           "body": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["DRAFT", "PUBLISHED"]
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ]
           },
           "publishedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "notifiedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "createdBy": {
@@ -2096,7 +2329,10 @@
             "format": "date-time"
           },
           "notified": {
-            "type": ["boolean", "null"]
+            "type": [
+              "boolean",
+              "null"
+            ]
           }
         }
       },
@@ -2131,7 +2367,11 @@
             "minLength": 0
           }
         },
-        "required": ["body", "reason", "title"]
+        "required": [
+          "body",
+          "reason",
+          "title"
+        ]
       },
       "NoticeReasonRequest": {
         "type": "object",
@@ -2142,7 +2382,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "PublishNoticeRequest": {
         "type": "object",
@@ -2151,8 +2393,14 @@
             "type": "boolean"
           },
           "notificationKind": {
-            "type": ["string", "null"],
-            "enum": ["SERVICE", "MARKETING"]
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "SERVICE",
+              "MARKETING"
+            ]
           },
           "reason": {
             "type": "string",
@@ -2160,7 +2408,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "AdminOperationReason": {
         "type": "object",
@@ -2171,7 +2421,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "AdminHoldReleased": {
         "type": "object",
@@ -2182,7 +2434,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["PENDING", "APPROVED", "REJECTED", "FAILED"]
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED",
+              "FAILED"
+            ]
           },
           "attempt": {
             "type": "integer",
@@ -2206,7 +2463,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
+            "enum": [
+              "ACTIVE",
+              "SUSPENDED",
+              "DELETED"
+            ]
           },
           "updatedAt": {
             "type": "string",
@@ -2223,7 +2484,10 @@
           },
           "type": {
             "type": "string",
-            "enum": ["GRANT", "REVOKE"]
+            "enum": [
+              "GRANT",
+              "REVOKE"
+            ]
           },
           "amount": {
             "type": "integer",
@@ -2232,7 +2496,10 @@
             "minimum": 1
           },
           "expiresInDays": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32"
           },
           "idempotencyKey": {
@@ -2247,7 +2514,10 @@
             "minLength": 0
           }
         },
-        "required": ["idempotencyKey", "reason"]
+        "required": [
+          "idempotencyKey",
+          "reason"
+        ]
       },
       "AdminCreditAdjustmentResponse": {
         "type": "object",
@@ -2258,7 +2528,10 @@
           },
           "type": {
             "type": "string",
-            "enum": ["GRANT", "REVOKE"]
+            "enum": [
+              "GRANT",
+              "REVOKE"
+            ]
           },
           "requestedAmount": {
             "type": "integer",
@@ -2280,7 +2553,10 @@
             "type": "boolean"
           },
           "expiresAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           }
         }
@@ -2293,7 +2569,9 @@
             "minLength": 1
           }
         },
-        "required": ["idToken"]
+        "required": [
+          "idToken"
+        ]
       },
       "AdminLoginResponse": {
         "type": "object",
@@ -2325,7 +2603,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
+            "enum": [
+              "ACTIVE",
+              "SUSPENDED",
+              "DELETED"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -2340,13 +2622,19 @@
         "type": "object",
         "properties": {
           "title": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 100,
             "minLength": 1,
             "pattern": "(?sU).*\\S.*"
           },
           "body": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 5000,
             "minLength": 1,
             "pattern": "(?sU).*\\S.*"
@@ -2357,7 +2645,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "AdminStoriesRequest": {
         "type": "object",
@@ -2374,77 +2664,140 @@
             "minimum": 1
           },
           "cursor": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "limit": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "sort": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "order": {
             "type": "string",
             "pattern": "asc|desc"
           },
           "q": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 50,
             "minLength": 1
           },
           "from": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "to": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "aiFrom": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "aiTo": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "aiFeature": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "aiStatus": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "hasLatency": {
-            "type": ["boolean", "null"]
+            "type": [
+              "boolean",
+              "null"
+            ]
           },
           "scope": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "genre": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "visibility": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "moderationStatus": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "memberId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "supportingCharacterCount": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32",
             "maximum": 5,
             "minimum": 0
           },
           "chatFrom": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "chatTo": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "creationFrom": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "creationTo": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -2489,7 +2842,10 @@
             "type": "string"
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "scope": {
             "type": "string"
@@ -2507,7 +2863,10 @@
             }
           },
           "supportingCharacterCount": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64"
           },
           "owner": {
@@ -2548,7 +2907,10 @@
             "type": "string"
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "scope": {
             "type": "string"
@@ -2566,7 +2928,10 @@
             }
           },
           "supportingCharacterCount": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64"
           },
           "owner": {
@@ -2658,7 +3023,10 @@
             "format": "int64"
           },
           "firstMessageSeconds": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64"
           }
         }
@@ -2716,7 +3084,10 @@
           },
           "kind": {
             "type": "string",
-            "enum": ["SERVICE", "MARKETING"]
+            "enum": [
+              "SERVICE",
+              "MARKETING"
+            ]
           },
           "requested": {
             "type": "integer",
@@ -2741,14 +3112,20 @@
         "properties": {
           "kind": {
             "type": "string",
-            "enum": ["SERVICE", "MARKETING"]
+            "enum": [
+              "SERVICE",
+              "MARKETING"
+            ]
           },
           "targetCount": {
             "type": "integer",
             "format": "int64"
           },
           "nightEligibleCount": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64"
           },
           "nightNow": {
@@ -2775,35 +3152,63 @@
             "minimum": 1
           },
           "cursor": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "limit": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "sort": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "order": {
             "type": "string",
             "pattern": "asc|desc"
           },
           "q": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 50,
             "minLength": 1
           },
           "from": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "to": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "status": {
-            "type": ["string", "null"],
-            "enum": ["PENDING", "COMPLETED", "REFUNDED"]
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "PENDING",
+              "COMPLETED",
+              "REFUNDED"
+            ]
           },
           "memberId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           }
         }
@@ -2850,7 +3255,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["PENDING", "COMPLETED", "REFUNDED"]
+            "enum": [
+              "PENDING",
+              "COMPLETED",
+              "REFUNDED"
+            ]
           },
           "priceKrw": {
             "type": "integer",
@@ -2865,11 +3274,17 @@
             "format": "date-time"
           },
           "refundedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "reversalShortfall": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64"
           }
         }
@@ -2889,7 +3304,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["PENDING", "COMPLETED", "REFUNDED"]
+            "enum": [
+              "PENDING",
+              "COMPLETED",
+              "REFUNDED"
+            ]
           },
           "priceKrw": {
             "type": "integer",
@@ -2904,11 +3323,17 @@
             "format": "date-time"
           },
           "refundedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "reversalShortfall": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64"
           },
           "firstPaidAt": {
@@ -2962,10 +3387,16 @@
             "pattern": "asc|desc"
           },
           "limit": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "cursor": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "offset": {
             "type": "integer",
@@ -3009,10 +3440,16 @@
           },
           "kind": {
             "type": "string",
-            "enum": ["CREATE", "UPDATE"]
+            "enum": [
+              "CREATE",
+              "UPDATE"
+            ]
           },
           "storyId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "ownerId": {
@@ -3051,56 +3488,102 @@
             "minimum": 1
           },
           "cursor": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "limit": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "sort": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "order": {
             "type": "string",
             "pattern": "asc|desc"
           },
           "q": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 50,
             "minLength": 1
           },
           "from": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "to": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "status": {
-            "type": ["string", "null"],
-            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "ACTIVE",
+              "SUSPENDED",
+              "DELETED"
+            ]
           },
           "excludeDeleted": {
-            "type": ["boolean", "null"]
+            "type": [
+              "boolean",
+              "null"
+            ]
           },
           "chatBucket": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32",
             "maximum": 4,
             "minimum": 0
           },
           "chatFrom": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "chatTo": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "creditDirection": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "creditDate": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "attendanceDate": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -3143,14 +3626,21 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
+            "enum": [
+              "ACTIVE",
+              "SUSPENDED",
+              "DELETED"
+            ]
           },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           },
           "lastActiveAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "creditsSpent": {
@@ -3166,7 +3656,10 @@
             "format": "int64"
           },
           "periodChatCount": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64"
           },
           "isAdmin": {
@@ -3186,14 +3679,21 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
+            "enum": [
+              "ACTIVE",
+              "SUSPENDED",
+              "DELETED"
+            ]
           },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           },
           "lastActiveAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "creditsSpent": {
@@ -3209,7 +3709,10 @@
             "format": "int64"
           },
           "periodChatCount": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64"
           },
           "creditBalance": {
@@ -3221,7 +3724,10 @@
             "format": "int64"
           },
           "deletedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "isAdmin": {
@@ -3244,13 +3750,22 @@
             "minimum": 1
           },
           "cursor": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "limit": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "sort": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "order": {
             "type": "string",
@@ -3458,6 +3973,57 @@
           },
           "amountKrwToday": {
             "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PlayInstallsResponse": {
+        "type": "object",
+        "properties": {
+          "totalInstalls": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeDevices": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlayInstallDay"
+            }
+          }
+        }
+      },
+      "PlayInstallDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "installs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uninstalls": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cumulativeInstalls": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeDevices": {
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64"
           }
         }
@@ -3713,66 +4279,117 @@
             "minimum": 1
           },
           "cursor": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "limit": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "sort": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "order": {
             "type": "string",
             "pattern": "asc|desc"
           },
           "q": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 50,
             "minLength": 1
           },
           "from": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "to": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "aiFrom": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "aiTo": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "aiFeature": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "aiStatus": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "hasLatency": {
-            "type": ["boolean", "null"]
+            "type": [
+              "boolean",
+              "null"
+            ]
           },
           "storyId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "memberId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "startedAs": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "turnBucket": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32",
             "maximum": 10,
             "minimum": 0
           },
           "hasFirstMessage": {
-            "type": ["boolean", "null"]
+            "type": [
+              "boolean",
+              "null"
+            ]
           },
           "turnDate": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -3818,35 +4435,59 @@
             "minimum": 1
           },
           "cursor": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "limit": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "sort": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "order": {
             "type": "string",
             "pattern": "asc|desc"
           },
           "q": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 50,
             "minLength": 1
           },
           "from": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "to": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "adminId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "action": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "enum": [
               "MEMBER_SEARCHED",
               "MEMBER_VIEWED",
@@ -3873,7 +4514,10 @@
             ]
           },
           "targetType": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "enum": [
               "MEMBER_QUERY",
               "MEMBER",
@@ -3886,11 +4530,20 @@
             ]
           },
           "category": {
-            "type": ["string", "null"],
-            "enum": ["CHANGE", "ACCESS"]
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "CHANGE",
+              "ACCESS"
+            ]
           },
           "targetId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 255,
             "minLength": 1
           }
@@ -3946,7 +4599,10 @@
             "type": "string"
           },
           "reason": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "before": {
             "oneOf": [
@@ -3980,20 +4636,25 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "container": {
-            "type": "boolean"
-          },
           "string": {
             "type": "boolean"
           },
-          "floatingPointNumber": {
+          "container": {
             "type": "boolean"
           },
-          "missingNode": {
-            "type": "boolean"
-          },
-          "integralNumber": {
-            "type": "boolean"
+          "nodeType": {
+            "type": "string",
+            "enum": [
+              "ARRAY",
+              "BINARY",
+              "BOOLEAN",
+              "MISSING",
+              "NULL",
+              "NUMBER",
+              "OBJECT",
+              "POJO",
+              "STRING"
+            ]
           },
           "int": {
             "type": "boolean"
@@ -4013,20 +4674,6 @@
           "bigInteger": {
             "type": "boolean"
           },
-          "nodeType": {
-            "type": "string",
-            "enum": [
-              "ARRAY",
-              "BINARY",
-              "BOOLEAN",
-              "MISSING",
-              "NULL",
-              "NUMBER",
-              "OBJECT",
-              "POJO",
-              "STRING"
-            ]
-          },
           "valueNode": {
             "type": "boolean"
           },
@@ -4044,6 +4691,15 @@
             "type": "boolean"
           },
           "binary": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "integralNumber": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
             "type": "boolean"
           },
           "number": {
