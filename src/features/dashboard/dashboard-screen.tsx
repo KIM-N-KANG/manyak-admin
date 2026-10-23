@@ -91,6 +91,10 @@ export function DashboardScreen() {
       )
     : null;
   const yesterday = c?.daily.find((day) => day.date === yesterdayDate);
+  const yesterdayOutsideRange =
+    yesterdayDate !== null &&
+    (yesterdayDate < range.from || yesterdayDate > range.to);
+  const missingValueStatus = charts.isPending ? '불러오는 중' : '불러오기 실패';
   const average = periodAverage(c?.daily.map((day) => day[metric]) ?? []);
   const cards = s
     ? ([
@@ -190,6 +194,15 @@ export function DashboardScreen() {
                 0,
               );
               const yesterdayValue = yesterday?.[cardMetric];
+              const periodText =
+                periodTotal !== undefined
+                  ? `${periodTotal.toLocaleString('ko-KR')}${unit}`
+                  : missingValueStatus;
+              const yesterdayText = yesterdayOutsideRange
+                ? '어제: 선택 기간 밖'
+                : yesterdayValue !== undefined
+                  ? `어제 ${yesterdayValue.toLocaleString('ko-KR')}${unit}`
+                  : `어제: ${missingValueStatus}`;
 
               return (
                 <Link
@@ -221,7 +234,7 @@ export function DashboardScreen() {
                       ))}
                     </dl>
                     <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                      {`${range.label} ${periodTotal?.toLocaleString('ko-KR') ?? '—'} ${unit} · 어제 ${yesterdayValue?.toLocaleString('ko-KR') ?? '—'} ${unit}`}
+                      {`${range.label} 합계 ${periodText}, ${yesterdayText}`}
                     </p>
                   </div>
                   <div className="w-14 shrink-0 sm:w-20">

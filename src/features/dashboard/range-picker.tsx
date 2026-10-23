@@ -8,7 +8,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { popoverMotionClass } from '@/components/ui/popover-motion';
 
 import type { DateRange, RangeName } from './date-range';
-import { kstToday, quickRanges, resolveRange, validRange } from './date-range';
+import {
+  getRangeError,
+  kstToday,
+  quickRanges,
+  resolveRange,
+} from './date-range';
 
 export function useDashboardRange() {
   const params = useSearchParams();
@@ -57,6 +62,7 @@ export function RangePicker({
   const [draft, setDraft] = useState<DateRange>(range);
   const trigger = useRef<HTMLButtonElement>(null);
   const today = kstToday();
+  const rangeError = getRangeError(draft, today);
 
   return (
     <Popover.Root
@@ -110,7 +116,7 @@ export function RangePicker({
                 onSubmit={(event) => {
                   event.preventDefault();
 
-                  if (validRange(draft, today)) {
+                  if (!rangeError) {
                     range.select(draft);
                     setOpen(false);
                   }
@@ -143,17 +149,18 @@ export function RangePicker({
                   />
                 </label>
                 <p className="max-w-56 text-xs text-muted-foreground">
-                  오늘까지 최대 366일을 선택할 수 있습니다.
+                  끝 날짜는 오늘까지 선택할 수 있으며 시작 날짜와 끝 날짜를
+                  포함해 최대 366일입니다.
                 </p>
-                {!validRange(draft, today) && (
+                {rangeError && (
                   <p role="alert" className="text-xs text-destructive">
-                    날짜 순서와 최대 366일 범위를 확인하세요.
+                    {rangeError}
                   </p>
                 )}
                 <button
                   type="submit"
                   className="control"
-                  disabled={!validRange(draft, today)}>
+                  disabled={!!rangeError}>
                   적용
                 </button>
               </form>

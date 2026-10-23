@@ -61,19 +61,26 @@ export function quickRange(name: RangeName, today = kstToday()): DateRange {
 
   return { from: date(start), to: date(end) };
 }
-export function validRange({ from, to }: DateRange, today = kstToday()) {
+export function getRangeError({ from, to }: DateRange, today = kstToday()) {
   const validDate = (v: string) =>
     /^\d{4}-\d{2}-\d{2}$/.test(v) &&
     Number.isFinite(Date.parse(v)) &&
     date(new Date(v)) === v;
 
-  return (
-    validDate(from) &&
-    validDate(to) &&
-    from <= to &&
-    to <= today &&
-    (Date.parse(to) - Date.parse(from)) / 86400000 < 366
-  );
+  if (!validDate(from) || !validDate(to))
+    return '시작 날짜와 끝 날짜를 올바르게 입력해 주세요.';
+
+  if (from > to) return '끝 날짜는 시작 날짜와 같거나 이후로 선택해 주세요.';
+
+  if (to > today) return '끝 날짜는 오늘 또는 이전 날짜로 선택해 주세요.';
+
+  if ((Date.parse(to) - Date.parse(from)) / 86400000 >= 366)
+    return '시작 날짜와 끝 날짜를 포함해 366일 이내로 선택해 주세요.';
+
+  return null;
+}
+export function validRange(range: DateRange, today = kstToday()) {
+  return getRangeError(range, today) === null;
 }
 export function resolveRange(params: URLSearchParams, today = kstToday()) {
   const name =

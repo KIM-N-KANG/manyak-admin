@@ -195,7 +195,7 @@ describe('Amplitude 실패 격리', () => {
     );
 
     await within(memberCard).findByText(
-      new RegExp(`최근 7일 ${sevenTotal.toLocaleString('ko-KR')} 명`),
+      new RegExp(`최근 7일 합계 ${sevenTotal.toLocaleString('ko-KR')}명`),
     );
 
     fireEvent.click(screen.getByRole('button', { name: '기간: 최근 7일' }));
@@ -229,7 +229,7 @@ describe('Amplitude 실패 격리', () => {
     const updatedCard = screen.getByRole('link', { name: /^회원/ });
 
     await within(updatedCard).findByText(
-      new RegExp(`최근 90일 ${ninetyTotal.toLocaleString('ko-KR')} 명`),
+      new RegExp(`최근 90일 합계 ${ninetyTotal.toLocaleString('ko-KR')}명`),
     );
     expect(updatedCard.querySelector('dl')!.textContent).toBe(headline);
   });
@@ -368,12 +368,44 @@ it('직접 날짜를 적용하고 Esc로 닫으면 기간 버튼에 포커스가
   const trigger = screen.getByRole('button', { name: '기간: 최근 7일' });
 
   fireEvent.click(trigger);
+
+  for (const [from, to, message] of [
+    ['', '2026-10-10', '시작 날짜와 끝 날짜를 올바르게 입력해 주세요.'],
+    [
+      '2026-10-11',
+      '2026-10-10',
+      '끝 날짜는 시작 날짜와 같거나 이후로 선택해 주세요.',
+    ],
+    [
+      '2026-10-01',
+      '2026-10-22',
+      '끝 날짜는 오늘 또는 이전 날짜로 선택해 주세요.',
+    ],
+    [
+      '2025-10-20',
+      '2026-10-21',
+      '시작 날짜와 끝 날짜를 포함해 366일 이내로 선택해 주세요.',
+    ],
+  ]) {
+    fireEvent.change(screen.getByLabelText('시작 날짜'), {
+      target: { value: from },
+    });
+    fireEvent.change(screen.getByLabelText('끝 날짜'), {
+      target: { value: to },
+    });
+    expect(screen.getByRole('alert').textContent).toBe(message);
+    expect(
+      screen.getByRole('button', { name: '적용' }).hasAttribute('disabled'),
+    ).toBe(true);
+  }
+
   fireEvent.change(screen.getByLabelText('시작 날짜'), {
     target: { value: '2026-10-01' },
   });
   fireEvent.change(screen.getByLabelText('끝 날짜'), {
     target: { value: '2026-10-10' },
   });
+  expect(screen.queryByRole('alert')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: '적용' }));
   expect(navigation.push).toHaveBeenCalledWith(
     '/dashboard?from=2026-10-01&to=2026-10-10',

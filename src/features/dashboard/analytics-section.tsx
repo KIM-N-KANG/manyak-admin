@@ -166,7 +166,8 @@ export function AnalyticsSection({
           <AnalyticsSource />
         </div>
         <p className="text-xs text-muted-foreground">
-          {label ?? `최근 ${days}일`} · KST · 집계가 몇 분 늦을 수 있습니다
+          {label ?? `최근 ${days}일`} (KST). 집계가 몇 분 늦게 반영될 수
+          있습니다.
         </p>
       </div>
       {query.isError ? (
