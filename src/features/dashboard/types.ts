@@ -58,12 +58,23 @@ export type DashboardCharts = {
   distributions: Distribution[];
 };
 
+export type DashboardPlatformCounts = {
+  total: number;
+  web: number;
+  android: number;
+};
+
 export type DashboardAnalytics = {
   asOf: string;
   from: string;
   to: string;
-  todayActiveUsers: number;
-  daily: { date: string; activeUsers: number; newUsers: number }[];
+  todayActiveUsers: DashboardPlatformCounts | null;
+  pendingDates: string[];
+  daily: {
+    date: string;
+    activeUsers: DashboardPlatformCounts;
+    newUsers: DashboardPlatformCounts;
+  }[];
 };
 
 export interface PlayInstalls {

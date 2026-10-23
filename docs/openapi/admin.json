@@ -7,8 +7,8 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-10-23T06:31:14.028Z",
-    "revision": "28bbf1c"
+    "receivedAt": "2026-10-23T08:10:20.363Z",
+    "revision": "a8f4617"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -1724,6 +1724,274 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/admin/campaigns": {
+      "get": {
+        "tags": [
+          "campaign-analytics-controller"
+        ],
+        "operationId": "catalog",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/CampaignDefinition"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/campaigns/sources": {
+      "get": {
+        "tags": [
+          "campaign-analytics-controller"
+        ],
+        "operationId": "sources",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignSourceResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/campaigns/funnels/story-detail": {
+      "get": {
+        "tags": [
+          "campaign-analytics-controller"
+        ],
+        "operationId": "story_1",
+        "parameters": [
+          {
+            "name": "storyId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "campaign",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignStoryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/campaigns/funnels/creation": {
+      "get": {
+        "tags": [
+          "campaign-analytics-controller"
+        ],
+        "operationId": "creation",
+        "parameters": [
+          {
+            "name": "campaign",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignCreationResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/campaigns/analytics": {
+      "get": {
+        "tags": [
+          "campaign-analytics-controller"
+        ],
+        "operationId": "analytics_1",
+        "parameters": [
+          {
+            "name": "campaign",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAnalyticsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/admin/audit-logs": {
@@ -4197,14 +4465,44 @@
             "format": "date"
           },
           "todayActiveUsers": {
-            "type": "integer",
-            "format": "int64"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DashboardPlatformCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "daily": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AnalyticsDay"
             }
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        }
+      },
+      "DashboardPlatformCounts": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "web": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "android": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -4216,12 +4514,10 @@
             "format": "date"
           },
           "activeUsers": {
-            "type": "integer",
-            "format": "int64"
+            "$ref": "#/components/schemas/DashboardPlatformCounts"
           },
           "newUsers": {
-            "type": "integer",
-            "format": "int64"
+            "$ref": "#/components/schemas/DashboardPlatformCounts"
           }
         }
       },
@@ -4433,6 +4729,332 @@
             "format": "int64"
           },
           "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CampaignDefinition": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "storyId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "CampaignSourceResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignSourceRow"
+            }
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignPostRow"
+            }
+          }
+        }
+      },
+      "CampaignSourceRow": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "newVisitors": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CampaignPostRow": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "visitors": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CampaignStoryResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "storyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryCampaignStep"
+            }
+          }
+        }
+      },
+      "StoryCampaignStep": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string"
+          },
+          "turnNumber": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "users": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CampaignCreationResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignFunnelStep"
+            }
+          }
+        }
+      },
+      "CampaignFunnelStep": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string"
+          },
+          "users": {
+            "$ref": "#/components/schemas/CampaignSegments"
+          }
+        }
+      },
+      "CampaignSegments": {
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ads": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "nonAds": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CampaignAnalyticsResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignDay"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/CampaignTotals"
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        }
+      },
+      "CampaignDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "activeUsers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "newVisitors": {
+            "$ref": "#/components/schemas/CampaignSegments"
+          },
+          "newVisitorsBySource": {
+            "$ref": "#/components/schemas/CampaignSources"
+          },
+          "signups": {
+            "$ref": "#/components/schemas/CampaignSegments"
+          },
+          "cumulativeSignups": {
+            "$ref": "#/components/schemas/CampaignSegments"
+          },
+          "storylineRequests": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completionRequests": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "chatMessages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CampaignSources": {
+        "type": "object",
+        "properties": {
+          "ads": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instagram": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "threads": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "dcinside": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "other": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CampaignTotals": {
+        "type": "object",
+        "properties": {
+          "activeUsersAverage": {
+            "type": "number",
+            "format": "double"
+          },
+          "newVisitors": {
+            "$ref": "#/components/schemas/CampaignSegments"
+          },
+          "signups": {
+            "$ref": "#/components/schemas/CampaignSegments"
+          },
+          "adsShare": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "storylineRequests": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completionRequests": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "chatMessages": {
             "type": "integer",
             "format": "int64"
           }
@@ -4654,22 +5276,22 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "container": {
-            "type": "boolean"
-          },
           "string": {
             "type": "boolean"
           },
           "number": {
             "type": "boolean"
           },
+          "container": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
+            "type": "boolean"
+          },
           "missingNode": {
             "type": "boolean"
           },
           "integralNumber": {
-            "type": "boolean"
-          },
-          "floatingPointNumber": {
             "type": "boolean"
           },
           "nodeType": {

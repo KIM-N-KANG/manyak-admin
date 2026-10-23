@@ -38,6 +38,23 @@ const cases: [string, string, string, unknown?][] = [
   ],
   ['POST', `/notices/${id}/unpublish`, `/notices/${id}/unpublish`, reason],
   ['GET', '/dashboard/summary', '/dashboard/summary'],
+  ['GET', '/campaigns', '/campaigns'],
+  ['GET', '/campaigns/sources?days=7', '/campaigns/sources?days=7'],
+  [
+    'GET',
+    '/campaigns/analytics?campaign=test&days=7',
+    '/campaigns/analytics?campaign=test&days=7',
+  ],
+  [
+    'GET',
+    '/campaigns/funnels/creation?days=7',
+    '/campaigns/funnels/creation?days=7',
+  ],
+  [
+    'GET',
+    `/campaigns/funnels/story-detail?storyId=${id}&days=7`,
+    `/campaigns/funnels/story-detail?storyId=${id}&days=7`,
+  ],
   ['GET', '/dashboard/play-installs', '/dashboard/play-installs'],
   ['GET', '/dashboard/charts?days=7', '/dashboard/charts?days=7'],
   ['GET', '/dashboard/analytics?days=30', '/dashboard/analytics?days=30'],
@@ -561,3 +578,37 @@ it.each(['charts', 'analytics'])(
     }
   },
 );
+
+it('개요 분석의 플랫폼 객체·null·준비 중 날짜를 변환 없이 전달한다', async () => {
+  for (const todayActiveUsers of [
+    null,
+    { total: 203, web: 186, android: 19 },
+  ]) {
+    const body = {
+      asOf: '2026-10-23T05:00:00Z',
+      from: '2026-10-20',
+      to: '2026-10-22',
+      todayActiveUsers,
+      pendingDates: ['2026-10-21'],
+      daily: [
+        {
+          date: '2026-10-20',
+          activeUsers: { total: 198, web: 181, android: 19 },
+          newUsers: { total: 27, web: 25, android: 2 },
+        },
+      ],
+    };
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(body));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await invoke(
+      'GET',
+      '/dashboard/analytics?from=2026-10-20&to=2026-10-22',
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(body);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  }
+});
