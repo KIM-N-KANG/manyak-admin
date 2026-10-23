@@ -352,55 +352,101 @@ describe('알림 화면의 BFF 연결', () => {
   });
 });
 
-it('서버 모드에서는 지원하지 않는 스토리 이동 대상을 전송하지 않는다', async () => {
+it('서버 모드에서도 홍보 스토리를 검색·미리 채우고 확인 후 storyId를 전송한다', async () => {
+  const story = stories.find((item) => item.visibility === 'PUBLIC')!;
   const view = render(
     wrap(
       createElement(
         ServerDataProvider,
         { value: true },
-        createElement(CampaignFormScreen, { storyId: stories[0].storyId }),
+        createElement(CampaignFormScreen, { storyId: story.storyId }),
       ),
     ),
   );
 
-  await screen.findByText(/스토리 이동 대상 지정은 준비 중입니다/);
-  expect(screen.queryByLabelText('이동 대상 스토리')).toBeNull();
   expect(
-    vi
-      .mocked(fetch)
-      .mock.calls.every(([url]) => !String(url).startsWith('/api/stories')),
-  ).toBe(true);
-  fill(view.container);
+    screen.getByRole('combobox', { name: '이동 대상 스토리' }),
+  ).toBeTruthy();
+  expect(
+    screen.queryByText(/스토리 이동 대상 지정은 준비 중입니다/),
+  ).toBeNull();
   await waitFor(() =>
     expect(
-      screen
-        .getByRole('button', { name: '대상 확인 후 발송' })
-        .hasAttribute('disabled'),
-    ).toBe(false),
+      vi
+        .mocked(fetch)
+        .mock.calls.some(([url]) => String(url).startsWith('/api/stories?')),
+    ).toBe(true),
   );
-  fireEvent.click(screen.getByRole('button', { name: '대상 확인 후 발송' }));
-  fireEvent.click(await screen.findByRole('button', { name: '확인' }));
+  fireEvent.change(screen.getByLabelText('홍보할 스토리 검색'), {
+    target: { value: '이야기' },
+  });
+  await waitFor(() =>
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.some(([url]) =>
+          String(url).includes(`q=${encodeURIComponent('이야기')}`),
+        ),
+    ).toBe(true),
+  );
+  fill(view.container);
+
+  const submit = screen.getByRole('button', { name: '대상 확인 후 발송' });
+
+  await waitFor(() => expect(submit.hasAttribute('disabled')).toBe(false));
+  fireEvent.click(submit);
+
+  const dialog = await screen.findByRole('dialog');
+
+  expect(dialog.textContent).toContain(story.title);
+  expect(writes).toHaveLength(0);
+  fireEvent.click(within(dialog).getByRole('button', { name: '확인' }));
   await waitFor(() => expect(writes).toHaveLength(1));
-  expect(writes[0].body).not.toHaveProperty('storyId');
+  expect(writes[0].body).toMatchObject({ storyId: story.storyId });
 });
 
-it('서버 캠페인 목록은 지원하는 상태 필터와 정렬만 제공한다', async () => {
-  render(
-    wrap(
-      createElement(
-        ServerDataProvider,
-        { value: true },
-        createElement(CampaignListScreen),
+it.each(['도달 회원', '도달 기기', '실패 기기'])(
+  '서버 캠페인 목록의 검색·종류 필터를 표시하고 %s 정렬에서 보존한다',
+  async (label) => {
+    nav.search = 'page=2&size=2&q=행사&kind=MARKETING';
+    render(
+      wrap(
+        createElement(
+          ServerDataProvider,
+          { value: true },
+          createElement(CampaignListScreen),
+        ),
       ),
-    ),
-  );
-  await screen.findByText('제목·본문 검색과 종류 필터는 준비 중입니다.');
-  expect(screen.queryByRole('searchbox')).toBeNull();
-  expect(screen.queryByLabelText('종류')).toBeNull();
-  await screen.findByRole('button', { name: /제목/ });
-  expect(screen.queryByRole('button', { name: /도달 회원/ })).toBeNull();
-  expect(screen.queryByRole('button', { name: /도달 기기/ })).toBeNull();
-});
+    );
+
+    const button = await screen.findByRole('button', { name: label });
+
+    expect(screen.getByRole('searchbox')).toBeTruthy();
+    expect((screen.getByLabelText('종류') as HTMLSelectElement).value).toBe(
+      'MARKETING',
+    );
+    expect(
+      screen.queryByText('제목·본문 검색과 종류 필터는 준비 중입니다.'),
+    ).toBeNull();
+    fireEvent.click(button);
+
+    const query = new URL(nav.push.mock.calls.at(-1)![0], 'http://localhost')
+      .searchParams;
+
+    expect(query.get('q')).toBe('행사');
+    expect(query.get('kind')).toBe('MARKETING');
+    expect(query.get('page')).toBe('1');
+    expect(query.get('sort')).toBe(
+      (
+        {
+          '도달 회원': 'deliveredMembers',
+          '도달 기기': 'deliveredDevices',
+          '실패 기기': 'failedDevices',
+        } as Record<string, string>
+      )[label],
+    );
+  },
+);
 
 it('서버 공지의 null 본문은 편집 화면에서 빈 입력으로 표시한다', async () => {
   const notice = saveNotice({

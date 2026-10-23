@@ -77,19 +77,27 @@ export const Delete2Body = zod.object({
 
 export const Delete2Response = zod.unknown();
 
-export const list1QueryPageDefault = 1;
-export const list1QuerySizeDefault = 20;
-export const list1QuerySortDefault = `createdAt`;
-export const list1QueryOrderDefault = `desc`;
+export const list1QueryQuerySizeMax = 100;
+
+export const list1QueryQueryOrderRegExp = new RegExp('asc|desc');
+export const list1QueryQueryQMax = 50;
 
 export const List1QueryParams = zod.object({
-  status: zod
-    .enum(['SCHEDULED', 'SENDING', 'SENT', 'CANCELED', 'FAILED'])
-    .optional(),
-  page: zod.number().default(list1QueryPageDefault),
-  size: zod.number().default(list1QuerySizeDefault),
-  sort: zod.string().default(list1QuerySortDefault),
-  order: zod.string().default(list1QueryOrderDefault),
+  query: zod.object({
+    page: zod.number().min(1).optional(),
+    size: zod.number().min(1).max(list1QueryQuerySizeMax).optional(),
+    cursor: zod.string().nullish(),
+    limit: zod.string().nullish(),
+    sort: zod.string().nullish(),
+    order: zod.string().regex(list1QueryQueryOrderRegExp).optional(),
+    q: zod.string().min(1).max(list1QueryQueryQMax).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+    status: zod
+      .enum(['SCHEDULED', 'SENDING', 'SENT', 'CANCELED', 'FAILED'])
+      .nullish(),
+    kind: zod.enum(['SERVICE', 'MARKETING']).nullish(),
+  }),
 });
 
 export const List1Response = zod.unknown();
@@ -108,6 +116,7 @@ export const Create2Body = zod.object({
   body: zod.string().min(create2BodyBodyMin).max(create2BodyBodyMax),
   scheduledAt: zod.iso.datetime({ offset: true }).nullish(),
   reason: zod.string().min(create2BodyReasonMin).max(create2BodyReasonMax),
+  storyId: zod.uuid().nullish(),
 });
 
 export const Create2Response = zod.void();
