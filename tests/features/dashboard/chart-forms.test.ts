@@ -252,9 +252,46 @@ it('첫 메시지 백분위는 한 축 위 연결 점이며 평균은 별도 마
   expect(screen.getByText('P50 80초')).toBeTruthy();
   expect(screen.getByText('P90 220초')).toBeTruthy();
   expect(screen.getByText('평균 120초')).toBeTruthy();
-  expect(
-    container.querySelector('.recharts-legend-wrapper')?.textContent,
-  ).toContain('평균 (마름모)');
+  expect(container.querySelector('.recharts-legend-wrapper')?.textContent).toBe(
+    '백분위평균',
+  );
+
+  const legendItems = container.querySelectorAll('.recharts-legend-item');
+  const meanLegend = Array.from(legendItems).find(
+    (item) => item.textContent === '평균',
+  )!;
+  const percentileLegend = Array.from(legendItems).find(
+    (item) => item.textContent === '백분위',
+  )!;
+  const diamond = meanLegend.querySelector('path')!;
+
+  expect(diamond.getAttribute('d')).toMatch(
+    /^M[^A-Z]+L[^A-Z]+L[^A-Z]+L[^A-Z]+Z$/,
+  );
+
+  const coordinates = diamond
+    .getAttribute('d')!
+    .match(/-?\d+(?:\.\d+)?/g)!
+    .map(Number);
+
+  expect(coordinates).toHaveLength(8);
+  expect([
+    coordinates[0],
+    coordinates[3],
+    coordinates[4],
+    coordinates[7],
+  ]).toEqual([0, 0, 0, 0]);
+  expect(coordinates[1]).toBeLessThan(0);
+  expect(coordinates[2]).toBeGreaterThan(0);
+  expect(coordinates[5]).toBeGreaterThan(0);
+  expect(coordinates[6]).toBeLessThan(0);
+  expect(diamond.getAttribute('fill')).toBe('var(--muted-foreground)');
+  expect(percentileLegend.querySelector('path')?.getAttribute('d')).toContain(
+    'A',
+  );
+  expect(percentileLegend.querySelector('path')?.getAttribute('fill')).toBe(
+    'var(--primary)',
+  );
   fireEvent.click(container.querySelectorAll('.recharts-scatter-symbol')[1]);
   expect(onSelect).toHaveBeenCalledWith(
     expect.objectContaining(data.points[2]),
