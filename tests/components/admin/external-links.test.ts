@@ -112,7 +112,7 @@ it('결제 상세 머리에 원본 확인 링크를 표시한다', () => {
     'https://www.groble.im/manage/store/operation',
   );
 });
-it('Amplitude 카드에서 계약에 없는 URL 필드를 추가하지 않고 프로젝트 링크를 사용한다', () => {
+it('오늘 활성 사용자 카드는 사용자 활동 탭으로 연결한다', () => {
   state.data = {
     asOf: '2026-10-21T00:00:00Z',
     from: '2026-10-21',
@@ -127,6 +127,8 @@ it('Amplitude 카드에서 계약에 없는 URL 필드를 추가하지 않고 �
       },
     ],
   };
-  render(createElement(AnalyticsSection, { days: '7' }));
-  assertExternal('Amplitude에서 보기', externalLinks.amplitude);
+  render(createElement(AnalyticsSection));
+  expect(
+    screen.getByRole('link', { name: '오늘 활성 사용자' }).getAttribute('href'),
+  ).toBe('/analytics/users?tab=activity');
 });

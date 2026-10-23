@@ -136,7 +136,7 @@ function expectDbMetricsVisible() {
   expect(
     screen.getByText('결제 금액 (환불 포함)', { selector: 'p' }),
   ).toBeTruthy();
-  expect(screen.getByRole('heading', { name: '일별 추이' })).toBeTruthy();
+  expect(screen.getByRole('region', { name: '일별 지표 추이' })).toBeTruthy();
   expect(screen.queryByRole('heading', { name: '이용 분포' })).toBeNull();
 }
 
@@ -146,23 +146,21 @@ describe('Amplitude 실패 격리', () => {
     render(dashboard());
 
     const region = screen.getByRole('region', {
-      name: 'Amplitude 사용자 지표',
+      name: '오늘 활성 사용자',
     });
     const alert = await within(region).findByRole('alert');
 
     expect(alert.textContent).toContain('불러올 수 없음');
-    await screen.findByRole('heading', { name: '일별 추이' });
+    await screen.findByRole('region', { name: '일별 지표 추이' });
     expectDbMetricsVisible();
     expect(screen.getAllByRole('alert')).toHaveLength(1);
-    expect(
-      within(region).queryByRole('heading', { name: '오늘 활성 사용자' }),
-    ).toBeNull();
+    expect(within(region).queryByText('합계')).toBeNull();
 
     const dbRequests = requested.filter((url) => !url.includes('/analytics'));
 
     failAnalytics = false;
     fireEvent.click(within(region).getByRole('button', { name: '다시 시도' }));
-    await within(region).findByRole('heading', { name: '오늘 활성 사용자' });
+    await within(region).findByText('합계');
     expect(within(region).queryByRole('alert')).toBeNull();
     expectDbMetricsVisible();
     expect(requested.filter((url) => url.includes('/analytics'))).toHaveLength(
@@ -173,18 +171,18 @@ describe('Amplitude 실패 격리', () => {
     );
   });
 
-  it('같은 기간 선택으로 DB 추이와 Amplitude 요청을 함께 전환한다', async () => {
+  it('기간 선택은 DB 추이만 전환하고 Amplitude 카드는 KST 오늘 하루 조회를 유지한다', async () => {
     const view = render(dashboard());
 
     await screen.findByRole('heading', { name: '오늘 활성 사용자' });
     expect(requested).toContain(
-      '/api/dashboard/analytics?from=2026-10-15&to=2026-10-21',
+      '/api/dashboard/analytics?from=2026-10-21&to=2026-10-21',
     );
     expect(requested).toContain(
       '/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
     );
 
-    const memberCard = screen.getByRole('link', { name: /^회원/ });
+    const memberCard = await screen.findByRole('link', { name: /^회원/ });
     const headline = memberCard.querySelector('dl')!.textContent;
     const sevenDays = await chartsResponse(
       new Request(
@@ -208,9 +206,9 @@ describe('Amplitude 실패 격리', () => {
     navigation.search = 'range=last90d';
     view.rerender(dashboard());
     await waitFor(() => {
-      expect(requested).toContain(
-        '/api/dashboard/analytics?from=2026-07-24&to=2026-10-21',
-      );
+      expect(requested.filter((url) => url.includes('/analytics'))).toEqual([
+        '/api/dashboard/analytics?from=2026-10-21&to=2026-10-21',
+      ]);
       expect(requested).toContain(
         '/api/dashboard/charts?from=2026-07-24&to=2026-10-21',
       );
@@ -272,9 +270,9 @@ describe('개요와 분석 화면 분리', () => {
     expect(
       screen.getByRole('heading', { name: '분석', level: 1 }),
     ).toBeTruthy();
-    expect(screen.queryByRole('heading', { name: '일별 추이' })).toBeNull();
+    expect(screen.queryByRole('region', { name: '일별 지표 추이' })).toBeNull();
     expect(
-      screen.queryByRole('region', { name: 'Amplitude 사용자 지표' }),
+      screen.queryByRole('region', { name: '오늘 활성 사용자' }),
     ).toBeNull();
     expect(screen.getAllByText('수치 및 관련 목록')).toHaveLength(8);
     expect(requested).toEqual([
@@ -326,7 +324,7 @@ describe('개요와 분석 화면 분리', () => {
   it('개요의 지표 전환은 새 경로와 기간을 유지하고 일별 목록 이동을 보존한다', async () => {
     const view = render(dashboard());
 
-    await screen.findByRole('heading', { name: '일별 추이' });
+    await screen.findByRole('region', { name: '일별 지표 추이' });
     expect(
       screen.getByRole('heading', { name: '개요', level: 1 }),
     ).toBeTruthy();
@@ -342,14 +340,7 @@ describe('개요와 분석 화면 분리', () => {
       ).toBe(`/credits/transactions?direction=${direction}`);
     }
 
-    fireEvent.change(screen.getByRole('combobox', { name: '지표' }), {
-      target: { value: 'spent' },
-    });
-    expect(navigation.push).toHaveBeenCalledWith(
-      '/dashboard?range=last7d&metric=spent',
-    );
-    navigation.search = 'range=last7d&metric=spent';
-    view.rerender(dashboard());
+    expect(screen.queryByRole('combobox', { name: '지표' })).toBeNull();
 
     const links = Array.from(view.container.querySelectorAll('a')).map((link) =>
       link.getAttribute('href'),
@@ -368,7 +359,7 @@ describe('개요와 분석 화면 분리', () => {
 
 it('직접 날짜를 적용하고 Esc로 닫으면 기간 버튼에 포커스가 돌아온다', async () => {
   render(dashboard());
-  await screen.findByRole('heading', { name: '일별 추이' });
+  await screen.findByRole('region', { name: '일별 지표 추이' });
 
   const trigger = screen.getByRole('button', { name: '기간: 최근 7일' });
 
@@ -440,7 +431,7 @@ it('Play 503은 설치 카드에만 설치 지표 사용 불가를 표시하고 
   render(dashboard());
   await screen.findByText('설치 지표 사용 불가');
   await screen.findByRole('heading', { name: '오늘 활성 사용자' });
-  await screen.findByRole('heading', { name: '일별 추이' });
+  await screen.findByRole('region', { name: '일별 지표 추이' });
   expectDbMetricsVisible();
   expect(
     screen.getByRole('region', { name: '앱 설치(Android)' }).textContent,

@@ -287,9 +287,9 @@ it('요약 카드에는 차트를 넣지 않고 바로 아래의 기존 일별 �
   const summary = screen.getByRole('region', { name: '요약 지표' });
   const cards = within(summary).getAllByRole('link');
 
-  expect(cards).toHaveLength(8);
+  expect(cards).toHaveLength(10);
   expect(summary.className).toContain('sm:grid-cols-2');
-  expect(summary.className).toContain('xl:grid-cols-4');
+  expect(summary.className).toContain('xl:grid-cols-5');
 
   for (const card of cards) expect(card.querySelector('svg')).toBeNull();
 
@@ -299,36 +299,51 @@ it('요약 카드에는 차트를 넣지 않고 바로 아래의 기존 일별 �
   expect(summary.textContent).not.toContain('어제');
   expect(container.textContent).not.toContain('오늘은 KST 자정부터');
 
-  const trendHeading = screen.getByRole('heading', { name: '일별 추이' });
-  const analyticsHeading = screen.getByRole('heading', {
-    name: 'Amplitude 사용자 지표',
-  });
+  const trendHeading = screen.getByRole('region', { name: '일별 지표 추이' });
 
+  expect(
+    screen.queryByRole('heading', { name: 'Amplitude 사용자 지표' }),
+  ).toBeNull();
   expect(
     summary.compareDocumentPosition(trendHeading) &
       Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
   expect(
-    trendHeading.compareDocumentPosition(analyticsHeading) &
-      Node.DOCUMENT_POSITION_FOLLOWING,
-  ).toBeTruthy();
+    within(summary)
+      .getByRole('link', { name: '오늘 활성 사용자' })
+      .getAttribute('href'),
+  ).toBe('/analytics/users?tab=activity');
+  expect(
+    within(summary)
+      .getByRole('link', { name: '앱 설치(Android)' })
+      .getAttribute('href'),
+  ).toBe('/analytics/acquisition?tab=installs');
 
-  const selectable = Array.from(
-    screen.getByRole('combobox', { name: '지표' }).querySelectorAll('option'),
-  ).map((option) => option.value);
+  expect(screen.queryByRole('combobox', { name: '지표' })).toBeNull();
 
-  expect(selectable).toEqual(
-    expect.arrayContaining([
-      'joined',
-      'chats',
-      'turns',
-      'stories',
-      'granted',
-      'spent',
-      'payments',
-      'revenue',
-    ]),
-  );
+  const trends = within(trendHeading).getAllByRole('heading');
+
+  expect(trends.map((node) => node.textContent)).toEqual([
+    '가입',
+    '채팅 시작',
+    '턴',
+    '스토리 생성',
+    '이프 적립',
+    '이프 소모',
+    '결제 건수',
+    '결제 금액 (환불 포함)',
+  ]);
+  expect(trendHeading.className).toContain('xl:grid-cols-4');
+
+  for (const chart of trendHeading.querySelectorAll('[data-slot="chart"]')) {
+    expect(chart.querySelectorAll('.recharts-yAxis')).toHaveLength(1);
+    expect(chart.querySelectorAll('.recharts-line-curve')).toHaveLength(1);
+    expect(
+      chart
+        .querySelector('.recharts-reference-line-line')
+        ?.getAttribute('stroke-dasharray'),
+    ).toBe('4 4');
+  }
 
   const daily = container.querySelector('[aria-label="가입 일별 추이"]')!;
 
@@ -342,50 +357,28 @@ it('요약 카드에는 차트를 넣지 않고 바로 아래의 기존 일별 �
       .querySelector('.recharts-reference-line-line')
       ?.getAttribute('stroke-dasharray'),
   ).toBe('4 4');
-  expect(daily.textContent).toContain(
+  expect(daily.closest('[data-slot=card]')!.textContent).toContain(
     `기간 평균 ${chartNumber(periodAverage(state.charts!.daily.map((day) => day.joined)))}`,
   );
 
-  const analytics = screen.getByRole('region', {
-    name: 'Amplitude 사용자 지표',
-  });
+  expect(container.querySelectorAll('.recharts-line-curve')).toHaveLength(8);
+  expect(screen.queryByText(/Amplitude 일별 수치/)).toBeNull();
+  expect(screen.queryByLabelText('일별 기기 설치 수와 앱 삭제 수')).toBeNull();
 
-  expect(analytics.querySelectorAll('.recharts-line')).toHaveLength(6);
-  expect(analytics.querySelectorAll('.recharts-label-list')).toHaveLength(6);
+  const tableDetails = screen
+    .getByText('일별 수치와 목록 이동')
+    .closest('details')!;
 
-  const last = getDashboardAnalytics(7).daily.at(-1)!;
-
-  expect(analytics.textContent).toContain(
-    `합계 ${chartNumber(last.activeUsers.total)}`,
+  expect(trendHeading.querySelectorAll('details')).toHaveLength(1);
+  expect(tableDetails.hasAttribute('open')).toBe(false);
+  expect(within(tableDetails).getAllByRole('columnheader')).toHaveLength(9);
+  expect(within(tableDetails).getAllByRole('row')).toHaveLength(
+    state.charts!.daily.length + 1,
   );
-  expect(analytics.textContent).toContain(
-    `합계 ${chartNumber(last.newUsers.total)}`,
-  );
 
-  expect(
-    analytics.querySelector('.recharts-legend-wrapper')?.textContent,
-  ).toContain('Web');
-
-  for (const plot of analytics.querySelectorAll('.recharts-line-chart')) {
-    const curves = plot.querySelectorAll('.recharts-line-curve');
-
-    expect(
-      Array.from(curves).map((line) => line.getAttribute('stroke')),
-    ).toEqual([
-      'var(--color-total)',
-      'var(--color-web)',
-      'var(--color-android)',
-    ]);
-    expect(curves[1].getAttribute('stroke-dasharray')).toBe('6 3');
-    expect(curves[2].getAttribute('stroke-dasharray')).toBe('2 3');
-    expect(plot.querySelectorAll('.recharts-yAxis')).toHaveLength(1);
-    expect(plot.querySelector('.recharts-legend-wrapper')!.textContent).toBe(
-      '합계WebAndroid',
-    );
+  for (const row of within(tableDetails).getAllByRole('row').slice(1)) {
+    expect(within(row).getAllByRole('link')).toHaveLength(8);
   }
-
-  expect(screen.getByText(/Amplitude 일별 수치/)).toBeTruthy();
-  expect(screen.getByText('일별 수치와 목록 이동')).toBeTruthy();
 });
 
 it('미리보기는 35개 장르 중 상위 30개와 나머지 안내·전체 표를 표시하고 서버 제목을 표시한다', () => {

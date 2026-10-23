@@ -213,10 +213,17 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
   const [custom, setCustom] = useState(false);
   const storyInput = useRef<HTMLInputElement>(null);
   const config = screens[screen];
-  const tab = pick(params.get('tab'), config.tabs, config.tabs[0][0]);
+  const requestedTab = params.get('tab');
+  const tab = pick(
+    screen === 'acquisition' && requestedTab === 'play-installs'
+      ? 'installs'
+      : requestedTab,
+    config.tabs,
+    config.tabs[0][0],
+  );
   const catalog = useApi<{ items: CampaignDefinition[] }>(
     '/api/campaigns',
-    screen === 'acquisition' && tab !== 'play-installs',
+    screen === 'acquisition' && tab !== 'installs',
   );
   const selectedCampaign =
     params.get('campaign') ??
@@ -235,7 +242,7 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
   const funnelPlatform = platform === 'all' ? 'web' : platform;
   const segment = pick(params.get('segment'), segments, 'all');
   const needsCampaign =
-    screen === 'acquisition' && !['sources', 'play-installs'].includes(tab);
+    screen === 'acquisition' && !['sources', 'installs'].includes(tab);
   const story =
     params.get('storyId') ??
     (needsCampaign && tab === 'story-detail' ? (campaign?.storyId ?? '') : '');
@@ -327,20 +334,20 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
   return (
     <>
       <PageHeading title={config.title}>
-        {tab !== 'play-installs' ? (
-          <RangePicker
-            range={{
-              ...range,
-              query: new URLSearchParams({
-                from: range.from,
-                to: range.to,
-              }).toString(),
-              select: selectRange,
-            }}
-            maxDays={range.maxDays}
-            endDate={range.endDate}
-          />
-        ) : null}
+        <RangePicker
+          disabled={tab === 'installs'}
+          range={{
+            ...range,
+            label: tab === 'installs' ? '전체 기간' : range.label,
+            query: new URLSearchParams({
+              from: range.from,
+              to: range.to,
+            }).toString(),
+            select: selectRange,
+          }}
+          maxDays={range.maxDays}
+          endDate={range.endDate}
+        />
       </PageHeading>
       <Tabs.Root
         value={tab}
@@ -433,7 +440,7 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
           ) : null}
         </div>
         <Tabs.Panel value={tab} keepMounted={false}>
-          {tab === 'play-installs' ? (
+          {tab === 'installs' ? (
             <PlayInstallsDetails />
           ) : (
             <>

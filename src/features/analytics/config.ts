@@ -6,7 +6,7 @@ export const screens = {
       ['creation', '간편 제작 퍼널'],
       ['story-detail', '상세 진입 퍼널'],
       ['sources', '유입 소스'],
-      ['play-installs', '앱 설치'],
+      ['installs', '앱 설치'],
     ],
   },
   users: {
