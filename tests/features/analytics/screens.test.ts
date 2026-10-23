@@ -355,11 +355,13 @@ it('품질은 입력 순서·오류율 150%·전송 없음, 모델·비용 누�
   expect(screen.getAllByText('NOVA').length).toBeGreaterThan(0);
   view.change('tab=ai-cost');
   await screen.findByText('총 AI 비용');
-  expect(screen.getAllByText('단가 없음').length).toBeGreaterThan(0);
+  expect(screen.getAllByText('비용 기록 없음').length).toBeGreaterThan(0);
   expect(screen.getAllByText('모델 정보 없음').length).toBeGreaterThan(0);
   expect(screen.getByText('호출 없음')).toBeTruthy();
   expect(screen.getByText(/토큰 수가 기록되지 않은 호출/)).toBeTruthy();
-  expect(screen.getByText(/단가가 없는 모델: UNPRICED/)).toBeTruthy();
+  expect(
+    screen.getByText(/사용량은 있으나 비용이 0원인 모델: UNPRICED/),
+  ).toBeTruthy();
   expect(screen.getAllByText('간편 제작').length).toBeGreaterThan(0);
 });
 it('준비 중 값은 60초 후 같은 요청으로 교체하고 준비 완료 후 재요청을 멈춘다', async () => {
@@ -684,11 +686,11 @@ it.each([48, 72])(
       {
         feature: 'chat_response',
         model: 'AURORA',
-        calls: 1,
+        calls: 2,
         callsWithoutTokens: 0,
         inputTokens: 1000,
         outputTokens: 500,
-        costKrw: 3,
+        costKrw: 7,
       },
       {
         feature: 'chat_image',
@@ -701,19 +703,20 @@ it.each([48, 72])(
       },
     ];
     data.totals = {
-      costKrw: 3 + 3 * unitCost,
-      costPerTurnKrw: 3,
+      costKrw: 7 + 3 * unitCost,
+      costPerTurnKrw: 3.5,
       costPerStoryKrw: null,
     };
     data.unpricedModels = [];
+    data.unmapped = [];
     vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
     draw('quality');
     await screen.findByText('총 AI 비용');
-    expect(screen.getByText(`${3 + 3 * unitCost}원`)).toBeTruthy();
+    expect(screen.getByText(`${7 + 3 * unitCost}원`)).toBeTruthy();
     expect(
       within(
         screen.getByRole('heading', { name: '턴당 원가' }).parentElement!,
-      ).getByText('3원'),
+      ).getByText('3.5원'),
     ).toBeTruthy();
     expect(screen.queryByText(/모델 정보가 없는 호출/)).toBeNull();
     expect(screen.queryByText(/토큰 수가 기록되지 않은 호출/)).toBeNull();
@@ -755,12 +758,180 @@ it.each([48, 72])(
     ).toEqual([1, 2, 3, 4, 5].map((i) => `var(--chart-${i})`));
 
     const help = screen.getByRole('button', {
-      name: '서버 DB 출처와 집계 안내',
+      name: 'Langfuse 출처와 집계 안내',
     });
 
     act(() => help.focus());
     expect((await screen.findByRole('tooltip')).textContent).toBe(
-      `서버 DB 출처 지표입니다. 팀 계정의 호출도 포함합니다. 성공한 호출만 집계합니다. 실시간 이미지는 장당 ${unitCost}원으로 계산하며 턴당 원가와 스토리당 원가에는 넣지 않습니다. 표지와 인물 이미지 생성 비용은 포함하지 않습니다.`,
+      `Langfuse 출처 지표이며 2026-10-23 12:00 KST에 받은 값입니다. 금액은 Langfuse가 모델 단가로 계산한 비용을 1달러 1400원으로 바꾼 값이고 호출 수와 토큰 수는 서버 DB 기록입니다. 팀 계정의 호출도 포함합니다. 금액은 실패한 호출 과정의 비용도 포함하고 호출 수와 토큰 수는 성공한 호출만 셉니다. 실시간 이미지는 장당 ${unitCost}원으로 계산하며 턴당 원가와 스토리당 원가에는 넣지 않습니다. 간편 제작에는 표지와 인물 이미지 비용이 포함됩니다.`,
     );
   },
 );
+
+it('Langfuse 비용은 실제 0·기록 없음·준비 중을 구분하고 미연결 비용을 계열에 넣지 않는다', async () => {
+  nav.search = 'tab=ai-cost&from=2026-10-21&to=2026-10-23';
+
+  const data = metricFixture(
+    '/quality/ai-cost',
+    new URLSearchParams(nav.search),
+  ) as AiCostResponse;
+
+  data.pendingDates = ['2026-10-22'];
+  data.daily.forEach((day, i) => {
+    day.byFeature = [
+      {
+        feature: 'chat_response',
+        model: null,
+        calls: 2,
+        inputTokens: 100,
+        outputTokens: 10,
+        callsWithoutTokens: i === 2 ? 1 : 0,
+        costKrw: i === 2 ? 0 : null,
+      },
+    ];
+  });
+  data.totals = { costKrw: 2.8, costPerTurnKrw: 0, costPerStoryKrw: null };
+  vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+  draw('quality');
+  await screen.findByText('총 AI 비용');
+  expect(
+    screen.getByRole('button', { name: 'Langfuse 출처와 집계 안내' }),
+  ).toBeTruthy();
+  expect(screen.queryByText(/KST 집계 기준/)).toBeNull();
+  expect(screen.getByText(/준비 중 날짜 1개/)).toBeTruthy();
+  expect(
+    screen.getByText(
+      '사용량은 있으나 비용이 0원인 모델: UNPRICED. Langfuse 모델 단가 설정을 확인해 주세요.',
+    ),
+  ).toBeTruthy();
+  expect(
+    screen.getByText(
+      '기능에 연결되지 않은 Langfuse 추적: 새 기능 2.8원. 이 비용은 총 AI 비용에만 들어갑니다.',
+    ),
+  ).toBeTruthy();
+  expect(
+    screen.getByText(
+      '토큰 수가 기록되지 않은 호출 1회가 있어 토큰 합이 실제보다 작을 수 있습니다.',
+    ),
+  ).toBeTruthy();
+  expect(screen.queryByText(/모델 정보가 없는 호출/)).toBeNull();
+
+  const table = screen.getByText('비용 표').parentElement!;
+  const rows = table.querySelectorAll('tbody tr');
+
+  expect(rows[0].textContent).toContain('비용 기록 없음');
+  expect(rows[1].textContent).toContain('준비 중');
+  expect(rows[2].textContent).toContain('0원');
+
+  const chart = screen.getByRole('heading', {
+    name: '기능별 일별 비용',
+  }).parentElement!;
+  const points = JSON.parse(
+    chart.querySelector('[data-rows]')!.getAttribute('data-rows')!,
+  );
+
+  expect(points[0].chat_response).toBeNull();
+  expect(points[0].chat_image).toBeNull();
+  expect(points[1]).toEqual({ date: '2026-10-22', pending: 1 });
+  expect(points[2].chat_response).toBe(0);
+  expect(
+    chart.querySelector('[data-config]')!.getAttribute('data-config'),
+  ).not.toContain('새 기능');
+});
+
+it('AI 비용 요약은 서버 합계와 원가를 그대로 보이며 연결 누락 안내는 값이 있을 때만 보인다', async () => {
+  nav.search = 'tab=ai-cost&from=2026-10-23&to=2026-10-23';
+
+  const data = metricFixture(
+    '/quality/ai-cost',
+    new URLSearchParams(nav.search),
+  ) as AiCostResponse;
+
+  data.totals = { costKrw: 7, costPerTurnKrw: 3.5, costPerStoryKrw: null };
+  data.unmapped = [];
+  data.unpricedModels = [];
+  data.daily[0].byFeature.forEach((item) => (item.callsWithoutTokens = 0));
+  vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+  draw('quality');
+  await screen.findByText('총 AI 비용');
+  expect(screen.getByText('7원')).toBeTruthy();
+  expect(screen.getByText('3.5원')).toBeTruthy();
+  expect(screen.queryByText(/기능에 연결되지 않은 Langfuse 추적/)).toBeNull();
+  expect(screen.queryByText(/사용량은 있으나 비용이/)).toBeNull();
+  expect(screen.queryByText(/토큰 수가 기록되지 않은 호출/)).toBeNull();
+});
+
+it('AI 비용 503은 전용 안내와 같은 요청의 다시 시도를 제공하고 다른 탭을 가리지 않는다', async () => {
+  nav.search = 'tab=ai-cost';
+  fail = 'ai-cost';
+
+  const view = draw('quality');
+
+  expect(
+    await screen.findByRole('heading', { name: 'AI 비용을 불러올 수 없음' }),
+  ).toBeTruthy();
+  expect(
+    screen.getByText(
+      '잠시 후 다시 시도해 주세요. 문제가 계속되면 서버의 Langfuse 설정을 확인해 주세요.',
+    ),
+  ).toBeTruthy();
+
+  const url = requests[0];
+
+  fail = '';
+  fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+  await screen.findByText('총 AI 비용');
+  expect(requests).toEqual([url, url]);
+  view.change('tab=chat-options');
+  expect(await screen.findByText('모델별 비중')).toBeTruthy();
+  expect(screen.queryByText('AI 비용을 불러올 수 없음')).toBeNull();
+});
+
+it('AI 비용 pendingDates는 60초 뒤 같은 범위를 재요청하고 준비 완료 후 멈춘다', async () => {
+  vi.useRealTimers();
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-10-23T03:00:00Z'));
+  nav.search = 'tab=ai-cost&from=2026-10-21&to=2026-10-23';
+
+  let calls = 0;
+
+  vi.mocked(fetch).mockImplementation(async (input) => {
+    const url = String(input);
+
+    requests.push(url);
+
+    const data = metricFixture(
+      '/quality/ai-cost',
+      new URL(url, 'http://localhost').searchParams,
+    ) as AiCostResponse;
+
+    data.pendingDates = calls++ === 0 ? ['2026-10-22'] : [];
+
+    return Response.json(data);
+  });
+  draw('quality');
+
+  const settle = async () =>
+    act(async () => {
+      for (let i = 0; i < 6; i++) {
+        await Promise.resolve();
+        await vi.advanceTimersByTimeAsync(1);
+      }
+
+      await realDelay(0);
+    });
+
+  await settle();
+  expect(screen.getByText(/준비 중 날짜 1개/)).toBeTruthy();
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(60001);
+  });
+  await settle();
+  expect(requests).toHaveLength(2);
+  expect(requests[0]).toBe(requests[1]);
+  expect(screen.queryByText(/준비 중 날짜 1개/)).toBeNull();
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(120000);
+  });
+  expect(requests).toHaveLength(2);
+});

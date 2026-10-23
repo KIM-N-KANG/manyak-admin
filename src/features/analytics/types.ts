@@ -225,6 +225,9 @@ export type AiCostItem = {
   costKrw: number | null;
 };
 export type AiCostResponse = {
+  pendingDates: string[];
+  usdKrwRate: number;
+  unmapped: { traceName: string; costKrw: number }[];
   chatImageUnitCostKrw: number;
   asOf: string;
   from: string;

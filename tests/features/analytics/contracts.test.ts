@@ -14,7 +14,10 @@ import {
   defaultPeriod,
 } from '@/features/analytics/range';
 import { seriesGroups } from '@/features/analytics/series';
-import type { SignupResponse } from '@/features/analytics/types';
+import type {
+  AiCostResponse,
+  SignupResponse,
+} from '@/features/analytics/types';
 import { summary } from '@/fixtures/dashboard';
 import { members } from '@/fixtures/entities';
 import { campaignCatalog, metricFixture } from '@/fixtures/metrics';
@@ -199,4 +202,30 @@ it('범주색 다섯 개는 정본의 서로 다른 색상이며 UI 토큰과 �
       );
     },
   );
+});
+
+it('AI 비용 fixture는 Langfuse 출처 필드·준비 중·0원·미연결 비용을 제공한다', () => {
+  const data = metricFixture(
+    '/quality/ai-cost',
+    new URLSearchParams('from=2026-10-21&to=2026-10-23'),
+  ) as AiCostResponse;
+
+  expect(data.usdKrwRate).toBe(1400);
+  expect(data.unmapped).toEqual([{ traceName: '새 기능', costKrw: 2.8 }]);
+  expect(data.pendingDates).toEqual([]);
+  expect(data.daily[0].byFeature.some((item) => item.costKrw === 0)).toBe(true);
+  expect(data.daily[0].byFeature.some((item) => item.costKrw === null)).toBe(
+    true,
+  );
+
+  const pending = metricFixture(
+    '/quality/ai-cost',
+    new URLSearchParams('from=2026-10-20&to=2026-10-23'),
+  ) as AiCostResponse;
+
+  expect(pending.pendingDates).toEqual(['2026-10-22']);
+  expect(
+    pending.daily[2].byFeature.find((item) => item.feature === 'chat_response')
+      ?.costKrw,
+  ).toBeNull();
 });

@@ -691,12 +691,9 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
   const items = d.daily.flatMap((day) =>
     day.byFeature.map((item) => ({ date: day.date, ...item })),
   );
-  const missingModels = items
-      .filter((item) => item.feature !== 'chat_image' && item.model === null)
-      .reduce((s, row) => s + row.calls, 0),
-    missingTokens = items
-      .filter((item) => item.feature !== 'chat_image')
-      .reduce((s, row) => s + row.callsWithoutTokens, 0);
+  const missingTokens = items
+    .filter((item) => item.feature !== 'chat_image')
+    .reduce((s, row) => s + row.callsWithoutTokens, 0);
 
   return (
     <>
@@ -721,36 +718,44 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
       />
       {d.unpricedModels.length ? (
         <p className="mb-3 text-sm">
-          단가가 없는 모델: {d.unpricedModels.join(', ')}. 이 모델의 비용은
-          합계에 들어가지 않습니다.
+          사용량은 있으나 비용이 0원인 모델: {d.unpricedModels.join(', ')}.
+          Langfuse 모델 단가 설정을 확인해 주세요.
         </p>
       ) : null}
-      {missingModels ? (
+      {d.unmapped.length ? (
         <p className="mb-3 text-sm">
-          모델 정보가 없는 호출 {missingModels}회는 비용에 들어가지 않습니다.
+          기능에 연결되지 않은 Langfuse 추적:{' '}
+          {d.unmapped
+            .map((item) => `${item.traceName} ${n(item.costKrw, '원')}`)
+            .join(', ')}
+          . 이 비용은 총 AI 비용에만 들어갑니다.
         </p>
       ) : null}
       {missingTokens ? (
         <p className="mb-5 text-sm">
-          토큰 수가 기록되지 않은 호출 {missingTokens}회는 0토큰으로
-          계산했습니다.
+          토큰 수가 기록되지 않은 호출 {missingTokens}회가 있어 토큰 합이
+          실제보다 작을 수 있습니다.
         </p>
       ) : null}
       <Charts
         items={[
           {
             title: '기능별 일별 비용',
+            emptyLabel: '비용 기록 없음',
             rows: dailyRows(d, (day) =>
               Object.fromEntries(
-                aiFeatures.map((feature) => [
-                  feature,
-                  day.byFeature
-                    .filter(
-                      (item) =>
-                        item.feature === feature && item.costKrw !== null,
-                    )
-                    .reduce((s, row) => s + (row.costKrw ?? 0), 0),
-                ]),
+                aiFeatures.map((feature) => {
+                  const costs = day.byFeature.filter(
+                    (item) => item.feature === feature && item.costKrw !== null,
+                  );
+
+                  return [
+                    feature,
+                    costs.length
+                      ? costs.reduce((sum, item) => sum + item.costKrw!, 0)
+                      : null,
+                  ];
+                }),
               ),
             ),
             series: featureSeries(
@@ -784,9 +789,9 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
             ? '해당 없음'
             : row.outputTokens.toLocaleString('ko-KR'),
           row.costKrw === null
-            ? row.model
-              ? '단가 없음'
-              : '모델 정보 없음'
+            ? d.pendingDates.includes(row.date)
+              ? '준비 중'
+              : '비용 기록 없음'
             : n(row.costKrw, '원'),
           row.feature === 'chat_image'
             ? '해당 없음'

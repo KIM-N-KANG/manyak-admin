@@ -206,10 +206,13 @@ export function metricFixture(path: string, query: URLSearchParams) {
     return {
       ...base,
       currency: 'KRW',
+      pendingDates,
+      usdKrwRate: 1400,
+      unmapped: [{ traceName: '새 기능', costKrw: 2.8 }],
       chatImageUnitCostKrw: 48,
       unpricedModels: ['UNPRICED'],
       totals: {
-        costKrw: dates.length * 150,
+        costKrw: dates.length * 144 + ready.length * 6 + 2.8,
         costPerTurnKrw: 3,
         costPerStoryKrw: null,
       },
@@ -232,7 +235,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
             callsWithoutTokens: 1,
             inputTokens: 1000,
             outputTokens: 500,
-            costKrw: 6,
+            costKrw: pendingDates.includes(date) ? null : 6,
           },
           {
             feature: 'story_completion',
@@ -241,7 +244,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
             callsWithoutTokens: 0,
             inputTokens: 100,
             outputTokens: 30,
-            costKrw: null,
+            costKrw: pendingDates.includes(date) ? null : 0,
           },
           {
             feature: 'choice_generation',
