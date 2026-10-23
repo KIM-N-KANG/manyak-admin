@@ -1206,7 +1206,7 @@ export const adminOperations = [
             turnBucket: {
               type: ['integer', 'null'],
               format: 'int32',
-              maximum: 10,
+              maximum: 12,
               minimum: 0,
             },
             hasFirstMessage: { type: ['boolean', 'null'] },

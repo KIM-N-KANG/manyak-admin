@@ -359,7 +359,7 @@ it.each([
   ['GET', '/members?unexpected=1'],
   ['GET', '/stories?memberId=invalid'],
   ['GET', '/stories?supportingCharacterCount=6'],
-  ['GET', '/chats?turnBucket=11'],
+  ['GET', '/chats?turnBucket=13'],
   ['GET', '/dashboard/analytics?days=abc'],
   ['GET', '/notifications/campaigns?status=UNKNOWN'],
   ['GET', '/notifications/delivery-stats?from=bad'],

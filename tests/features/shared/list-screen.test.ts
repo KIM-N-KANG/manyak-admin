@@ -213,6 +213,78 @@ for (const domain of Object.keys(columns) as ListDomain[]) {
   });
 }
 
+describe('채팅 턴 구간 필터', () => {
+  const labels = [
+    '0턴',
+    '1턴',
+    '2턴',
+    '3턴',
+    '4턴',
+    '5턴',
+    '6턴',
+    '7~9턴',
+    '10~14턴',
+    '15~19턴',
+    '20~29턴',
+    '30~49턴',
+    '50턴 이상',
+  ];
+
+  it.each(labels.map((label, bucket) => [bucket, label] as const))(
+    'turnBucket=%i 링크로 진입하면 %s를 선택한다',
+    async (bucket, label) => {
+      navigation.pathname = '/chats';
+      navigation.search = `turnBucket=${bucket}`;
+      render(list('chats'));
+      await screen.findByRole('navigation', { name: '목록 페이지' });
+
+      const select = screen.getByRole('combobox', {
+        name: '턴 구간',
+      }) as HTMLSelectElement;
+
+      expect(select.value).toBe(String(bucket));
+      expect(select.selectedOptions[0].textContent).toBe(label);
+      expect(
+        Array.from(select.options, (option) => [option.value, option.text]),
+      ).toEqual([
+        ['', '전체'],
+        ...labels.map((name, index) => [String(index), name]),
+      ]);
+    },
+  );
+
+  it('구간 변경·해제 시 페이지를 1로 되돌리고 기간·정렬·추가 조건을 보존한다', async () => {
+    navigation.pathname = '/chats';
+    navigation.search =
+      'turnBucket=12&page=4&size=2&sort=turnCount&order=asc&from=2026-10-01&to=2026-10-21&startedAs=GUEST';
+
+    const view = render(list('chats'));
+
+    for (const bucket of ['11', '']) {
+      await screen.findByRole('navigation', { name: '목록 페이지' });
+      fireEvent.change(screen.getByRole('combobox', { name: '턴 구간' }), {
+        target: { value: bucket },
+      });
+      fireEvent.submit(
+        screen.getByRole('button', { name: '적용' }).closest('form')!,
+      );
+
+      const params = pushed().searchParams;
+
+      expect(params.get('turnBucket')).toBe(bucket || null);
+      expect(params.get('page')).toBe('1');
+      expect(params.get('size')).toBe('2');
+      expect(params.get('sort')).toBe('turnCount');
+      expect(params.get('order')).toBe('asc');
+      expect(params.get('from')).toBe('2026-10-01');
+      expect(params.get('to')).toBe('2026-10-21');
+      expect(params.get('startedAs')).toBe('GUEST');
+      navigation.search = params.toString();
+      view.rerender(list('chats'));
+    }
+  });
+});
+
 describe('숫자 페이지 이동', () => {
   it.each([1, 5, 10])(
     '%i페이지에서 처음·끝과 주변 번호만 표시하고 경계를 비활성화한다',
