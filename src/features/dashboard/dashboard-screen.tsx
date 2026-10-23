@@ -31,7 +31,6 @@ import {
   getDailyMetricHref,
   paymentHistoryHref,
 } from '@/features/dashboard/links';
-import { MetricSparkline } from '@/features/dashboard/metric-sparkline';
 import { PlayInstallsCard } from '@/features/dashboard/play-installs-card';
 import {
   RangePicker,
@@ -85,15 +84,6 @@ export function DashboardScreen() {
 
   const s = summary.data;
   const c = charts.data;
-  const yesterdayDate = s
-    ? new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(
-        new Date(Date.parse(s.todayStartsAt) - 1),
-      )
-    : null;
-  const yesterday = c?.daily.find((day) => day.date === yesterdayDate);
-  const yesterdayOutsideRange =
-    yesterdayDate !== null &&
-    (yesterdayDate < range.from || yesterdayDate > range.to);
   const missingValueStatus = charts.isPending ? '불러오는 중' : '불러오기 실패';
   const average = periodAverage(c?.daily.map((day) => day[metric]) ?? []);
   const cards = s
@@ -179,30 +169,18 @@ export function DashboardScreen() {
       />
       {s ? (
         <>
-          <div className="mb-4 text-xs text-muted-foreground">
-            {new Intl.DateTimeFormat('ko-KR', {
-              timeZone: 'Asia/Seoul',
-              dateStyle: 'medium',
-              timeStyle: 'short',
-            }).format(new Date(s.asOf))}{' '}
-            KST 기준 · 오늘은 KST 자정부터 · 팀 계정 제외
-          </div>
-          <div className="mb-8 grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
+          <section
+            aria-label="요약 지표"
+            className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {cards.map(([label, total, today, href, unit, cardMetric]) => {
               const periodTotal = c?.daily.reduce(
                 (sum, day) => sum + day[cardMetric],
                 0,
               );
-              const yesterdayValue = yesterday?.[cardMetric];
               const periodText =
                 periodTotal !== undefined
                   ? `${periodTotal.toLocaleString('ko-KR')}${unit}`
                   : missingValueStatus;
-              const yesterdayText = yesterdayOutsideRange
-                ? '어제: 선택 기간 밖'
-                : yesterdayValue !== undefined
-                  ? `어제 ${yesterdayValue.toLocaleString('ko-KR')}${unit}`
-                  : `어제: ${missingValueStatus}`;
 
               return (
                 <Link
@@ -211,56 +189,32 @@ export function DashboardScreen() {
                   className="flex items-center gap-3 rounded-md border bg-card p-4 transition-colors hover:border-foreground-tertiary focus-visible:ring-2 focus-visible:ring-ring">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-muted-foreground">{label}</p>
-                    <dl className="mt-3 grid grid-cols-2 gap-3">
-                      {(
-                        [
-                          ['오늘', today],
-                          ['누적', total],
-                        ] as const
-                      ).map(([name, value]) => (
-                        <div
-                          key={name}
-                          className="flex flex-wrap items-baseline gap-x-1">
-                          <dt className="text-xs text-muted-foreground">
-                            {name}
-                          </dt>
-                          <dd className="text-lg font-semibold tracking-tight xl:text-xl">
-                            <NumberValue value={value} />
-                            <span className="ml-1 text-xs font-normal text-muted-foreground">
-                              {unit}
-                            </span>
-                          </dd>
-                        </div>
-                      ))}
+                    <dl>
+                      <div className="mt-3">
+                        <dt className="text-xs text-muted-foreground">누적</dt>
+                        <dd className="mt-1 flex flex-wrap items-baseline gap-x-1 text-2xl font-semibold tracking-tight break-all sm:text-3xl">
+                          <NumberValue value={total} />
+                          <span className="text-xs font-normal text-muted-foreground">
+                            {unit}
+                          </span>
+                        </dd>
+                      </div>
+                      <div className="mt-3 flex items-baseline gap-2 text-sm text-muted-foreground">
+                        <dt>오늘</dt>
+                        <dd>
+                          <NumberValue value={today} />
+                          <span className="ml-1">{unit}</span>
+                        </dd>
+                      </div>
                     </dl>
-                    <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                      {`${range.label} 합계 ${periodText}, ${yesterdayText}`}
-                    </p>
-                  </div>
-                  <div className="w-14 shrink-0 sm:w-20">
-                    {c?.daily.length ? (
-                      <MetricSparkline
-                        daily={c.daily}
-                        metric={cardMetric}
-                        label={label}
-                      />
-                    ) : null}
-                    <span
-                      aria-hidden="true"
-                      className="mt-2 block text-right text-xs text-muted-foreground">
-                      ↗
-                    </span>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">{`${range.label} 합계 ${periodText}`}</p>
                   </div>
                 </Link>
               );
             })}
-          </div>
+          </section>
         </>
       ) : null}
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <AnalyticsSection query={range.query} label={range.label} />
-        <PlayInstallsCard />
-      </div>
       <QueryState
         pending={charts.isPending}
         error={charts.error}
@@ -372,6 +326,10 @@ export function DashboardScreen() {
           </Card>
         </>
       ) : null}
+      <div className="grid min-w-0 grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <AnalyticsSection query={range.query} label={range.label} />
+        <PlayInstallsCard />
+      </div>
     </>
   );
 }

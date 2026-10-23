@@ -280,17 +280,53 @@ it('성공률은 0~100 트랙과 % 수치이며 95% 미만에만 경고 아이�
   expect(onSelect).toHaveBeenCalledWith(data.points[0]);
 });
 
-it('개요 카드 8개의 스파크라인과 일별 2px 선·평균 점선을 실제 SVG로 그린다', () => {
+it('요약 카드에는 차트를 넣지 않고 바로 아래의 기존 일별 차트로 추이를 통합한다', () => {
   const { container } = render(createElement(DashboardScreen));
-  const sparklines = container.querySelectorAll('[aria-label$="기간별 추이"]');
+  const summary = screen.getByRole('region', { name: '요약 지표' });
+  const cards = within(summary).getAllByRole('link');
 
-  expect(sparklines).toHaveLength(8);
+  expect(cards).toHaveLength(8);
+  expect(summary.className).toContain('sm:grid-cols-2');
+  expect(summary.className).toContain('xl:grid-cols-4');
 
-  for (const sparkline of sparklines) {
-    expect(sparkline.querySelector('.recharts-line-curve')).toBeTruthy();
-    expect(sparkline.querySelector('.recharts-cartesian-axis')).toBeNull();
-    expect(sparkline.querySelector('.recharts-cartesian-grid')).toBeNull();
-  }
+  for (const card of cards) expect(card.querySelector('svg')).toBeNull();
+
+  expect(
+    container.querySelectorAll('[aria-label$="기간별 추이"]'),
+  ).toHaveLength(0);
+  expect(summary.textContent).not.toContain('어제');
+  expect(container.textContent).not.toContain('오늘은 KST 자정부터');
+
+  const trendHeading = screen.getByRole('heading', { name: '일별 추이' });
+  const analyticsHeading = screen.getByRole('heading', {
+    name: 'Amplitude 사용자 지표',
+  });
+
+  expect(
+    summary.compareDocumentPosition(trendHeading) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  expect(
+    trendHeading.compareDocumentPosition(analyticsHeading) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+
+  const selectable = Array.from(
+    screen.getByRole('combobox', { name: '지표' }).querySelectorAll('option'),
+  ).map((option) => option.value);
+
+  expect(selectable).toEqual(
+    expect.arrayContaining([
+      'joined',
+      'chats',
+      'turns',
+      'stories',
+      'granted',
+      'spent',
+      'payments',
+      'revenue',
+    ]),
+  );
 
   const daily = container.querySelector('[aria-label="가입 일별 추이"]')!;
 
@@ -413,7 +449,7 @@ it('일별 선의 호버에는 십자선·날짜 툴팁을 표시하고 클릭�
   );
 });
 
-it('오늘 0과 누적을 함께 표시하고 KST 어제·기간 합계와 원 단위 천 구분을 계산한다', () => {
+it('누적을 대표 숫자, 오늘 0과 기간 합계를 보조로 표시하고 원 단위 천 구분을 유지한다', () => {
   const daily = state.charts!.daily.at(-1)!;
 
   state.charts = {
@@ -446,26 +482,15 @@ it('오늘 0과 누적을 함께 표시하고 KST 어제·기간 합계와 원 �
     expect(within(card).getByText('0')).toBeTruthy();
   }
 
+  const cumulative = within(memberCard).getByText('1,234').closest('dd')!;
+  const today = within(memberCard).getByText('0').closest('dd')!;
+
+  expect(cumulative.className).toContain('sm:text-3xl');
+  expect(today.parentElement!.className).toContain('text-sm');
   expect(within(memberCard).getByText('1,234')).toBeTruthy();
-  expect(
-    within(memberCard).getByText('최근 7일 합계 6명, 어제 4명'),
-  ).toBeTruthy();
+  expect(within(memberCard).getByText('최근 7일 합계 6명')).toBeTruthy();
   expect(within(paymentCard).getByText('1,234,567')).toBeTruthy();
-  expect(
-    within(paymentCard).getByText('최근 7일 합계 13,345원, 어제 12,345원'),
-  ).toBeTruthy();
-});
-
-it('선택 기간 안의 어제 원장이 없으면 불러오기 실패를 표시한다', () => {
-  state.charts = {
-    ...state.charts!,
-    daily: state.charts!.daily.filter((day) => day.date !== '2026-10-20'),
-  };
-  render(createElement(DashboardScreen));
-
-  const memberCard = screen.getByRole('link', { name: /^회원/ });
-
-  expect(within(memberCard).getByText(/어제: 불러오기 실패$/)).toBeTruthy();
+  expect(within(paymentCard).getByText('최근 7일 합계 13,345원')).toBeTruthy();
 });
 
 it.each([
@@ -482,15 +507,13 @@ it.each([
     for (const label of ['회원', '채팅 시작', '이프 지급']) {
       const card = screen.getByRole('link', { name: new RegExp(`^${label}`) });
 
-      expect(
-        within(card).getByText(`최근 7일 합계 ${status}, 어제: ${status}`),
-      ).toBeTruthy();
+      expect(within(card).getByText(`최근 7일 합계 ${status}`)).toBeTruthy();
     }
   },
 );
 
 it.each(['success', 'pending', 'error'])(
-  '어제가 기간 밖이면 차트 상태와 무관하게 표시한다: %s',
+  '직접 선택한 기간의 합계 또는 로드 상태만 표시한다: %s',
   (status) => {
     state.search = 'from=2026-10-01&to=2026-10-10';
     state.chartsPending = status === 'pending';
@@ -508,9 +531,7 @@ it.each(['success', 'pending', 'error'])(
           : '불러오기 실패';
 
     expect(
-      within(memberCard).getByText(
-        `2026-10-01 ~ 2026-10-10 합계 ${total}, 어제: 선택 기간 밖`,
-      ),
+      within(memberCard).getByText(`2026-10-01 ~ 2026-10-10 합계 ${total}`),
     ).toBeTruthy();
   },
 );
