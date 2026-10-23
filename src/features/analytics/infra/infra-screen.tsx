@@ -1,6 +1,5 @@
 'use client';
 
-import { Tabs } from '@base-ui/react/tabs';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { FetchError } from '@/api/mutator/custom-instance';
@@ -8,6 +7,7 @@ import { PageHeading, QueryState } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Tabs } from '@/components/ui/tabs';
 import type { DateRange, RangeName } from '@/features/dashboard/date-range';
 import { RangePicker } from '@/features/dashboard/range-picker';
 import { useApi } from '@/features/shared/use-api';

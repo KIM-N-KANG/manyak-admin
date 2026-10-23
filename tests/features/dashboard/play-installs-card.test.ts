@@ -139,7 +139,7 @@ it('다른 실패와 로딩도 카드 안에서 표시한다', () => {
     name: '앱 설치(Android)',
   }).className;
 
-  expect(cardClass).toContain('min-h-56');
+  expect(cardClass).not.toMatch(/min-h-|h-56/);
   expect(screen.getByRole('status').getAttribute('data-slot')).toBeNull();
   state.pending = false;
   state.error = new FetchError('failure', 500, {});

@@ -2,12 +2,12 @@
 
 import { type RefObject, useId, useRef, useState } from 'react';
 
-import { Tabs } from '@base-ui/react/tabs';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { dateTime, PageHeading, QueryState } from '@/components/admin/data-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Tabs } from '@/components/ui/tabs';
 import type { DateRange, RangeName } from '@/features/dashboard/date-range';
 import { PlayInstallsDetails } from '@/features/dashboard/play-installs-details';
 import { RangePicker } from '@/features/dashboard/range-picker';

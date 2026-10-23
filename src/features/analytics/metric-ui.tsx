@@ -25,6 +25,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
+import { ChartEndLabels } from '@/features/dashboard/chart-end-labels';
 
 import { eventLabel, metricNumber, percent, ratio } from './config';
 import type { Series } from './series';
@@ -138,13 +139,6 @@ export function SeriesChart({
       rows.findLast((row) => typeof row[s.key] === 'number')?.date,
     ]),
   );
-  const lastValue = (key: string) =>
-    Number(rows.findLast((row) => row.date === last.get(key))?.[key] ?? 0);
-  const labelRanks = new Map(
-    series
-      .toSorted((a, b) => lastValue(b.key) - lastValue(a.key))
-      .map((item, index) => [item.key, index]),
-  );
   const axes = (
     <>
       <CartesianGrid vertical={false} />
@@ -228,7 +222,7 @@ export function SeriesChart({
             }}
             onClick={click}>
             {axes}
-            {series.map((s, i) => (
+            {series.map((s) => (
               <Line
                 key={s.key}
                 dataKey={s.key}
@@ -239,22 +233,28 @@ export function SeriesChart({
                 dot={false}
                 activeDot={{ r: 4 }}
                 connectNulls={false}
-                isAnimationActive={false}>
-                {series.length > 1 ? (
-                  <LabelList
-                    dataKey={(row: PlotRow) =>
-                      row.date === last.get(s.key)
-                        ? `${s.label} ${values(row[s.key] as number)}`
-                        : null
-                    }
-                    position="right"
-                    dy={-(series.length - (labelRanks.get(s.key) ?? i)) * 14}
-                    fill="var(--foreground)"
-                    fontSize={10}
-                  />
-                ) : null}
-              </Line>
+                isAnimationActive={false}
+              />
             ))}
+            {series.length > 1 ? (
+              <ChartEndLabels
+                labels={series.flatMap((s) => {
+                  const row = rows.find((row) => row.date === last.get(s.key));
+                  const value = row?.[s.key];
+
+                  return row && typeof value === 'number'
+                    ? [
+                        {
+                          id: s.key,
+                          x: row.date,
+                          y: value,
+                          text: `${s.label} ${values(value)}`,
+                        },
+                      ]
+                    : [];
+                })}
+              />
+            ) : null}
           </LineChart>
         )}
       </ChartContainer>
