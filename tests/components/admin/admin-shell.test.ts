@@ -87,7 +87,7 @@ describe('관리자 메뉴 구조', () => {
       within(nav).getByRole('region', { name: '알림' }).querySelectorAll('a'),
     ).toHaveLength(3);
     expect(
-      screen.getByRole('link', { name: '마냑' }).getAttribute('href'),
+      screen.getByRole('link', { name: '마냑 관리자' }).getAttribute('href'),
     ).toBe('/dashboard');
   });
 
