@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import {
   DataTable,
@@ -12,6 +12,10 @@ import { Card } from '@/components/ui/card';
 import { genreDepthTitle } from '@/features/dashboard/chart-data';
 import { DistributionChart } from '@/features/dashboard/distribution-chart';
 import { getDistributionHref } from '@/features/dashboard/links';
+import {
+  RangePicker,
+  useDashboardRange,
+} from '@/features/dashboard/range-picker';
 import type { DashboardCharts, Distribution } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
@@ -65,39 +69,17 @@ function DistributionCard({ distribution }: { distribution: Distribution }) {
 }
 
 export function DashboardAnalysisScreen() {
-  const params = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const days = ['7', '30', '90'].includes(params.get('days') ?? '')
-    ? params.get('days')!
-    : '30';
-  const charts = useApi<DashboardCharts>(`/api/dashboard/charts?days=${days}`);
-
-  function updateDays(value: string) {
-    const query = new URLSearchParams(params);
-
-    query.set('days', value);
-    router.push(`${pathname}?${query}`);
-  }
+  const range = useDashboardRange();
+  const charts = useApi<DashboardCharts>(
+    `/api/dashboard/charts?${range.query}`,
+  );
 
   return (
     <>
       <PageHeading
         title="분석"
         description="이용 분포를 살펴보고 관련 목록으로 이동하세요.">
-        <label className="flex items-center gap-3 text-sm">
-          기간
-          <select
-            className="control"
-            value={days}
-            onChange={(event) => updateDays(event.target.value)}>
-            {[7, 30, 90].map((value) => (
-              <option key={value} value={value}>
-                최근 {value}일
-              </option>
-            ))}
-          </select>
-        </label>
+        <RangePicker range={range} />
       </PageHeading>
       <QueryState
         pending={charts.isPending}

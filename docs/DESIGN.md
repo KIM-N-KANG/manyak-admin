@@ -545,3 +545,5 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 - Don't loosen the display tracking — large Pretendard headings carry tight negative letter-spacing by design.
 
 Play 설치 지표는 개요의 Amplitude 영역 옆에 앱 설치(Android) 카드로 표시한다. 누적 기기 설치·활성 기기·일별 설치 작은 추이와 기준일을 제공한다. 날짜는 Play 원천의 태평양 날짜를 변환 없이 표시하며 보고서 반영 지연과 페이지 기간 선택에 영향받지 않는 전체 기간 지표임을 안내한다. 펼친 상세에는 누적 설치 계단선과 활성 기기 일반 선을 같은 축에 표시하고 범례·끝 수치·십자선 툴팁을 제공한다. 별도 일별 차트는 0 기준으로 설치를 위쪽 기본색, 삭제를 아래쪽 회색 막대로 표시하며 툴팁과 원장 표의 삭제 수치는 양수로 표시한다. 모션은 끄고 수치 표를 유지한다. `/api/dashboard/play-installs` 요청 실패는 이 카드에 격리하며 503에는 '설정 안 됨'과 재시도를 표시한다. 서버가 미설정과 원천 장애 모두 SERVICE_UNAVAILABLE로 응답하므로 상세 상태는 구분하지 않는다.
+
+개요와 분석은 공용 기간 선택기를 사용한다. 기존 외부 도구 팝오버의 Base UI 포커스 처리와 150ms 전환 스타일을 재사용한다. 왼쪽에는 오늘·어제·최근 7/14/30/90일·이번 주·지난주·이번 달·지난달·최근 6개월·최근 1년 빠른 범위, 오른쪽에는 시작·끝 날짜와 적용 버튼을 둔다. KST 오늘까지 양끝 포함 최대 366일을 허용한다. 빠른 범위는 URL `range`로 저장해 방문 시 다시 계산하고, 직접 선택은 `from`·`to`로 저장한다. 기존 `days` 링크는 대응하는 빠른 범위로 변환한다. API에는 계산된 `from`·`to`만 보내며 요약 카드 기간 합계·스파크라인과 아래 DB·Amplitude 차트가 함께 바뀐다. 오늘·누적 수치는 summary를 유지한다.

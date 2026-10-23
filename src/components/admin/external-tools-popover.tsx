@@ -5,7 +5,9 @@ import { useRef, useSyncExternalStore } from 'react';
 import { Popover } from '@base-ui/react/popover';
 
 import { ExternalToolLink } from '@/components/admin/external-tool-link';
+import { popoverMotionClass } from '@/components/ui/popover-motion';
 import { externalLinks } from '@/lib/external-links';
+import { cn } from '@/lib/utils';
 
 const desktopQuery = '(min-width: 1024px)';
 
@@ -58,7 +60,10 @@ export function ExternalToolsPopover() {
             className="z-50">
             <Popover.Popup
               finalFocus={trigger}
-              className="w-56 max-w-[calc(100vw-24px)] origin-[var(--transform-origin)] rounded-md border bg-card p-2 shadow-md transition-[opacity,transform] duration-150 ease-out outline-none data-ending-style:opacity-0 data-starting-style:opacity-0 motion-safe:data-ending-style:translate-y-1 motion-safe:data-starting-style:translate-y-1 motion-reduce:transition-none">
+              className={cn(
+                popoverMotionClass,
+                'w-56 max-w-[calc(100vw-24px)] rounded-md border bg-card p-2 shadow-md',
+              )}>
               <Popover.Title className="sr-only">외부 도구</Popover.Title>
               {(
                 [

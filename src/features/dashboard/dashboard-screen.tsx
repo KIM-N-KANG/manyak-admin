@@ -33,6 +33,10 @@ import {
 } from '@/features/dashboard/links';
 import { MetricSparkline } from '@/features/dashboard/metric-sparkline';
 import { PlayInstallsCard } from '@/features/dashboard/play-installs-card';
+import {
+  RangePicker,
+  useDashboardRange,
+} from '@/features/dashboard/range-picker';
 import type {
   DashboardCharts,
   DashboardSummary,
@@ -62,15 +66,15 @@ export function DashboardScreen() {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const days = ['7', '30', '90'].includes(params.get('days') ?? '')
-    ? params.get('days')!
-    : '30';
+  const range = useDashboardRange();
   const rawMetric = params.get('metric') ?? 'joined';
   const metric: MetricKey = Object.hasOwn(metrics, rawMetric)
     ? (rawMetric as MetricKey)
     : 'joined';
   const summary = useApi<DashboardSummary>('/api/dashboard/summary');
-  const charts = useApi<DashboardCharts>(`/api/dashboard/charts?days=${days}`);
+  const charts = useApi<DashboardCharts>(
+    `/api/dashboard/charts?${range.query}`,
+  );
 
   function update(key: string, value: string) {
     const q = new URLSearchParams(params);
@@ -162,19 +166,7 @@ export function DashboardScreen() {
       <PageHeading
         title="개요"
         description="서비스의 흐름과 이용 현황을 확인하세요.">
-        <label className="flex items-center gap-3 text-sm">
-          기간
-          <select
-            className="control"
-            value={days}
-            onChange={(e) => update('days', e.target.value)}>
-            {[7, 30, 90].map((d) => (
-              <option key={d} value={d}>
-                최근 {d}일
-              </option>
-            ))}
-          </select>
-        </label>
+        <RangePicker range={range} />
       </PageHeading>
       <QueryState
         pending={summary.isPending}
@@ -229,7 +221,7 @@ export function DashboardScreen() {
                       ))}
                     </dl>
                     <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                      {`최근 ${days}일 ${periodTotal?.toLocaleString('ko-KR') ?? '—'} ${unit} · 어제 ${yesterdayValue?.toLocaleString('ko-KR') ?? '—'} ${unit}`}
+                      {`${range.label} ${periodTotal?.toLocaleString('ko-KR') ?? '—'} ${unit} · 어제 ${yesterdayValue?.toLocaleString('ko-KR') ?? '—'} ${unit}`}
                     </p>
                   </div>
                   <div className="w-14 shrink-0 sm:w-20">
@@ -253,7 +245,7 @@ export function DashboardScreen() {
         </>
       ) : null}
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <AnalyticsSection days={days} />
+        <AnalyticsSection query={range.query} label={range.label} />
         <PlayInstallsCard />
       </div>
       <QueryState

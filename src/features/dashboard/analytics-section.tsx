@@ -140,9 +140,17 @@ function AnalyticsTrend({ daily }: { daily: DashboardAnalytics['daily'] }) {
   );
 }
 
-export function AnalyticsSection({ days }: { days: string }) {
+export function AnalyticsSection({
+  days,
+  query: rangeQuery,
+  label,
+}: {
+  days?: string;
+  query?: string;
+  label?: string;
+}) {
   const query = useApi<DashboardAnalytics>(
-    `/api/dashboard/analytics?days=${days}`,
+    `/api/dashboard/analytics?${rangeQuery ?? `days=${days}`}`,
   );
   const data = query.data;
 
@@ -158,7 +166,7 @@ export function AnalyticsSection({ days }: { days: string }) {
           <AnalyticsSource />
         </div>
         <p className="text-xs text-muted-foreground">
-          최근 {days}일 · KST · 집계가 몇 분 늦을 수 있습니다
+          {label ?? `최근 ${days}일`} · KST · 집계가 몇 분 늦을 수 있습니다
         </p>
       </div>
       {query.isError ? (

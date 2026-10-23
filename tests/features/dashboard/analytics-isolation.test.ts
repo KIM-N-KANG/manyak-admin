@@ -24,14 +24,15 @@ import type { ChartLink } from '@/features/dashboard/types';
 
 const navigation = vi.hoisted(() => ({
   pathname: '/dashboard',
-  search: 'days=7',
+  search: 'range=last7d',
   push: vi.fn(),
+  replace: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
   usePathname: () => navigation.pathname,
   useSearchParams: () => new URLSearchParams(navigation.search),
-  useRouter: () => ({ push: navigation.push }),
+  useRouter: () => ({ push: navigation.push, replace: navigation.replace }),
 }));
 vi.mock('recharts', () => {
   const Container = ({ children }: PropsWithChildren) =>
@@ -71,8 +72,10 @@ let failPlay: boolean;
 const requested: string[] = [];
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-21T10:00:00Z'));
   navigation.pathname = '/dashboard';
-  navigation.search = 'days=7';
+  navigation.search = 'range=last7d';
   navigation.push.mockReset();
   requested.length = 0;
   failAnalytics = false;
@@ -117,6 +120,7 @@ afterEach(() => {
   cleanup();
   client.clear();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 function dashboard() {
@@ -171,13 +175,19 @@ describe('Amplitude 실패 격리', () => {
     const view = render(dashboard());
 
     await screen.findByRole('heading', { name: '오늘 활성 사용자' });
-    expect(requested).toContain('/api/dashboard/analytics?days=7');
-    expect(requested).toContain('/api/dashboard/charts?days=7');
+    expect(requested).toContain(
+      '/api/dashboard/analytics?from=2026-10-15&to=2026-10-21',
+    );
+    expect(requested).toContain(
+      '/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
+    );
 
     const memberCard = screen.getByRole('link', { name: /^회원/ });
     const headline = memberCard.querySelector('dl')!.textContent;
     const sevenDays = await chartsResponse(
-      new Request('http://localhost/api/dashboard/charts?days=7'),
+      new Request(
+        'http://localhost/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
+      ),
     ).json();
     const sevenTotal = sevenDays.daily.reduce(
       (sum: number, day: { joined: number }) => sum + day.joined,
@@ -188,22 +198,29 @@ describe('Amplitude 실패 격리', () => {
       new RegExp(`최근 7일 ${sevenTotal.toLocaleString('ko-KR')} 명`),
     );
 
-    fireEvent.change(screen.getByRole('combobox', { name: '기간' }), {
-      target: { value: '90' },
+    fireEvent.click(screen.getByRole('button', { name: '기간: 최근 7일' }));
+    fireEvent.click(screen.getByRole('button', { name: '최근 90일' }));
+    expect(navigation.push).toHaveBeenCalledWith('/dashboard?range=last90d', {
+      scroll: false,
     });
-    expect(navigation.push).toHaveBeenCalledWith('/dashboard?days=90');
-    navigation.search = 'days=90';
+    navigation.search = 'range=last90d';
     view.rerender(dashboard());
     await waitFor(() => {
-      expect(requested).toContain('/api/dashboard/analytics?days=90');
-      expect(requested).toContain('/api/dashboard/charts?days=90');
+      expect(requested).toContain(
+        '/api/dashboard/analytics?from=2026-07-24&to=2026-10-21',
+      );
+      expect(requested).toContain(
+        '/api/dashboard/charts?from=2026-07-24&to=2026-10-21',
+      );
     });
     await screen.findByRole('heading', { name: '오늘 활성 사용자' });
     expectDbMetricsVisible();
     expect(requested.filter((url) => url.includes('/summary'))).toHaveLength(1);
 
     const ninetyDays = await chartsResponse(
-      new Request('http://localhost/api/dashboard/charts?days=90'),
+      new Request(
+        'http://localhost/api/dashboard/charts?from=2026-07-24&to=2026-10-21',
+      ),
     ).json();
     const ninetyTotal = ninetyDays.daily.reduce(
       (sum: number, day: { joined: number }) => sum + day.joined,
@@ -256,10 +273,14 @@ describe('개요와 분석 화면 분리', () => {
       screen.queryByRole('region', { name: 'Amplitude 사용자 지표' }),
     ).toBeNull();
     expect(screen.getAllByText('수치 및 관련 목록')).toHaveLength(8);
-    expect(requested).toEqual(['/api/dashboard/charts?days=7']);
+    expect(requested).toEqual([
+      '/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
+    ]);
 
     const data = await chartsResponse(
-      new Request('http://localhost/api/dashboard/charts?days=7'),
+      new Request(
+        'http://localhost/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
+      ),
     ).json();
     const links = Array.from(view.container.querySelectorAll('a')).map((link) =>
       link.getAttribute('href'),
@@ -271,13 +292,13 @@ describe('개요와 분석 화면 분리', () => {
           distribution.points.map((point) => getDistributionHref(point.link)),
       ),
     );
-    fireEvent.change(screen.getByRole('combobox', { name: '기간' }), {
-      target: { value: '90' },
-    });
+    fireEvent.click(screen.getByRole('button', { name: '기간: 최근 7일' }));
+    fireEvent.click(screen.getByRole('button', { name: '최근 90일' }));
     expect(navigation.push).toHaveBeenCalledWith(
-      '/dashboard/analytics?days=90',
+      '/dashboard/analytics?range=last90d',
+      { scroll: false },
     );
-    navigation.search = 'days=90';
+    navigation.search = 'range=last90d';
     view.rerender(
       createElement(
         QueryClientProvider,
@@ -286,7 +307,9 @@ describe('개요와 분석 화면 분리', () => {
       ),
     );
     await waitFor(() =>
-      expect(requested).toContain('/api/dashboard/charts?days=90'),
+      expect(requested).toContain(
+        '/api/dashboard/charts?from=2026-07-24&to=2026-10-21',
+      ),
     );
     expect(
       requested.some(
@@ -318,9 +341,9 @@ describe('개요와 분석 화면 분리', () => {
       target: { value: 'spent' },
     });
     expect(navigation.push).toHaveBeenCalledWith(
-      '/dashboard?days=7&metric=spent',
+      '/dashboard?range=last7d&metric=spent',
     );
-    navigation.search = 'days=7&metric=spent';
+    navigation.search = 'range=last7d&metric=spent';
     view.rerender(dashboard());
 
     const links = Array.from(view.container.querySelectorAll('a')).map((link) =>
@@ -336,6 +359,43 @@ describe('개요와 분석 화면 분리', () => {
     ).toBe(true);
     expectDbMetricsVisible();
   });
+});
+
+it('직접 날짜를 적용하고 Esc로 닫으면 기간 버튼에 포커스가 돌아온다', async () => {
+  render(dashboard());
+  await screen.findByRole('heading', { name: '일별 추이' });
+
+  const trigger = screen.getByRole('button', { name: '기간: 최근 7일' });
+
+  fireEvent.click(trigger);
+  fireEvent.change(screen.getByLabelText('시작 날짜'), {
+    target: { value: '2026-10-01' },
+  });
+  fireEvent.change(screen.getByLabelText('끝 날짜'), {
+    target: { value: '2026-10-10' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: '적용' }));
+  expect(navigation.push).toHaveBeenCalledWith(
+    '/dashboard?from=2026-10-01&to=2026-10-10',
+    { scroll: false },
+  );
+  await waitFor(() =>
+    expect(trigger.getAttribute('aria-expanded')).toBe('false'),
+  );
+  fireEvent.click(trigger);
+  fireEvent.keyDown(screen.getByLabelText('시작 날짜'), { key: 'Escape' });
+  await waitFor(() =>
+    expect(trigger.getAttribute('aria-expanded')).toBe('false'),
+  );
+  await waitFor(() => expect(document.activeElement).toBe(trigger));
+});
+it('기존 days URL은 다른 쿼리를 유지하며 상대 범위로 교체한다', () => {
+  navigation.search = 'days=7&metric=spent';
+  render(dashboard());
+  expect(navigation.replace).toHaveBeenCalledWith(
+    '/dashboard?metric=spent&range=last7d',
+    { scroll: false },
+  );
 });
 
 it('Play 503은 설치 카드에만 설치 지표 사용 불가를 표시하고 DB·Amplitude를 유지한다', async () => {

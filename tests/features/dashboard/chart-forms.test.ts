@@ -38,7 +38,7 @@ const state = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({
   usePathname: () => '/dashboard',
   useSearchParams: () => new URLSearchParams('days=7'),
-  useRouter: () => ({ push: state.push }),
+  useRouter: () => ({ push: state.push, replace: vi.fn() }),
 }));
 vi.mock('@/features/shared/use-api', () => ({
   useApi: (url: string) => ({
