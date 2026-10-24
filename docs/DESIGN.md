@@ -484,6 +484,8 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 
 회원·스토리·오리지널·채팅·결제·공지·감사 로그·캠페인 목록은 검색과 필터를 한 카드·한 폼에 둔다. 검색 입력은 첫 칸에서 가장 넓게 배치하고 안내는 placeholder로 제공한다. Enter와 적용 버튼은 작성 중인 q와 필터를 함께 제출하고 페이지를 1로 돌린다. 초기화는 전체 쿼리를 비운다. 기본 버튼·입력·select 높이는 36px이며 좌우 여백은 버튼 12px, 입력 10px이다. 사이드바 구역 버튼은 데스크톱에서 36px, 모바일에서 44px 터치 높이를 유지한다. 결과가 없으면 검색어와 지우기 동작을 표 안에 표시한다. 회원 상세 거래·출석 표도 각각 독립적인 숫자 페이지를 사용하며, 거래는 시각·사유·변동 이프·거래 후 잔액만 표시한다.
 
+공지 작성은 제목 위에 태그 단일 선택을 두고 기본 선택 없이 시작한다. 공지사항(SERVICE), 업데이트(UPDATE), 점검(MAINTENANCE), 이벤트(EVENT), 홍보(PROMOTION) 순서이며 선택 전 저장은 비활성이다. 수정은 현재 태그를 선택하고, 목록 제목 앞과 상세 제목 옆에는 같은 중립 배지를 쓴다. 모르는 태그는 원문을 보존한다. 태그 도움말은 공용 HelpTooltip으로 제공한다. 게시는 알림 체크박스·유형 선택 없이 사유만 보내고, 알림 요청 이력 notifiedAt이 있으면 재게시해도 알림을 다시 요청하지 않는다는 확인 문구를 우선하고, 그 외에는 태그의 정보성·광고성에 맞는 확인 문구를 표시한다. 태그 도움말은 알림 내역에 표시되는 회원 범위와 설정·기기 조건에 따라 달라지는 푸시 발송을 구분한다. fixture도 태그로 캠페인 종류를 정하고 공지당 한 번만 알림을 요청한다. 서버 계약 임시 보완은 OpenAPI의 x-contract-overlay로 표시하며 배포 후 실제 추출과 대조한다.
+
 **`text-input`** — default form field
 
 - Background `{colors.canvas-elevated}`, ink text `{colors.ink}`, 1px hairline `{colors.hairline}`, type `{typography.body-md}`, rounded `{rounded.sm}`, padding `{spacing.xs} {spacing.sm}`.
@@ -643,3 +645,5 @@ AI 비용의 Langfuse 추가 필드 pendingDates·usdKrwRate·unmapped는 배포
 스켈레톤은 200ms 뒤 나타나며 한 번 보이면 최소 300ms 유지한다. 초기 useApi 요청은 이 표시 구간 안에 끝나면 결과·오류 공개를 최소 표시 시점까지 보류한다. 캐시에 이전 값이 있는 재요청은 이 보류를 적용하지 않고 TanStack Query의 이전 값을 유지한다. Suspense의 클라이언트 전환은 공용 LoadingBoundary에서 같은 시간을 적용한다. 서버 렌더와 하이드레이션 전에는 대체 스켈레톤을 즉시 표시하고, 루트 loading.tsx도 서버 HTML에 ShellSkeleton을 포함한다. 하이드레이션 후에는 지속되는 루트 경계가 표시를 이어받는다. 초기 빠른 응답은 회색 블록을 보이지 않으며 기다리는 동안 자리 크기는 예약한다.
 
 기다리는 영역은 aria-busy이고 상태 알림 문구 '데이터를 불러오는 중입니다…'만 sr-only로 둔다. 회색 블록은 aria-hidden이다. 배경은 muted, 불투명도 애니메이션 주기는 1.5초이고 motion-reduce에서는 정지한다. 실패·사용 불가·준비 중·실제 0의 처리와 문구는 유지한다.
+
+회원 상세 요약은 채팅 다음에 누적 턴(turnCount)을 천 단위 쉼표와 턴 단위로 표시하고 그 뒤에 소모 이프를 둔다. 누적 턴 라벨 옆 공용 HelpTooltip은 삭제·게스트 이관 채팅 포함과 재생성 제외 기준을 설명한다. DetailGrid는 항목별 선택적 도움말을 받으며 회원 목록 열에는 누적 턴을 추가하지 않는다. 회원 상세 turnCount는 서버 0f350d8의 실제 dev OpenAPI 추출본에 포함되어 있으며 수동 overlay는 사용하지 않는다.

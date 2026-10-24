@@ -137,6 +137,9 @@ export function getMemberDetail(memberId: string): MemberDetail | null {
       0,
     ),
     storyCount: ownedStories.length,
+    turnCount: chats
+      .filter((chat) => chat.member?.memberId === memberId)
+      .reduce((sum, chat) => sum + chat.turnCount, 0),
     chatCount: member.chatCount,
     deletedAt: member.status === 'DELETED' ? '2026-10-20T05:00:00Z' : null,
     periodChatCount: null,

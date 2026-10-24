@@ -5,10 +5,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { PageHeading, QueryState, TextLink } from '@/components/admin/data-ui';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { FormSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useManagementMutation } from '@/features/management/mutation';
+import { noticeTagHelp, noticeTags } from '@/features/notices/tags';
 import type { Notice } from '@/features/notices/types';
 import { useApi } from '@/features/shared/use-api';
 
@@ -36,6 +38,8 @@ function NoticeForm({ notice }: { notice?: Notice }) {
   const mutation = useManagementMutation();
   const router = useRouter();
   const [saved, setSaved] = useState<Notice | undefined>(notice);
+
+  const [tag, setTag] = useState(notice?.tag ?? '');
 
   async function save(form: FormData) {
     const result = await mutation.run<Notice>(
@@ -67,6 +71,34 @@ function NoticeForm({ notice }: { notice?: Notice }) {
             void save(new FormData(event.currentTarget));
           }}
           className="grid max-w-3xl gap-5">
+          <fieldset className="grid gap-2">
+            <legend className="mb-2 text-sm">
+              <span className="inline-flex items-center gap-1">
+                태그
+                <HelpTooltip label="공지 태그 도움말">
+                  {noticeTagHelp}
+                </HelpTooltip>
+              </span>
+            </legend>
+            <div className="flex flex-wrap gap-x-5 gap-y-2">
+              {noticeTags.map((option) => (
+                <label
+                  key={option.value}
+                  className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="tag"
+                    value={option.value}
+                    required
+                    checked={tag === option.value}
+                    onChange={() => setTag(option.value)}
+                    className="accent-primary"
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <label className="grid gap-2 text-sm">
             제목
             <input
@@ -96,7 +128,7 @@ function NoticeForm({ notice }: { notice?: Notice }) {
               {mutation.error}
             </p>
           ) : null}
-          <Button type="submit" disabled={mutation.pending}>
+          <Button type="submit" disabled={!tag || mutation.pending}>
             {mutation.pending ? '저장 중…' : '저장'}
           </Button>
         </form>

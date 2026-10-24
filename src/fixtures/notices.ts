@@ -1,3 +1,4 @@
+import { isMarketingNoticeTag, noticeTags } from '@/features/notices/tags';
 import type { Notice, NoticePublish } from '@/features/notices/types';
 import {
   checkFixtureId,
@@ -27,6 +28,7 @@ function records() {
               '할로윈 이벤트 안내',
               '이프 충전 상품 변경 안내',
             ][i % 3] + (i > 2 ? ` ${i + 1}` : ''),
+          tag: noticeTags[i % noticeTags.length].value,
           body: '마냑 서비스 이용 안내입니다.\n자세한 내용을 확인해 주세요.',
           status: i % 3 === 1 ? 'DRAFT' : 'PUBLISHED',
           publishedAt: i % 3 === 1 ? null : '2026-10-21T02:00:00Z',
@@ -70,13 +72,19 @@ export function saveNotice(body: Record<string, unknown>, id?: string) {
       ? previous.body
       : textField(body, 'body', 5000);
 
-  if (previous && body.title == null && body.body == null)
-    throw new Error('제목이나 본문을 입력하세요.');
+  const tag = body.tag == null && previous ? previous.tag : body.tag;
+
+  if (!noticeTags.some((option) => option.value === tag))
+    throw new Error('태그를 선택해 주세요.');
+
+  if (previous && body.title == null && body.body == null && body.tag == null)
+    throw new Error('제목, 본문, 태그 중 하나를 입력해 주세요.');
 
   const now = new Date().toISOString();
   const item: Notice = {
     noticeId: id ?? crypto.randomUUID(),
     title,
+    tag: String(tag),
     body: content,
     status: previous?.status ?? 'DRAFT',
     publishedAt: previous?.publishedAt ?? null,
@@ -101,19 +109,10 @@ export function publishNotice(
 
   const item = getNotice(id);
 
-  if (
-    typeof body.notify !== 'boolean' ||
-    (body.notify &&
-      !['SERVICE', 'MARKETING'].includes(String(body.notificationKind))) ||
-    (body.notificationKind != null &&
-      !['SERVICE', 'MARKETING'].includes(String(body.notificationKind)))
-  )
-    throw new Error('알림 여부와 종류를 확인하세요.');
-
   if (item.status === 'PUBLISHED')
     throw new FixtureError(409, '이미 게시된 공지입니다.');
 
-  const notified = body.notify && !item.notifiedAt;
+  const notified = !item.notifiedAt;
 
   item.status = 'PUBLISHED';
   item.publishedAt = new Date().toISOString();
@@ -125,7 +124,7 @@ export function publishNotice(
       id,
       item.title,
       item.body ?? '',
-      body.notificationKind as 'SERVICE' | 'MARKETING',
+      isMarketingNoticeTag(item.tag) ? 'MARKETING' : 'SERVICE',
     );
   }
 

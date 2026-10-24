@@ -7,15 +7,13 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-10-23T18:58:38.632Z",
-    "revision": "4eb8776"
+    "receivedAt": "2026-10-24T08:51:31.022Z",
+    "revision": "2c989be"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
       "get": {
-        "tags": [
-          "admin-push-controller"
-        ],
+        "tags": ["admin-push-controller"],
         "operationId": "template",
         "parameters": [
           {
@@ -41,9 +39,7 @@
         }
       },
       "put": {
-        "tags": [
-          "admin-push-controller"
-        ],
+        "tags": ["admin-push-controller"],
         "operationId": "upsert",
         "parameters": [
           {
@@ -79,9 +75,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "admin-push-controller"
-        ],
+        "tags": ["admin-push-controller"],
         "operationId": "reset",
         "parameters": [
           {
@@ -119,9 +113,7 @@
     },
     "/api/v1/admin/credits/policies/{policyKey}": {
       "put": {
-        "tags": [
-          "admin-credit-controller"
-        ],
+        "tags": ["admin-credit-controller"],
         "operationId": "upsert_1",
         "parameters": [
           {
@@ -157,9 +149,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "admin-credit-controller"
-        ],
+        "tags": ["admin-credit-controller"],
         "operationId": "delete_2",
         "parameters": [
           {
@@ -197,9 +187,7 @@
     },
     "/api/v1/admin/push/campaigns": {
       "get": {
-        "tags": [
-          "admin-push-controller"
-        ],
+        "tags": ["admin-push-controller"],
         "operationId": "list_1",
         "parameters": [
           {
@@ -225,9 +213,7 @@
         }
       },
       "post": {
-        "tags": [
-          "admin-push-controller"
-        ],
+        "tags": ["admin-push-controller"],
         "operationId": "create_2",
         "requestBody": {
           "content": {
@@ -255,9 +241,7 @@
     },
     "/api/v1/admin/push/campaigns/{campaignId}/retry": {
       "post": {
-        "tags": [
-          "admin-push-controller"
-        ],
+        "tags": ["admin-push-controller"],
         "operationId": "retry",
         "parameters": [
           {
@@ -296,9 +280,7 @@
     },
     "/api/v1/admin/push/campaigns/{campaignId}/cancel": {
       "post": {
-        "tags": [
-          "admin-push-controller"
-        ],
+        "tags": ["admin-push-controller"],
         "operationId": "cancel",
         "parameters": [
           {
@@ -337,9 +319,7 @@
     },
     "/api/v1/admin/originals": {
       "get": {
-        "tags": [
-          "admin-original-controller"
-        ],
+        "tags": ["admin-original-controller"],
         "operationId": "list_2",
         "parameters": [
           {
@@ -369,9 +349,7 @@
         }
       },
       "post": {
-        "tags": [
-          "admin-original-controller"
-        ],
+        "tags": ["admin-original-controller"],
         "operationId": "create_3",
         "requestBody": {
           "content": {
@@ -389,9 +367,7 @@
     },
     "/api/v1/admin/originals/{storyId}/images/presign": {
       "post": {
-        "tags": [
-          "admin-original-controller"
-        ],
+        "tags": ["admin-original-controller"],
         "operationId": "presign_1",
         "parameters": [
           {
@@ -430,9 +406,7 @@
     },
     "/api/v1/admin/originals/images/presign": {
       "post": {
-        "tags": [
-          "admin-original-controller"
-        ],
+        "tags": ["admin-original-controller"],
         "operationId": "presignDraft",
         "requestBody": {
           "content": {
@@ -460,9 +434,7 @@
     },
     "/api/v1/admin/notices": {
       "get": {
-        "tags": [
-          "admin-notice-controller"
-        ],
+        "tags": ["admin-notice-controller"],
         "operationId": "list_3",
         "parameters": [
           {
@@ -493,9 +465,7 @@
         ]
       },
       "post": {
-        "tags": [
-          "admin-notice-controller"
-        ],
+        "tags": ["admin-notice-controller"],
         "operationId": "create_4",
         "requestBody": {
           "content": {
@@ -528,9 +498,7 @@
     },
     "/api/v1/admin/notices/{noticeId}/unpublish": {
       "post": {
-        "tags": [
-          "admin-notice-controller"
-        ],
+        "tags": ["admin-notice-controller"],
         "operationId": "unpublish",
         "parameters": [
           {
@@ -574,9 +542,7 @@
     },
     "/api/v1/admin/notices/{noticeId}/publish": {
       "post": {
-        "tags": [
-          "admin-notice-controller"
-        ],
+        "tags": ["admin-notice-controller"],
         "operationId": "publish",
         "parameters": [
           {
@@ -620,9 +586,7 @@
     },
     "/api/v1/admin/moderation/holds/{submissionId}/release": {
       "post": {
-        "tags": [
-          "admin-moderation-controller"
-        ],
+        "tags": ["admin-moderation-controller"],
         "operationId": "release",
         "parameters": [
           {
@@ -666,9 +630,7 @@
     },
     "/api/v1/admin/members/{memberId}/suspension": {
       "post": {
-        "tags": [
-          "admin-suspension-controller"
-        ],
+        "tags": ["admin-suspension-controller"],
         "operationId": "suspend",
         "parameters": [
           {
@@ -705,9 +667,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "admin-suspension-controller"
-        ],
+        "tags": ["admin-suspension-controller"],
         "operationId": "unsuspend",
         "parameters": [
           {
@@ -746,9 +706,7 @@
     },
     "/api/v1/admin/credits/adjustments": {
       "post": {
-        "tags": [
-          "admin-credit-controller"
-        ],
+        "tags": ["admin-credit-controller"],
         "operationId": "adjust",
         "requestBody": {
           "content": {
@@ -776,9 +734,7 @@
     },
     "/api/v1/admin/auth/login/google": {
       "post": {
-        "tags": [
-          "admin-auth-controller"
-        ],
+        "tags": ["admin-auth-controller"],
         "operationId": "login",
         "requestBody": {
           "content": {
@@ -806,9 +762,7 @@
     },
     "/api/v1/admin/originals/{storyId}": {
       "get": {
-        "tags": [
-          "admin-original-controller"
-        ],
+        "tags": ["admin-original-controller"],
         "operationId": "detail",
         "parameters": [
           {
@@ -829,9 +783,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "admin-original-controller"
-        ],
+        "tags": ["admin-original-controller"],
         "operationId": "update_1",
         "parameters": [
           {
@@ -860,9 +812,7 @@
     },
     "/api/v1/admin/notices/{noticeId}": {
       "get": {
-        "tags": [
-          "admin-notice-controller"
-        ],
+        "tags": ["admin-notice-controller"],
         "operationId": "detail_1",
         "parameters": [
           {
@@ -894,9 +844,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "admin-notice-controller"
-        ],
+        "tags": ["admin-notice-controller"],
         "operationId": "delete_4",
         "parameters": [
           {
@@ -931,9 +879,7 @@
         ]
       },
       "patch": {
-        "tags": [
-          "admin-notice-controller"
-        ],
+        "tags": ["admin-notice-controller"],
         "operationId": "update_2",
         "parameters": [
           {
@@ -977,9 +923,7 @@
     },
     "/api/v1/admin/users/signups": {
       "get": {
-        "tags": [
-          "admin-metrics-controller"
-        ],
+        "tags": ["admin-metrics-controller"],
         "operationId": "signups",
         "parameters": [
           {
@@ -988,11 +932,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "enum": [
-                "7",
-                "30",
-                "90"
-              ]
+              "enum": ["7", "30", "90"]
             }
           },
           {
@@ -1033,9 +973,7 @@
     },
     "/api/v1/admin/users/sessions": {
       "get": {
-        "tags": [
-          "admin-metrics-controller"
-        ],
+        "tags": ["admin-metrics-controller"],
         "operationId": "sessions",
         "parameters": [
           {
@@ -1084,9 +1022,7 @@
     },
     "/api/v1/admin/users/retention": {
       "get": {
-        "tags": [
-          "admin-metrics-controller"
-        ],
+        "tags": ["admin-metrics-controller"],
         "operationId": "retention",
         "parameters": [
           {
@@ -1135,9 +1071,7 @@
     },
     "/api/v1/admin/users/activity": {
       "get": {
-        "tags": [
-          "admin-metrics-controller"
-        ],
+        "tags": ["admin-metrics-controller"],
         "operationId": "activity",
         "parameters": [
           {
@@ -1186,9 +1120,7 @@
     },
     "/api/v1/admin/stories": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "stories",
         "parameters": [
           {
@@ -1216,9 +1148,7 @@
     },
     "/api/v1/admin/stories/{storyId}": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "story",
         "parameters": [
           {
@@ -1247,9 +1177,7 @@
     },
     "/api/v1/admin/quality/client": {
       "get": {
-        "tags": [
-          "admin-metrics-controller"
-        ],
+        "tags": ["admin-metrics-controller"],
         "operationId": "quality",
         "parameters": [
           {
@@ -1306,9 +1234,7 @@
     },
     "/api/v1/admin/quality/chat-options": {
       "get": {
-        "tags": [
-          "admin-metrics-controller"
-        ],
+        "tags": ["admin-metrics-controller"],
         "operationId": "options",
         "parameters": [
           {
@@ -1317,11 +1243,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "enum": [
-                "7",
-                "30",
-                "90"
-              ]
+              "enum": ["7", "30", "90"]
             }
           },
           {
@@ -1362,9 +1284,7 @@
     },
     "/api/v1/admin/quality/ai-cost": {
       "get": {
-        "tags": [
-          "admin-metrics-controller"
-        ],
+        "tags": ["admin-metrics-controller"],
         "operationId": "aiCost",
         "parameters": [
           {
@@ -1373,11 +1293,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "enum": [
-                "7",
-                "30",
-                "90"
-              ]
+              "enum": ["7", "30", "90"]
             }
           },
           {
@@ -1418,9 +1334,7 @@
     },
     "/api/v1/admin/push/delivery-stats": {
       "get": {
-        "tags": [
-          "admin-push-delivery-controller"
-        ],
+        "tags": ["admin-push-delivery-controller"],
         "operationId": "stats",
         "parameters": [
           {
@@ -1462,10 +1376,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "SERVICE",
-                "MARKETING"
-              ]
+              "enum": ["SERVICE", "MARKETING"]
             }
           }
         ],
@@ -1485,9 +1396,7 @@
     },
     "/api/v1/admin/push/campaigns/{campaignId}": {
       "get": {
-        "tags": [
-          "admin-push-controller"
-        ],
+        "tags": ["admin-push-controller"],
         "operationId": "detail_3",
         "parameters": [
           {
@@ -1516,9 +1425,7 @@
     },
     "/api/v1/admin/push/campaigns/target-count": {
       "get": {
-        "tags": [
-          "admin-push-controller"
-        ],
+        "tags": ["admin-push-controller"],
         "operationId": "targetCount",
         "parameters": [
           {
@@ -1527,10 +1434,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "SERVICE",
-                "MARKETING"
-              ]
+              "enum": ["SERVICE", "MARKETING"]
             }
           }
         ],
@@ -1550,9 +1454,7 @@
     },
     "/api/v1/admin/payments/orders": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "payments",
         "parameters": [
           {
@@ -1580,9 +1482,7 @@
     },
     "/api/v1/admin/payments/orders/{orderId}": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "payment",
         "parameters": [
           {
@@ -1611,9 +1511,7 @@
     },
     "/api/v1/admin/moderation/submissions": {
       "get": {
-        "tags": [
-          "admin-moderation-controller"
-        ],
+        "tags": ["admin-moderation-controller"],
         "operationId": "submissions",
         "parameters": [
           {
@@ -1622,13 +1520,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "HELD",
-                "APPROVED",
-                "REJECTED",
-                "FAILED"
-              ]
+              "enum": ["PENDING", "HELD", "APPROVED", "REJECTED", "FAILED"]
             }
           },
           {
@@ -1751,9 +1643,7 @@
     },
     "/api/v1/admin/moderation/submissions/{submissionId}": {
       "get": {
-        "tags": [
-          "admin-moderation-controller"
-        ],
+        "tags": ["admin-moderation-controller"],
         "operationId": "submission",
         "parameters": [
           {
@@ -1786,9 +1676,7 @@
     },
     "/api/v1/admin/moderation/holds": {
       "get": {
-        "tags": [
-          "admin-moderation-controller"
-        ],
+        "tags": ["admin-moderation-controller"],
         "operationId": "holds",
         "parameters": [
           {
@@ -1821,9 +1709,7 @@
     },
     "/api/v1/admin/members": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "members",
         "parameters": [
           {
@@ -1851,9 +1737,7 @@
     },
     "/api/v1/admin/members/{memberId}": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "member",
         "parameters": [
           {
@@ -1882,9 +1766,7 @@
     },
     "/api/v1/admin/members/{memberId}/transactions": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "transactions",
         "parameters": [
           {
@@ -1921,9 +1803,7 @@
     },
     "/api/v1/admin/members/{memberId}/attendance": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "attendance",
         "parameters": [
           {
@@ -1960,9 +1840,7 @@
     },
     "/api/v1/admin/infra/metrics": {
       "get": {
-        "tags": [
-          "infra-metrics-controller"
-        ],
+        "tags": ["infra-metrics-controller"],
         "operationId": "metrics",
         "parameters": [
           {
@@ -2003,9 +1881,7 @@
     },
     "/api/v1/admin/infra/db-tables": {
       "get": {
-        "tags": [
-          "infra-metrics-controller"
-        ],
+        "tags": ["infra-metrics-controller"],
         "operationId": "tables",
         "parameters": [
           {
@@ -2041,9 +1917,7 @@
     },
     "/api/v1/admin/dashboard/summary": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "summary",
         "responses": {
           "200": {
@@ -2061,9 +1935,7 @@
     },
     "/api/v1/admin/dashboard/play-installs": {
       "get": {
-        "tags": [
-          "admin-play-installs-controller"
-        ],
+        "tags": ["admin-play-installs-controller"],
         "summary": "Play 설치 지표",
         "description": "Play 기준 날짜를 그대로 반환합니다. 보고서는 며칠 늦게 갱신되며 결과는 1시간 캐시합니다.",
         "operationId": "installs",
@@ -2088,9 +1960,7 @@
     },
     "/api/v1/admin/dashboard/charts": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "charts",
         "parameters": [
           {
@@ -2118,9 +1988,7 @@
     },
     "/api/v1/admin/dashboard/analytics": {
       "get": {
-        "tags": [
-          "admin-analytics-controller"
-        ],
+        "tags": ["admin-analytics-controller"],
         "operationId": "analytics",
         "parameters": [
           {
@@ -2148,9 +2016,7 @@
     },
     "/api/v1/admin/credits/transactions": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "summary": "전체 이프 거래 내역",
         "description": "팀 계정 제외를 적용하지 않아 대시보드의 지급·소진 합계와 다를 수 있습니다. 접속 기록은 남기지 않습니다.",
         "operationId": "creditTransactions",
@@ -2248,9 +2114,7 @@
     },
     "/api/v1/admin/credits/policies": {
       "get": {
-        "tags": [
-          "admin-credit-controller"
-        ],
+        "tags": ["admin-credit-controller"],
         "operationId": "policies",
         "responses": {
           "200": {
@@ -2268,9 +2132,7 @@
     },
     "/api/v1/admin/conversion/turn-reach": {
       "get": {
-        "tags": [
-          "admin-metrics-controller"
-        ],
+        "tags": ["admin-metrics-controller"],
         "operationId": "reach",
         "parameters": [
           {
@@ -2279,11 +2141,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "enum": [
-                "7",
-                "30",
-                "90"
-              ]
+              "enum": ["7", "30", "90"]
             }
           },
           {
@@ -2324,9 +2182,7 @@
     },
     "/api/v1/admin/conversion/funnels/{funnel}": {
       "get": {
-        "tags": [
-          "admin-metrics-controller"
-        ],
+        "tags": ["admin-metrics-controller"],
         "operationId": "funnel",
         "parameters": [
           {
@@ -2400,9 +2256,7 @@
     },
     "/api/v1/admin/chats": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "chats",
         "parameters": [
           {
@@ -2430,9 +2284,7 @@
     },
     "/api/v1/admin/chats/{chatId}": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "chat",
         "parameters": [
           {
@@ -2461,9 +2313,7 @@
     },
     "/api/v1/admin/campaigns": {
       "get": {
-        "tags": [
-          "campaign-analytics-controller"
-        ],
+        "tags": ["campaign-analytics-controller"],
         "operationId": "catalog",
         "responses": {
           "200": {
@@ -2492,9 +2342,7 @@
     },
     "/api/v1/admin/campaigns/sources": {
       "get": {
-        "tags": [
-          "campaign-analytics-controller"
-        ],
+        "tags": ["campaign-analytics-controller"],
         "operationId": "sources",
         "parameters": [
           {
@@ -2543,9 +2391,7 @@
     },
     "/api/v1/admin/campaigns/funnels/story-detail": {
       "get": {
-        "tags": [
-          "campaign-analytics-controller"
-        ],
+        "tags": ["campaign-analytics-controller"],
         "operationId": "story_1",
         "parameters": [
           {
@@ -2611,9 +2457,7 @@
     },
     "/api/v1/admin/campaigns/funnels/creation": {
       "get": {
-        "tags": [
-          "campaign-analytics-controller"
-        ],
+        "tags": ["campaign-analytics-controller"],
         "operationId": "creation",
         "parameters": [
           {
@@ -2670,9 +2514,7 @@
     },
     "/api/v1/admin/campaigns/analytics": {
       "get": {
-        "tags": [
-          "campaign-analytics-controller"
-        ],
+        "tags": ["campaign-analytics-controller"],
         "operationId": "analytics_1",
         "parameters": [
           {
@@ -2729,9 +2571,7 @@
     },
     "/api/v1/admin/audit-logs": {
       "get": {
-        "tags": [
-          "admin-read-controller"
-        ],
+        "tags": ["admin-read-controller"],
         "operationId": "auditLogs",
         "parameters": [
           {
@@ -2759,9 +2599,7 @@
     },
     "/api/v1/admin/originals/{storyId}/thumbnail": {
       "delete": {
-        "tags": [
-          "admin-original-controller"
-        ],
+        "tags": ["admin-original-controller"],
         "operationId": "deleteThumbnail_1",
         "parameters": [
           {
@@ -2840,10 +2678,7 @@
             "format": "date-time"
           },
           "effectiveUntil": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "active": {
@@ -2865,17 +2700,11 @@
             "minLength": 0
           },
           "effectiveFrom": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "effectiveUntil": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "reason": {
@@ -2884,11 +2713,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "body",
-          "reason",
-          "title"
-        ]
+        "required": ["body", "reason", "title"]
       },
       "AdminPushReasonRequest": {
         "type": "object",
@@ -2899,9 +2724,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "AdminCreditPolicyRequest": {
         "type": "object",
@@ -2911,10 +2734,7 @@
             "format": "int64"
           },
           "effectiveUntil": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "reason": {
@@ -2923,9 +2743,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "AdminCreditPolicyResponse": {
         "type": "object",
@@ -2965,10 +2783,7 @@
             "format": "int64"
           },
           "effectiveUntil": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "updatedAt": {
@@ -2986,9 +2801,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "AdminCampaignListRequest": {
         "type": "object",
@@ -3005,69 +2818,36 @@
             "minimum": 1
           },
           "cursor": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "limit": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "sort": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "order": {
             "type": "string",
             "pattern": "asc|desc"
           },
           "q": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 50,
             "minLength": 1
           },
           "from": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "to": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "status": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "SCHEDULED",
-              "SENDING",
-              "SENT",
-              "CANCELED",
-              "FAILED"
-            ]
+            "type": ["string", "null"],
+            "enum": ["SCHEDULED", "SENDING", "SENT", "CANCELED", "FAILED"]
           },
           "kind": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "SERVICE",
-              "MARKETING"
-            ]
+            "type": ["string", "null"],
+            "enum": ["SERVICE", "MARKETING"]
           }
         }
       },
@@ -3107,10 +2887,7 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
-              "SERVICE",
-              "MARKETING"
-            ]
+            "enum": ["SERVICE", "MARKETING"]
           },
           "title": {
             "type": "string"
@@ -3124,47 +2901,26 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "SCHEDULED",
-              "SENDING",
-              "SENT",
-              "CANCELED",
-              "FAILED"
-            ]
+            "enum": ["SCHEDULED", "SENDING", "SENT", "CANCELED", "FAILED"]
           },
           "noticeId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "targetCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int32"
           },
           "sentCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int32"
           },
           "startedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "finishedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "createdAt": {
@@ -3184,10 +2940,7 @@
             "format": "int64"
           },
           "storyId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           }
         }
@@ -3206,10 +2959,7 @@
             "minLength": 0
           },
           "scheduledAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "reason": {
@@ -3218,49 +2968,30 @@
             "minLength": 0
           },
           "storyId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           }
         },
-        "required": [
-          "body",
-          "reason",
-          "title"
-        ]
+        "required": ["body", "reason", "title"]
       },
       "ImagePresignRequest": {
         "type": "object",
         "description": "이미지 업로드용 presigned URL 발급 요청",
         "properties": {
           "kind": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "업로드 대상. 객체 키 prefix가 갈린다",
-            "enum": [
-              "COVER",
-              "CHARACTER"
-            ],
+            "enum": ["COVER", "CHARACTER"],
             "example": "COVER"
           },
           "contentType": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "image/jpeg · image/png · image/webp 중 하나",
             "example": "image/webp",
             "minLength": 1
           },
           "contentLength": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64",
             "description": "바이트 크기(1~5,242,880). 클라이언트는 이 값 그대로 PUT해야 한다",
             "example": 204800,
@@ -3268,11 +2999,7 @@
             "minimum": 1
           }
         },
-        "required": [
-          "contentLength",
-          "contentType",
-          "kind"
-        ]
+        "required": ["contentLength", "contentType", "kind"]
       },
       "ImagePresignResponse": {
         "type": "object",
@@ -3299,22 +3026,13 @@
         "type": "object",
         "properties": {
           "q": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 50,
             "minLength": 1
           },
           "status": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "DRAFT",
-              "PUBLISHED"
-            ]
+            "type": ["string", "null"],
+            "enum": ["DRAFT", "PUBLISHED"]
           },
           "page": {
             "type": "integer",
@@ -3335,16 +3053,10 @@
             "pattern": "asc|desc"
           },
           "cursor": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "limit": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -3385,31 +3097,23 @@
           "title": {
             "type": "string"
           },
+          "tag": {
+            "type": "string",
+            "enum": ["SERVICE", "UPDATE", "MAINTENANCE", "EVENT", "PROMOTION"]
+          },
           "body": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "status": {
             "type": "string",
-            "enum": [
-              "DRAFT",
-              "PUBLISHED"
-            ]
+            "enum": ["DRAFT", "PUBLISHED"]
           },
           "publishedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "notifiedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "createdBy": {
@@ -3424,10 +3128,7 @@
             "format": "date-time"
           },
           "notified": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           }
         }
       },
@@ -3456,17 +3157,17 @@
             "maxLength": 5000,
             "minLength": 0
           },
+          "tag": {
+            "type": "string",
+            "enum": ["SERVICE", "UPDATE", "MAINTENANCE", "EVENT", "PROMOTION"]
+          },
           "reason": {
             "type": "string",
             "maxLength": 500,
             "minLength": 0
           }
         },
-        "required": [
-          "body",
-          "reason",
-          "title"
-        ]
+        "required": ["body", "reason", "tag", "title"]
       },
       "NoticeReasonRequest": {
         "type": "object",
@@ -3477,35 +3178,18 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "PublishNoticeRequest": {
         "type": "object",
         "properties": {
-          "notify": {
-            "type": "boolean"
-          },
-          "notificationKind": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "SERVICE",
-              "MARKETING"
-            ]
-          },
           "reason": {
             "type": "string",
             "maxLength": 500,
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "AdminOperationReason": {
         "type": "object",
@@ -3516,9 +3200,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "AdminHoldReleased": {
         "type": "object",
@@ -3529,12 +3211,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PENDING",
-              "APPROVED",
-              "REJECTED",
-              "FAILED"
-            ]
+            "enum": ["PENDING", "APPROVED", "REJECTED", "FAILED"]
           },
           "attempt": {
             "type": "integer",
@@ -3558,11 +3235,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "DELETED"
-            ]
+            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
           },
           "updatedAt": {
             "type": "string",
@@ -3579,10 +3252,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "GRANT",
-              "REVOKE"
-            ]
+            "enum": ["GRANT", "REVOKE"]
           },
           "amount": {
             "type": "integer",
@@ -3591,10 +3261,7 @@
             "minimum": 1
           },
           "expiresInDays": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int32"
           },
           "idempotencyKey": {
@@ -3609,10 +3276,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "idempotencyKey",
-          "reason"
-        ]
+        "required": ["idempotencyKey", "reason"]
       },
       "AdminCreditAdjustmentResponse": {
         "type": "object",
@@ -3623,10 +3287,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "GRANT",
-              "REVOKE"
-            ]
+            "enum": ["GRANT", "REVOKE"]
           },
           "requestedAmount": {
             "type": "integer",
@@ -3648,10 +3309,7 @@
             "type": "boolean"
           },
           "expiresAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           }
         }
@@ -3664,9 +3322,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "idToken"
-        ]
+        "required": ["idToken"]
       },
       "AdminLoginResponse": {
         "type": "object",
@@ -3698,11 +3354,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "DELETED"
-            ]
+            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
           },
           "createdAt": {
             "type": "string",
@@ -3716,20 +3368,18 @@
       "UpdateNoticeRequest": {
         "type": "object",
         "properties": {
+          "tag": {
+            "type": ["string", "null"],
+            "enum": ["SERVICE", "UPDATE", "MAINTENANCE", "EVENT", "PROMOTION"]
+          },
           "title": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 100,
             "minLength": 1,
             "pattern": "(?sU).*\\S.*"
           },
           "body": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 5000,
             "minLength": 1,
             "pattern": "(?sU).*\\S.*"
@@ -3740,9 +3390,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "SignupResponse": {
         "type": "object",
@@ -3854,31 +3502,19 @@
         "type": "object",
         "properties": {
           "all": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           },
           "web": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           },
           "android": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           },
           "unknown": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           }
         }
@@ -3942,24 +3578,15 @@
             "format": "int64"
           },
           "d1": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           },
           "d7": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           },
           "d30": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           }
         }
@@ -3968,24 +3595,15 @@
         "type": "object",
         "properties": {
           "d1": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           },
           "d7": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           },
           "d30": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           }
         }
@@ -4006,10 +3624,7 @@
             "format": "date"
           },
           "monthlyActiveUsers": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           },
           "daily": {
@@ -4084,140 +3699,77 @@
             "minimum": 1
           },
           "cursor": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "limit": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "sort": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "order": {
             "type": "string",
             "pattern": "asc|desc"
           },
           "q": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 50,
             "minLength": 1
           },
           "from": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "to": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "aiFrom": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "aiTo": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "aiFeature": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "aiStatus": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "hasLatency": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           },
           "scope": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "genre": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "visibility": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "moderationStatus": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "memberId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "supportingCharacterCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int32",
             "maximum": 5,
             "minimum": 0
           },
           "chatFrom": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "chatTo": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "creationFrom": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "creationTo": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -4262,10 +3814,7 @@
             "type": "string"
           },
           "description": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "scope": {
             "type": "string"
@@ -4283,10 +3832,7 @@
             }
           },
           "supportingCharacterCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           },
           "owner": {
@@ -4327,10 +3873,7 @@
             "type": "string"
           },
           "description": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "scope": {
             "type": "string"
@@ -4348,10 +3891,7 @@
             }
           },
           "supportingCharacterCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           },
           "owner": {
@@ -4443,10 +3983,7 @@
             "format": "int64"
           },
           "firstMessageSeconds": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           }
         }
@@ -4518,10 +4055,7 @@
             "format": "int64"
           },
           "streamErrorRate": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           },
           "users": {
@@ -4663,10 +4197,7 @@
             "type": "string"
           },
           "model": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "calls": {
             "type": "integer",
@@ -4685,10 +4216,7 @@
             "format": "int64"
           },
           "costKrw": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           }
         }
       },
@@ -4699,16 +4227,10 @@
             "type": "number"
           },
           "costPerTurnKrw": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "costPerStoryKrw": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           }
         }
       },
@@ -4761,10 +4283,7 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
-              "SERVICE",
-              "MARKETING"
-            ]
+            "enum": ["SERVICE", "MARKETING"]
           },
           "requested": {
             "type": "integer",
@@ -4789,20 +4308,14 @@
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "SERVICE",
-              "MARKETING"
-            ]
+            "enum": ["SERVICE", "MARKETING"]
           },
           "targetCount": {
             "type": "integer",
             "format": "int64"
           },
           "nightEligibleCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           },
           "nightNow": {
@@ -4829,63 +4342,35 @@
             "minimum": 1
           },
           "cursor": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "limit": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "sort": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "order": {
             "type": "string",
             "pattern": "asc|desc"
           },
           "q": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 50,
             "minLength": 1
           },
           "from": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "to": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "status": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "PENDING",
-              "COMPLETED",
-              "REFUNDED"
-            ]
+            "type": ["string", "null"],
+            "enum": ["PENDING", "COMPLETED", "REFUNDED"]
           },
           "memberId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           }
         }
@@ -4932,11 +4417,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PENDING",
-              "COMPLETED",
-              "REFUNDED"
-            ]
+            "enum": ["PENDING", "COMPLETED", "REFUNDED"]
           },
           "priceKrw": {
             "type": "integer",
@@ -4951,17 +4432,11 @@
             "format": "date-time"
           },
           "refundedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "reversalShortfall": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           }
         }
@@ -4981,11 +4456,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PENDING",
-              "COMPLETED",
-              "REFUNDED"
-            ]
+            "enum": ["PENDING", "COMPLETED", "REFUNDED"]
           },
           "priceKrw": {
             "type": "integer",
@@ -5000,17 +4471,11 @@
             "format": "date-time"
           },
           "refundedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "reversalShortfall": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           },
           "firstPaidAt": {
@@ -5078,20 +4543,11 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
-              "CREATE",
-              "UPDATE"
-            ]
+            "enum": ["CREATE", "UPDATE"]
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PENDING",
-              "HELD",
-              "APPROVED",
-              "REJECTED",
-              "FAILED"
-            ]
+            "enum": ["PENDING", "HELD", "APPROVED", "REJECTED", "FAILED"]
           },
           "story": {
             "$ref": "#/components/schemas/AdminSubmissionStory"
@@ -5110,22 +4566,13 @@
             }
           },
           "firstIssueReason": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "holdReason": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "errorCode": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "attempt": {
             "type": "integer",
@@ -5137,17 +4584,11 @@
             "format": "date-time"
           },
           "decidedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "heldAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           }
         }
@@ -5156,10 +4597,7 @@
         "type": "object",
         "properties": {
           "storyId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "title": {
@@ -5176,20 +4614,11 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
-              "CREATE",
-              "UPDATE"
-            ]
+            "enum": ["CREATE", "UPDATE"]
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PENDING",
-              "HELD",
-              "APPROVED",
-              "REJECTED",
-              "FAILED"
-            ]
+            "enum": ["PENDING", "HELD", "APPROVED", "REJECTED", "FAILED"]
           },
           "story": {
             "$ref": "#/components/schemas/AdminSubmissionStory"
@@ -5208,22 +4637,13 @@
             }
           },
           "firstIssueReason": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "holdReason": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "errorCode": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "attempt": {
             "type": "integer",
@@ -5235,17 +4655,11 @@
             "format": "date-time"
           },
           "decidedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "heldAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "fields": {
@@ -5280,22 +4694,13 @@
             "type": "string"
           },
           "oneLineIntro": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "description": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "protagonistName": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "genres": {
             "type": "array",
@@ -5342,18 +4747,10 @@
           },
           "moderationStatus": {
             "type": "string",
-            "enum": [
-              "APPROVED",
-              "REJECTED",
-              "ERROR",
-              "PENDING"
-            ]
+            "enum": ["APPROVED", "REJECTED", "ERROR", "PENDING"]
           },
           "errorCode": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -5379,16 +4776,10 @@
             "pattern": "asc|desc"
           },
           "limit": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "cursor": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "offset": {
             "type": "integer",
@@ -5432,16 +4823,10 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
-              "CREATE",
-              "UPDATE"
-            ]
+            "enum": ["CREATE", "UPDATE"]
           },
           "storyId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "ownerId": {
@@ -5480,102 +4865,56 @@
             "minimum": 1
           },
           "cursor": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "limit": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "sort": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "order": {
             "type": "string",
             "pattern": "asc|desc"
           },
           "q": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 50,
             "minLength": 1
           },
           "from": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "to": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "status": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "DELETED"
-            ]
+            "type": ["string", "null"],
+            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
           },
           "excludeDeleted": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           },
           "chatBucket": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int32",
             "maximum": 4,
             "minimum": 0
           },
           "chatFrom": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "chatTo": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "creditDirection": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "creditDate": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "attendanceDate": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -5618,21 +4957,14 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "DELETED"
-            ]
+            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
           },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           },
           "lastActiveAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "creditsSpent": {
@@ -5648,10 +4980,7 @@
             "format": "int64"
           },
           "periodChatCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           },
           "isAdmin": {
@@ -5671,21 +5000,14 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "DELETED"
-            ]
+            "enum": ["ACTIVE", "SUSPENDED", "DELETED"]
           },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           },
           "lastActiveAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "creditsSpent": {
@@ -5701,10 +5023,7 @@
             "format": "int64"
           },
           "periodChatCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           },
           "creditBalance": {
@@ -5715,11 +5034,12 @@
             "type": "integer",
             "format": "int64"
           },
+          "turnCount": {
+            "type": "integer",
+            "format": "int64"
+          },
           "deletedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "isAdmin": {
@@ -5742,22 +5062,13 @@
             "minimum": 1
           },
           "cursor": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "limit": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "sort": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "order": {
             "type": "string",
@@ -6327,10 +5638,7 @@
             "format": "int64"
           },
           "activeDevices": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           }
         }
@@ -6339,27 +5647,14 @@
         "type": "object",
         "properties": {
           "days": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "7",
-              "30",
-              "90"
-            ]
+            "type": ["string", "null"],
+            "enum": ["7", "30", "90"]
           },
           "from": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "to": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -6477,17 +5772,11 @@
             "$ref": "#/components/schemas/AdminChartLink"
           },
           "chats": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           },
           "totalTurns": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           }
         }
@@ -6735,10 +6024,7 @@
             "type": "string"
           },
           "storyId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "steps": {
@@ -6756,10 +6042,7 @@
             "type": "string"
           },
           "turnNumber": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int32"
           },
           "users": {
@@ -6783,117 +6066,66 @@
             "minimum": 1
           },
           "cursor": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "limit": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "sort": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "order": {
             "type": "string",
             "pattern": "asc|desc"
           },
           "q": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 50,
             "minLength": 1
           },
           "from": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "to": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "aiFrom": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "aiTo": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "aiFeature": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "aiStatus": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "hasLatency": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           },
           "storyId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "memberId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "startedAs": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "turnBucket": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int32",
             "maximum": 12,
             "minimum": 0
           },
           "hasFirstMessage": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           },
           "turnDate": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -6941,17 +6173,11 @@
             "format": "date"
           },
           "endDate": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date"
           },
           "storyId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           }
         }
@@ -6989,10 +6215,7 @@
         "type": "object",
         "properties": {
           "source": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "newVisitors": {
             "type": "integer",
@@ -7004,10 +6227,7 @@
         "type": "object",
         "properties": {
           "content": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "visitors": {
             "type": "integer",
@@ -7052,10 +6272,7 @@
             "type": "string"
           },
           "turnNumber": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int32"
           },
           "users": {
@@ -7230,10 +6447,7 @@
             "$ref": "#/components/schemas/CampaignSegments"
           },
           "adsShare": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": ["number", "null"],
             "format": "double"
           },
           "storylineRequests": {
@@ -7265,59 +6479,35 @@
             "minimum": 1
           },
           "cursor": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "limit": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "sort": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "order": {
             "type": "string",
             "pattern": "asc|desc"
           },
           "q": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 50,
             "minLength": 1
           },
           "from": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "to": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "adminId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "action": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "enum": [
               "MEMBER_SEARCHED",
               "MEMBER_VIEWED",
@@ -7344,10 +6534,7 @@
             ]
           },
           "targetType": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "enum": [
               "MEMBER_QUERY",
               "MEMBER",
@@ -7360,20 +6547,11 @@
             ]
           },
           "category": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "CHANGE",
-              "ACCESS"
-            ]
+            "type": ["string", "null"],
+            "enum": ["CHANGE", "ACCESS"]
           },
           "targetId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 255,
             "minLength": 1
           }
@@ -7429,10 +6607,7 @@
             "type": "string"
           },
           "reason": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "before": {
             "oneOf": [
@@ -7467,6 +6642,9 @@
         "type": "object",
         "properties": {
           "container": {
+            "type": "boolean"
+          },
+          "string": {
             "type": "boolean"
           },
           "floatingPointNumber": {
@@ -7542,9 +6720,6 @@
             "type": "boolean"
           },
           "float": {
-            "type": "boolean"
-          },
-          "string": {
             "type": "boolean"
           },
           "embeddedValue": {
