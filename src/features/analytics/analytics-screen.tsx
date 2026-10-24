@@ -24,6 +24,7 @@ import {
 } from './config';
 import { kstTime } from './infra/data';
 import { PendingDates, Source } from './metric-ui';
+import { MetricsSkeleton } from './metrics-skeleton';
 import { analyticsRange, analyticsRefetch } from './range';
 import {
   AcquisitionContent,
@@ -204,6 +205,7 @@ function MetricsTab({
         aiCost={query.isError ? undefined : data}
       />
       <QueryState
+        skeleton={<MetricsSkeleton tab={tab} />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}
@@ -492,6 +494,7 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
               ) : null}
               {catalogPending || catalogFailed ? (
                 <QueryState
+                  skeleton={<MetricsSkeleton tab={tab} />}
                   pending={catalogPending}
                   error={catalogFailed ? catalog.error : null}
                   retry={catalog.refetch}

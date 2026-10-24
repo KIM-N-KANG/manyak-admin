@@ -11,6 +11,7 @@ import {
   QueryState,
   TextLink,
 } from '@/components/admin/data-ui';
+import { DetailSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useManagementMutation } from '@/features/management/mutation';
@@ -57,6 +58,7 @@ export function NoticeDetailScreen({ id }: { id: string }) {
         <TextLink href="/notices">목록으로</TextLink>
       </PageHeading>
       <QueryState
+        skeleton={<DetailSkeleton />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}

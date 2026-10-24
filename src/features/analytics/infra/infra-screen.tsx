@@ -5,6 +5,11 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { FetchError } from '@/api/mutator/custom-instance';
 import { PageHeading, QueryState } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
+import {
+  ChartsSkeleton,
+  SummarySkeleton,
+  TableSkeleton,
+} from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
@@ -173,6 +178,19 @@ export function InfraScreen() {
                 </Card>
               ) : (
                 <QueryState
+                  skeleton={
+                    tab === 'tables' ? (
+                      <TableSkeleton columns={5} rows={10} pagination={false} />
+                    ) : (
+                      <>
+                        <SummarySkeleton count={tab === 'services' ? 5 : 3} />
+                        <ChartsSkeleton
+                          infra
+                          count={tab === 'services' ? 5 : 9}
+                        />
+                      </>
+                    )
+                  }
                   pending={query.isPending}
                   error={query.error}
                   retry={query.refetch}

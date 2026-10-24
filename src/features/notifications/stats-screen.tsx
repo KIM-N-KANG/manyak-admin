@@ -11,6 +11,7 @@ import {
   PageHeading,
   QueryState,
 } from '@/components/admin/data-ui';
+import { ChartsSkeleton, LoadingStatus } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -25,7 +26,13 @@ const DeliveryChart = dynamic(
     import('@/features/notifications/delivery-chart').then(
       (m) => m.DeliveryChart,
     ),
-  { loading: () => <p role="status">차트를 불러오는 중입니다…</p> },
+  {
+    loading: () => (
+      <LoadingStatus>
+        <ChartsSkeleton />
+      </LoadingStatus>
+    ),
+  },
 );
 
 type Aggregate = {
@@ -151,7 +158,12 @@ export function StatsScreen() {
           </p>
         ) : null}
       </form>
-      <QueryState pending={q.isPending} error={q.error} retry={q.refetch} />
+      <QueryState
+        skeleton={<ChartsSkeleton count={2} />}
+        pending={q.isPending}
+        error={q.error}
+        retry={q.refetch}
+      />
       {q.data ? (
         <>
           <label className="mb-4 flex items-center gap-3 text-sm">

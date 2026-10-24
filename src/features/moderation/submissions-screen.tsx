@@ -15,6 +15,7 @@ import {
 } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { ListFilterForm } from '@/components/admin/list-search';
+import { DetailSkeleton, TableSkeleton } from '@/components/admin/loading-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -121,6 +122,7 @@ export function SubmissionsScreen() {
       </ListFilterForm>
       {release.success ? <SuccessNotice key={release.success} /> : null}
       <QueryState
+        skeleton={<TableSkeleton columns={11} />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}
@@ -283,6 +285,7 @@ export function SubmissionDetailScreen({ id }: { id: string }) {
         <p role="alert">제출본을 찾을 수 없습니다.</p>
       ) : (
         <QueryState
+          skeleton={<DetailSkeleton split />}
           pending={query.isPending}
           error={query.error}
           retry={query.refetch}

@@ -1,11 +1,12 @@
-import { Suspense } from 'react';
-
+import { LoadingBoundary } from '@/components/admin/loading-boundary';
+import { PageSkeleton } from '@/components/admin/loading-ui';
 import { ListScreen } from '@/features/shared/list-screen';
 
 export default function Page() {
   return (
-    <Suspense fallback={<p role="status">목록을 불러오는 중입니다…</p>}>
+    <LoadingBoundary
+      fallback={<PageSkeleton immediate columns={8} layout="list" />}>
       <ListScreen domain="members" />
-    </Suspense>
+    </LoadingBoundary>
   );
 }

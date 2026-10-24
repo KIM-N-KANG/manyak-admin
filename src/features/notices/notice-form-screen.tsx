@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { PageHeading, QueryState, TextLink } from '@/components/admin/data-ui';
+import { FormSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useManagementMutation } from '@/features/management/mutation';
@@ -20,7 +21,12 @@ function EditNotice({ id }: { id: string }) {
 
   return (
     <>
-      <QueryState pending={q.isPending} error={q.error} retry={q.refetch} />
+      <QueryState
+        skeleton={<FormSkeleton />}
+        pending={q.isPending}
+        error={q.error}
+        retry={q.refetch}
+      />
       {q.data ? <NoticeForm key={id} notice={q.data} /> : null}
     </>
   );

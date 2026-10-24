@@ -1,11 +1,12 @@
-import { Suspense } from 'react';
-
+import { LoadingBoundary } from '@/components/admin/loading-boundary';
+import { PageSkeleton } from '@/components/admin/loading-ui';
 import { SubmissionsScreen } from '@/features/moderation/submissions-screen';
 
 export default function Page() {
   return (
-    <Suspense fallback={<p role="status">데이터를 불러오는 중입니다…</p>}>
+    <LoadingBoundary
+      fallback={<PageSkeleton immediate columns={11} layout="list" />}>
       <SubmissionsScreen />
-    </Suspense>
+    </LoadingBoundary>
   );
 }

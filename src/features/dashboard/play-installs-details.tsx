@@ -21,6 +21,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
 import { ChartEndLabels } from '@/features/dashboard/chart-end-labels';
 import type { PlayInstalls } from '@/features/dashboard/types';
@@ -52,6 +53,7 @@ export function PlayInstallsDetails() {
         </HelpTooltip>
       </div>
       <QueryState
+        skeleton={<PlayInstallsSkeleton />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}
@@ -237,5 +239,22 @@ export function PlayInstallsDetails() {
         </Card>
       ) : null}
     </>
+  );
+}
+
+function PlayInstallsSkeleton() {
+  return (
+    <Card data-loading-layout="play-installs">
+      <Skeleton className="mb-5 h-4 w-64 max-w-full" />
+      <div className="space-y-6">
+        {[0, 1].map((i) => (
+          <div key={i}>
+            <Skeleton className="h-5 w-64 max-w-full" />
+            <Skeleton className="mt-3 h-64 w-full" />
+          </div>
+        ))}
+        <Skeleton className="h-4 w-28" />
+      </div>
+    </Card>
   );
 }

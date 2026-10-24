@@ -19,12 +19,18 @@ import {
   TextLink,
 } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
+import {
+  ChartsSkeleton,
+  LoadingStatus,
+  SummaryCardSkeleton,
+} from '@/components/admin/loading-ui';
 import { Card } from '@/components/ui/card';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
 import { AnalyticsSection } from '@/features/dashboard/analytics-section';
 import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
 import { chartNumber, periodAverage } from '@/features/dashboard/chart-data';
@@ -43,6 +49,7 @@ import type {
   MetricKey,
 } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
+import { useSkeletonVisible } from '@/features/shared/use-skeleton-visible';
 
 const metrics: Record<MetricKey, { label: string; unit: string }> = {
   joined: { label: '가입', unit: '명' },
@@ -86,9 +93,10 @@ export function DashboardScreen() {
     `/api/dashboard/charts?${range.query}`,
   );
 
+  const showSummarySkeleton = useSkeletonVisible(summary.isPending);
   const s = summary.data;
   const c = charts.data;
-  const missingValueStatus = charts.isPending ? '불러오는 중' : '불러오기 실패';
+  const missingValueStatus = '불러오기 실패';
   const cards = s
     ? ([
         [
@@ -165,14 +173,21 @@ export function DashboardScreen() {
       </PageHeading>
       <QueryState
         variant="inline"
+        skeleton={<span />}
         pending={summary.isPending}
         error={summary.error}
         retry={summary.refetch}
       />
       <section
         aria-label="요약 지표"
+        aria-busy={summary.isPending}
         className="mb-8 grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <AnalyticsSection />
+        {summary.isPending
+          ? Array.from({ length: 8 }, (_, index) => (
+              <SummaryCardSkeleton key={index} visible={showSummarySkeleton} />
+            ))
+          : null}
         {cards.map(([label, total, today, href, unit, cardMetric]) => {
           const periodTotal = c?.daily.reduce(
             (sum, day) => sum + day[cardMetric],
@@ -208,7 +223,13 @@ export function DashboardScreen() {
                       </dd>
                     </div>
                   </dl>
-                  <p className="mt-2 text-xs leading-5 text-muted-foreground">{`${range.label} 합계 ${periodText}`}</p>
+                  {charts.isPending ? (
+                    <LoadingStatus className="mt-2">
+                      <Skeleton className="h-5 w-full" />
+                    </LoadingStatus>
+                  ) : (
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">{`${range.label} 합계 ${periodText}`}</p>
+                  )}
                 </div>
               </Link>
               {cardMetric === 'joined' && s ? (
@@ -227,6 +248,7 @@ export function DashboardScreen() {
         <PlayInstallsCard />
       </section>
       <QueryState
+        skeleton={<ChartsSkeleton count={8} columns={4} compact />}
         pending={charts.isPending}
         error={charts.error}
         retry={charts.refetch}
