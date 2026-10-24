@@ -136,6 +136,8 @@ describe('알림 화면의 BFF 연결', () => {
     '공지 %s 태그의 게시 확인에 알림 대상을 표시한다',
     async (tag) => {
       const item = saveNotice({
+        notificationTitle: '알림 제목',
+        notificationBody: '알림 본문',
         title: '동의 안내 확인',
         tag,
         body: '공지 본문',
@@ -295,6 +297,8 @@ describe('알림 화면의 BFF 연결', () => {
   });
   it('공지 초안 삭제의 204 응답 후 목록으로 이동한다', async () => {
     const item = saveNotice({
+      notificationTitle: '알림 제목',
+      notificationBody: '알림 본문',
       title: '삭제 초안',
       tag: 'SERVICE',
       body: '본문',
@@ -430,6 +434,8 @@ it.each(['도달 회원', '도달 기기', '실패 기기'])(
 
 it('서버 공지의 null 본문은 편집 화면에서 빈 입력으로 표시한다', async () => {
   const notice = saveNotice({
+    notificationTitle: '알림 제목',
+    notificationBody: '알림 본문',
     title: 'nullable 공지',
     tag: 'SERVICE',
     body: '본문',

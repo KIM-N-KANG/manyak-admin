@@ -11,10 +11,17 @@ const req = (body: unknown) =>
     body: JSON.stringify(body),
   });
 
+const createRequest = (body: Record<string, unknown>) =>
+  req({
+    notificationTitle: '알림 제목',
+    notificationBody: '알림 본문',
+    ...body,
+  });
+
 describe('공지 BFF', () => {
   it('작성→게시→해제 후 알림 이력 때문에 삭제를 거절한다', async () => {
     const created = await POST(
-      req({
+      createRequest({
         title: '점검',
         body: '본문',
         tag: 'MAINTENANCE',
@@ -39,12 +46,18 @@ describe('공지 BFF', () => {
   });
   it('미발송 초안만 삭제하고 필수값을 검사한다', async () => {
     expect(
-      (await POST(req({ title: ' ', body: '본문', reason: '사유' }))).status,
+      (await POST(createRequest({ title: ' ', body: '본문', reason: '사유' })))
+        .status,
     ).toBe(400);
 
     const item = await (
       await POST(
-        req({ title: '초안', body: '본문', tag: 'SERVICE', reason: '사유' }),
+        createRequest({
+          title: '초안',
+          body: '본문',
+          tag: 'SERVICE',
+          reason: '사유',
+        }),
       )
     ).json();
 
@@ -70,13 +83,21 @@ describe('공지 BFF', () => {
 it('태그 누락과 모르는 태그를 거절하고 태그만 수정하거나 생략해 유지할 수 있다', async () => {
   for (const tag of [undefined, 'NEWS']) {
     expect(
-      (await POST(req({ title: '공지', body: '본문', reason: '작성', tag })))
-        .status,
+      (
+        await POST(
+          createRequest({ title: '공지', body: '본문', reason: '작성', tag }),
+        )
+      ).status,
     ).toBe(400);
   }
 
   const created = await POST(
-    req({ title: '태그 수정', body: '본문', reason: '작성', tag: 'UPDATE' }),
+    createRequest({
+      title: '태그 수정',
+      body: '본문',
+      reason: '작성',
+      tag: 'UPDATE',
+    }),
   );
   const item = await created.json();
   const context = { params: Promise.resolve({ id: item.noticeId }) };
@@ -102,7 +123,12 @@ it('태그 누락과 모르는 태그를 거절하고 태그만 수정하거나 
 it('예전 알림 선택 값은 무시하고 태그대로 한 번만 알림을 요청한다', async () => {
   const item = await (
     await POST(
-      req({ title: '홍보', body: '본문', tag: 'PROMOTION', reason: '작성' }),
+      createRequest({
+        title: '홍보',
+        body: '본문',
+        tag: 'PROMOTION',
+        reason: '작성',
+      }),
     )
   ).json();
   const context = { params: Promise.resolve({ id: item.noticeId }) };
