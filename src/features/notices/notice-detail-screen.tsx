@@ -80,6 +80,13 @@ export function NoticeDetailScreen({ id }: { id: string }) {
                   item.notifiedAt ? dateTime(item.notifiedAt) : '—',
                 ],
                 ['수정 시각', dateTime(item.updatedAt)],
+                ['알림 제목', item.notificationTitle ?? '—'],
+                [
+                  '알림 본문',
+                  <span key="notification-body" className="whitespace-pre-wrap">
+                    {item.notificationBody ?? '—'}
+                  </span>,
+                ],
               ]}
             />
             <p className="mt-8 text-sm leading-7 whitespace-pre-wrap">

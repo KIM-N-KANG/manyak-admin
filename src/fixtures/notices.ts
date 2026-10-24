@@ -14,7 +14,7 @@ const shared = globalThis as typeof globalThis & {
 };
 
 function records() {
-  return (shared.manyakNotices ??= new Map(
+  return (shared.manyakNotices ??= new Map<string, Notice>(
     Array.from({ length: 27 }, (_, i) => {
       const id = `b1000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`;
 
@@ -30,6 +30,8 @@ function records() {
             ][i % 3] + (i > 2 ? ` ${i + 1}` : ''),
           tag: noticeTags[i % noticeTags.length].value,
           body: '마냑 서비스 이용 안내입니다.\n자세한 내용을 확인해 주세요.',
+          notificationTitle: i < 2 ? null : '마냑의 새로운 소식',
+          notificationBody: i < 2 ? null : '새로운 운영 소식을 확인해 주세요.',
           status: i % 3 === 1 ? 'DRAFT' : 'PUBLISHED',
           publishedAt: i % 3 === 1 ? null : '2026-10-21T02:00:00Z',
           notifiedAt: i % 3 === 0 ? '2026-10-21T02:00:00Z' : null,
@@ -48,11 +50,15 @@ function records() {
 }
 
 export function listNotices() {
-  return [...records().values()].map(({ body, ...item }) => {
-    void body;
+  return [...records().values()].map(
+    ({ body, notificationTitle, notificationBody, ...item }) => {
+      void body;
+      void notificationTitle;
+      void notificationBody;
 
-    return structuredClone(item);
-  });
+      return structuredClone(item);
+    },
+  );
 }
 export function getNotice(id: string) {
   checkFixtureId(id);
@@ -77,8 +83,40 @@ export function saveNotice(body: Record<string, unknown>, id?: string) {
   if (!noticeTags.some((option) => option.value === tag))
     throw new Error('태그를 선택해 주세요.');
 
-  if (previous && body.title == null && body.body == null && body.tag == null)
-    throw new Error('제목, 본문, 태그 중 하나를 입력해 주세요.');
+  const titleChanged = body.notificationTitle != null;
+  const bodyChanged = body.notificationBody != null;
+  const notificationTitle =
+    titleChanged || !previous
+      ? textField(body, 'notificationTitle', 100)
+      : previous.notificationTitle;
+  const notificationBody =
+    bodyChanged || !previous
+      ? textField(body, 'notificationBody', 300)
+      : previous.notificationBody;
+
+  if (previous?.notifiedAt && (titleChanged || bodyChanged))
+    throw new FixtureError(
+      409,
+      '이미 알림을 요청한 공지라 알림 문구를 바꿀 수 없습니다.',
+    );
+
+  if (
+    previous &&
+    !previous.notifiedAt &&
+    (titleChanged || bodyChanged) &&
+    (notificationTitle === null || notificationBody === null)
+  )
+    throw new Error('알림 제목과 본문을 함께 입력해 주세요.');
+
+  if (
+    previous &&
+    body.title == null &&
+    body.body == null &&
+    body.tag == null &&
+    !titleChanged &&
+    !bodyChanged
+  )
+    throw new Error('변경할 내용을 입력해 주세요.');
 
   const now = new Date().toISOString();
   const item: Notice = {
@@ -86,6 +124,8 @@ export function saveNotice(body: Record<string, unknown>, id?: string) {
     title,
     tag: String(tag),
     body: content,
+    notificationTitle,
+    notificationBody,
     status: previous?.status ?? 'DRAFT',
     publishedAt: previous?.publishedAt ?? null,
     notifiedAt: previous?.notifiedAt ?? null,
@@ -119,11 +159,17 @@ export function publishNotice(
   item.updatedAt = item.publishedAt;
 
   if (notified) {
+    if (item.notificationTitle === null || item.notificationBody === null)
+      throw new FixtureError(
+        409,
+        '알림 제목과 본문을 입력한 뒤 게시해 주세요.',
+      );
+
     item.notifiedAt = item.publishedAt;
     createNoticeCampaign(
       id,
-      item.title,
-      item.body ?? '',
+      item.notificationTitle,
+      item.notificationBody,
       isMarketingNoticeTag(item.tag) ? 'MARKETING' : 'SERVICE',
     );
   }
