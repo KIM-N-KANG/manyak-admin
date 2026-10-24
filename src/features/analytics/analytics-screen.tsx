@@ -116,7 +116,11 @@ function TabHeading({
 }: {
   screen: AnalyticsScreenName;
   tab: string;
-  aiCost?: { asOf: string; usdKrwRate?: number; chatImageUnitCostKrw?: number };
+  aiCost?: {
+    asOf: string | null;
+    usdKrwRate?: number;
+    chatImageUnitCostKrw?: number;
+  };
 }) {
   const db = ['signups', 'turn-reach', 'chat-options', 'ai-cost'].includes(tab);
   const source = tab === 'ai-cost' ? 'Langfuse' : db ? '서버 DB' : 'Amplitude';
@@ -128,7 +132,12 @@ function TabHeading({
         typeof aiCost.usdKrwRate === 'number' &&
         typeof aiCost.chatImageUnitCostKrw === 'number'
         ? template
-            .replace('{받은 시각}', kstTime(aiCost.asOf))
+            .replace(
+              'Langfuse 출처 지표이며 {받은 시각} KST에 받은 값입니다.',
+              aiCost.asOf === null
+                ? 'Langfuse 출처 지표입니다.'
+                : `Langfuse 출처 지표이며 ${kstTime(aiCost.asOf)} KST에 받은 값입니다.`,
+            )
             .replace(
               '{환율}',
               aiCost.usdKrwRate.toLocaleString('ko-KR', {
@@ -186,7 +195,7 @@ function MetricsTab({
   });
   const data = query.data as
     | {
-        asOf: string;
+        asOf: string | null;
         chatImageUnitCostKrw?: number;
         usdKrwRate?: number;
         pendingDates?: string[];
@@ -213,7 +222,7 @@ function MetricsTab({
       />
       {data && !query.isError ? (
         <>
-          {tab !== 'ai-cost' ? (
+          {tab !== 'ai-cost' && data.asOf ? (
             <p className="mb-4 text-xs text-muted-foreground">
               {dateTime(data.asOf)} KST 집계 기준
             </p>
@@ -263,7 +272,7 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
   );
   const catalog = useApi<{ items: CampaignDefinition[] }>(
     '/api/campaigns',
-    screen === 'acquisition' && tab !== 'installs',
+    screen === 'acquisition' && !['installs', 'push'].includes(tab),
   );
   const selectedCampaign =
     params.get('campaign') ??
@@ -282,7 +291,7 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
   const funnelPlatform = platform === 'all' ? 'web' : platform;
   const segment = pick(params.get('segment'), segments, 'all');
   const needsCampaign =
-    screen === 'acquisition' && !['sources', 'installs'].includes(tab);
+    screen === 'acquisition' && !['sources', 'installs', 'push'].includes(tab);
   const story =
     params.get('storyId') ??
     (needsCampaign && tab === 'story-detail' ? (campaign?.storyId ?? '') : '');
@@ -351,9 +360,11 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
     screen === 'acquisition'
       ? tab === 'trend'
         ? '/campaigns/analytics'
-        : tab === 'sources'
-          ? '/campaigns/sources'
-          : `/campaigns/funnels/${tab}`
+        : tab === 'push'
+          ? '/campaigns/push-opens'
+          : tab === 'sources'
+            ? '/campaigns/sources'
+            : `/campaigns/funnels/${tab}`
       : screen === 'conversion'
         ? tab === 'funnels'
           ? `/conversion/funnels/${funnel}`

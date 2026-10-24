@@ -4,6 +4,8 @@ import {
   SummarySkeleton,
   TableSkeleton,
 } from '@/components/admin/loading-ui';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const layouts: Record<
   string,
@@ -20,6 +22,18 @@ const layouts: Record<
 };
 
 export function MetricsSkeleton({ tab }: { tab: string }) {
+  if (tab === 'push')
+    return (
+      <div className="space-y-5">
+        {[6, 4].map((columns) => (
+          <Card key={columns}>
+            <Skeleton className="mb-4 h-7 w-36" />
+            <TableSkeleton columns={columns} rows={10} pagination={false} />
+          </Card>
+        ))}
+      </div>
+    );
+
   if (['creation', 'story-detail', 'funnels', 'sources'].includes(tab))
     return (
       <>

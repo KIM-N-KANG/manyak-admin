@@ -105,8 +105,21 @@ it('서버 합계를 크게 표시하고 Web·Android를 더해 합계를 재계
   expect(card.getByText('186')).toBeTruthy();
   expect(card.getByText('19')).toBeTruthy();
   expect(card.queryByText('205')).toBeNull();
-  expect(card.getByText('Web')).toBeTruthy();
-  expect(card.getByText('Android')).toBeTruthy();
+  expect(card.getByText('웹')).toBeTruthy();
+  expect(card.getByText('앱')).toBeTruthy();
+  act(() =>
+    screen.getByRole('button', { name: 'Amplitude 출처와 집계 안내' }).focus(),
+  );
+
+  const tooltip = (await screen.findByRole('tooltip')).textContent!;
+
+  expect(tooltip).toContain(
+    '국가가 한국이거나 국가 정보가 없는 사용자를 집계하고 앱은 그 밖 국가에서 로그인한 사용자도 더합니다.',
+  );
+  expect(tooltip).toContain(
+    '같은 날 웹과 앱, 또는 국내와 해외에서 앱을 쓴 사람은 두 번 셉니다.',
+  );
+  expect(tooltip).not.toContain('국가와 무관');
   expect(screen.queryByText('[object Object]')).toBeNull();
 });
 it('준비된 0은 준비 중이 아니라 0으로 표시한다', async () => {

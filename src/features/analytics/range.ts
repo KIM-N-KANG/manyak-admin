@@ -29,7 +29,7 @@ export function defaultPeriod(
   if (campaign && ['trend', 'creation', 'story-detail'].includes(tab))
     return { from: campaign.startDate, to: campaign.endDate ?? today };
 
-  const days = ['retention', 'sources', 'funnels'].includes(tab)
+  const days = ['retention', 'sources', 'funnels', 'push'].includes(tab)
     ? 7
     : tab === 'sessions'
       ? 14
@@ -46,10 +46,12 @@ export function analyticsRange(
 ) {
   const hasQuick = quickRanges.some(([key]) => key === params.get('range'));
   const custom = { from: params.get('from') ?? '', to: params.get('to') ?? '' };
-  const explicit = hasQuick || !getRangeError(custom, today);
-  const range = explicit
+  const validCustom = !getRangeError(custom, today, Infinity);
+  const range = hasQuick
     ? resolveRange(params, today)
-    : { ...defaultPeriod(tab, campaign, today), name: null, label: '' };
+    : validCustom
+      ? { ...custom, name: null, label: `${custom.from} ~ ${custom.to}` }
+      : { ...defaultPeriod(tab, campaign, today), name: null, label: '' };
   const { maxDays, yesterday } = tabLimits(tab);
   const endDate = yesterday ? shiftDate(today, -1) : today;
   const error =

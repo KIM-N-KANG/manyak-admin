@@ -23,7 +23,10 @@ import {
   QualityContent,
 } from '@/features/analytics/tab-content';
 import { TURN_THRESHOLDS } from '@/features/analytics/turn-thresholds';
-import type { TurnReachResponse } from '@/features/analytics/types';
+import type {
+  AiCostResponse,
+  TurnReachResponse,
+} from '@/features/analytics/types';
 import { getStoryDetail, stories } from '@/fixtures/entities';
 import { infraMetricsFixture } from '@/fixtures/infra';
 import { metricFixture } from '@/fixtures/metrics';
@@ -36,6 +39,125 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
+
+const aiCostStates = [
+  { pending: true, expired: false, label: '준비 중', imageCost: 96 },
+  { pending: true, expired: true, label: '준비 중', imageCost: 0 },
+  { pending: false, expired: true, label: '보관 기간 지남', imageCost: 96 },
+  { pending: false, expired: false, label: '비용 기록 없음', imageCost: 96 },
+];
+
+function renderAiCost({
+  pending,
+  expired,
+  imageCost,
+}: (typeof aiCostStates)[number]) {
+  const date = '2026-10-21';
+  const data = metricFixture(
+    '/quality/ai-cost',
+    new URLSearchParams(`from=${date}&to=2026-10-22`),
+  ) as AiCostResponse;
+
+  data.pendingDates = pending ? [date] : [];
+  data.expiredDates = expired ? [date] : [];
+  data.daily.forEach((day) => {
+    day.byFeature = [
+      {
+        feature: 'chat_response',
+        model: null,
+        calls: 2,
+        inputTokens: 0,
+        outputTokens: 0,
+        callsWithoutTokens: 0,
+        costKrw: null,
+      },
+      {
+        feature: 'chat_image',
+        model: null,
+        calls: 2,
+        inputTokens: 0,
+        outputTokens: 0,
+        callsWithoutTokens: 0,
+        costKrw: imageCost,
+      },
+    ];
+  });
+  render(createElement(QualityContent, { tab: 'ai-cost', data }));
+
+  return screen.getByLabelText('기능별 일별 비용 추이');
+}
+
+it.each(aiCostStates)(
+  'AI 비용 수치 표는 pending=$pending, expired=$expired의 null을 $label으로 표시하고 이미지 $imageCost원을 유지한다',
+  (state) => {
+    const chart = renderAiCost(state);
+    const tables = screen.getAllByText('전체 수치 표');
+    const chartRows = within(tables[0].closest('details')!)
+      .getAllByRole('row')
+      .slice(1);
+
+    expect(cellTexts(chartRows[0])).toEqual([
+      '2026-10-21',
+      state.label,
+      state.label,
+      `${state.imageCost}원`,
+      state.label,
+      state.label,
+    ]);
+
+    const allRows = within(tables[1].closest('details')!).getAllByRole('row');
+
+    expect(cellTexts(allRows[1])).toEqual([
+      '기능별 일별 비용',
+      '2026-10-21',
+      'AI 응답 생성',
+      state.label,
+    ]);
+    expect(cellTexts(allRows[3])).toEqual([
+      '기능별 일별 비용',
+      '2026-10-21',
+      '실시간 이미지 생성',
+      `${state.imageCost}원`,
+    ]);
+
+    const costRows = within(screen.getByText('비용 표').closest('details')!)
+      .getAllByRole('row')
+      .slice(1);
+
+    expect(cellTexts(costRows[0])[6]).toBe(state.label);
+    expect(cellTexts(costRows[1])[6]).toBe(`${state.imageCost}원`);
+    expect(chart.querySelectorAll('.recharts-line-curve[d]')).toHaveLength(1);
+  },
+);
+
+it.each(aiCostStates)(
+  'AI 비용 툴팁은 pending=$pending, expired=$expired의 null을 $label으로 표시하고 이미지 $imageCost원을 유지한다',
+  async (state) => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+      function (this: HTMLElement) {
+        return this.classList.contains('recharts-wrapper')
+          ? new DOMRect(0, 0, 320, 200)
+          : new DOMRect(0, 0, 0, 0);
+      },
+    );
+
+    const chart = renderAiCost(state);
+
+    fireEvent.mouseMove(chart.querySelector('.recharts-wrapper')!, {
+      clientX: 64,
+      clientY: 90,
+    });
+    await waitFor(() => {
+      const tooltip = chart.querySelector('.recharts-tooltip-wrapper')!;
+
+      expect(tooltip.textContent).toContain('2026-10-21');
+      expect(tooltip.textContent).toContain(`AI 응답 생성 ${state.label}`);
+      expect(tooltip.textContent).toContain(
+        `실시간 이미지 생성 ${state.imageCost}원`,
+      );
+    });
+  },
+);
 
 it('턴 도달률 차트의 X축에 기준 턴 라벨을 그대로 표시한다', () => {
   const { container } = render(

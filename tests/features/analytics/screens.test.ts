@@ -357,7 +357,7 @@ it('품질은 입력 순서·오류율 150%·전송 없음, 모델·비용 누�
   await screen.findByText('총 AI 비용');
   expect(screen.getAllByText('비용 기록 없음').length).toBeGreaterThan(0);
   expect(screen.getAllByText('모델 정보 없음').length).toBeGreaterThan(0);
-  expect(screen.getByText('호출 없음')).toBeTruthy();
+  expect(screen.getByText('계산할 수 없음')).toBeTruthy();
   expect(screen.getByText(/토큰 수가 기록되지 않은 호출/)).toBeTruthy();
   expect(
     screen.getByText(/사용량은 있으나 비용이 0원인 모델: UNPRICED/),
@@ -832,7 +832,7 @@ it('Langfuse 비용은 실제 0·기록 없음·준비 중을 구분하고 미�
 
   expect(points[0].chat_response).toBeNull();
   expect(points[0].chat_image).toBeNull();
-  expect(points[1]).toEqual({ date: '2026-10-22', pending: 1 });
+  expect(points[1].chat_response).toBeNull();
   expect(points[2].chat_response).toBe(0);
   expect(
     chart.querySelector('[data-config]')!.getAttribute('data-config'),
@@ -906,6 +906,7 @@ it('AI 비용 pendingDates는 60초 뒤 같은 범위를 재요청하고 준비 
     ) as AiCostResponse;
 
     data.pendingDates = calls++ === 0 ? ['2026-10-22'] : [];
+    data.expiredDates = ['2026-10-21'];
 
     return Response.json(data);
   });
@@ -934,4 +935,143 @@ it('AI 비용 pendingDates는 60초 뒤 같은 범위를 재요청하고 준비 
     await vi.advanceTimersByTimeAsync(120000);
   });
   expect(requests).toHaveLength(2);
+});
+
+it('AI 비용은 보관 만료·준비 중·조합 기록 없음과 이미지 비용을 따로 표시한다', async () => {
+  nav.search = 'tab=ai-cost&from=2026-10-21&to=2026-10-23';
+
+  const data = metricFixture(
+    '/quality/ai-cost',
+    new URLSearchParams(nav.search),
+  ) as AiCostResponse;
+
+  Object.assign(data, {
+    asOf: null,
+    expiredDates: ['2026-10-21', '2026-10-22'],
+    retentionDays: 30,
+    retentionStartDate: '2026-10-23',
+    pendingDates: ['2026-10-22'],
+  });
+  data.daily.forEach((day) => {
+    day.byFeature = [
+      {
+        feature: 'chat_response',
+        model: null,
+        calls: 4,
+        callsWithoutTokens: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+        costKrw: null,
+      },
+      {
+        feature: 'chat_image',
+        model: null,
+        calls: 2,
+        callsWithoutTokens: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+        costKrw: 96,
+      },
+    ];
+  });
+  data.totals = { costKrw: 288, costPerTurnKrw: null, costPerStoryKrw: null };
+  vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+  draw('quality');
+  await screen.findByText('총 AI 비용');
+  expect(
+    screen.getByText(
+      'Langfuse 보관 기간(30일)이 지나 비용 기록이 없는 날짜가 2일 있습니다. 해당 날짜는 턴당 원가와 스토리당 원가 계산에서 제외했습니다. 실시간 이미지 비용은 해당 날짜도 총 AI 비용에 포함합니다.',
+    ),
+  ).toBeTruthy();
+  expect(
+    within(
+      screen.getByRole('heading', { name: '턴당 원가' }).parentElement!,
+    ).getByText('계산할 수 없음'),
+  ).toBeTruthy();
+  expect(
+    within(
+      screen.getByRole('heading', { name: '스토리당 원가' }).parentElement!,
+    ).getByText('호출 없음'),
+  ).toBeTruthy();
+
+  const rows = screen
+    .getByText('비용 표')
+    .parentElement!.querySelectorAll('tbody tr');
+
+  expect(rows[0].textContent).toContain('보관 기간 지남');
+  expect(rows[2].textContent).toContain('준비 중');
+  expect(rows[4].textContent).toContain('비용 기록 없음');
+
+  const chart = screen.getByRole('heading', {
+    name: '기능별 일별 비용',
+  }).parentElement!;
+  const points = JSON.parse(
+    chart.querySelector('[data-rows]')!.getAttribute('data-rows')!,
+  );
+
+  expect(points.map((row: { chat_image: number }) => row.chat_image)).toEqual([
+    96, 96, 96,
+  ]);
+  expect(
+    points.map((row: { chat_response: null }) => row.chat_response),
+  ).toEqual([null, null, null]);
+  act(() =>
+    screen.getByRole('button', { name: 'Langfuse 출처와 집계 안내' }).focus(),
+  );
+
+  const help = (await screen.findByRole('tooltip')).textContent!;
+
+  expect(help.startsWith('Langfuse 출처 지표입니다.')).toBe(true);
+  expect(help).not.toContain('받은');
+  expect(help).not.toContain('{');
+});
+
+it.each([
+  [
+    'users',
+    '',
+    '리텐션과 평균 세션 길이의 전체는 국내 조건으로 별도 조회한 값입니다.',
+  ],
+  [
+    'conversion',
+    '',
+    '웹과 앱 모두 국가가 한국이거나 국가 정보가 없는 사용자만 집계합니다. 팀 계정은 제외하지 않습니다.',
+  ],
+  [
+    'quality',
+    '',
+    '여러 조건으로 활동한 사람은 사용자 수에 두 번 들 수 있습니다.',
+  ],
+] as const)(
+  '%s 출처 도움말은 플랫폼 집계 조건을 표시한다',
+  async (name, search, phrase) => {
+    nav.search = search;
+    draw(name);
+
+    const button = await screen.findByRole('button', {
+      name: 'Amplitude 출처와 집계 안내',
+    });
+
+    act(() => button.focus());
+    expect((await screen.findByRole('tooltip')).textContent).toContain(phrase);
+  },
+);
+
+it('보관 시작일 전이라도 expiredDates에 없으면 조합별 비용 기록 없음이다', async () => {
+  nav.search = 'tab=ai-cost&from=2026-10-21&to=2026-10-21';
+
+  const data = metricFixture(
+    '/quality/ai-cost',
+    new URLSearchParams(nav.search),
+  ) as AiCostResponse;
+
+  data.retentionStartDate = '2026-10-23';
+  data.expiredDates = [];
+  data.pendingDates = [];
+  data.daily[0].byFeature.forEach((item) => (item.costKrw = null));
+  vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+  draw('quality');
+  await screen.findByText('총 AI 비용');
+  expect(screen.queryByText('보관 기간 지남')).toBeNull();
+  expect(screen.getAllByText('비용 기록 없음').length).toBeGreaterThan(0);
 });
