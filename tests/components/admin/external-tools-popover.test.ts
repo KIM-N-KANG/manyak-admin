@@ -45,7 +45,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it('Portal에 이름 있는 팝오버와 링크 5개를 열고 버튼에 관계·상태를 알린다', async () => {
+it('Portal에 이름 있는 팝오버와 링크 6개를 열고 버튼에 관계·상태를 알린다', async () => {
   const { trigger, container } = setup();
 
   expect(trigger.getAttribute('aria-expanded')).toBe('false');
@@ -63,7 +63,14 @@ it('Portal에 이름 있는 팝오버와 링크 5개를 열고 버튼에 관계�
     within(popup)
       .getAllByRole('link')
       .map((link) => link.textContent),
-  ).toEqual(['Amplitude', 'OpenSearch 로그', 'Sentry', 'Langfuse', '그로블']);
+  ).toEqual([
+    'Amplitude',
+    'OpenSearch 로그',
+    'Sentry',
+    'Langfuse',
+    'Google Play Console',
+    '그로블',
+  ]);
   fireEvent.click(trigger);
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   expect(trigger.getAttribute('aria-expanded')).toBe('false');

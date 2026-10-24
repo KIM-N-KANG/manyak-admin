@@ -76,6 +76,7 @@ it('외부 도구 버튼은 닉네임 위에 있으며 팝오버로 링크를 �
     ['openSearch', 'OpenSearch 로그'],
     ['sentry', 'Sentry'],
     ['langfuse', 'Langfuse'],
+    ['playConsole', 'Google Play Console'],
     ['groble', '그로블'],
   ] as const)
     assertExternal(name, externalLinks[key]);
@@ -89,7 +90,14 @@ it('외부 도구 버튼은 닉네임 위에 있으며 팝오버로 링크를 �
       .getAllByRole('link')
       .filter((link) => link.getAttribute('target') === '_blank')
       .map((link) => link.textContent),
-  ).toEqual(['Amplitude', 'OpenSearch 로그', 'Sentry', 'Langfuse', '그로블']);
+  ).toEqual([
+    'Amplitude',
+    'OpenSearch 로그',
+    'Sentry',
+    'Langfuse',
+    'Google Play Console',
+    '그로블',
+  ]);
 
   expect(
     trigger.compareDocumentPosition(screen.getByText('운영자')) &
