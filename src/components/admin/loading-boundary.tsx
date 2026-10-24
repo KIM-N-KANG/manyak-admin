@@ -7,26 +7,54 @@ import {
   useContext,
   useEffect,
   useState,
+  useSyncExternalStore,
 } from 'react';
 
 import { useSkeletonVisible } from '@/features/shared/use-skeleton-visible';
 
-const RoutePending = createContext<(pending: boolean) => void>(() => {});
+type PendingMode = false | 'client' | 'server';
 
-function PendingMarker({ change }: { change: (pending: boolean) => void }) {
+type PendingContext = {
+  change: (mode: PendingMode) => void;
+  fallback: ReactNode;
+};
+
+const RoutePending = createContext<PendingContext | null>(null);
+const subscribe = () => () => {};
+const ignorePending = () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
+
+function PendingMarker({ change, fallback }: PendingContext) {
+  const hydrated = useSyncExternalStore(
+    subscribe,
+    clientSnapshot,
+    serverSnapshot,
+  );
+  const [serverRendered] = useState(!hydrated);
+
   useEffect(() => {
-    change(true);
+    change(serverRendered ? 'server' : 'client');
 
     return () => change(false);
-  }, [change]);
+  }, [change, serverRendered]);
 
-  return null;
+  return hydrated ? null : <div aria-busy="true">{fallback}</div>;
 }
 
-export function RouteLoadingMarker() {
-  const change = useContext(RoutePending);
+export function RouteLoadingMarker({
+  fallback = null,
+}: {
+  fallback?: ReactNode;
+}) {
+  const context = useContext(RoutePending);
 
-  return <PendingMarker change={change} />;
+  return (
+    <PendingMarker
+      change={context?.change ?? ignorePending}
+      fallback={context?.fallback ?? fallback}
+    />
+  );
 }
 
 export function LoadingBoundary({
@@ -36,19 +64,21 @@ export function LoadingBoundary({
   children?: ReactNode;
   fallback: ReactNode;
 }) {
-  const [pending, setPending] = useState(false);
-  const visible = useSkeletonVisible(pending);
+  const [pending, setPending] = useState<PendingMode>(false);
+  const visible = useSkeletonVisible(Boolean(pending), pending === 'server');
+  const show = pending === 'server' || visible;
 
   return (
-    <RoutePending.Provider value={setPending}>
-      <div aria-busy={pending || visible}>
+    <RoutePending.Provider value={{ change: setPending, fallback }}>
+      <div aria-busy={Boolean(pending) || visible}>
         {pending || visible ? (
-          <div style={{ visibility: visible ? 'visible' : 'hidden' }}>
+          <div style={{ visibility: show ? 'visible' : 'hidden' }}>
             {fallback}
           </div>
         ) : null}
-        <Suspense fallback={<PendingMarker change={setPending} />}>
-          <div hidden={pending || visible}>{children}</div>
+        <Suspense
+          fallback={<PendingMarker change={setPending} fallback={fallback} />}>
+          <div hidden={Boolean(pending) || visible}>{children}</div>
         </Suspense>
       </div>
     </RoutePending.Provider>

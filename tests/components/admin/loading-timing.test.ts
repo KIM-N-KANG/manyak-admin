@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { createElement } from 'react';
+import { hydrateRoot } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, render, screen } from '@testing-library/react';
@@ -212,3 +214,37 @@ it.each([100, 250])(
     }
   },
 );
+
+it('서버에서 보인 루트 스켈레톤은 하이드레이션 직후에도 지연 없이 이어진다', async () => {
+  const route = (pending: boolean) =>
+    createElement(
+      LoadingBoundary,
+      { fallback: createElement('p', null, '서버 자리') },
+      pending
+        ? createElement(RouteLoadingMarker)
+        : createElement('p', null, '서버 완료'),
+    );
+  const container = document.createElement('div');
+
+  container.innerHTML = renderToString(route(true));
+  document.body.append(container);
+  expect(container.textContent).toContain('서버 자리');
+
+  let root!: ReturnType<typeof hydrateRoot>;
+
+  await act(async () => {
+    root = hydrateRoot(container, route(true));
+  });
+  expect(screen.getByText('서버 자리').parentElement!.style.visibility).toBe(
+    'visible',
+  );
+  await tick(1);
+  await act(async () => root.render(route(false)));
+  await tick(100);
+  expect(screen.getByText('서버 자리')).toBeTruthy();
+  await tick(201);
+  expect(screen.queryByText('서버 자리')).toBeNull();
+  expect(screen.getByText('서버 완료').closest('[hidden]')).toBeNull();
+  await act(async () => root.unmount());
+  container.remove();
+});

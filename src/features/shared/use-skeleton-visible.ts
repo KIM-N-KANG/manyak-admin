@@ -4,13 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 
 import { skeletonDelayMs, skeletonMinimumMs } from './loading-timing';
 
-export function useSkeletonVisible(pending: boolean) {
+export function useSkeletonVisible(pending: boolean, immediate = false) {
   const [visible, setVisible] = useState(false);
   const shownAt = useRef<number | null>(null);
 
   useEffect(() => {
     const delay = pending
-      ? skeletonDelayMs
+      ? immediate
+        ? 0
+        : skeletonDelayMs
       : shownAt.current === null
         ? 0
         : Math.max(
@@ -28,7 +30,7 @@ export function useSkeletonVisible(pending: boolean) {
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [pending]);
+  }, [pending, immediate]);
 
   return visible;
 }
