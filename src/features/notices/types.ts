@@ -3,6 +3,8 @@ export type Notice = {
   title: string;
   tag: string;
   body: string | null;
+  notificationTitle: string | null;
+  notificationBody: string | null;
   status: 'DRAFT' | 'PUBLISHED';
   publishedAt: string | null;
   notifiedAt: string | null;
@@ -10,5 +12,8 @@ export type Notice = {
   createdAt: string;
   updatedAt: string;
 };
-export type NoticeListItem = Omit<Notice, 'body'>;
+export type NoticeListItem = Omit<
+  Notice,
+  'body' | 'notificationTitle' | 'notificationBody'
+>;
 export type NoticePublish = Notice & { notified: boolean };

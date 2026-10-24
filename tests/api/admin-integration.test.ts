@@ -26,14 +26,27 @@ const cases: [string, string, string, unknown?][] = [
     'POST',
     '/notices',
     '/notices',
-    { ...reason, title: '공지', body: '공지 본문', tag: 'MAINTENANCE' },
+    {
+      ...reason,
+      title: '공지',
+      body: '공지 본문',
+      tag: 'MAINTENANCE',
+      notificationTitle: '별도 제목',
+      notificationBody: '별도 본문',
+    },
   ],
   ['GET', `/notices/${id}`, `/notices/${id}`],
   [
     'PATCH',
     `/notices/${id}`,
     `/notices/${id}`,
-    { ...reason, title: '수정 공지', tag: 'EVENT' },
+    {
+      ...reason,
+      title: '수정 공지',
+      tag: 'EVENT',
+      notificationTitle: '수정 알림',
+      notificationBody: '수정 알림 본문',
+    },
   ],
   ['DELETE', `/notices/${id}`, `/notices/${id}`, reason],
   ['POST', `/notices/${id}/publish`, `/notices/${id}/publish`, reason],
@@ -938,4 +951,108 @@ it('공지 태그만 수정하는 PATCH도 생성 계약을 통과해 그대로 
 
   expect((await invoke('PATCH', `/notices/${id}`, body)).status).toBe(200);
   expect(fetchMock.mock.calls[0][1].body).toBe(JSON.stringify(body));
+});
+
+it.each([
+  [
+    'POST',
+    {
+      title: '공지',
+      body: '본문',
+      tag: 'SERVICE',
+      notificationBody: '알림 본문',
+    },
+  ],
+  [
+    'POST',
+    {
+      title: '공지',
+      body: '본문',
+      tag: 'SERVICE',
+      notificationTitle: '알림 제목',
+    },
+  ],
+  [
+    'POST',
+    {
+      title: '공지',
+      body: '본문',
+      tag: 'SERVICE',
+      notificationTitle: '  ',
+      notificationBody: '알림 본문',
+    },
+  ],
+  [
+    'POST',
+    {
+      title: '공지',
+      body: '본문',
+      tag: 'SERVICE',
+      notificationTitle: '가'.repeat(101),
+      notificationBody: '알림 본문',
+    },
+  ],
+  [
+    'POST',
+    {
+      title: '공지',
+      body: '본문',
+      tag: 'SERVICE',
+      notificationTitle: '제목',
+      notificationBody: '가'.repeat(301),
+    },
+  ],
+  ['PATCH', { notificationTitle: '  ' }],
+  ['PATCH', { notificationBody: '가'.repeat(301) }],
+] as const)(
+  '공지 알림 문구의 생성 필수·길이·공백 계약을 %s 업스트림 전에 검사한다',
+  async (method, fields) => {
+    const fetchMock = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+    expect(
+      (
+        await invoke(
+          method,
+          method === 'POST' ? '/notices' : `/notices/${id}`,
+          { ...reason, ...fields },
+        )
+      ).status,
+    ).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  },
+);
+it('알림 문구 null PATCH를 그대로 전달하고 서버의 잠금 409 응답을 유지한다', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(Response.json({ tag: 'SERVICE' }));
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  const body = {
+    ...reason,
+    title: '제목 정정',
+    notificationTitle: null,
+    notificationBody: null,
+  };
+
+  expect((await invoke('PATCH', `/notices/${id}`, body)).status).toBe(200);
+  expect(fetchMock.mock.calls[0][1].body).toBe(JSON.stringify(body));
+  fetchMock.mockResolvedValueOnce(
+    Response.json(
+      { code: 'CONFLICT', message: '알림 문구 잠김' },
+      { status: 409 },
+    ),
+  );
+
+  const response = await invoke('PATCH', `/notices/${id}`, {
+    ...reason,
+    notificationTitle: '별도 알림',
+  });
+
+  expect(response.status).toBe(409);
+  expect(await response.json()).toEqual({
+    code: 'CONFLICT',
+    message: '알림 문구 잠김',
+  });
 });

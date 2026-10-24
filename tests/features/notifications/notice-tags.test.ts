@@ -108,6 +108,8 @@ it('다섯 태그는 기본 선택 없이 제목 위에 놓이고 점검을 골�
 
   for (const [name, value] of Object.entries({
     title: '점검 테스트',
+    notificationTitle: '알림 제목',
+    notificationBody: '알림 본문',
     body: '본문',
     reason: '작성',
   }))
@@ -126,6 +128,8 @@ it('다섯 태그는 기본 선택 없이 제목 위에 놓이고 점검을 골�
     url: '/api/notices',
     body: {
       title: '점검 테스트',
+      notificationTitle: '알림 제목',
+      notificationBody: '알림 본문',
       body: '본문',
       reason: '작성',
       tag: 'MAINTENANCE',
@@ -135,6 +139,8 @@ it('다섯 태그는 기본 선택 없이 제목 위에 놓이고 점검을 골�
 
 it('수정은 현재 이벤트를 선택하고 바꾼 태그를 전달한다', async () => {
   const item = saveNotice({
+    notificationTitle: '알림 제목',
+    notificationBody: '알림 본문',
     title: '수정 테스트',
     body: '본문',
     tag: 'EVENT',
@@ -178,6 +184,8 @@ it.each(['UPDATE', 'NEWS', 'ACTIVE'])(
   async (tag) => {
     const item = {
       ...saveNotice({
+        notificationTitle: '알림 제목',
+        notificationBody: '알림 본문',
         title: `배지 ${tag}`,
         body: '본문',
         tag: 'UPDATE',
@@ -227,6 +235,8 @@ it.each(noticeTags)(
   '$label 게시 요청에는 사유만 보내고 태그에 따라 알림 종류를 정한다',
   async ({ value: tag }) => {
     const item = saveNotice({
+      notificationTitle: '알림 제목',
+      notificationBody: '알림 본문',
       title: `게시 ${tag}`,
       body: '본문',
       tag,
@@ -278,6 +288,8 @@ it.each([
   async (tag, notifiedAt, notified) => {
     const item = {
       ...saveNotice({
+        notificationTitle: '알림 제목',
+        notificationBody: '알림 본문',
         title: '알림 요청 확인',
         body: '본문',
         tag,

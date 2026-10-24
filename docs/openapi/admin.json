@@ -7,8 +7,8 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-10-24T08:51:31.022Z",
-    "revision": "2c989be"
+    "receivedAt": "2026-10-24T10:35:51.925Z",
+    "revision": "11a740a"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -3066,7 +3066,7 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/AdminNoticeResponse"
+              "$ref": "#/components/schemas/AdminNoticeItemResponse"
             }
           },
           "page": {
@@ -3086,6 +3086,101 @@
             "format": "int64"
           }
         }
+      },
+      "AdminNoticeItemResponse": {
+        "type": "object",
+        "properties": {
+          "noticeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "tag": {
+            "type": "string",
+            "enum": ["SERVICE", "UPDATE", "MAINTENANCE", "EVENT", "PROMOTION"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DRAFT", "PUBLISHED"]
+          },
+          "publishedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "notifiedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/NoticeAuthorResponse"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NoticeAuthorResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nickname": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateNoticeRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 0
+          },
+          "tag": {
+            "type": "string",
+            "enum": ["SERVICE", "UPDATE", "MAINTENANCE", "EVENT", "PROMOTION"]
+          },
+          "notificationTitle": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0,
+            "pattern": "(?sU).*\\S.*"
+          },
+          "notificationBody": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 0,
+            "pattern": "(?sU).*\\S.*"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "body",
+          "notificationBody",
+          "notificationTitle",
+          "reason",
+          "tag",
+          "title"
+        ]
       },
       "AdminNoticeResponse": {
         "type": "object",
@@ -3127,47 +3222,16 @@
             "type": "string",
             "format": "date-time"
           },
+          "notificationTitle": {
+            "type": ["string", "null"]
+          },
+          "notificationBody": {
+            "type": ["string", "null"]
+          },
           "notified": {
             "type": ["boolean", "null"]
           }
         }
-      },
-      "NoticeAuthorResponse": {
-        "type": "object",
-        "properties": {
-          "memberId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "nickname": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateNoticeRequest": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 0
-          },
-          "body": {
-            "type": "string",
-            "maxLength": 5000,
-            "minLength": 0
-          },
-          "tag": {
-            "type": "string",
-            "enum": ["SERVICE", "UPDATE", "MAINTENANCE", "EVENT", "PROMOTION"]
-          },
-          "reason": {
-            "type": "string",
-            "maxLength": 500,
-            "minLength": 0
-          }
-        },
-        "required": ["body", "reason", "tag", "title"]
       },
       "NoticeReasonRequest": {
         "type": "object",
@@ -3371,6 +3435,18 @@
           "tag": {
             "type": ["string", "null"],
             "enum": ["SERVICE", "UPDATE", "MAINTENANCE", "EVENT", "PROMOTION"]
+          },
+          "notificationTitle": {
+            "type": ["string", "null"],
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "(?sU).*\\S.*"
+          },
+          "notificationBody": {
+            "type": ["string", "null"],
+            "maxLength": 300,
+            "minLength": 1,
+            "pattern": "(?sU).*\\S.*"
           },
           "title": {
             "type": ["string", "null"],
@@ -6641,10 +6717,10 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "container": {
+          "string": {
             "type": "boolean"
           },
-          "string": {
+          "container": {
             "type": "boolean"
           },
           "floatingPointNumber": {

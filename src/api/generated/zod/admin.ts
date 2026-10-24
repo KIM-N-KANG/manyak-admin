@@ -238,6 +238,18 @@ export const create4BodyTitleMax = 100;
 export const create4BodyBodyMin = 0;
 export const create4BodyBodyMax = 5000;
 
+export const create4BodyNotificationTitleMin = 0;
+export const create4BodyNotificationTitleMax = 100;
+
+export const create4BodyNotificationTitleRegExp = new RegExp(
+  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
+);
+export const create4BodyNotificationBodyMin = 0;
+export const create4BodyNotificationBodyMax = 300;
+
+export const create4BodyNotificationBodyRegExp = new RegExp(
+  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
+);
 export const create4BodyReasonMin = 0;
 export const create4BodyReasonMax = 500;
 
@@ -245,6 +257,16 @@ export const Create4Body = zod.object({
   title: zod.string().min(create4BodyTitleMin).max(create4BodyTitleMax),
   body: zod.string().min(create4BodyBodyMin).max(create4BodyBodyMax),
   tag: zod.enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION']),
+  notificationTitle: zod
+    .string()
+    .min(create4BodyNotificationTitleMin)
+    .max(create4BodyNotificationTitleMax)
+    .regex(create4BodyNotificationTitleRegExp),
+  notificationBody: zod
+    .string()
+    .min(create4BodyNotificationBodyMin)
+    .max(create4BodyNotificationBodyMax)
+    .regex(create4BodyNotificationBodyRegExp),
   reason: zod.string().min(create4BodyReasonMin).max(create4BodyReasonMax),
 });
 
@@ -380,6 +402,16 @@ export const Update2Params = zod.object({
   noticeId: zod.uuid(),
 });
 
+export const update2BodyNotificationTitleMax = 100;
+
+export const update2BodyNotificationTitleRegExp = new RegExp(
+  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
+);
+export const update2BodyNotificationBodyMax = 300;
+
+export const update2BodyNotificationBodyRegExp = new RegExp(
+  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
+);
 export const update2BodyTitleMax = 100;
 
 export const update2BodyTitleRegExp = new RegExp(
@@ -396,6 +428,18 @@ export const update2BodyReasonMax = 500;
 export const Update2Body = zod.object({
   tag: zod
     .enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION'])
+    .nullish(),
+  notificationTitle: zod
+    .string()
+    .min(1)
+    .max(update2BodyNotificationTitleMax)
+    .regex(update2BodyNotificationTitleRegExp)
+    .nullish(),
+  notificationBody: zod
+    .string()
+    .min(1)
+    .max(update2BodyNotificationBodyMax)
+    .regex(update2BodyNotificationBodyRegExp)
     .nullish(),
   title: zod
     .string()
