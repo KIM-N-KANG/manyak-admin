@@ -15,12 +15,15 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { InfraChart } from '@/features/analytics/infra/infra-chart';
 import { DashboardAnalysisScreen } from '@/features/dashboard/analysis-screen';
 import {
+  aiFeatureLabel,
+  aiFeatures,
   chartNumber,
   periodAverage,
   rankedPoints,
 } from '@/features/dashboard/chart-data';
 import { DashboardScreen } from '@/features/dashboard/dashboard-screen';
 import { DistributionChart } from '@/features/dashboard/distribution-chart';
+import { getDistributionHref } from '@/features/dashboard/links';
 import type {
   ChartPoint,
   DashboardCharts,
@@ -84,6 +87,8 @@ afterEach(() => {
 const point = (label: string, value: number): ChartPoint => ({
   label,
   value,
+  chats: 5,
+  totalTurns: value * 5,
   link: { list: 'chats', params: { feature: label } },
 });
 const distribution = (
@@ -112,7 +117,7 @@ it('장르 상위 30개를 값 내림차순 세로 막대로 그리며 정렬 �
   const points = Array.from({ length: 35 }, (_, index) =>
     point(`장르${index}`, index + 1),
   );
-  const data = distribution('genre-depth', points, '턴');
+  const data = distribution('genre-depth', points.toReversed(), '턴');
   const { container, onSelect } = draw(data);
   const bars = container.querySelectorAll('.recharts-bar-rectangle');
 
@@ -287,7 +292,7 @@ it('첫 메시지 백분위는 한 축 위 연결 점이며 평균은 별도 마
   expect(coordinates[2]).toBeGreaterThan(0);
   expect(coordinates[5]).toBeGreaterThan(0);
   expect(coordinates[6]).toBeLessThan(0);
-  expect(diamond.getAttribute('fill')).toBe('var(--muted-foreground)');
+  expect(diamond.getAttribute('fill')).toBe('var(--chart-2)');
   expect(percentileLegend.querySelector('path')?.getAttribute('d')).toContain(
     'A',
   );
@@ -713,4 +718,129 @@ it('요약 카드 10개는 고정 최소 높이 없이 같은 행의 내용 높�
   const dbLink = within(grid).getByRole('link', { name: /가입자.*누적/ });
 
   expect(dbLink.className).toContain('h-full');
+});
+
+it('AI 품질은 기능 다섯 개의 고정 순서와 색을 유지하며 실시간 이미지 막대는 채팅 목록으로 이동한다', () => {
+  const source = state.charts!.distributions.find(
+    (d) => d.chartId === 'ai-success',
+  )!;
+
+  source.points.reverse();
+  render(createElement(DashboardAnalysisScreen));
+
+  const card = screen
+    .getByRole('heading', { name: source.title })
+    .closest('[data-slot="card"]')!;
+  const charts = Array.from(card.querySelectorAll('[data-slot="chart"]'));
+
+  expect(charts).toHaveLength(5);
+  expect(charts.map((c) => c.getAttribute('aria-label'))).toEqual(
+    aiFeatures.map((key) => `${aiFeatureLabel(key)} 성공률`),
+  );
+  charts.forEach((chart, i) =>
+    expect(chart.querySelector('style')!.textContent).toContain(
+      `var(--chart-${i + 1})`,
+    ),
+  );
+  fireEvent.click(charts[2].querySelector('.recharts-bar-rectangle')!);
+
+  const link = source.points.find((p) => p.label === 'chat_image')!.link;
+
+  expect(link.list).toBe('chats');
+  expect(link.params.aiFeature).toBe('chat_image');
+  expect(state.push).toHaveBeenCalledWith(getDistributionHref(link));
+});
+
+it('AI 지연도 값 순위 대신 다섯 기능 순서·색을 쓰고 이미지 호출일 링크를 보존한다', () => {
+  const source = state.charts!.distributions.find(
+    (d) => d.chartId === 'ai-latency',
+  )!;
+
+  source.points.reverse();
+  render(createElement(DashboardAnalysisScreen));
+
+  const card = screen
+    .getByRole('heading', { name: source.title })
+    .closest('[data-slot="card"]')!;
+  const ticks = card.querySelectorAll('.recharts-cartesian-axis-tick-value');
+  const bars = card.querySelectorAll('.recharts-bar-rectangle');
+
+  expect(
+    Array.from(ticks)
+      .map((t) => t.textContent)
+      .filter((label) => aiFeatures.map(aiFeatureLabel).includes(label ?? '')),
+  ).toEqual(aiFeatures.map(aiFeatureLabel));
+  expect(bars).toHaveLength(5);
+  expect(
+    Array.from(bars).map((bar) =>
+      bar.querySelector('path')?.getAttribute('fill'),
+    ),
+  ).toEqual([1, 2, 3, 4, 5].map((i) => `var(--chart-${i})`));
+  fireEvent.click(bars[2]);
+
+  const link = source.points.find((p) => p.label === 'chat_image')!.link;
+
+  expect(link.params).toMatchObject({
+    aiFeature: 'chat_image',
+    aiStatus: 'SUCCEEDED',
+    hasLatency: 'true',
+  });
+  expect(state.push).toHaveBeenCalledWith(getDistributionHref(link));
+});
+
+it('장르 소표본은 표에만 남기며 응답 순서·평균·채팅 수·총 턴 수와 빈 상태를 보존한다', async () => {
+  const points = [
+    { ...point('던전', 465), chats: 1, totalTurns: 465 },
+    { ...point('로맨스', 10), chats: 6, totalTurns: 60 },
+  ];
+  const genre = distribution('genre-depth', points, '턴');
+
+  state.charts = { ...state.charts!, distributions: [genre] };
+
+  const view = render(createElement(DashboardAnalysisScreen));
+
+  expect(
+    view.container.querySelectorAll('.recharts-bar-rectangle'),
+  ).toHaveLength(1);
+
+  const table = screen.getByText('수치 및 관련 목록').closest('details')!;
+
+  expect(within(table).getByText('차트 제외(채팅 5개 미만)')).toBeTruthy();
+  expect(within(table).getAllByRole('row')).toHaveLength(3);
+  expect(within(table).getByText('60턴')).toBeTruthy();
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
+    new DOMRect(0, 0, 360, 360),
+  );
+
+  const chart = screen.getByLabelText('장르별 평균 턴 수');
+
+  fireEvent.mouseMove(chart.querySelector('.recharts-wrapper')!, {
+    clientX: 180,
+    clientY: 90,
+  });
+  await waitFor(() =>
+    expect(
+      chart.querySelector('.recharts-tooltip-wrapper')?.textContent,
+    ).toContain('평균 10턴, 채팅 6개, 총 60턴'),
+  );
+  state.charts = {
+    ...state.charts!,
+    distributions: [{ ...genre, points: [points[0]] }],
+  };
+  view.rerender(createElement(DashboardAnalysisScreen));
+  expect(screen.getByText('채팅이 5개 이상인 장르가 없습니다.')).toBeTruthy();
+  expect(
+    view.container.querySelectorAll('.recharts-bar-rectangle'),
+  ).toHaveLength(0);
+  expect(screen.getByRole('link', { name: '던전 →' })).toBeTruthy();
+
+  const responseOrder = distribution('genre-depth', [
+    { ...point('낮음', 1) },
+    { ...point('높음', 100) },
+  ]);
+
+  expect(rankedPoints(responseOrder).map((p) => p.label)).toEqual([
+    '낮음',
+    '높음',
+  ]);
 });

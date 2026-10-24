@@ -13,6 +13,8 @@ import { Card } from '@/components/ui/card';
 import {
   aiFeatureLabel,
   distributionNumber,
+  MIN_GENRE_CHATS,
+  orderedAiPoints,
 } from '@/features/dashboard/chart-data';
 import { DistributionChart } from '@/features/dashboard/distribution-chart';
 import { getDistributionHref } from '@/features/dashboard/links';
@@ -30,7 +32,10 @@ function DistributionCard({
 }) {
   const distribution = {
     ...response,
-    points: response.points.map((point) => ({
+    points: (['ai-latency', 'ai-success'].includes(response.chartId)
+      ? orderedAiPoints(response.points)
+      : response.points
+    ).map((point) => ({
       ...point,
       label: aiFeatureLabel(point.label),
     })),
@@ -62,7 +67,17 @@ function DistributionCard({
         </summary>
         <div className="mt-3 max-h-80 overflow-auto">
           <DataTable
-            headers={['구분 및 관련 목록', `값 (${distribution.unit})`]}
+            headers={
+              distribution.chartId === 'genre-depth'
+                ? [
+                    '구분 및 관련 목록',
+                    '평균 (턴)',
+                    '채팅 수',
+                    '총 턴 수',
+                    '차트 표시',
+                  ]
+                : ['구분 및 관련 목록', `값 (${distribution.unit})`]
+            }
             empty={!distribution.points.length}>
             {distribution.points.map((point) => (
               <tr key={point.label}>
@@ -75,6 +90,17 @@ function DistributionCard({
                   {distributionNumber(point.value, distribution.unit)}{' '}
                   {distribution.unit}
                 </td>
+                {distribution.chartId === 'genre-depth' ? (
+                  <>
+                    <td>{point.chats?.toLocaleString('ko-KR')}개</td>
+                    <td>{point.totalTurns?.toLocaleString('ko-KR')}턴</td>
+                    <td>
+                      {(point.chats ?? 0) < MIN_GENRE_CHATS
+                        ? '차트 제외(채팅 5개 미만)'
+                        : '차트 포함'}
+                    </td>
+                  </>
+                ) : null}
               </tr>
             ))}
           </DataTable>

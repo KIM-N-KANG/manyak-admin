@@ -22,6 +22,7 @@ import {
   segments,
   sourceHelp,
 } from './config';
+import { kstTime } from './infra/data';
 import { PendingDates, Source } from './metric-ui';
 import { analyticsRange, analyticsRefetch } from './range';
 import {
@@ -110,19 +111,48 @@ function TextCondition({
 function TabHeading({
   screen,
   tab,
+  aiCost,
 }: {
   screen: AnalyticsScreenName;
   tab: string;
+  aiCost?: { asOf: string; usdKrwRate?: number; chatImageUnitCostKrw?: number };
 }) {
   const db = ['signups', 'turn-reach', 'chat-options', 'ai-cost'].includes(tab);
-  const source = db ? '서버 DB' : 'Amplitude';
-  const help = sourceHelp[tab as keyof typeof sourceHelp] ?? sourceHelp[screen];
+  const source = tab === 'ai-cost' ? 'Langfuse' : db ? '서버 DB' : 'Amplitude';
+  const template =
+    sourceHelp[tab as keyof typeof sourceHelp] ?? sourceHelp[screen];
+  const help =
+    tab === 'ai-cost'
+      ? aiCost &&
+        typeof aiCost.usdKrwRate === 'number' &&
+        typeof aiCost.chatImageUnitCostKrw === 'number'
+        ? template
+            .replace('{받은 시각}', kstTime(aiCost.asOf))
+            .replace(
+              '{환율}',
+              aiCost.usdKrwRate.toLocaleString('ko-KR', {
+                useGrouping: false,
+                maximumFractionDigits: 2,
+              }),
+            )
+            .replace(
+              '{장당 원가}',
+              aiCost.chatImageUnitCostKrw.toLocaleString('ko-KR', {
+                maximumFractionDigits: 2,
+              }),
+            )
+        : undefined
+      : template;
   const title = screens[screen].tabs.find(([key]) => key === tab)?.[1] ?? '';
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
       <h2 className="text-xl font-semibold">{title}</h2>
-      <Source source={source} help={help} />
+      {help ? (
+        <Source source={source} help={help} />
+      ) : (
+        <span className="text-xs text-muted-foreground">{source}</span>
+      )}
     </div>
   );
 }
@@ -156,6 +186,8 @@ function MetricsTab({
   const data = query.data as
     | {
         asOf: string;
+        chatImageUnitCostKrw?: number;
+        usdKrwRate?: number;
         pendingDates?: string[];
         campaign?: string;
         storyId?: string | null;
@@ -166,18 +198,24 @@ function MetricsTab({
 
   return (
     <>
-      <TabHeading screen={screen} tab={tab} />
+      <TabHeading
+        screen={screen}
+        tab={tab}
+        aiCost={query.isError ? undefined : data}
+      />
       <QueryState
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}
-        source={db ? undefined : 'amplitude'}
+        source={tab === 'ai-cost' ? 'langfuse' : db ? undefined : 'amplitude'}
       />
       {data && !query.isError ? (
         <>
-          <p className="mb-4 text-xs text-muted-foreground">
-            {dateTime(data.asOf)} KST 집계 기준
-          </p>
+          {tab !== 'ai-cost' ? (
+            <p className="mb-4 text-xs text-muted-foreground">
+              {dateTime(data.asOf)} KST 집계 기준
+            </p>
+          ) : null}
           {data.campaign || data.storyId || data.platform ? (
             <p className="mb-4 text-xs text-muted-foreground">
               {[

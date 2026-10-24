@@ -206,6 +206,7 @@ export type ChatOptionDay = {
   chats: number;
   withPersona: number;
   byModel: Record<string, number>;
+  turnsByModel: Record<string, number>;
 };
 export type ChatOptionResponse = {
   asOf: string;
@@ -224,6 +225,10 @@ export type AiCostItem = {
   costKrw: number | null;
 };
 export type AiCostResponse = {
+  pendingDates: string[];
+  usdKrwRate: number;
+  unmapped: { traceName: string; costKrw: number }[];
+  chatImageUnitCostKrw: number;
   asOf: string;
   from: string;
   to: string;

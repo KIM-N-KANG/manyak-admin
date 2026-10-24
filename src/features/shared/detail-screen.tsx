@@ -19,6 +19,7 @@ import type { ChatRoom } from '@/features/chats/types';
 import { MemberActions } from '@/features/members/member-actions';
 import { MemberHistoryList } from '@/features/members/member-history-list';
 import type { MemberDetail } from '@/features/members/types';
+import { SubmissionLinks } from '@/features/moderation/submission-links';
 import type { PaymentDetail } from '@/features/payments/types';
 import { RelatedList } from '@/features/shared/list-screen';
 import { useApi } from '@/features/shared/use-api';
@@ -28,6 +29,12 @@ import { externalLinks } from '@/lib/external-links';
 function StoryContent({ story: s }: { story: StoryDetail }) {
   return (
     <>
+      <div className="mb-5">
+        <SubmissionLinks
+          storyId={s.storyId}
+          held={s.moderationStatus === 'HELD'}
+        />
+      </div>
       <Card>
         <DetailGrid
           items={[
@@ -75,7 +82,7 @@ function StoryContent({ story: s }: { story: StoryDetail }) {
           <p className="mb-5 text-xs text-muted-foreground">
             전체 채팅 중 해당 턴 이상에 도달한 채팅 비율
           </p>
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-5">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 xl:grid-cols-6">
             {s.retention.map((r) => (
               <div key={r.turn}>
                 <p className="text-sm text-muted-foreground">{r.turn}턴 도달</p>
@@ -108,6 +115,9 @@ function StoryContent({ story: s }: { story: StoryDetail }) {
 function MemberContent({ member: m }: { member: MemberDetail }) {
   return (
     <>
+      <div className="mb-5">
+        <SubmissionLinks memberId={m.memberId} />
+      </div>
       <Card>
         <DetailGrid
           items={[

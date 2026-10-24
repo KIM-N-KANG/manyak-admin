@@ -53,6 +53,7 @@ vi.mock('recharts', () => {
     Scatter: Container,
     Label: () => null,
     LabelList: () => null,
+    Cell: () => null,
     ReferenceLine: () => null,
     Bar: () => null,
     CartesianGrid: () => null,

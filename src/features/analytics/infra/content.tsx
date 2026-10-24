@@ -96,6 +96,7 @@ export function InfraServices({ data }: { data: InfraMetrics }) {
                 data={data}
                 series={services.map((service, index) => ({
                   ...serviceSeries(service.name, service[metric]),
+                  maxPoints: service[metric === 'cpu' ? 'cpuMax' : 'memoryMax'],
                   key: `service_${index}`,
                 }))}
                 unit="%"
@@ -226,14 +227,23 @@ export function InfraStorage({ data }: { data: InfraMetrics }) {
                   }[metric]
                 }
                 data={data}
-                series={data.redis!.nodes.map((node, index) =>
-                  listedSeries(
-                    `node_${index}`,
-                    `노드 ${node.id.split('-').at(-1)}`,
-                    node[metric],
-                    index,
-                  ),
-                )}
+                series={data
+                  .redis!.nodes.toSorted((a, b) =>
+                    a.id
+                      .split('-')
+                      .at(-1)!
+                      .localeCompare(b.id.split('-').at(-1)!, undefined, {
+                        numeric: true,
+                      }),
+                  )
+                  .map((node, index) =>
+                    listedSeries(
+                      `node_${index}`,
+                      `노드 ${node.id.split('-').at(-1)}`,
+                      node[metric],
+                      index,
+                    ),
+                  )}
                 unit={metric === 'connections' ? '개' : '%'}
               />
             ))}

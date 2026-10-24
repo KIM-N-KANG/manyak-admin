@@ -800,6 +800,102 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/moderation/submissions',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'status',
+        in: 'query',
+        required: false,
+        schema: {
+          type: 'string',
+          enum: ['PENDING', 'HELD', 'APPROVED', 'REJECTED', 'FAILED'],
+        },
+      },
+      {
+        name: 'memberId',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', format: 'uuid' },
+      },
+      {
+        name: 'storyId',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', format: 'uuid' },
+      },
+      {
+        name: 'q',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', maxLength: 50, minLength: 1 },
+      },
+      {
+        name: 'from',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
+      {
+        name: 'page',
+        in: 'query',
+        required: true,
+        schema: { type: 'integer', format: 'int32', minimum: 1 },
+      },
+      {
+        name: 'size',
+        in: 'query',
+        required: true,
+        schema: { type: 'integer', format: 'int32', maximum: 100, minimum: 1 },
+      },
+      {
+        name: 'cursor',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      {
+        name: 'limit',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      {
+        name: 'sort',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      {
+        name: 'order',
+        in: 'query',
+        required: true,
+        schema: { type: 'string', pattern: 'asc|desc' },
+      },
+    ],
+    params: undefined,
+    query: schemas.SubmissionsQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
+    path: '/api/v1/admin/moderation/submissions/{submissionId}',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'submissionId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+      },
+    ],
+    params: schemas.SubmissionParams,
+    query: undefined,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/moderation/holds',
     method: 'GET',
     parameters: [

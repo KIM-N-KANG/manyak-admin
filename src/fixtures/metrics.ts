@@ -1,4 +1,5 @@
 import { chartDates, shiftDate } from '@/features/analytics/range';
+import { TURN_THRESHOLDS } from '@/features/analytics/turn-thresholds';
 import type * as T from '@/features/analytics/types';
 import { kstToday } from '@/features/dashboard/date-range';
 import { members } from '@/fixtures/entities';
@@ -197,6 +198,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
         chats: 4,
         withPersona: 2,
         byModel: { AURORA: 1, LITE: 3, NOVA: 0 },
+        turnsByModel: { AURORA: 2, LITE: 4 },
       })),
     } satisfies T.ChatOptionResponse;
 
@@ -204,9 +206,13 @@ export function metricFixture(path: string, query: URLSearchParams) {
     return {
       ...base,
       currency: 'KRW',
+      pendingDates,
+      usdKrwRate: 1400,
+      unmapped: [{ traceName: '새 기능', costKrw: 2.8 }],
+      chatImageUnitCostKrw: 48,
       unpricedModels: ['UNPRICED'],
       totals: {
-        costKrw: dates.length * 6,
+        costKrw: dates.length * 144 + ready.length * 6 + 2.8,
         costPerTurnKrw: 3,
         costPerStoryKrw: null,
       },
@@ -214,13 +220,22 @@ export function metricFixture(path: string, query: URLSearchParams) {
         date,
         byFeature: [
           {
+            feature: 'chat_image',
+            model: null,
+            calls: 3,
+            callsWithoutTokens: 0,
+            inputTokens: 0,
+            outputTokens: 0,
+            costKrw: 144,
+          },
+          {
             feature: 'chat_response',
             model: 'AURORA',
             calls: 2,
             callsWithoutTokens: 1,
             inputTokens: 1000,
             outputTokens: 500,
-            costKrw: 6,
+            costKrw: pendingDates.includes(date) ? null : 6,
           },
           {
             feature: 'story_completion',
@@ -229,7 +244,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
             callsWithoutTokens: 0,
             inputTokens: 100,
             outputTokens: 30,
-            costKrw: null,
+            costKrw: pendingDates.includes(date) ? null : 0,
           },
           {
             feature: 'choice_generation',
@@ -250,10 +265,10 @@ export function metricFixture(path: string, query: URLSearchParams) {
       segments: ['all', 'guest', 'member'].map((name, j) => ({
         segment: name,
         chats: j === 1 ? 0 : 100,
-        reached: [1, 5, 10, 20].map((turn, i) => ({
+        reached: TURN_THRESHOLDS.map((turn, i) => ({
           turn,
-          chats: j === 1 ? 0 : 80 - i * 15,
-          rate: j === 1 ? 0 : 0.8 - i * 0.15,
+          chats: j === 1 ? 0 : Math.max(0, 80 - i * 7),
+          rate: j === 1 ? 0 : Math.max(0, 0.8 - i * 0.07),
         })),
       })),
       guestToMember: { chatsReached5: 0, chatsReached6: 0, rate: 0 },

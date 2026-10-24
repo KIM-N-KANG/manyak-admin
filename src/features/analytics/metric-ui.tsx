@@ -216,7 +216,11 @@ export function SeriesChart({
             data={rows}
             margin={{
               top: 64,
-              right: series.length > 1 ? 100 : 16,
+              right:
+                series.length > 1 ||
+                series.some((s) => s.color === 'var(--chart-3)')
+                  ? 100
+                  : 16,
               bottom: 8,
               left: 0,
             }}
@@ -236,7 +240,8 @@ export function SeriesChart({
                 isAnimationActive={false}
               />
             ))}
-            {series.length > 1 ? (
+            {series.length > 1 ||
+            series.some((s) => s.color === 'var(--chart-3)') ? (
               <ChartEndLabels
                 labels={series.flatMap((s) => {
                   const row = rows.find((row) => row.date === last.get(s.key));

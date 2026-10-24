@@ -97,11 +97,11 @@
   --sidebar-accent-foreground: var(--primary-text);
   --sidebar-border: #ebebeb;
   --sidebar-ring: var(--primary);
-  --chart-1: var(--primary);
-  --chart-2: color-mix(in oklab, var(--primary) 80%, transparent);
-  --chart-3: color-mix(in oklab, var(--primary) 60%, transparent);
-  --chart-4: color-mix(in oklab, var(--primary) 40%, transparent);
-  --chart-5: color-mix(in oklab, var(--primary) 20%, transparent);
+  --chart-1: #01a76b;
+  --chart-2: #3b6fd4;
+  --chart-3: #e07a1f;
+  --chart-4: #8b5cd6;
+  --chart-5: #d9467a;
 }
 
 @layer base {

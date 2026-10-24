@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Label,
   LabelList,
   type LabelProps,
@@ -22,9 +23,12 @@ import {
   ChartTooltip,
 } from '@/components/ui/chart';
 import {
+  aiFeatureColor,
   chartNumber,
   distributionNumber,
   genreDepthTitle,
+  MIN_GENRE_CHATS,
+  orderedAiPoints,
   rankedPoints,
 } from '@/features/dashboard/chart-data';
 import type { ChartPoint, Distribution } from '@/features/dashboard/types';
@@ -40,10 +44,12 @@ function DistributionTooltip({
   active,
   payload,
   unit,
+  genre = false,
 }: {
   active?: boolean;
   payload?: readonly { payload?: unknown }[];
   unit: string;
+  genre?: boolean;
 }) {
   const point = payload?.[0]?.payload;
 
@@ -62,7 +68,9 @@ function DistributionTooltip({
     <div className="rounded-md border bg-card px-3 py-2 text-xs shadow-sm">
       <p>{point.label}</p>
       <p className="mt-1 font-mono">
-        {distributionNumber(point.value, unit)} {unit}
+        {genre && 'chats' in point && 'totalTurns' in point
+          ? `평균 ${chartNumber(point.value)}턴, 채팅 ${chartNumber(point.chats)}개, 총 ${chartNumber(point.totalTurns)}턴`
+          : `${distributionNumber(point.value, unit)} ${unit}`}
       </p>
     </div>
   );
@@ -70,7 +78,17 @@ function DistributionTooltip({
 
 function GenreBars({ distribution, onSelect }: ChartProps) {
   const points = rankedPoints(distribution);
-  const omitted = distribution.points.length - points.length;
+  const omitted =
+    distribution.points.filter((point) => (point.chats ?? 0) >= MIN_GENRE_CHATS)
+      .length - points.length;
+
+  if (!points.length)
+    return (
+      <p className="mt-5 text-sm text-muted-foreground">
+        채팅이 5개 이상인 장르가 없습니다.
+      </p>
+    );
+
   const minWidth = Math.max(360, points.length * 84 + 80);
 
   return (
@@ -110,7 +128,7 @@ function GenreBars({ distribution, onSelect }: ChartProps) {
             <YAxis type="number" width={48} tickLine={false} axisLine={false} />
             <ChartTooltip
               isAnimationActive={false}
-              content={<DistributionTooltip unit={distribution.unit} />}
+              content={<DistributionTooltip unit={distribution.unit} genre />}
             />
             <Bar
               dataKey="value"
@@ -135,7 +153,9 @@ function GenreBars({ distribution, onSelect }: ChartProps) {
 }
 
 function HorizontalBars({ distribution, onSelect }: ChartProps) {
-  const points = rankedPoints(distribution);
+  const ranked = rankedPoints(distribution);
+  const points =
+    distribution.chartId === 'ai-latency' ? orderedAiPoints(ranked) : ranked;
 
   return (
     <ChartContainer
@@ -170,6 +190,11 @@ function HorizontalBars({ distribution, onSelect }: ChartProps) {
           isAnimationActive={false}
           className="cursor-pointer"
           onClick={(_data, index) => onSelect(points[index])}>
+          {distribution.chartId === 'ai-latency'
+            ? points.map((point) => (
+                <Cell key={point.label} fill={aiFeatureColor(point)} />
+              ))
+            : null}
           <LabelList
             dataKey="value"
             position="right"
@@ -227,7 +252,7 @@ function DonutCenter({
 function StartedAsDonut({ distribution, onSelect }: ChartProps) {
   const points = distribution.points.map((point, index) => ({
     ...point,
-    fill: index === 0 ? 'var(--primary)' : 'var(--muted-foreground)',
+    fill: index === 0 ? 'var(--chart-2)' : 'var(--chart-3)',
   }));
   const guest =
     points.find((point) => point.link.params.startedAs === 'GUEST')?.value ?? 0;
@@ -308,7 +333,7 @@ function FirstMessagePlot({ distribution, onSelect }: ChartProps) {
     <ChartContainer
       config={{
         percentiles: { label: '백분위', color: 'var(--primary)' },
-        mean: { label: '평균', color: 'var(--muted-foreground)' },
+        mean: { label: '평균', color: 'var(--chart-2)' },
       }}
       className="mt-5 h-[220px] w-full"
       aria-label={distribution.title}>
@@ -344,7 +369,7 @@ function FirstMessagePlot({ distribution, onSelect }: ChartProps) {
           name="평균"
           legendType="diamond"
           data={means}
-          fill="var(--muted-foreground)"
+          fill="var(--chart-2)"
           shape="diamond"
           isAnimationActive={false}
           onClick={(_data, index) => onSelect(means[index])}
@@ -373,7 +398,7 @@ function FirstMessagePlot({ distribution, onSelect }: ChartProps) {
 function SuccessMeters({ distribution, onSelect }: ChartProps) {
   return (
     <div className="mt-5 space-y-5">
-      {distribution.points.map((point) => {
+      {orderedAiPoints(distribution.points).map((point) => {
         const warning = point.value < 95;
 
         return (
@@ -391,9 +416,7 @@ function SuccessMeters({ distribution, onSelect }: ChartProps) {
               config={{
                 value: {
                   label: '성공률',
-                  color: warning
-                    ? 'var(--warning-foreground)'
-                    : 'var(--primary)',
+                  color: aiFeatureColor(point),
                 },
               }}
               className="h-8 w-full"

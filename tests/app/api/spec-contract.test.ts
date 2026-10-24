@@ -14,7 +14,7 @@ import { members as memberRows, payments } from '@/fixtures/entities';
 const req = (path: string) => new Request(`http://localhost/api/${path}`);
 
 describe('ADMIN 응답 계약 회귀', () => {
-  it('차트는 구조화된 링크·AI 기능 4종·일별 출석을 반환한다', async () => {
+  it('차트는 구조화된 링크·AI 기능 5종·일별 출석을 반환한다', async () => {
     const data = await charts(req('dashboard/charts?days=7')).json();
 
     expect(data.distributions).toHaveLength(8);
@@ -45,6 +45,7 @@ describe('ADMIN 응답 계약 회귀', () => {
     ).toEqual([
       'chat_response',
       'choice_generation',
+      'chat_image',
       'storyline_generation',
       'story_completion',
     ]);
@@ -86,7 +87,8 @@ describe('ADMIN 응답 계약 회귀', () => {
     }
 
     expect(chats(req('chats?aiFeature=choice_generation')).status).toBe(200);
-    expect(chats(req('chats?aiFeature=chat_image')).status).toBe(400);
+    expect(chats(req('chats?aiFeature=chat_image')).status).toBe(200);
+    expect(chats(req('chats?aiFeature=story_completion')).status).toBe(400);
   });
   it('회원 상세는 관계 배열과 이메일 없이 집계만 반환하고 기간 미지정 값은 null이다', async () => {
     const id = memberRows[0].memberId;

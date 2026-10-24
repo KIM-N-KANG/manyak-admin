@@ -42,6 +42,7 @@ const entries = [
   ['/analytics/infra', '인프라'],
   ['/members', '회원'],
   ['/stories', '스토리'],
+  ['/moderation/submissions', '검수 제출'],
   ['/originals', '오리지널'],
   ['/chats', '채팅'],
   ['/payments', '결제'],
@@ -87,7 +88,7 @@ describe('관리자 메뉴 구조', () => {
     ).toHaveLength(7);
     expect(
       within(nav).getByRole('region', { name: '관리' }).querySelectorAll('a'),
-    ).toHaveLength(8);
+    ).toHaveLength(9);
     expect(
       within(nav).getByRole('region', { name: '알림' }).querySelectorAll('a'),
     ).toHaveLength(3);

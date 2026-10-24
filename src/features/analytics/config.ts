@@ -68,9 +68,9 @@ export const sourceHelp = {
   quality:
     'Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 국가가 한국이거나 국가 정보가 없는 사용자만 집계하며 팀 계정은 제외하지 않습니다. 스트림 오류율은 두 이벤트의 건수 비율이라 100%를 넘을 수 있습니다.',
   'chat-options':
-    '서버 DB 출처 지표입니다. 팀 계정은 제외합니다. 삭제되지 않은 채팅을 생성일 기준으로 집계합니다.',
+    '서버 DB 출처 지표입니다. 팀 계정은 제외합니다. 채팅 수는 삭제되지 않은 채팅을 생성일 기준으로 집계하며 채팅에 지금 선택된 모델로 셉니다. 턴 수는 AI 응답이 생성된 날 기준이고 그 턴을 만든 모델로 세며 삭제된 채팅의 턴도 셉니다. 모델 기록 전의 턴은 "기록 전"으로 셉니다.',
   'ai-cost':
-    '서버 DB 출처 지표입니다. 팀 계정의 호출도 포함합니다. 성공한 호출만 집계하며 이미지 생성 비용은 포함하지 않습니다.',
+    'Langfuse 출처 지표이며 {받은 시각} KST에 받은 값입니다. 금액은 Langfuse가 모델 단가로 계산한 비용을 1달러 {환율}원으로 바꾼 값이고 호출 수와 토큰 수는 서버 DB 기록입니다. 팀 계정의 호출도 포함합니다. 금액은 실패한 호출 과정의 비용도 포함하고 호출 수와 토큰 수는 성공한 호출만 셉니다. 실시간 이미지는 장당 {장당 원가}원으로 계산하며 턴당 원가와 스토리당 원가에는 넣지 않습니다. 간편 제작에는 표지와 인물 이미지 비용이 포함됩니다.',
 };
 export function pick<T extends string>(
   value: string | null,
@@ -101,8 +101,12 @@ export function eventLabel(event: string, turnNumber?: number | null) {
     : (labels[event] ?? event);
 }
 export const modelLabel = (value: string) =>
-  (({ AURORA: '오로라', LITE: '라이트' }) as Record<string, string>)[value] ??
-  value;
+  (
+    ({ AURORA: '오로라', LITE: '라이트', UNRECORDED: '기록 전' }) as Record<
+      string,
+      string
+    >
+  )[value] ?? value;
 export const percent = (value: number | null, missing = '계산할 수 없음') =>
   value === null
     ? missing

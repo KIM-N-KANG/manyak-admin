@@ -1,3 +1,4 @@
+import { TURN_THRESHOLDS } from '@/features/analytics/turn-thresholds';
 import type { ChatRoom } from '@/features/chats/types';
 import type {
   CreditTransaction,
@@ -155,7 +156,7 @@ export function getStoryDetail(storyId: string): StoryDetail | null {
   return story
     ? {
         ...story,
-        retention: [1, 3, 5, 10, 20].map((turn) => {
+        retention: TURN_THRESHOLDS.map((turn) => {
           const rooms = chats.filter((c) => c.story.storyId === storyId);
 
           return {
@@ -272,7 +273,7 @@ export const aiCalls = [
   ...chats.map((chat, index) => ({
     chatId: chat.chatId,
     storyId: chat.story.storyId,
-    feature: index % 2 ? 'chat_response' : 'choice_generation',
+    feature: ['chat_response', 'choice_generation', 'chat_image'][index % 3],
     createdAt: chat.lastActiveAt,
     status:
       index % 17 === 0 ? 'FAILED' : index % 19 === 0 ? 'STARTED' : 'SUCCEEDED',

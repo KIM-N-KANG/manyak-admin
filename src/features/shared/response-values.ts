@@ -32,6 +32,7 @@ export function adminResponseValues(value: unknown, url: string): unknown {
   const relation = (
     {
       stories: 'owner',
+      moderation: 'owner',
       chats: 'member',
       payments: 'member',
       'audit-logs': 'admin',

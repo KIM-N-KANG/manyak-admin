@@ -576,6 +576,37 @@ export const PaymentParams = zod.object({
 
 export const PaymentResponse = zod.unknown();
 
+export const submissionsQueryQMax = 50;
+
+export const submissionsQuerySizeMax = 100;
+
+export const submissionsQueryOrderRegExp = new RegExp('asc|desc');
+
+export const SubmissionsQueryParams = zod.object({
+  status: zod
+    .enum(['PENDING', 'HELD', 'APPROVED', 'REJECTED', 'FAILED'])
+    .optional(),
+  memberId: zod.uuid().optional(),
+  storyId: zod.uuid().optional(),
+  q: zod.string().min(1).max(submissionsQueryQMax).optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  page: zod.number().min(1),
+  size: zod.number().min(1).max(submissionsQuerySizeMax),
+  cursor: zod.string().optional(),
+  limit: zod.string().optional(),
+  sort: zod.string().optional(),
+  order: zod.string().regex(submissionsQueryOrderRegExp),
+});
+
+export const SubmissionsResponse = zod.unknown();
+
+export const SubmissionParams = zod.object({
+  submissionId: zod.string(),
+});
+
+export const SubmissionResponse = zod.unknown();
+
 export const holdsQueryQuerySizeMax = 100;
 
 export const holdsQueryQueryOrderRegExp = new RegExp('asc|desc');
@@ -707,6 +738,22 @@ export const MetricsResponse = zod.object({
                 )
                 .optional(),
               memory: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+              cpuMax: zod
+                .array(
+                  zod.object({
+                    at: zod.iso.datetime({ offset: true }).optional(),
+                    value: zod.number().optional(),
+                  }),
+                )
+                .optional(),
+              memoryMax: zod
                 .array(
                   zod.object({
                     at: zod.iso.datetime({ offset: true }).optional(),

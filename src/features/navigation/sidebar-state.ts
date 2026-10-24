@@ -18,6 +18,7 @@ export const navigation = [
     items: [
       ['/members', '회원'],
       ['/stories', '스토리'],
+      ['/moderation/submissions', '검수 제출'],
       ['/originals', '오리지널'],
       ['/chats', '채팅'],
       ['/payments', '결제'],

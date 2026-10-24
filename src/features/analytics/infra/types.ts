@@ -19,6 +19,7 @@ export type InfraSeries = {
   key: string;
   label: string;
   points: InfraPoint[];
+  maxPoints?: InfraPoint[];
   color: string;
   dash?: string;
 };

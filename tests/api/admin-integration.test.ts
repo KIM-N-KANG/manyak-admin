@@ -13,6 +13,12 @@ const presign = { kind: 'COVER', contentType: 'image/png', contentLength: 32 };
 const cases: [string, string, string, unknown?][] = [
   [
     'GET',
+    `/moderation/submissions?page=1&size=20&sort=decidedAt&order=desc&status=HELD&memberId=${id}&storyId=${id}&q=test&from=2026-10-01&to=2026-10-21`,
+    `/moderation/submissions?page=1&size=20&sort=decidedAt&order=desc&status=HELD&memberId=${id}&storyId=${id}&q=test&from=2026-10-01&to=2026-10-21`,
+  ],
+  ['GET', `/moderation/submissions/${id}`, `/moderation/submissions/${id}`],
+  [
+    'GET',
     '/notices?status=DRAFT&size=10&sort=updatedAt&q=test',
     '/notices?status=DRAFT&size=10&sort=updatedAt&q=test',
   ],
@@ -824,3 +830,101 @@ it.each([
     );
   },
 );
+
+it('실시간 이미지 채팅 필터를 생성 검증하고 인증과 호출일을 그대로 전달한다', async () => {
+  const fetchMock = vi.fn().mockResolvedValue(Response.json({ items: [] }));
+  const query =
+    'aiFeature=chat_image&aiStatus=FINISHED&aiFrom=2026-10-21&aiTo=2026-10-23';
+
+  vi.stubGlobal('fetch', fetchMock);
+  expect((await invoke('GET', `/chats?${query}`)).status).toBe(200);
+  expect(fetchMock.mock.calls[0][0]).toBe(
+    `https://upstream.example/api/v1/admin/chats?${query}`,
+  );
+  expect(fetchMock.mock.calls[0][1].headers.get('Authorization')).toBe(
+    'Bearer forged-test-token',
+  );
+});
+
+it.each(['x'.repeat(501), null])(
+  '검수 보류 해제의 생성 계약을 벗어난 사유를 업스트림 전에 거부한다',
+  async (value) => {
+    const fetchMock = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+    expect(
+      (
+        await invoke('POST', `/moderation/holds/${id}/release`, {
+          reason: value,
+        })
+      ).status,
+    ).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  },
+);
+
+it.each(['', '   '])(
+  '검수 해제의 빈 사유는 실제 OpenAPI 허용 범위에서 전달하고 서버 400을 보존한다',
+  async (reason) => {
+    const body = { message: '처리 사유가 필요합니다.' };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json(body, { status: 400 }));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await invoke('POST', `/moderation/holds/${id}/release`, {
+      reason,
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual(body);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  },
+);
+
+it('AI 비용의 Langfuse 필드·null·0·미연결 비용을 바꾸지 않고 전달한다', async () => {
+  const body = {
+    asOf: '2026-10-23T03:00:00Z',
+    from: '2026-10-21',
+    to: '2026-10-23',
+    currency: 'KRW',
+    usdKrwRate: 1400,
+    chatImageUnitCostKrw: 48,
+    pendingDates: ['2026-10-22'],
+    daily: [
+      {
+        date: '2026-10-21',
+        byFeature: [
+          {
+            feature: 'chat_response',
+            model: 'AURORA',
+            calls: 1,
+            costKrw: null,
+          },
+          { feature: 'story_completion', model: 'ZERO', calls: 1, costKrw: 0 },
+        ],
+      },
+    ],
+    unmapped: [{ traceName: '새 기능', costKrw: 2.8 }],
+    unpricedModels: ['ZERO'],
+    totals: { costKrw: 2.8, costPerTurnKrw: 0, costPerStoryKrw: 0 },
+  };
+  const fetchMock = vi.fn().mockResolvedValue(Response.json(body));
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  const response = await invoke(
+    'GET',
+    '/quality/ai-cost?from=2026-10-21&to=2026-10-23',
+  );
+
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual(body);
+  expect(fetchMock.mock.calls[0][0]).toBe(
+    'https://upstream.example/api/v1/admin/quality/ai-cost?from=2026-10-21&to=2026-10-23',
+  );
+  expect(fetchMock.mock.calls[0][1].headers.get('Authorization')).toBe(
+    'Bearer forged-test-token',
+  );
+});
