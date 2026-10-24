@@ -132,36 +132,20 @@ function fill(view: HTMLElement) {
 }
 
 describe('알림 화면의 BFF 연결', () => {
-  it.each(['SERVICE', 'MARKETING'])(
-    '공지 %s 안내와 게시 확인에 종류·동의 대상·야간 기준을 표시한다',
-    async (kind) => {
+  it.each(['SERVICE', 'PROMOTION'])(
+    '공지 %s 태그의 게시 확인에 알림 대상을 표시한다',
+    async (tag) => {
       const item = saveNotice({
         title: '동의 안내 확인',
+        tag,
         body: '공지 본문',
         reason: '작성',
       });
 
       render(wrap(createElement(NoticeDetailScreen, { id: item.noticeId })));
       await screen.findByRole('heading', { name: '동의 안내 확인' });
-      fireEvent.click(
-        screen.getByRole('checkbox', { name: '게시할 때 알림 보내기' }),
-      );
-      fireEvent.change(screen.getByRole('combobox', { name: '알림 성격' }), {
-        target: { value: kind },
-      });
-
-      const guidance = screen.getByText(
-        kind === 'SERVICE'
-          ? /^정보성은 서비스 알림 동의자에게/
-          : /^광고성 알림은 광고 수신에 동의한 회원만 대상이며/,
-      );
-
-      expect(guidance.textContent).toContain(
-        '정보성은 서비스 알림 동의자에게 야간 제한 없이 발송',
-      );
-
-      if (kind === 'MARKETING')
-        expect(guidance.textContent).toContain('야간 광고 수신 동의자만 대상');
+      expect(screen.queryByRole('checkbox')).toBeNull();
+      expect(screen.queryByRole('combobox', { name: '알림 성격' })).toBeNull();
 
       fireEvent.change(screen.getByRole('textbox', { name: '처리 사유' }), {
         target: { value: '게시 사유' },
@@ -171,15 +155,10 @@ describe('알림 화면의 BFF 연결', () => {
       const dialog = await screen.findByRole('dialog');
 
       expect(dialog.textContent).toContain(
-        kind === 'SERVICE'
-          ? '정보성 알림을 서비스 알림 동의자에게 야간 제한 없이 발송'
-          : '광고성 알림은 광고 수신에 동의한 회원만 대상',
+        tag === 'SERVICE'
+          ? '게시하면 회원에게 알림이 갑니다. 게시할까요?'
+          : '게시하면 광고 수신에 동의한 회원에게 광고 알림이 갑니다. 게시할까요?',
       );
-
-      if (kind === 'MARKETING')
-        expect(dialog.textContent).toContain(
-          '야간 광고 수신 동의자에게만 발송',
-        );
 
       expect(writes).toHaveLength(0);
     },
@@ -317,6 +296,7 @@ describe('알림 화면의 BFF 연결', () => {
   it('공지 초안 삭제의 204 응답 후 목록으로 이동한다', async () => {
     const item = saveNotice({
       title: '삭제 초안',
+      tag: 'SERVICE',
       body: '본문',
       reason: '작성',
     });
@@ -451,6 +431,7 @@ it.each(['도달 회원', '도달 기기', '실패 기기'])(
 it('서버 공지의 null 본문은 편집 화면에서 빈 입력으로 표시한다', async () => {
   const notice = saveNotice({
     title: 'nullable 공지',
+    tag: 'SERVICE',
     body: '본문',
     reason: '작성',
   });

@@ -1,6 +1,7 @@
 export type Notice = {
   noticeId: string;
   title: string;
+  tag: string;
   body: string | null;
   status: 'DRAFT' | 'PUBLISHED';
   publishedAt: string | null;

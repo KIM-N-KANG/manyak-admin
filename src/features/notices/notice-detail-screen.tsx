@@ -15,6 +15,8 @@ import { DetailSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useManagementMutation } from '@/features/management/mutation';
+import { NoticeTagBadge } from '@/features/notices/notice-tag-badge';
+import { noticePublishConfirmation } from '@/features/notices/tags';
 import type { Notice } from '@/features/notices/types';
 import { ConfirmDialog } from '@/features/originals/confirm-dialog';
 import { useApi } from '@/features/shared/use-api';
@@ -26,8 +28,6 @@ export function NoticeDetailScreen({ id }: { id: string }) {
   const router = useRouter();
   const [action, setAction] = useState('');
   const [reason, setReason] = useState('');
-  const [notify, setNotify] = useState(false);
-  const [kind, setKind] = useState('SERVICE');
 
   async function confirm() {
     if (action === 'delete') {
@@ -42,10 +42,7 @@ export function NoticeDetailScreen({ id }: { id: string }) {
       const result = await mutation.run<Notice>(
         `/api/notices/${id}/${action}`,
         'POST',
-        {
-          reason,
-          ...(action === 'publish' ? { notify, notificationKind: kind } : {}),
-        },
+        { reason },
       );
 
       if (result) setAction('');
@@ -66,7 +63,10 @@ export function NoticeDetailScreen({ id }: { id: string }) {
       {item ? (
         <>
           <Card>
-            <h2 className="mb-6 text-xl font-semibold">{item.title}</h2>
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              <h2 className="text-xl font-semibold">{item.title}</h2>
+              <NoticeTagBadge tag={item.tag} />
+            </div>
             <DetailGrid
               items={[
                 ['상태', item.status === 'PUBLISHED' ? '게시' : '초안'],
@@ -109,43 +109,6 @@ export function NoticeDetailScreen({ id }: { id: string }) {
                   onChange={(e) => setReason(e.target.value)}
                 />
               </label>
-              {item.status === 'DRAFT' ? (
-                <>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={notify}
-                      disabled={!!item.notifiedAt}
-                      onChange={(e) => setNotify(e.target.checked)}
-                    />
-                    게시할 때 알림 보내기
-                  </label>
-                  {item.notifiedAt ? (
-                    <p className="text-sm text-muted-foreground">
-                      이미 알림을 요청한 공지는 다시 알리지 않습니다.
-                    </p>
-                  ) : null}
-                  {notify ? (
-                    <>
-                      <label className="grid gap-2 text-sm">
-                        알림 성격
-                        <select
-                          className="control"
-                          value={kind}
-                          onChange={(e) => setKind(e.target.value)}>
-                          <option value="SERVICE">정보성</option>
-                          <option value="MARKETING">광고성</option>
-                        </select>
-                      </label>
-                      <p className="text-sm text-muted-foreground">
-                        {kind === 'SERVICE'
-                          ? '정보성은 서비스 알림 동의자에게 야간 제한 없이 발송합니다.'
-                          : '광고성 알림은 광고 수신에 동의한 회원만 대상이며 캠페인 경로로 발송합니다. 제목에 (광고) 표시와 수신 거부 안내가 추가되며, KST 21:00~08:00에는 야간 광고 수신 동의자만 대상입니다. 정보성은 서비스 알림 동의자에게 야간 제한 없이 발송합니다.'}
-                      </p>
-                    </>
-                  ) : null}
-                </>
-              ) : null}
               <div className="flex gap-3">
                 <Button type="submit" disabled={mutation.pending}>
                   {item.status === 'PUBLISHED' ? '게시 해제' : '게시'}
@@ -180,11 +143,11 @@ export function NoticeDetailScreen({ id }: { id: string }) {
               : '게시를 해제할까요?'
         }
         description={
-          action === 'publish' && notify
-            ? kind === 'SERVICE'
-              ? '정보성 알림을 서비스 알림 동의자에게 야간 제한 없이 발송하도록 요청합니다. 게시 후 알림 요청은 되돌릴 수 없습니다.'
-              : '광고성 알림은 광고 수신에 동의한 회원만 대상입니다. KST 21:00~08:00에는 야간 광고 수신 동의자에게만 발송합니다. 게시 후 알림 요청은 되돌릴 수 없습니다.'
-            : '선택한 작업을 고정 데이터에 반영합니다.'
+          action === 'publish' && item
+            ? noticePublishConfirmation(item.tag, item.notifiedAt)
+            : action === 'delete'
+              ? '삭제한 초안은 복구할 수 없습니다.'
+              : '게시를 해제하면 사용자에게 보이지 않습니다.'
         }
         pending={mutation.pending}
         error={mutation.error}
