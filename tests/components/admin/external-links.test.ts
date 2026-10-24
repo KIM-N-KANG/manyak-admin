@@ -73,7 +73,8 @@ it('외부 도구 버튼은 닉네임 위에 있으며 팝오버로 링크를 �
 
   for (const [key, name] of [
     ['amplitude', 'Amplitude'],
-    ['openSearch', 'OpenSearch 로그'],
+    ['openSearchDashboards', 'OpenSearch Dashboards'],
+    ['openSearchUi', 'OpenSearch UI'],
     ['sentry', 'Sentry'],
     ['langfuse', 'Langfuse'],
     ['playConsole', 'Google Play Console'],
@@ -82,9 +83,14 @@ it('외부 도구 버튼은 닉네임 위에 있으며 팝오버로 링크를 �
     assertExternal(name, externalLinks[key]);
 
   assertExternal(
-    'OpenSearch 로그',
+    'OpenSearch Dashboards',
     'https://search-manyak-logs-p4mhzbcpwj2y35xdrqusddxgum.ap-northeast-2.es.amazonaws.com/_dashboards/',
   );
+  assertExternal(
+    'OpenSearch UI',
+    'https://application-manyak-prod-observability-oe5e3cgxf4ka7duyc8b7.ap-northeast-2.opensearch.amazonaws.com/',
+  );
+  expect(screen.queryByRole('link', { name: 'OpenSearch 로그' })).toBeNull();
   expect(
     screen
       .getAllByRole('link')
@@ -92,7 +98,8 @@ it('외부 도구 버튼은 닉네임 위에 있으며 팝오버로 링크를 �
       .map((link) => link.textContent),
   ).toEqual([
     'Amplitude',
-    'OpenSearch 로그',
+    'OpenSearch Dashboards',
+    'OpenSearch UI',
     'Sentry',
     'Langfuse',
     'Google Play Console',
