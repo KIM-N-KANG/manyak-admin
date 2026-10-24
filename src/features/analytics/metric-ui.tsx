@@ -100,6 +100,34 @@ export function NumericTable({
   );
 }
 export type PlotRow = { date: string; [key: string]: string | number | null };
+export type PlotEmptyLabel = string | ((date: string) => string);
+
+export function formatPlotValue(
+  row: PlotRow,
+  key: string,
+  {
+    title,
+    unit,
+    emptyLabel = '값 없음',
+  }: { title: string; unit: string; emptyLabel?: PlotEmptyLabel },
+) {
+  const value = row[key] as number | null;
+
+  if (value == null) {
+    if (row.pending === 1) return '준비 중';
+
+    return typeof emptyLabel === 'function' ? emptyLabel(row.date) : emptyLabel;
+  }
+
+  return unit === '%'
+    ? percent(value)
+    : metricNumber(
+        value,
+        unit,
+        unit === '초' || title.includes('사용자당') ? 1 : 0,
+      );
+}
+
 export function SeriesChart({
   title,
   categoryLabel = '날짜',
@@ -115,21 +143,13 @@ export function SeriesChart({
   rows: PlotRow[];
   series: Series[];
   unit: string;
-  emptyLabel?: string;
+  emptyLabel?: PlotEmptyLabel;
   href?: (date: string) => string;
   grouped?: boolean;
 }) {
   const router = useRouter();
-  const values = (value: number | null) =>
-    value == null
-      ? emptyLabel
-      : unit === '%'
-        ? percent(value)
-        : metricNumber(
-            value,
-            unit,
-            unit === '초' || title.includes('사용자당') ? 1 : 0,
-          );
+  const values = (row: PlotRow, key: string) =>
+    formatPlotValue(row, key, { title, unit, emptyLabel });
   const config = Object.fromEntries(
     series.map((s) => [s.key, { label: s.label, color: s.color }]),
   );
@@ -163,11 +183,13 @@ export function SeriesChart({
       <ChartTooltip
         cursor={grouped ? undefined : <ChartCrosshair />}
         isAnimationActive={false}
+        filterNull={false}
         content={
           <ChartTooltipContent
-            formatter={(value, name) => (
+            formatter={(_value, name, item) => (
               <span>
-                {config[String(name)]?.label} {values(Number(value))}
+                {config[String(name)]?.label}{' '}
+                {values(item.payload, String(name))}
               </span>
             )}
           />
@@ -253,7 +275,7 @@ export function SeriesChart({
                           id: s.key,
                           x: row.date,
                           y: value,
-                          text: `${s.label} ${values(value)}`,
+                          text: `${s.label} ${values(row, s.key)}`,
                         },
                       ]
                     : [];
@@ -271,9 +293,7 @@ export function SeriesChart({
         ]}
         rows={rows.map((row) => [
           row.date,
-          ...series.map((s) =>
-            row.pending === 1 ? '준비 중' : values(row[s.key] as number | null),
-          ),
+          ...series.map((s) => values(row, s.key)),
           ...(href
             ? [
                 <TextLink key="link" href={href(row.date)}>

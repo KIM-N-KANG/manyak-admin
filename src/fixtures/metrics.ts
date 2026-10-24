@@ -79,6 +79,99 @@ export function metricFixture(path: string, query: URLSearchParams) {
   const ready = dates.filter((date) => !pendingDates.includes(date));
   const campaign = query.get('campaign') ?? 'FOURTH_2026';
 
+  if (path === '/campaigns/push-opens') {
+    const measuredFrom = '2026-10-21';
+    const activityFrom =
+      to < measuredFrom ? null : from > measuredFrom ? from : measuredFrom;
+    const campaigns: T.PushOpensResponse['campaigns'] = [
+      {
+        campaignId: id,
+        title: '점검 알림',
+        kind: 'SERVICE',
+        noticeId: id,
+        startedAt: `${to}T02:00:31Z`,
+        deliveredMembers: 412,
+        openState: 'MEASURED',
+        pushOpens: 58,
+        pushOpenRate: 0.1408,
+      },
+      {
+        campaignId: 'c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f',
+        title: '가을 이벤트 안내',
+        kind: 'MARKETING',
+        noticeId: null,
+        startedAt: `${shiftDate(to, -1)}T02:00:00Z`,
+        deliveredMembers: 230,
+        openState: 'NO_LINK',
+        pushOpens: null,
+        pushOpenRate: null,
+      },
+      {
+        campaignId: '9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b',
+        title: '발송 준비 알림',
+        kind: 'MARKETING',
+        noticeId: null,
+        startedAt: `${shiftDate(to, -2)}T02:00:00Z`,
+        deliveredMembers: 0,
+        openState: 'PENDING',
+        pushOpens: null,
+        pushOpenRate: null,
+      },
+      {
+        campaignId: '4b7f0c2a-9d1e-4f3a-8c5b-6e2d1a0f9b37',
+        title: '측정 전 알림',
+        kind: 'SERVICE',
+        noticeId: null,
+        startedAt: `${from}T01:00:00Z`,
+        deliveredMembers: 198,
+        openState: 'BEFORE_MEASUREMENT',
+        pushOpens: null,
+        pushOpenRate: null,
+      },
+    ];
+
+    return {
+      ...base,
+      asOf: activityFrom ? base.asOf : null,
+      pendingDates: activityFrom
+        ? pendingDates.filter((date) => date >= measuredFrom)
+        : [],
+      measuredFrom,
+      campaigns: campaigns
+        .filter(
+          (row) =>
+            row.startedAt.slice(0, 10) >= from &&
+            row.startedAt.slice(0, 10) <= to,
+        )
+        .map((row) =>
+          row.startedAt.slice(0, 10) < measuredFrom
+            ? {
+                ...row,
+                openState: 'BEFORE_MEASUREMENT' as const,
+                pushOpens: null,
+                pushOpenRate: null,
+              }
+            : row,
+        ),
+      activityFrom,
+      activityTypes: (
+        [
+          'STORY_COMPLETED',
+          'STORY_MODERATION_COMPLETED',
+          'ATTENDANCE_REMINDER',
+        ] as const
+      ).map((type, i) => ({
+        type,
+        deliveredMembers: [61, 11, 1206][i],
+        openState: activityFrom
+          ? ('MEASURED' as const)
+          : ('BEFORE_MEASUREMENT' as const),
+        pushOpens: activityFrom ? [27, 4, 104][i] : null,
+        pushOpenRate: activityFrom ? [0.4426, 0.3636, 0.0862][i] : null,
+      })),
+    } satisfies T.PushOpensResponse;
+  }
+
   if (path === '/users/activity')
     return {
       ...base,
@@ -202,18 +295,37 @@ export function metricFixture(path: string, query: URLSearchParams) {
       })),
     } satisfies T.ChatOptionResponse;
 
-  if (path === '/quality/ai-cost')
+  if (path === '/quality/ai-cost') {
+    const retentionStartDate = shiftDate(kstToday(), -28);
+    const expiredDates = dates.filter((date) => date < retentionStartDate);
+    const costPendingDates = pendingDates.filter(
+      (date) => date >= retentionStartDate,
+    );
+    const availableDates = dates.filter(
+      (date) =>
+        !expiredDates.includes(date) && !costPendingDates.includes(date),
+    );
+
     return {
       ...base,
       currency: 'KRW',
-      pendingDates,
+      pendingDates: costPendingDates,
+      expiredDates,
+      retentionDays: 30,
+      retentionStartDate,
+      asOf: availableDates.length ? base.asOf : null,
       usdKrwRate: 1400,
-      unmapped: [{ traceName: '새 기능', costKrw: 2.8 }],
+      unmapped: availableDates.length
+        ? [{ traceName: '새 기능', costKrw: 2.8 }]
+        : [],
       chatImageUnitCostKrw: 48,
-      unpricedModels: ['UNPRICED'],
+      unpricedModels: availableDates.length ? ['UNPRICED'] : [],
       totals: {
-        costKrw: dates.length * 144 + ready.length * 6 + 2.8,
-        costPerTurnKrw: 3,
+        costKrw:
+          dates.length * 144 +
+          availableDates.length * 6 +
+          (availableDates.length ? 2.8 : 0),
+        costPerTurnKrw: availableDates.length ? 3 : null,
         costPerStoryKrw: null,
       },
       daily: dates.map((date) => ({
@@ -235,7 +347,10 @@ export function metricFixture(path: string, query: URLSearchParams) {
             callsWithoutTokens: 1,
             inputTokens: 1000,
             outputTokens: 500,
-            costKrw: pendingDates.includes(date) ? null : 6,
+            costKrw:
+              costPendingDates.includes(date) || expiredDates.includes(date)
+                ? null
+                : 6,
           },
           {
             feature: 'story_completion',
@@ -244,7 +359,10 @@ export function metricFixture(path: string, query: URLSearchParams) {
             callsWithoutTokens: 0,
             inputTokens: 100,
             outputTokens: 30,
-            costKrw: pendingDates.includes(date) ? null : 0,
+            costKrw:
+              costPendingDates.includes(date) || expiredDates.includes(date)
+                ? null
+                : 0,
           },
           {
             feature: 'choice_generation',
@@ -258,6 +376,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
         ],
       })),
     } satisfies T.AiCostResponse;
+  }
 
   if (path === '/conversion/turn-reach')
     return {

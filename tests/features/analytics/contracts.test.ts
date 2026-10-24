@@ -101,7 +101,7 @@ it('5-1 준비 중 재요청은 날짜 또는 MAU null이 남을 때만 60초이
     }),
   ).toBe(false);
 });
-it('14개 fixture BFF는 생성 스키마로 요청을 받고 실제 응답 계약 구조를 반환한다', async () => {
+it('15개 fixture BFF는 생성 스키마로 요청을 받고 실제 응답 계약 구조를 반환한다', async () => {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date('2026-10-23T03:00:00Z'));
   vi.stubEnv('ADMIN_DATA_SOURCE', 'fixture');
@@ -113,6 +113,7 @@ it('14개 fixture BFF는 생성 스키마로 요청을 받고 실제 응답 계�
     'campaigns/funnels/creation',
     'campaigns/funnels/story-detail',
     'campaigns/sources',
+    'campaigns/push-opens',
     'users/activity',
     'users/retention',
     'users/sessions',
@@ -226,6 +227,48 @@ it('AI 비용 fixture는 Langfuse 출처 필드·준비 중·0원·미연결 비
   expect(pending.pendingDates).toEqual(['2026-10-22']);
   expect(
     pending.daily[2].byFeature.find((item) => item.feature === 'chat_response')
+      ?.costKrw,
+  ).toBeNull();
+});
+
+it('보관 기간 만료만으로 재요청하지 않으며 준비 중과 함께면 60초를 유지한다', () => {
+  const data = {
+    asOf: null,
+    expiredDates: ['2026-09-01'],
+    pendingDates: [] as string[],
+  };
+
+  expect(analyticsRefetch({ state: { data } })).toBe(false);
+  data.pendingDates.push('2026-10-22');
+  expect(analyticsRefetch({ state: { data } })).toBe(60000);
+  expect(seriesGroups.platform.map((s) => s.label)).toEqual([
+    '전체',
+    '웹',
+    '앱',
+    '플랫폼 없음',
+  ]);
+});
+
+it('AI 비용 fixture는 보관 기간 밖 날짜에도 이미지 비용을 남기며 받은 시각은 null이다', () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-23T03:00:00Z'));
+
+  const data = metricFixture(
+    '/quality/ai-cost',
+    new URLSearchParams('from=2026-09-01&to=2026-09-02'),
+  ) as AiCostResponse;
+
+  expect(data.expiredDates).toEqual(['2026-09-01', '2026-09-02']);
+  expect(data.pendingDates).toEqual([]);
+  expect(data.asOf).toBeNull();
+  expect(data.retentionDays).toBe(30);
+  expect(data.retentionStartDate).toBe('2026-09-25');
+  expect(
+    data.daily[0].byFeature.find((item) => item.feature === 'chat_image')
+      ?.costKrw,
+  ).toBe(144);
+  expect(
+    data.daily[0].byFeature.find((item) => item.feature === 'chat_response')
       ?.costKrw,
   ).toBeNull();
 });

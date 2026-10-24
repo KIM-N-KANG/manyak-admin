@@ -27,8 +27,8 @@ export const seriesGroups = {
   platform: fixed(
     [
       ['all', '전체'],
-      ['web', 'Web'],
-      ['android', 'Android'],
+      ['web', '웹'],
+      ['android', '앱'],
       ['unknown', '플랫폼 없음'],
     ],
     colors,

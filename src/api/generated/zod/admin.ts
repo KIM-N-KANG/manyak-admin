@@ -1127,6 +1127,14 @@ export const SourcesQueryParams = zod.object({
 
 export const SourcesResponse = zod.unknown();
 
+export const PushOpensQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const PushOpensResponse = zod.unknown();
+
 export const Story1QueryParams = zod.object({
   storyId: zod.uuid().optional(),
   campaign: zod.string().optional(),

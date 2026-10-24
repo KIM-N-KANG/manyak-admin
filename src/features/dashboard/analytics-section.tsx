@@ -41,12 +41,15 @@ export function AnalyticsSection() {
         </h3>
         <span className="relative z-10">
           <HelpTooltip label="Amplitude 출처와 집계 안내">
-            Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 팀
-            계정 코호트가 설정된 경우 해당 사용자는 제외합니다. 국가가
-            한국이거나 국가 정보가 없는 사용자 중 플랫폼이 Web 또는 Android인
-            고유 사용자만 집계합니다. 같은 사람이 두 플랫폼에서 활동하면
-            합계에는 한 번만 들어가므로 Web과 Android를 더한 값과 합계는 다를 수
-            있습니다. Amplitude 사용자 수는 DB 회원 수와 다를 수 있습니다.
+            {data
+              ? `Amplitude 출처 지표이며 ${dateTime(data.asOf)} KST에 받은 값입니다.`
+              : 'Amplitude 출처 지표입니다.'}{' '}
+            집계가 몇 분 늦게 반영될 수 있습니다. 팀 계정 코호트가 설정된 경우
+            해당 사용자는 제외합니다. 국가가 한국이거나 국가 정보가 없는
+            사용자를 집계하고 앱은 그 밖 국가에서 로그인한 사용자도 더합니다.
+            합계와 앱 값은 조건별 사용자 수를 더한 값이라 같은 날 웹과 앱, 또는
+            국내와 해외에서 앱을 쓴 사람은 두 번 셉니다. Amplitude 사용자 수는
+            DB 회원 수와 다를 수 있습니다.
           </HelpTooltip>
         </span>
       </div>
@@ -80,7 +83,7 @@ export function AnalyticsSection() {
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
               {(['web', 'android'] as const).map((platform) => (
                 <div key={platform} className="flex items-baseline gap-1">
-                  <dt>{platform === 'web' ? 'Web' : 'Android'}</dt>
+                  <dt>{platform === 'web' ? '웹' : '앱'}</dt>
                   <dd>
                     {counts == null ? (
                       '준비 중'
