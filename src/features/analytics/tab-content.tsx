@@ -14,8 +14,10 @@ import {
   ratio,
 } from './config';
 import {
+  formatPlotValue,
   FunnelChart,
   NumericTable,
+  type PlotEmptyLabel,
   type PlotRow,
   Ranking,
   SeriesChart,
@@ -38,17 +40,18 @@ const single = (key: string, label: string) => pairSeries([[key, label]]);
 export function dailyRows<D extends { date: string }>(
   data: { from: string; to: string; daily: D[]; pendingDates?: string[] },
   map: (day: D) => Record<string, number | null>,
+  { preservePendingValues = false } = {},
 ): PlotRow[] {
   const byDate = new Map(data.daily.map((day) => [day.date, day]));
 
   return chartDates(data.from, data.to).map((date) => {
     const day = byDate.get(date);
+    const pending = !day || data.pendingDates?.includes(date);
 
     return {
       date,
-      ...(day && !data.pendingDates?.includes(date)
-        ? map(day)
-        : { pending: 1 }),
+      ...(day && (!pending || preservePendingValues) ? map(day) : {}),
+      ...(pending ? { pending: 1 } : {}),
     };
   });
 }
@@ -61,7 +64,7 @@ function Charts({
     rows: PlotRow[];
     series: Series[];
     unit: string;
-    emptyLabel?: string;
+    emptyLabel?: PlotEmptyLabel;
     href?: (date: string) => string;
   }[];
 }) {
@@ -81,19 +84,7 @@ function Charts({
               item.title,
               row.date,
               series.label,
-              row.pending === 1
-                ? '준비 중'
-                : row[series.key] == null
-                  ? (item.emptyLabel ?? '값 없음')
-                  : item.unit === '%'
-                    ? percent(row[series.key] as number)
-                    : n(
-                        row[series.key] as number,
-                        item.unit,
-                        item.unit === '초' || item.title.includes('사용자당')
-                          ? 1
-                          : 0,
-                      ),
+              formatPlotValue(row, series.key, item),
             ]),
           ),
         )}
@@ -822,6 +813,12 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
   const missingTokens = items
     .filter((item) => item.feature !== 'chat_image')
     .reduce((s, row) => s + row.callsWithoutTokens, 0);
+  const costEmptyLabel = (date: string) =>
+    d.pendingDates.includes(date)
+      ? '준비 중'
+      : d.expiredDates.includes(date)
+        ? '보관 기간 지남'
+        : '비용 기록 없음';
 
   return (
     <>
@@ -887,22 +884,26 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
         items={[
           {
             title: '기능별 일별 비용',
-            emptyLabel: '비용 기록 없음',
-            rows: dailyRows({ ...d, pendingDates: [] }, (day) =>
-              Object.fromEntries(
-                aiFeatures.map((feature) => {
-                  const costs = day.byFeature.filter(
-                    (item) => item.feature === feature && item.costKrw !== null,
-                  );
+            emptyLabel: costEmptyLabel,
+            rows: dailyRows(
+              d,
+              (day) =>
+                Object.fromEntries(
+                  aiFeatures.map((feature) => {
+                    const costs = day.byFeature.filter(
+                      (item) =>
+                        item.feature === feature && item.costKrw !== null,
+                    );
 
-                  return [
-                    feature,
-                    costs.length
-                      ? costs.reduce((sum, item) => sum + item.costKrw!, 0)
-                      : null,
-                  ];
-                }),
-              ),
+                    return [
+                      feature,
+                      costs.length
+                        ? costs.reduce((sum, item) => sum + item.costKrw!, 0)
+                        : null,
+                    ];
+                  }),
+                ),
+              { preservePendingValues: true },
             ),
             series: featureSeries(
               aiFeatures.map((feature) => [feature, aiFeatureLabel(feature)]),
@@ -935,11 +936,7 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
             ? '해당 없음'
             : row.outputTokens.toLocaleString('ko-KR'),
           row.costKrw === null
-            ? d.pendingDates.includes(row.date)
-              ? '준비 중'
-              : d.expiredDates.includes(row.date)
-                ? '보관 기간 지남'
-                : '비용 기록 없음'
+            ? costEmptyLabel(row.date)
             : n(row.costKrw, '원'),
           row.feature === 'chat_image'
             ? '해당 없음'
