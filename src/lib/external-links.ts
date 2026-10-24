@@ -6,4 +6,6 @@ export const externalLinks = {
     'https://search-manyak-logs-p4mhzbcpwj2y35xdrqusddxgum.ap-northeast-2.es.amazonaws.com/_dashboards/',
   sentry: 'https://manyak.sentry.io',
   langfuse: 'https://jp.cloud.langfuse.com',
+  playConsole:
+    'https://play.google.com/console/developers/7346202752431827582/app-list',
 } as const;

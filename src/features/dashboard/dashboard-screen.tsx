@@ -172,6 +172,7 @@ export function DashboardScreen() {
       <section
         aria-label="요약 지표"
         className="mb-8 grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <AnalyticsSection />
         {cards.map(([label, total, today, href, unit, cardMetric]) => {
           const periodTotal = c?.daily.reduce(
             (sum, day) => sum + day[cardMetric],
@@ -223,7 +224,6 @@ export function DashboardScreen() {
             </div>
           );
         })}
-        <AnalyticsSection />
         <PlayInstallsCard />
       </section>
       <QueryState
