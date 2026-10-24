@@ -10,6 +10,7 @@ import {
   QueryState,
   TextLink,
 } from '@/components/admin/data-ui';
+import { InlineSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useManagementMutation } from '@/features/management/mutation';
@@ -139,6 +140,7 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
               />
             </label>
             <QueryState
+              skeleton={<InlineSkeleton />}
               pending={stories.isPending}
               error={stories.error}
               retry={stories.refetch}
@@ -166,6 +168,7 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
               누르면 선택한 스토리로 이동합니다.
             </p>
             <QueryState
+              skeleton={<InlineSkeleton />}
               pending={!!story && selected.isPending}
               error={story ? selected.error : null}
               retry={selected.refetch}
@@ -203,6 +206,7 @@ export function CampaignFormScreen({ storyId = '' }: { storyId?: string }) {
             <input className="control" name="reason" required maxLength={500} />
           </label>
           <QueryState
+            skeleton={<InlineSkeleton />}
             pending={target.isPending}
             error={target.error}
             retry={target.refetch}

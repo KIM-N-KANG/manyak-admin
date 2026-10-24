@@ -10,6 +10,7 @@ import {
 } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { ListFilterForm } from '@/components/admin/list-search';
+import { TableSkeleton } from '@/components/admin/loading-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
 import { creditReasonLabel } from '@/features/credits/reason-label';
 import type { CreditTransactionItem } from '@/features/credits/types';
@@ -59,6 +60,7 @@ export function CreditTransactionsScreen() {
         </label>
       </ListFilterForm>
       <QueryState
+        skeleton={<TableSkeleton columns={4} />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}

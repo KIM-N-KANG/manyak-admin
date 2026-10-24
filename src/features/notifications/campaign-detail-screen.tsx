@@ -9,6 +9,7 @@ import {
   QueryState,
   TextLink,
 } from '@/components/admin/data-ui';
+import { DetailSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useManagementMutation } from '@/features/management/mutation';
@@ -39,7 +40,12 @@ export function CampaignDetailScreen({ id }: { id: string }) {
       <PageHeading title="캠페인 상세">
         <TextLink href="/notifications/campaigns">목록으로</TextLink>
       </PageHeading>
-      <QueryState pending={q.isPending} error={q.error} retry={q.refetch} />
+      <QueryState
+        skeleton={<DetailSkeleton />}
+        pending={q.isPending}
+        error={q.error}
+        retry={q.refetch}
+      />
       {item ? (
         <>
           <Card>

@@ -74,7 +74,7 @@ it.each([
   },
 );
 
-it('카드 밖 기본 오류와 로딩은 기존 테두리 패널을 유지한다', () => {
+it('카드 밖 오류 패널은 유지하고 로딩은 접근 가능한 표 스켈레톤을 표시한다', () => {
   const view = render(
     createElement(QueryState, {
       pending: false,
@@ -92,7 +92,14 @@ it('카드 밖 기본 오류와 로딩은 기존 테두리 패널을 유지한�
   view.rerender(
     createElement(QueryState, { pending: true, error: null, retry: vi.fn() }),
   );
-  expect(screen.getByRole('status').getAttribute('data-slot')).toBe('card');
+
+  const status = screen.getByRole('status');
+
+  expect(status.getAttribute('aria-busy')).toBe('true');
+  expect(status.querySelector('[data-loading-layout="table"]')).toBeTruthy();
+  expect(screen.getByText('데이터를 불러오는 중입니다…').className).toBe(
+    'sr-only',
+  );
 });
 
 it('인라인 로딩과 서버 미구현도 박스 없이 기존 문구를 유지한다', () => {

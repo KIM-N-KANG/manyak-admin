@@ -140,12 +140,14 @@ function dashboard() {
   );
 }
 
-function expectDbMetricsVisible() {
+async function expectDbMetricsVisible() {
   expect(screen.getByText('가입자', { selector: 'p' })).toBeTruthy();
   expect(
     screen.getByText('결제 금액 (환불 포함)', { selector: 'p' }),
   ).toBeTruthy();
-  expect(screen.getByRole('region', { name: '일별 지표 추이' })).toBeTruthy();
+  expect(
+    await screen.findByRole('region', { name: '일별 지표 추이' }),
+  ).toBeTruthy();
   expect(screen.queryByRole('heading', { name: '이용 분포' })).toBeNull();
 }
 
@@ -163,7 +165,7 @@ describe('Amplitude 실패 격리', () => {
     expect(alert.getAttribute('data-slot')).toBeNull();
     expect(region.className).not.toMatch(/min-h-|h-56/);
     await screen.findByRole('region', { name: '일별 지표 추이' });
-    expectDbMetricsVisible();
+    await expectDbMetricsVisible();
     expect(screen.getAllByRole('alert')).toHaveLength(1);
     expect(within(region).queryByText('합계')).toBeNull();
 
@@ -173,7 +175,7 @@ describe('Amplitude 실패 격리', () => {
     fireEvent.click(within(region).getByRole('button', { name: '다시 시도' }));
     await within(region).findByText('합계');
     expect(within(region).queryByRole('alert')).toBeNull();
-    expectDbMetricsVisible();
+    await expectDbMetricsVisible();
     expect(requested.filter((url) => url.includes('/analytics'))).toHaveLength(
       2,
     );
@@ -225,7 +227,7 @@ describe('Amplitude 실패 격리', () => {
       );
     });
     await screen.findByRole('heading', { name: '오늘 활성 사용자' });
-    expectDbMetricsVisible();
+    await expectDbMetricsVisible();
     expect(requested.filter((url) => url.includes('/summary'))).toHaveLength(1);
 
     const ninetyDays = await chartsResponse(
@@ -364,7 +366,7 @@ describe('개요와 분석 화면 분리', () => {
           href.includes('date='),
       ),
     ).toBe(true);
-    expectDbMetricsVisible();
+    await expectDbMetricsVisible();
   });
 });
 
@@ -443,7 +445,7 @@ it('Play 503은 설치 카드에만 설치 지표 사용 불가를 표시하고 
   await screen.findByText('설치 지표 사용 불가');
   await screen.findByRole('heading', { name: '오늘 활성 사용자' });
   await screen.findByRole('region', { name: '일별 지표 추이' });
-  expectDbMetricsVisible();
+  await expectDbMetricsVisible();
   expect(
     screen.getByRole('region', { name: '앱 설치(Android)' }).textContent,
   ).toContain('설치 지표 사용 불가');

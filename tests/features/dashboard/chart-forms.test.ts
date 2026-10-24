@@ -560,7 +560,15 @@ it.each([
     for (const label of ['가입자', '채팅 시작', '이프 적립']) {
       const card = screen.getByRole('link', { name: new RegExp(`^${label}`) });
 
-      expect(within(card).getByText(`최근 7일 합계 ${status}`)).toBeTruthy();
+      if (pending) {
+        expect(
+          card.querySelector('[aria-busy="true"] [data-slot="skeleton"]'),
+        ).toBeTruthy();
+        expect(
+          within(card).getByText('데이터를 불러오는 중입니다…').className,
+        ).toBe('sr-only');
+      } else
+        expect(within(card).getByText(`최근 7일 합계 ${status}`)).toBeTruthy();
     }
   },
 );
@@ -583,9 +591,14 @@ it.each(['success', 'pending', 'error'])(
           ? '불러오는 중'
           : '불러오기 실패';
 
-    expect(
-      within(memberCard).getByText(`2026-10-01 ~ 2026-10-10 합계 ${total}`),
-    ).toBeTruthy();
+    if (status === 'pending')
+      expect(
+        memberCard.querySelector('[aria-busy="true"] [data-slot="skeleton"]'),
+      ).toBeTruthy();
+    else
+      expect(
+        within(memberCard).getByText(`2026-10-01 ~ 2026-10-10 합계 ${total}`),
+      ).toBeTruthy();
   },
 );
 

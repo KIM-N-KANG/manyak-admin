@@ -8,6 +8,7 @@ import {
   PageHeading,
   QueryState,
 } from '@/components/admin/data-ui';
+import { FormSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useManagementMutation } from '@/features/management/mutation';
@@ -23,7 +24,12 @@ export function TemplateScreen() {
   return (
     <>
       <PageHeading title="문구 템플릿" />
-      <QueryState pending={q.isPending} error={q.error} retry={q.refetch} />
+      <QueryState
+        skeleton={<FormSkeleton />}
+        pending={q.isPending}
+        error={q.error}
+        retry={q.refetch}
+      />
       {q.data ? <TemplateEditor template={q.data} /> : null}
     </>
   );

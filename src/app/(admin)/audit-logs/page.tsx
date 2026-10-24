@@ -1,11 +1,12 @@
-import { Suspense } from 'react';
-
+import { LoadingBoundary } from '@/components/admin/loading-boundary';
+import { PageSkeleton } from '@/components/admin/loading-ui';
 import { AuditLogListScreen } from '@/features/audit-logs/audit-log-screen';
 
 export default function Page() {
   return (
-    <Suspense fallback={<p role="status">감사 로그를 불러오는 중입니다…</p>}>
+    <LoadingBoundary
+      fallback={<PageSkeleton immediate columns={6} layout="list" />}>
       <AuditLogListScreen />
-    </Suspense>
+    </LoadingBoundary>
   );
 }

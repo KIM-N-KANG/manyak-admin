@@ -3,6 +3,7 @@
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 
 import { customInstance } from '@/api/mutator/custom-instance';
+import { finishInitialLoading } from '@/features/shared/loading-timing';
 import { adminResponseValues } from '@/features/shared/response-values';
 
 export function useApi<T>(
@@ -14,14 +15,21 @@ export function useApi<T>(
     ...options,
     queryKey: [url],
     enabled,
-    queryFn: async ({ signal }) => {
-      const response = await customInstance<{
-        data: T;
-        status: number;
-        headers: Headers;
-      }>(url, { signal });
+    queryFn: async ({ signal, client }) => {
+      const startedAt = performance.now();
+      const initial = client.getQueryData([url]) === undefined;
 
-      return adminResponseValues(response.data, url) as T;
+      try {
+        const response = await customInstance<{
+          data: T;
+          status: number;
+          headers: Headers;
+        }>(url, { signal });
+
+        return adminResponseValues(response.data, url) as T;
+      } finally {
+        await finishInitialLoading(startedAt, initial, signal);
+      }
     },
   });
 }

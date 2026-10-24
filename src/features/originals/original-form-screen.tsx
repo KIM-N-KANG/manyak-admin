@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 
 import { customInstance } from '@/api/mutator/custom-instance';
 import { PageHeading, QueryState, TextLink } from '@/components/admin/data-ui';
+import { FormSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDialog } from '@/features/originals/confirm-dialog';
@@ -691,6 +692,7 @@ function ExistingOriginalEditor({ id }: { id: string }) {
   return (
     <>
       <QueryState
+        skeleton={<FormSkeleton />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}

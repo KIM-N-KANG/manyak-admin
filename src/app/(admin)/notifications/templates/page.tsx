@@ -1,11 +1,11 @@
-import { Suspense } from 'react';
-
+import { LoadingBoundary } from '@/components/admin/loading-boundary';
+import { PageSkeleton } from '@/components/admin/loading-ui';
 import { TemplateScreen } from '@/features/notifications/template-screen';
 
 export default function Page() {
   return (
-    <Suspense fallback={<p role="status">알림 데이터를 불러오는 중입니다…</p>}>
+    <LoadingBoundary fallback={<PageSkeleton immediate layout="form" />}>
       <TemplateScreen />
-    </Suspense>
+    </LoadingBoundary>
   );
 }

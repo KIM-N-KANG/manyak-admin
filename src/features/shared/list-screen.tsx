@@ -15,6 +15,7 @@ import {
 } from '@/components/admin/data-ui';
 import { ExternalToolLink } from '@/components/admin/external-tool-link';
 import { ListFilterForm, SearchEmpty } from '@/components/admin/list-search';
+import { TableSkeleton } from '@/components/admin/loading-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
 import type { ChatRoom } from '@/features/chats/types';
 import type { MemberListItem } from '@/features/members/types';
@@ -332,6 +333,7 @@ export function RelatedList({
   return (
     <>
       <QueryState
+        skeleton={<TableSkeleton columns={headers[kind].length} />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}
@@ -467,6 +469,7 @@ export function ListScreen({ domain }: { domain: Domain }) {
         </div>
       ) : null}
       <QueryState
+        skeleton={<TableSkeleton columns={headers[domain].length} />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}

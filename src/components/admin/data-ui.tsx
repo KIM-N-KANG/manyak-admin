@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 import { HelpTooltip } from './help-tooltip';
+import { InlineSkeleton, LoadingStatus, TableSkeleton } from './loading-ui';
 
 export function PageHeading({
   title,
@@ -37,12 +38,14 @@ export function QueryState({
   retry,
   source,
   variant = 'panel',
+  skeleton,
 }: {
   pending: boolean;
   error: Error | null;
   retry: () => unknown;
   source?: 'amplitude' | 'play' | 'langfuse';
   variant?: 'panel' | 'inline';
+  skeleton?: ReactNode;
 }) {
   const serverNotImplemented =
     error instanceof FetchError &&
@@ -102,20 +105,11 @@ export function QueryState({
   }
 
   if (pending)
-    return variant === 'inline' ? (
-      <div
-        role="status"
-        aria-live="polite"
-        className="mt-3 text-sm text-muted-foreground">
-        데이터를 불러오는 중입니다…
-      </div>
-    ) : (
-      <Card
-        role="status"
-        aria-live="polite"
-        className="py-16 text-center text-muted-foreground">
-        데이터를 불러오는 중입니다…
-      </Card>
+    return (
+      <LoadingStatus>
+        {skeleton ??
+          (variant === 'inline' ? <InlineSkeleton /> : <TableSkeleton />)}
+      </LoadingStatus>
     );
 
   return null;

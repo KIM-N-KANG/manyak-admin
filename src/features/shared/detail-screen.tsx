@@ -14,6 +14,7 @@ import {
   TextLink,
 } from '@/components/admin/data-ui';
 import { ExternalToolLink } from '@/components/admin/external-tool-link';
+import { DetailSkeleton } from '@/components/admin/loading-ui';
 import { Card } from '@/components/ui/card';
 import type { ChatRoom } from '@/features/chats/types';
 import { MemberActions } from '@/features/members/member-actions';
@@ -303,6 +304,7 @@ export function DetailScreen({
         )}
       </PageHeading>
       <QueryState
+        skeleton={<DetailSkeleton />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}
