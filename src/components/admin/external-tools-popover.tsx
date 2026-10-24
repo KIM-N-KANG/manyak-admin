@@ -71,6 +71,7 @@ export function ExternalToolsPopover() {
                   ['openSearch', 'OpenSearch 로그'],
                   ['sentry', 'Sentry'],
                   ['langfuse', 'Langfuse'],
+                  ['playConsole', 'Google Play Console'],
                   ['groble', '그로블'],
                 ] as const
               ).map(([key, label]) => (
