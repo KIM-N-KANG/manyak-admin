@@ -14,6 +14,7 @@ import {
   TextLink,
 } from '@/components/admin/data-ui';
 import { ExternalToolLink } from '@/components/admin/external-tool-link';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { DetailSkeleton } from '@/components/admin/loading-ui';
 import { Card } from '@/components/ui/card';
 import type { ChatRoom } from '@/features/chats/types';
@@ -131,6 +132,23 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
             ['이프 잔액', <NumberValue key="b" value={m.creditBalance} />],
             ['만든 스토리', m.storyCount],
             ['채팅', m.chatCount],
+            [
+              '누적 턴',
+              <span key="turn-count">
+                <NumberValue value={m.turnCount} />턴
+              </span>,
+              <HelpTooltip key="turn-help" label="누적 턴 집계 안내">
+                이 회원이 가진 채팅의 AI 응답 수입니다. 삭제한 채팅과 게스트
+                때의 채팅도 포함하고 재생성은 세지 않습니다.
+              </HelpTooltip>,
+            ],
+            [
+              '소모 이프',
+              <span key="credits-spent">
+                <NumberValue value={m.creditsSpent} />
+                이프
+              </span>,
+            ],
           ]}
         />
         <div className="mt-6 border-t pt-6">
