@@ -332,6 +332,22 @@ it('요약 카드에는 차트를 넣지 않고 바로 아래의 기존 일별 �
   const cards = within(summary).getAllByRole('link');
 
   expect(cards).toHaveLength(10);
+  expect(
+    cards.map(
+      (card) => card.querySelector('p')?.textContent ?? card.textContent,
+    ),
+  ).toEqual([
+    '오늘 활성 사용자',
+    '가입자',
+    '채팅 시작',
+    '턴',
+    '스토리',
+    '이프 적립',
+    '이프 소모',
+    '결제 건수',
+    '결제 금액 (환불 포함)',
+    '앱 설치(Android)',
+  ]);
   expect(summary.className).toContain('sm:grid-cols-2');
   expect(summary.className).toContain('xl:grid-cols-5');
 
