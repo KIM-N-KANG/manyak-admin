@@ -1394,6 +1394,29 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/campaigns/push-opens',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'from',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
+      {
+        name: 'days',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+    ],
+    params: undefined,
+    query: schemas.PushOpensQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/campaigns/funnels/story-detail',
     method: 'GET',
     parameters: [
@@ -1582,33 +1605,5 @@ export const adminOperations = [
     query: undefined,
     body: schemas.DeleteThumbnail1Body,
     bodyRequired: true,
-  },
-  {
-    path: '/api/v1/admin/campaigns/push-opens',
-    method: 'GET',
-    parameters: [
-      {
-        name: 'from',
-        in: 'query',
-        required: false,
-        schema: { type: 'string', format: 'date' },
-      },
-      {
-        name: 'to',
-        in: 'query',
-        required: false,
-        schema: { type: 'string', format: 'date' },
-      },
-      {
-        name: 'days',
-        in: 'query',
-        required: false,
-        schema: { type: 'integer', enum: [7, 30] },
-      },
-    ],
-    params: undefined,
-    query: schemas.PushOpensQueryParams,
-    body: undefined,
-    bodyRequired: false,
   },
 ];

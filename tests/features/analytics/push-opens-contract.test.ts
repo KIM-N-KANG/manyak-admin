@@ -45,14 +45,16 @@ it('최근 7일과 기간 쿼리를 적용한 fixture는 모든 측정 상태와
     new Set(data.campaigns.map((x: { openState: string }) => x.openState)),
   ).toEqual(new Set(['MEASURED', 'BEFORE_MEASUREMENT', 'NO_LINK', 'PENDING']));
 });
-it('days는 7/30과 기간 생략에만 허용한다', async () => {
-  const response = await invoke('days=30');
+it.each([
+  ['14', '2026-10-11'],
+  ['30', '2026-09-25'],
+])('fixture는 days=%s의 기간을 적용한다', async (days, from) => {
+  const response = await invoke(`days=${days}`);
 
   expect(response.status).toBe(200);
-  expect((await response.json()).from).toBe('2026-09-25');
+  expect(await response.json()).toMatchObject({ from, to: '2026-10-24' });
 });
 it.each([
-  'days=14',
   'days=x',
   'days=7&from=2026-10-18&to=2026-10-24',
   'from=2026-10-18',

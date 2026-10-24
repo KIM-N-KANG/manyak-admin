@@ -1062,7 +1062,27 @@ it('알림 문구 null PATCH를 그대로 전달하고 서버의 잠금 409 응�
   });
 });
 
-it.each(['days=14', 'days=no', 'days=7&days=30', 'campaign=TEST'])(
+it.each(['days=14', 'days=no'])(
+  '푸시 열람의 %s는 실제 문자열 계약으로 전달하고 서버 400을 보존한다',
+  async (query) => {
+    const body = { message: '기간이 올바르지 않습니다.' };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json(body, { status: 400 }));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await invoke('GET', `/campaigns/push-opens?${query}`);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual(body);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://upstream.example/api/v1/admin/campaigns/push-opens?${query}`,
+    );
+  },
+);
+it.each(['days=7&days=30', 'campaign=TEST'])(
   '푸시 열람의 지원하지 않는 %s 쿼리는 업스트림 전에 거부한다',
   async (query) => {
     const fetchMock = vi.fn();
