@@ -1,6 +1,6 @@
 'use client';
 
-import { DataTable } from '@/components/admin/data-ui';
+import { DataTable, dateTime } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 import { aiFeatureLabel, aiFeatures } from '@/features/dashboard/chart-data';
@@ -318,6 +318,134 @@ export function AcquisitionContent({
   data: unknown;
   segment: string;
 }) {
+  if (tab === 'push') {
+    const d = data as T.PushOpensResponse;
+    const states: Record<string, string> = {
+      BEFORE_MEASUREMENT: '측정 시작 전',
+      NO_LINK: '링크 없음',
+      PENDING: '발송 기록 없음',
+    };
+    const rateHelp = (
+      <HelpTooltip label="푸시 열람률 도움말">
+        푸시 열람 수를 도달 회원 수로 나눈 값입니다. 열람 수는 웹에서 연 경우만
+        세며, 도달 회원 수에는 앱 수신 회원도 포함합니다. 같은 회원이 다른 날
+        다시 열면 두 번 셉니다.
+      </HelpTooltip>
+    );
+    const activities = (
+      [
+        'STORY_COMPLETED',
+        'STORY_MODERATION_COMPLETED',
+        'ATTENDANCE_REMINDER',
+      ] as const
+    )
+      .map((type) => d.activityTypes.find((row) => row.type === type))
+      .filter((row) => row !== undefined);
+
+    return (
+      <div className="space-y-5">
+        {d.pendingDates.length ? (
+          <p role="status" className="text-sm">
+            열람 수는 준비된 날짜만 합산했습니다. 열람률은 일부 날짜의 열람 수를
+            전체 도달 회원 수로 나눈 값입니다.
+          </p>
+        ) : null}
+        <Card>
+          <h3 className="mb-4 text-lg font-semibold">관리자 캠페인</h3>
+          <DataTable
+            headers={[
+              '제목',
+              '성격',
+              {
+                label: '마지막 발송 시작',
+                help: (
+                  <HelpTooltip label="마지막 발송 시작 도움말">
+                    기간과 정렬은 마지막 발송 작업의 시작 시각 기준입니다.
+                  </HelpTooltip>
+                ),
+              },
+              '도달 회원',
+              '푸시 열람',
+              { label: '열람률', help: rateHelp },
+            ]}
+            empty={!d.campaigns.length}
+            emptyContent="선택한 기간에 해당하는 관리자 캠페인이 없습니다.">
+            {d.campaigns.map((row) => (
+              <tr key={row.campaignId}>
+                <td>
+                  {row.noticeId ? (
+                    <span className="mr-2 inline-flex rounded-sm border bg-muted px-2 py-1 text-xs">
+                      공지
+                    </span>
+                  ) : null}
+                  {row.title}
+                </td>
+                <td>{row.kind === 'SERVICE' ? '정보성' : '광고성'}</td>
+                <td>{dateTime(row.startedAt)} KST</td>
+                <td>{n(row.deliveredMembers, '명')}</td>
+                <td>
+                  {row.openState === 'MEASURED'
+                    ? row.pushOpens === null
+                      ? '계산할 수 없음'
+                      : n(row.pushOpens, '명')
+                    : states[row.openState]}
+                </td>
+                <td>
+                  {row.openState === 'MEASURED'
+                    ? percent(row.pushOpenRate)
+                    : states[row.openState]}
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        </Card>
+        <Card>
+          <h3 className="mb-4 text-lg font-semibold">활동 알림</h3>
+          {d.activityFrom && d.activityFrom > d.from ? (
+            <p className="mb-4 text-sm">
+              {d.activityFrom}부터 집계했습니다. 그 전은 측정 시작 전입니다.
+            </p>
+          ) : null}
+          <DataTable
+            headers={[
+              '종류',
+              '도달 회원',
+              '푸시 열람',
+              { label: '열람률', help: rateHelp },
+            ]}
+            empty={!activities.length}>
+            {activities.map((row) => (
+              <tr key={row.type}>
+                <td>
+                  {
+                    {
+                      STORY_COMPLETED: '스토리 완성',
+                      STORY_MODERATION_COMPLETED: '검수 완료',
+                      ATTENDANCE_REMINDER: '출석 리마인드',
+                    }[row.type]
+                  }
+                </td>
+                <td>{n(row.deliveredMembers, '명')}</td>
+                <td>
+                  {row.openState === 'MEASURED'
+                    ? row.pushOpens === null
+                      ? '계산할 수 없음'
+                      : n(row.pushOpens, '명')
+                    : states[row.openState]}
+                </td>
+                <td>
+                  {row.openState === 'MEASURED'
+                    ? percent(row.pushOpenRate)
+                    : states[row.openState]}
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        </Card>
+      </div>
+    );
+  }
+
   if (tab === 'trend') {
     const d = data as T.CampaignAnalyticsResponse;
     const t = d.totals;
@@ -704,18 +832,36 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
             label: '턴당 원가',
             value:
               d.totals.costPerTurnKrw === null
-                ? '호출 없음'
+                ? items.some(
+                    (item) =>
+                      item.feature === 'chat_response' && item.calls > 0,
+                  )
+                  ? '계산할 수 없음'
+                  : '호출 없음'
                 : n(d.totals.costPerTurnKrw, '원'),
           },
           {
             label: '스토리당 원가',
             value:
               d.totals.costPerStoryKrw === null
-                ? '호출 없음'
+                ? items.some(
+                    (item) =>
+                      item.feature === 'story_completion' && item.calls > 0,
+                  )
+                  ? '계산할 수 없음'
+                  : '호출 없음'
                 : n(d.totals.costPerStoryKrw, '원'),
           },
         ]}
       />
+      {d.expiredDates.length ? (
+        <p className="mb-3 text-sm">
+          Langfuse 보관 기간({d.retentionDays}일)이 지나 비용 기록이 없는 날짜가{' '}
+          {d.expiredDates.length}일 있습니다. 해당 날짜는 턴당 원가와 스토리당
+          원가 계산에서 제외했습니다. 실시간 이미지 비용은 해당 날짜도 총 AI
+          비용에 포함합니다.
+        </p>
+      ) : null}
       {d.unpricedModels.length ? (
         <p className="mb-3 text-sm">
           사용량은 있으나 비용이 0원인 모델: {d.unpricedModels.join(', ')}.
@@ -742,7 +888,7 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
           {
             title: '기능별 일별 비용',
             emptyLabel: '비용 기록 없음',
-            rows: dailyRows(d, (day) =>
+            rows: dailyRows({ ...d, pendingDates: [] }, (day) =>
               Object.fromEntries(
                 aiFeatures.map((feature) => {
                   const costs = day.byFeature.filter(
@@ -791,7 +937,9 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
           row.costKrw === null
             ? d.pendingDates.includes(row.date)
               ? '준비 중'
-              : '비용 기록 없음'
+              : d.expiredDates.includes(row.date)
+                ? '보관 기간 지남'
+                : '비용 기록 없음'
             : n(row.costKrw, '원'),
           row.feature === 'chat_image'
             ? '해당 없음'

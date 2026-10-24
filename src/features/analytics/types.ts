@@ -225,11 +225,14 @@ export type AiCostItem = {
   costKrw: number | null;
 };
 export type AiCostResponse = {
+  expiredDates: string[];
+  retentionDays: number;
+  retentionStartDate: string;
   pendingDates: string[];
   usdKrwRate: number;
   unmapped: { traceName: string; costKrw: number }[];
   chatImageUnitCostKrw: number;
-  asOf: string;
+  asOf: string | null;
   from: string;
   to: string;
   currency: string;
@@ -241,4 +244,34 @@ export type AiCostTotals = {
   costKrw: number;
   costPerTurnKrw: number | null;
   costPerStoryKrw: number | null;
+};
+
+export type PushOpensResponse = {
+  asOf: string | null;
+  pendingDates: string[];
+  from: string;
+  to: string;
+  measuredFrom: string | null;
+  campaigns: {
+    campaignId: string;
+    kind: 'SERVICE' | 'MARKETING';
+    title: string;
+    noticeId: string | null;
+    startedAt: string;
+    deliveredMembers: number;
+    openState: 'MEASURED' | 'BEFORE_MEASUREMENT' | 'NO_LINK' | 'PENDING';
+    pushOpens: number | null;
+    pushOpenRate: number | null;
+  }[];
+  activityFrom: string | null;
+  activityTypes: {
+    type:
+      | 'STORY_COMPLETED'
+      | 'STORY_MODERATION_COMPLETED'
+      | 'ATTENDANCE_REMINDER';
+    deliveredMembers: number;
+    openState: 'MEASURED' | 'BEFORE_MEASUREMENT';
+    pushOpens: number | null;
+    pushOpenRate: number | null;
+  }[];
 };

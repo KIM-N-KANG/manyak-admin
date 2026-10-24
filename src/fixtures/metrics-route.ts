@@ -39,15 +39,26 @@ export async function metricsRoute(request: Request) {
     if (path === '/campaigns') return Response.json(campaignCatalog());
 
     const tab =
-      path.split('/').at(-1) === 'analytics'
-        ? 'trend'
-        : path.includes('/conversion/funnels/')
-          ? 'funnels'
-          : path.split('/').at(-1)!;
+      path === '/campaigns/push-opens'
+        ? 'push'
+        : path.split('/').at(-1) === 'analytics'
+          ? 'trend'
+          : path.includes('/conversion/funnels/')
+            ? 'funnels'
+            : path.split('/').at(-1)!;
     const campaign = campaignCatalog().items.find(
       (item) => item.campaign === query.get('campaign'),
     );
     const defaults = defaultPeriod(tab, campaign);
+
+    if (path === '/campaigns/push-opens' && query.has('days')) {
+      if (query.has('from') || query.has('to'))
+        return bffError(request, 400, '기간 범위를 확인해 주세요.', 'days');
+
+      defaults.to = kstToday();
+      defaults.from = shiftDate(defaults.to, 1 - Number(query.get('days')));
+    }
+
     const from = query.get('from') ?? defaults.from,
       to = query.get('to') ?? defaults.to;
 
@@ -63,9 +74,16 @@ export async function metricsRoute(request: Request) {
     query.set('from', from);
     query.set('to', to);
 
+    const data = metricFixture(path, query);
+
     if (
-      process.env.ADMIN_ANALYTICS_FIXTURE_SCENARIO === 'unavailable' ||
-      query.get('campaign') === 'FIXTURE_UNAVAILABLE'
+      (process.env.ADMIN_ANALYTICS_FIXTURE_SCENARIO === 'unavailable' ||
+        query.get('campaign') === 'FIXTURE_UNAVAILABLE') &&
+      !(
+        path === '/campaigns/push-opens' &&
+        'asOf' in data &&
+        data.asOf === null
+      )
     )
       return Response.json(
         {
@@ -77,7 +95,7 @@ export async function metricsRoute(request: Request) {
         { status: 503 },
       );
 
-    return Response.json(metricFixture(path, query));
+    return Response.json(data);
   } catch {
     return bffError(request, 400, '요청 조건을 확인해 주세요.');
   }

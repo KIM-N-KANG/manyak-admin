@@ -51,6 +51,11 @@ const cases: [string, string, string, unknown?][] = [
   ['DELETE', `/notices/${id}`, `/notices/${id}`, reason],
   ['POST', `/notices/${id}/publish`, `/notices/${id}/publish`, reason],
   ['POST', `/notices/${id}/unpublish`, `/notices/${id}/unpublish`, reason],
+  [
+    'GET',
+    '/campaigns/push-opens?from=2026-10-18&to=2026-10-24',
+    '/campaigns/push-opens?from=2026-10-18&to=2026-10-24',
+  ],
   ['GET', '/dashboard/summary', '/dashboard/summary'],
   [
     'GET',
@@ -1055,4 +1060,63 @@ it('알림 문구 null PATCH를 그대로 전달하고 서버의 잠금 409 응�
     code: 'CONFLICT',
     message: '알림 문구 잠김',
   });
+});
+
+it.each(['days=14', 'days=no', 'days=7&days=30', 'campaign=TEST'])(
+  '푸시 열람의 지원하지 않는 %s 쿼리는 업스트림 전에 거부한다',
+  async (query) => {
+    const fetchMock = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+    expect((await invoke('GET', `/campaigns/push-opens?${query}`)).status).toBe(
+      400,
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  },
+);
+it('푸시 열람의 null 기준 시각·열람 수·측정 상태·100% 초과 비율을 그대로 반환한다', async () => {
+  const data = {
+    asOf: null,
+    pendingDates: [],
+    from: '2026-10-18',
+    to: '2026-10-24',
+    measuredFrom: null,
+    activityFrom: null,
+    campaigns: [{ openState: 'MEASURED', pushOpens: 3, pushOpenRate: 1.5 }],
+    activityTypes: [
+      { openState: 'BEFORE_MEASUREMENT', pushOpens: null, pushOpenRate: null },
+    ],
+  };
+
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(data)));
+  expect(
+    await (await invoke('GET', '/campaigns/push-opens?days=7')).json(),
+  ).toEqual(data);
+});
+
+it('AI 비용의 보관 만료·null 받은 시각·서버 원가를 재계산 없이 전달한다', async () => {
+  const data = {
+    asOf: null,
+    pendingDates: ['2026-10-22'],
+    expiredDates: ['2026-10-21'],
+    retentionDays: 30,
+    retentionStartDate: '2026-10-23',
+    daily: [
+      {
+        date: '2026-10-21',
+        byFeature: [
+          { feature: 'chat_image', costKrw: 96 },
+          { feature: 'chat_response', costKrw: null },
+        ],
+      },
+    ],
+    totals: { costKrw: 777, costPerTurnKrw: null, costPerStoryKrw: 3.5 },
+  };
+
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(data)));
+  expect(
+    await (
+      await invoke('GET', '/quality/ai-cost?from=2026-10-21&to=2026-10-23')
+    ).json(),
+  ).toEqual(data);
 });

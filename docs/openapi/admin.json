@@ -2629,6 +2629,64 @@
           }
         }
       }
+    },
+    "/api/v1/admin/campaigns/push-opens": {
+      "get": {
+        "tags": ["campaign-analytics-controller"],
+        "operationId": "pushOpens",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [7, 30]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushOpensResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "기간 범위 오류 또는 허용하지 않는 days"
+          },
+          "503": {
+            "description": "Amplitude 지표 사용 불가"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -4201,7 +4259,7 @@
         "type": "object",
         "properties": {
           "asOf": {
-            "type": "string",
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "from": {
@@ -4248,7 +4306,32 @@
             "items": {
               "$ref": "#/components/schemas/AiCostUnmapped"
             }
+          },
+          "expiredDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "retentionDays": {
+            "type": "integer"
+          },
+          "retentionStartDate": {
+            "type": "string",
+            "format": "date"
           }
+        },
+        "x-contract-overlay": {
+          "harnessRevision": "41aa033",
+          "source": "ADMIN BACKEND 4-2-32",
+          "note": "서버 배포 후 실제 dev OpenAPI로 대조한다.",
+          "fields": [
+            "asOf",
+            "expiredDates",
+            "retentionDays",
+            "retentionStartDate"
+          ]
         }
       },
       "AiCostDay": {
@@ -6810,6 +6893,145 @@
             "type": "string"
           }
         }
+      },
+      "PushOpenCampaign": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["SERVICE", "MARKETING"]
+          },
+          "title": {
+            "type": "string"
+          },
+          "noticeId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deliveredMembers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "openState": {
+            "type": "string",
+            "enum": ["MEASURED", "BEFORE_MEASUREMENT", "NO_LINK", "PENDING"]
+          },
+          "pushOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "pushOpenRate": {
+            "type": ["number", "null"]
+          }
+        },
+        "required": [
+          "campaignId",
+          "kind",
+          "title",
+          "noticeId",
+          "startedAt",
+          "deliveredMembers",
+          "openState",
+          "pushOpens",
+          "pushOpenRate"
+        ]
+      },
+      "PushOpenActivity": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "STORY_COMPLETED",
+              "STORY_MODERATION_COMPLETED",
+              "ATTENDANCE_REMINDER"
+            ]
+          },
+          "deliveredMembers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "openState": {
+            "type": "string",
+            "enum": ["MEASURED", "BEFORE_MEASUREMENT"]
+          },
+          "pushOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "pushOpenRate": {
+            "type": ["number", "null"]
+          }
+        },
+        "required": [
+          "type",
+          "deliveredMembers",
+          "openState",
+          "pushOpens",
+          "pushOpenRate"
+        ]
+      },
+      "PushOpensResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "measuredFrom": {
+            "type": ["string", "null"],
+            "format": "date"
+          },
+          "campaigns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PushOpenCampaign"
+            }
+          },
+          "activityFrom": {
+            "type": ["string", "null"],
+            "format": "date"
+          },
+          "activityTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PushOpenActivity"
+            }
+          }
+        },
+        "required": [
+          "asOf",
+          "pendingDates",
+          "from",
+          "to",
+          "measuredFrom",
+          "campaigns",
+          "activityFrom",
+          "activityTypes"
+        ]
       }
     },
     "securitySchemes": {
@@ -6820,5 +7042,12 @@
         "bearerFormat": "JWT"
       }
     }
+  },
+  "x-contract-overlay": {
+    "issue": "KNK-1728",
+    "harnessRevision": "ebda2ab (1078ec8 포함)",
+    "source": "ADMIN BACKEND 4-2-35",
+    "paths": ["GET /api/v1/admin/campaigns/push-opens"],
+    "note": "서버 PR #400 배포 후 실제 dev OpenAPI로 재추출·대조한다. 기간 동시 입력·상한은 서버가 검증한다."
   }
 }

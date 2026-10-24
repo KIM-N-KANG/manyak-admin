@@ -1232,3 +1232,49 @@ export const DeleteThumbnail1Body = zod.object({
 });
 
 export const DeleteThumbnail1Response = zod.unknown();
+
+export const PushOpensQueryParams = zod.object({
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  days: zod.union([zod.literal(7), zod.literal(30)]).optional(),
+});
+
+export const PushOpensResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).nullable(),
+  pendingDates: zod.array(zod.iso.date()),
+  from: zod.iso.date(),
+  to: zod.iso.date(),
+  measuredFrom: zod.iso.date().nullable(),
+  campaigns: zod.array(
+    zod.object({
+      campaignId: zod.uuid(),
+      kind: zod.enum(['SERVICE', 'MARKETING']),
+      title: zod.string(),
+      noticeId: zod.uuid().nullable(),
+      startedAt: zod.iso.datetime({ offset: true }),
+      deliveredMembers: zod.number(),
+      openState: zod.enum([
+        'MEASURED',
+        'BEFORE_MEASUREMENT',
+        'NO_LINK',
+        'PENDING',
+      ]),
+      pushOpens: zod.number().nullable(),
+      pushOpenRate: zod.number().nullable(),
+    }),
+  ),
+  activityFrom: zod.iso.date().nullable(),
+  activityTypes: zod.array(
+    zod.object({
+      type: zod.enum([
+        'STORY_COMPLETED',
+        'STORY_MODERATION_COMPLETED',
+        'ATTENDANCE_REMINDER',
+      ]),
+      deliveredMembers: zod.number(),
+      openState: zod.enum(['MEASURED', 'BEFORE_MEASUREMENT']),
+      pushOpens: zod.number().nullable(),
+      pushOpenRate: zod.number().nullable(),
+    }),
+  ),
+});
