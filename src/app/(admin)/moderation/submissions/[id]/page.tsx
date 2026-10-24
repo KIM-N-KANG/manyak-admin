@@ -1,5 +1,5 @@
-import { Suspense } from 'react';
-
+import { LoadingBoundary } from '@/components/admin/loading-boundary';
+import { PageSkeleton } from '@/components/admin/loading-ui';
 import { SubmissionDetailScreen } from '@/features/moderation/submissions-screen';
 
 export default async function Page({
@@ -8,8 +8,8 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <Suspense fallback={<p role="status">데이터를 불러오는 중입니다…</p>}>
+    <LoadingBoundary fallback={<PageSkeleton immediate layout="detail" />}>
       <SubmissionDetailScreen id={(await params).id} />
-    </Suspense>
+    </LoadingBoundary>
   );
 }

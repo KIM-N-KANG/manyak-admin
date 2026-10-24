@@ -11,6 +11,7 @@ import {
   TextLink,
 } from '@/components/admin/data-ui';
 import { ListFilterForm, SearchEmpty } from '@/components/admin/list-search';
+import { TableSkeleton } from '@/components/admin/loading-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
 import { buttonVariants } from '@/components/ui/button';
 import { useManagementList } from '@/features/management/use-management-list';
@@ -41,6 +42,7 @@ export function NoticeListScreen() {
         </label>
       </ListFilterForm>
       <QueryState
+        skeleton={<TableSkeleton columns={4} />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}

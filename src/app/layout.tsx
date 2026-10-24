@@ -3,6 +3,8 @@ import './globals.css';
 import { type Metadata } from 'next';
 import localFont from 'next/font/local';
 
+import { LoadingBoundary } from '@/components/admin/loading-boundary';
+import { ShellSkeleton } from '@/components/admin/loading-ui';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -33,7 +35,9 @@ export default function RootLayout({
     <html lang="ko" className={pretendard.variable}>
       <body className="font-sans antialiased">
         <QueryProvider>
-          {children}
+          <LoadingBoundary fallback={<ShellSkeleton />}>
+            {children}
+          </LoadingBoundary>
           <Toaster />
         </QueryProvider>
       </body>

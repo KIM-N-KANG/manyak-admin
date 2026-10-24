@@ -1,11 +1,11 @@
-import { Suspense } from 'react';
-
+import { LoadingBoundary } from '@/components/admin/loading-boundary';
+import { PageSkeleton } from '@/components/admin/loading-ui';
 import { DashboardScreen } from '@/features/dashboard/dashboard-screen';
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<p role="status">대시보드를 불러오는 중입니다…</p>}>
+    <LoadingBoundary fallback={<PageSkeleton immediate layout="overview" />}>
       <DashboardScreen />
-    </Suspense>
+    </LoadingBoundary>
   );
 }

@@ -8,6 +8,7 @@ import {
   NumberValue,
   QueryState,
 } from '@/components/admin/data-ui';
+import { TableSkeleton } from '@/components/admin/loading-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
 import { creditReasonLabel } from '@/features/credits/reason-label';
 import type {
@@ -50,6 +51,7 @@ export function MemberHistoryList({
   return (
     <>
       <QueryState
+        skeleton={<TableSkeleton columns={kind === 'transactions' ? 4 : 2} />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}

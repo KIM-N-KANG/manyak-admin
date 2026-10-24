@@ -9,6 +9,7 @@ import {
   TextLink,
 } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
+import { ChartsSkeleton } from '@/components/admin/loading-ui';
 import { Card } from '@/components/ui/card';
 import {
   aiFeatureLabel,
@@ -129,6 +130,7 @@ export function DashboardAnalysisScreen() {
         <RangePicker range={range} />
       </PageHeading>
       <QueryState
+        skeleton={<ChartsSkeleton count={4} />}
         pending={charts.isPending}
         error={charts.error}
         retry={charts.refetch}

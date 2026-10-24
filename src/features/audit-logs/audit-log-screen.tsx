@@ -9,6 +9,7 @@ import {
   TextLink,
 } from '@/components/admin/data-ui';
 import { ListFilterForm, SearchEmpty } from '@/components/admin/list-search';
+import { DetailSkeleton, TableSkeleton } from '@/components/admin/loading-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
 import { Card } from '@/components/ui/card';
 import { auditChangeValues } from '@/features/audit-logs/change-values';
@@ -46,6 +47,7 @@ export function AuditLogListScreen() {
         ))}
       </ListFilterForm>
       <QueryState
+        skeleton={<TableSkeleton columns={6} />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}
@@ -101,6 +103,7 @@ export function AuditLogDetailScreen({ id }: { id: string }) {
         <TextLink href="/audit-logs">목록으로</TextLink>
       </PageHeading>
       <QueryState
+        skeleton={<DetailSkeleton />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}

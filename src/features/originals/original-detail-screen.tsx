@@ -16,6 +16,7 @@ import {
   Status,
   TextLink,
 } from '@/components/admin/data-ui';
+import { DetailSkeleton } from '@/components/admin/loading-ui';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDialog } from '@/features/originals/confirm-dialog';
@@ -63,6 +64,7 @@ export function OriginalDetailScreen({ id }: { id: string }) {
         <TextLink href="/originals">← 오리지널 목록</TextLink>
       </div>
       <QueryState
+        skeleton={<DetailSkeleton />}
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}
