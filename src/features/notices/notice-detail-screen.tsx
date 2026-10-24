@@ -144,7 +144,7 @@ export function NoticeDetailScreen({ id }: { id: string }) {
         }
         description={
           action === 'publish' && item
-            ? noticePublishConfirmation(item.tag)
+            ? noticePublishConfirmation(item.tag, item.notifiedAt)
             : action === 'delete'
               ? '삭제한 초안은 복구할 수 없습니다.'
               : '게시를 해제하면 사용자에게 보이지 않습니다.'
