@@ -68,7 +68,8 @@ export function ExternalToolsPopover() {
               {(
                 [
                   ['amplitude', 'Amplitude'],
-                  ['openSearch', 'OpenSearch 로그'],
+                  ['openSearchDashboards', 'OpenSearch Dashboards'],
+                  ['openSearchUi', 'OpenSearch UI'],
                   ['sentry', 'Sentry'],
                   ['langfuse', 'Langfuse'],
                   ['playConsole', 'Google Play Console'],
