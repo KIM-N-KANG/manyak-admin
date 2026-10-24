@@ -244,8 +244,8 @@ export const create4BodyReasonMax = 500;
 export const Create4Body = zod.object({
   title: zod.string().min(create4BodyTitleMin).max(create4BodyTitleMax),
   body: zod.string().min(create4BodyBodyMin).max(create4BodyBodyMax),
-  reason: zod.string().min(create4BodyReasonMin).max(create4BodyReasonMax),
   tag: zod.enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION']),
+  reason: zod.string().min(create4BodyReasonMin).max(create4BodyReasonMax),
 });
 
 export const Create4Response = zod.void();
@@ -394,6 +394,9 @@ export const update2BodyReasonMin = 0;
 export const update2BodyReasonMax = 500;
 
 export const Update2Body = zod.object({
+  tag: zod
+    .enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION'])
+    .nullish(),
   title: zod
     .string()
     .min(1)
@@ -407,9 +410,6 @@ export const Update2Body = zod.object({
     .regex(update2BodyBodyRegExp)
     .nullish(),
   reason: zod.string().min(update2BodyReasonMin).max(update2BodyReasonMax),
-  tag: zod
-    .enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION'])
-    .nullish(),
 });
 
 export const Update2Response = zod.unknown();
