@@ -45,7 +45,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it('Portal에 이름 있는 팝오버와 링크 6개를 열고 버튼에 관계·상태를 알린다', async () => {
+it('Portal에 이름 있는 팝오버와 링크 7개를 열고 버튼에 관계·상태를 알린다', async () => {
   const { trigger, container } = setup();
 
   expect(trigger.getAttribute('aria-expanded')).toBe('false');
@@ -65,7 +65,8 @@ it('Portal에 이름 있는 팝오버와 링크 6개를 열고 버튼에 관계�
       .map((link) => link.textContent),
   ).toEqual([
     'Amplitude',
-    'OpenSearch 로그',
+    'OpenSearch Dashboards',
+    'OpenSearch UI',
     'Sentry',
     'Langfuse',
     'Google Play Console',
