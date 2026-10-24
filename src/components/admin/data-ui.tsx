@@ -242,12 +242,19 @@ export function dateTime(value: string) {
     timeStyle: 'short',
   }).format(new Date(value));
 }
-export function DetailGrid({ items }: { items: [string, ReactNode][] }) {
+export function DetailGrid({
+  items,
+}: {
+  items: [string, ReactNode, ReactNode?][];
+}) {
   return (
     <dl className="grid gap-x-8 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
-      {items.map(([label, value]) => (
+      {items.map(([label, value, help]) => (
         <div key={label}>
-          <dt className="mb-2 text-xs text-muted-foreground">{label}</dt>
+          <dt className="mb-2 flex items-center gap-1 text-xs text-muted-foreground">
+            {label}
+            {help}
+          </dt>
           <dd className="text-sm break-all">{value}</dd>
         </div>
       ))}

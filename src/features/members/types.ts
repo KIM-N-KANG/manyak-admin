@@ -14,6 +14,7 @@ export type CreditTransaction = {
   createdAt: string;
 };
 export type MemberDetail = MemberListItem & {
+  turnCount: number;
   creditBalance: number;
   storyCount: number;
   deletedAt: string | null;
