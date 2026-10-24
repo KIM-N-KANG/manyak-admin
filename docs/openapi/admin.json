@@ -3428,6 +3428,10 @@
               "boolean",
               "null"
             ]
+          },
+          "tag": {
+            "type": "string",
+            "description": "공지 태그. SERVICE, UPDATE, MAINTENANCE, EVENT, PROMOTION."
           }
         }
       },
@@ -3460,12 +3464,23 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 0
+          },
+          "tag": {
+            "type": "string",
+            "enum": [
+              "SERVICE",
+              "UPDATE",
+              "MAINTENANCE",
+              "EVENT",
+              "PROMOTION"
+            ]
           }
         },
         "required": [
           "body",
           "reason",
-          "title"
+          "title",
+          "tag"
         ]
       },
       "NoticeReasonRequest": {
@@ -3484,19 +3499,6 @@
       "PublishNoticeRequest": {
         "type": "object",
         "properties": {
-          "notify": {
-            "type": "boolean"
-          },
-          "notificationKind": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "SERVICE",
-              "MARKETING"
-            ]
-          },
           "reason": {
             "type": "string",
             "maxLength": 500,
@@ -3738,6 +3740,19 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 0
+          },
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "SERVICE",
+              "UPDATE",
+              "MAINTENANCE",
+              "EVENT",
+              "PROMOTION"
+            ]
           }
         },
         "required": [
@@ -7573,5 +7588,17 @@
         "bearerFormat": "JWT"
       }
     }
+  },
+  "x-contract-overlay": {
+    "issue": "KNK-1728",
+    "harnessRevision": "ab4dd07",
+    "source": "NOTICE BACKEND 4-2-1, 4-2-6~4-2-8",
+    "fields": [
+      "AdminNoticeResponse.tag",
+      "CreateNoticeRequest.tag (required)",
+      "UpdateNoticeRequest.tag (optional)",
+      "PublishNoticeRequest (reason only)"
+    ],
+    "note": "서버 배포 후 실제 dev OpenAPI로 재추출·대조한다."
   }
 }

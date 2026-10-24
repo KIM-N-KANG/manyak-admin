@@ -26,22 +26,17 @@ const cases: [string, string, string, unknown?][] = [
     'POST',
     '/notices',
     '/notices',
-    { ...reason, title: '공지', body: '공지 본문' },
+    { ...reason, title: '공지', body: '공지 본문', tag: 'MAINTENANCE' },
   ],
   ['GET', `/notices/${id}`, `/notices/${id}`],
   [
     'PATCH',
     `/notices/${id}`,
     `/notices/${id}`,
-    { ...reason, title: '수정 공지' },
+    { ...reason, title: '수정 공지', tag: 'EVENT' },
   ],
   ['DELETE', `/notices/${id}`, `/notices/${id}`, reason],
-  [
-    'POST',
-    `/notices/${id}/publish`,
-    `/notices/${id}/publish`,
-    { ...reason, notify: true, notificationKind: 'SERVICE' },
-  ],
+  ['POST', `/notices/${id}/publish`, `/notices/${id}/publish`, reason],
   ['POST', `/notices/${id}/unpublish`, `/notices/${id}/unpublish`, reason],
   ['GET', '/dashboard/summary', '/dashboard/summary'],
   [
@@ -365,7 +360,10 @@ it.each(cases)(
 
 it.each([
   ['POST', '/notices', { ...reason, title: [], body: '본문' }],
-  ['POST', `/notices/${id}/publish`, { ...reason, notify: 'true' }],
+  ['POST', `/notices/${id}/publish`, { reason: [] }],
+  ['POST', '/notices', { ...reason, title: '공지', body: '본문' }],
+  ['POST', '/notices', { ...reason, title: '공지', body: '본문', tag: 'NEWS' }],
+  ['PATCH', `/notices/${id}`, { ...reason, tag: 'NEWS' }],
   ['GET', '/members?page=0'],
   ['GET', '/infra/db-tables?limit=0'],
   ['GET', '/infra/db-tables?limit=101'],
@@ -927,4 +925,17 @@ it('AI 비용의 Langfuse 필드·null·0·미연결 비용을 바꾸지 않고 
   expect(fetchMock.mock.calls[0][1].headers.get('Authorization')).toBe(
     'Bearer forged-test-token',
   );
+});
+
+it('공지 태그만 수정하는 PATCH도 생성 계약을 통과해 그대로 전달한다', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(Response.json({ tag: 'PROMOTION' }));
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  const body = { ...reason, tag: 'PROMOTION' };
+
+  expect((await invoke('PATCH', `/notices/${id}`, body)).status).toBe(200);
+  expect(fetchMock.mock.calls[0][1].body).toBe(JSON.stringify(body));
 });

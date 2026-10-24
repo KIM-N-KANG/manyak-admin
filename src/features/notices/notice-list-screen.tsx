@@ -15,6 +15,7 @@ import { TableSkeleton } from '@/components/admin/loading-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
 import { buttonVariants } from '@/components/ui/button';
 import { useManagementList } from '@/features/management/use-management-list';
+import { NoticeTagBadge } from '@/features/notices/notice-tag-badge';
 import type { NoticeListItem } from '@/features/notices/types';
 
 export function NoticeListScreen() {
@@ -62,7 +63,12 @@ export function NoticeListScreen() {
             {query.data.items.map((i) => (
               <tr key={i.noticeId}>
                 <td>
-                  <TextLink href={`/notices/${i.noticeId}`}>{i.title}</TextLink>
+                  <div className="flex items-center gap-2">
+                    <NoticeTagBadge tag={i.tag} />
+                    <TextLink href={`/notices/${i.noticeId}`}>
+                      {i.title}
+                    </TextLink>
+                  </div>
                 </td>
                 <td>
                   <Status value={i.status} />
