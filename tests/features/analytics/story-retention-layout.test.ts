@@ -17,6 +17,9 @@ vi.mock('@/features/shared/use-api', () => ({
   }),
 }));
 vi.mock('@/features/shared/list-screen', () => ({ RelatedList: () => null }));
+vi.mock('@/features/stories/story-settings', () => ({
+  StorySettingsSection: () => null,
+}));
 afterEach(cleanup);
 
 it('스토리 상세 기준 턴 12개를 작은 화면 2열·중간 4열·넓은 화면 6열로 배치한다', () => {

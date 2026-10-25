@@ -595,6 +595,22 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/stories/{storyId}/settings',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'storyId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string', format: 'uuid' },
+      },
+    ],
+    params: schemas.StorySettingsParams,
+    query: undefined,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/quality/client',
     method: 'GET',
     parameters: [

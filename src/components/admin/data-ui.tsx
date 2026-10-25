@@ -263,14 +263,19 @@ export function DetailGrid({
 }
 export function Section({
   title,
+  help,
   children,
 }: {
   title: string;
+  help?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <section className="mt-8">
-      <h2 className="mb-4 text-lg font-semibold tracking-tight">{title}</h2>
+      <div className="mb-4 flex items-center gap-1">
+        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        {help}
+      </div>
       {children}
     </section>
   );

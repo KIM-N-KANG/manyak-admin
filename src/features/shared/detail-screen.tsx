@@ -27,6 +27,7 @@ import { SubmissionLinks } from '@/features/moderation/submission-links';
 import type { PaymentDetail } from '@/features/payments/types';
 import { RelatedList } from '@/features/shared/list-screen';
 import { useApi } from '@/features/shared/use-api';
+import { StorySettingsSection } from '@/features/stories/story-settings';
 import type { StoryDetail } from '@/features/stories/types';
 import { externalLinks } from '@/lib/external-links';
 
@@ -112,6 +113,7 @@ function StoryContent({ story: s }: { story: StoryDetail }) {
           </TextLink>
         </div>
       </Section>
+      <StorySettingsSection storyId={s.storyId} />
     </>
   );
 }

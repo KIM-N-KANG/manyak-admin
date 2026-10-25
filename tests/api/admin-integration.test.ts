@@ -152,6 +152,7 @@ const cases: [string, string, string, unknown?][] = [
     '/stories?scope=original&supportingCharacterCount=0&hasLatency=false',
   ],
   ['GET', `/stories/${id}`, `/stories/${id}`],
+  ['GET', `/stories/${id}/settings`, `/stories/${id}/settings`],
   [
     'GET',
     '/chats?turnBucket=10&hasFirstMessage=true',
