@@ -67,6 +67,13 @@ const makeData = (): PushOpensResponse => ({
       pushOpens: 104,
       pushOpenRate: 0.0862,
     },
+    {
+      type: 'CREDIT_EXPIRY_REMINDER',
+      deliveredMembers: 80,
+      openState: 'MEASURED',
+      pushOpens: 12,
+      pushOpenRate: 0.15,
+    },
   ],
 });
 let data: ReturnType<typeof makeData>;
@@ -180,8 +187,12 @@ it('공지 배지와 성격·천 구분·단위·소수 퍼센트 및 활동 알
     '스토리 완성',
     '검수 완료',
     '출석 리마인드',
+    '이프 만료 예정',
   ]);
   expect(activity[2].textContent).toContain('1,206명');
+  expect(activity[3].textContent).toContain('80명');
+  expect(activity[3].textContent).toContain('12명');
+  expect(activity[3].textContent).toContain('15.0%');
 });
 
 it.each([

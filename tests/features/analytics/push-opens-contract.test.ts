@@ -22,7 +22,7 @@ const invoke = (query = '') =>
     ),
   );
 
-it('최근 7일과 기간 쿼리를 적용한 fixture는 모든 측정 상태와 세 활동 종류를 제공한다', async () => {
+it('최근 7일과 기간 쿼리를 적용한 fixture는 모든 측정 상태와 네 활동 종류를 제공한다', async () => {
   expect(defaultPeriod('push', undefined, '2026-10-24')).toEqual({
     from: '2026-10-18',
     to: '2026-10-24',
@@ -40,6 +40,7 @@ it('최근 7일과 기간 쿼리를 적용한 fixture는 모든 측정 상태와
     'STORY_COMPLETED',
     'STORY_MODERATION_COMPLETED',
     'ATTENDANCE_REMINDER',
+    'CREDIT_EXPIRY_REMINDER',
   ]);
   expect(
     new Set(data.campaigns.map((x: { openState: string }) => x.openState)),

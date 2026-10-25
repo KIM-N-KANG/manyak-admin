@@ -27,6 +27,18 @@ export function ruleLabel(code: string) {
     )[code] ?? code
   );
 }
+export function imageStatusLabel(code: string) {
+  return (
+    (
+      {
+        APPROVED: '통과',
+        REJECTED: '반려',
+        ERROR: '오류',
+        PENDING: '판정 전',
+      } as Record<string, string>
+    )[code] ?? code
+  );
+}
 export function causeLabel(code: string | null) {
   return code
     ? ((
@@ -46,7 +58,7 @@ export function pathLabel(path: string) {
     {
       title: '제목',
       oneLineIntro: '한 줄 소개',
-      description: '소개',
+      description: '주요 내용',
       protagonistName: '기본 주인공 이름',
       'storySettings.worldSetting': '세계관 설정',
       'storySettings.characterSetting': '인물 설정',
@@ -70,13 +82,13 @@ export function pathLabel(path: string) {
   if (!match) return path;
 
   const fields: Record<string, Record<string, string>> = {
-    characters: { name: '이름', description: '설명' },
+    characters: { name: '이름', description: '소개' },
     startSettings: {
-      name: '이름',
+      name: '상황 이름',
       prologue: '프롤로그',
       startSituation: '시작 상황',
     },
-    mainEvents: { name: '이름', description: '설명', keySentence: '핵심 문장' },
+    mainEvents: { name: '이름', description: '설명', keySentence: '키 문장' },
   };
   const field = fields[match[1]][match[3]];
   const group = {
@@ -92,7 +104,7 @@ export const issueHelp =
 export const causeHelp =
   '보류 사유에는 마지막 검수 실행의 실패 원인을, 실패 원인에는 최종 실패 원인을 표시합니다. 보류된 제출본은 원인을 조치한 뒤 해제해 주세요.';
 export const fieldsHelp =
-  '설정 본문, 시작 설정, 주요 사건은 관리자 화면에 보이지 않습니다. 그 필드의 위반 항목은 위치와 이유로 판단해 주세요.';
+  '설정 본문, 시작 설정, 주요 사건은 검수 제출 상세에 보이지 않습니다. 그 필드의 위반 항목은 위치와 이유로 판단해 주세요.';
 
 export const attemptHelp =
   '접수 때 1이고 선점과 재제출마다 늘어나는 실행 구분 번호입니다. 실행 횟수와 다릅니다.';

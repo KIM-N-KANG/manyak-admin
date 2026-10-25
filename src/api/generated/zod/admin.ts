@@ -539,6 +539,16 @@ export const StoryParams = zod.object({
 
 export const StoryResponse = zod.unknown();
 
+/**
+ * 삭제되지 않은 모든 스토리의 현재 저장값 원문과 이미지 전부를 검수 상태와 함께 돌려줍니다. 승인 전 제출본은 반영하지 않으며 접속 기록은 남기지 않습니다.
+ * @summary 스토리 설정
+ */
+export const StorySettingsParams = zod.object({
+  storyId: zod.uuid(),
+});
+
+export const StorySettingsResponse = zod.unknown();
+
 export const QualityQueryParams = zod.object({
   platform: zod.string().optional(),
   from: zod.string().optional(),
@@ -572,6 +582,7 @@ export const StatsQueryParams = zod.object({
       'STORY_COMPLETED',
       'STORY_MODERATION_COMPLETED',
       'ATTENDANCE_REMINDER',
+      'CREDIT_EXPIRY_REMINDER',
       'PROMOTION',
       'NOTICE',
     ])

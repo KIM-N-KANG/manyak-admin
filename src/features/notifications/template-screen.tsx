@@ -12,30 +12,77 @@ import { FormSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useManagementMutation } from '@/features/management/mutation';
-import type { Template } from '@/features/notifications/types';
+import type { Template, TemplateKey } from '@/features/notifications/types';
 import { ConfirmDialog } from '@/features/originals/confirm-dialog';
 import { useApi } from '@/features/shared/use-api';
 
-const url = '/api/notifications/templates/attendance_reminder';
+const templateOptions = {
+  attendance_reminder: {
+    label: '출석 리마인드',
+    heading: '출석 알림',
+    kind: '광고성',
+  },
+  credit_expiry_reminder: {
+    label: '이프 만료 예정 안내',
+    heading: '이프 만료 예정 안내',
+    kind: '정보성',
+  },
+};
 
 export function TemplateScreen() {
+  const [selected, setSelected] = useState<TemplateKey>('attendance_reminder');
+  const url = `/api/notifications/templates/${selected}`;
   const q = useApi<Template>(url);
 
   return (
     <>
       <PageHeading title="문구 템플릿" />
+      <label className="mb-6 grid max-w-md gap-2 text-sm">
+        알림 템플릿
+        <select
+          className="control"
+          value={selected}
+          onChange={(event) => setSelected(event.target.value as TemplateKey)}>
+          {Object.entries(templateOptions).map(([key, option]) => (
+            <option key={key} value={key}>
+              {option.label} ({option.kind})
+            </option>
+          ))}
+        </select>
+      </label>
       <QueryState
         skeleton={<FormSkeleton />}
         pending={q.isPending}
         error={q.error}
         retry={q.refetch}
       />
-      {q.data ? <TemplateEditor template={q.data} /> : null}
+      {q.data ? (
+        <TemplateEditor
+          key={selected}
+          template={q.data}
+          templateKey={selected}
+          url={url}
+        />
+      ) : null}
     </>
   );
 }
 
-function TemplateEditor({ template }: { template: Template }) {
+function TemplateEditor({
+  template,
+  templateKey,
+  url,
+}: {
+  template: Template;
+  templateKey: TemplateKey;
+  url: string;
+}) {
+  const option = templateOptions[templateKey];
+  const marketing = templateKey === 'attendance_reminder';
+  const previewTitle =
+    marketing && !template.effective.title.startsWith('(광고)')
+      ? `(광고) ${template.effective.title}`
+      : template.effective.title;
   const m = useManagementMutation();
   const [draft, setDraft] = useState<{
     method: string;
@@ -78,12 +125,18 @@ function TemplateEditor({ template }: { template: Template }) {
   return (
     <>
       <Card>
-        <h2 className="text-xl font-semibold">출석 알림</h2>
+        <h2 className="text-xl font-semibold">{option.heading}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          attendance_reminder · 광고성 ·{' '}
+          {templateKey} · {option.kind} ·{' '}
           {template.effective.isDefault ? '기본 문구' : '변경 문구'}
         </p>
-        <h3 className="mt-6 font-semibold">{template.effective.title}</h3>
+        {!marketing ? (
+          <p className="mt-4 rounded-md border bg-muted p-3 text-sm">
+            금액·수량·만료 시각을 넣지 마세요. 충전이나 이용을 권하는 문구가
+            포함되면 광고성 알림으로 분류됩니다.
+          </p>
+        ) : null}
+        <h3 className="mt-6 font-semibold">{previewTitle}</h3>
         <p className="mt-3 text-sm whitespace-pre-wrap">
           {template.effective.body}
         </p>
@@ -100,7 +153,7 @@ function TemplateEditor({ template }: { template: Template }) {
           }}
           className="grid max-w-3xl gap-5">
           <label className="grid gap-2 text-sm">
-            제목 (광고 표기 없이)
+            {marketing ? '제목 (광고 표기 없이)' : '제목'}
             <input
               className="control"
               name="title"

@@ -28,6 +28,7 @@ import {
   causeHelp,
   causeLabel,
   fieldsHelp,
+  imageStatusLabel,
   issueHelp,
   kindLabel,
   pathLabel,
@@ -342,7 +343,7 @@ export function SubmissionDetailScreen({ id }: { id: string }) {
                 items={[
                   ['제목', d.fields.title],
                   ['한 줄 소개', d.fields.oneLineIntro ?? ''],
-                  ['소개', d.fields.description ?? ''],
+                  ['주요 내용', d.fields.description ?? ''],
                   ['기본 주인공 이름', d.fields.protagonistName ?? ''],
                   ['장르', d.fields.genres.join(', ')],
                   [
@@ -385,16 +386,7 @@ export function SubmissionDetailScreen({ id }: { id: string }) {
               {d.imageResults.map((image, index) => (
                 <tr key={index}>
                   <td>{image.label}</td>
-                  <td>
-                    {(
-                      {
-                        APPROVED: '통과',
-                        REJECTED: '반려',
-                        ERROR: '오류',
-                        PENDING: '판정 전',
-                      } as Record<string, string>
-                    )[image.moderationStatus] ?? image.moderationStatus}
-                  </td>
+                  <td>{imageStatusLabel(image.moderationStatus)}</td>
                   <td>{causeLabel(image.errorCode)}</td>
                 </tr>
               ))}

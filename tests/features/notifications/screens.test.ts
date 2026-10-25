@@ -90,7 +90,7 @@ beforeEach(() => {
 
       if (url.startsWith('/api/notifications/templates/'))
         return template(request, {
-          params: Promise.resolve({ key: 'attendance_reminder' }),
+          params: Promise.resolve({ key: url.split('/').at(-1)! }),
         });
 
       if (url.startsWith('/api/notices/'))
@@ -316,6 +316,74 @@ describe('알림 화면의 BFF 연결', () => {
 
     fireEvent.click(within(dialog).getByRole('button', { name: '확인' }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith('/notices'));
+  });
+  it('템플릿 전환 시 정보성 안내와 미리보기를 표시하고 다른 키에 변경하지 않는다', async () => {
+    const view = render(wrap(createElement(TemplateScreen)));
+
+    await screen.findByRole('heading', { name: '출석 알림' });
+    fireEvent.change(screen.getByRole('combobox', { name: '알림 템플릿' }), {
+      target: { value: 'credit_expiry_reminder' },
+    });
+    await screen.findByRole('heading', {
+      name: '이프 만료 예정 안내',
+      level: 2,
+    });
+    expect(
+      screen.getByText(
+        '금액·수량·만료 시각을 넣지 마세요. 충전이나 이용을 권하는 문구가 포함되면 광고성 알림으로 분류됩니다.',
+      ),
+    ).toBeTruthy();
+    expect(view.container.textContent).not.toContain('(광고)');
+    fireEvent.change(view.container.querySelector('[name=title]')!, {
+      target: { value: '만료 고지' },
+    });
+    fireEvent.change(view.container.querySelector('[name=reason]')!, {
+      target: { value: '문구 수정' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '문구 변경' }));
+
+    const dialog = await screen.findByRole('dialog');
+
+    fireEvent.click(within(dialog).getByRole('button', { name: '확인' }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0].url).toBe(
+      '/api/notifications/templates/credit_expiry_reminder',
+    );
+    fireEvent.change(screen.getByRole('combobox', { name: '알림 템플릿' }), {
+      target: { value: 'attendance_reminder' },
+    });
+    await screen.findByRole('heading', { name: '출석 알림' });
+    expect(view.container.textContent).toContain('(광고)');
+    expect(
+      (view.container.querySelector('[name=title]') as HTMLInputElement).value,
+    ).not.toBe('만료 고지');
+  });
+  it('템플릿 전환 시 입력값과 오류를 초기화한다', async () => {
+    const view = render(wrap(createElement(TemplateScreen)));
+
+    await screen.findByRole('heading', { name: '출석 알림' });
+    fireEvent.change(view.container.querySelector('[name=effectiveFrom]')!, {
+      target: { value: '2000-01-01T10:00' },
+    });
+    fireEvent.change(view.container.querySelector('[name=reason]')!, {
+      target: { value: '변경 사유' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '문구 변경' }));
+    await screen.findByRole('alert');
+    fireEvent.change(screen.getByRole('combobox', { name: '알림 템플릿' }), {
+      target: { value: 'credit_expiry_reminder' },
+    });
+    await screen.findByRole('heading', {
+      name: '이프 만료 예정 안내',
+      level: 2,
+    });
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(
+      (view.container.querySelector('[name=effectiveFrom]') as HTMLInputElement)
+        .value,
+    ).toBe('');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(writes).toHaveLength(0);
   });
   it('문구의 과거 시작 시각은 확인 다이얼로그 전에 거절한다', async () => {
     const view = render(wrap(createElement(TemplateScreen)));
