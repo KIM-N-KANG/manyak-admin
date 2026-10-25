@@ -5,16 +5,26 @@ import Link from 'next/link';
 import { NumberValue, QueryState } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
+import { type DateRange, kstToday } from '@/features/dashboard/date-range';
 import type { PlayInstalls } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
-export function PlayInstallsCard() {
+export function PlayInstallsCard({
+  range,
+}: {
+  range: DateRange & { label: string };
+}) {
   const query = useApi<PlayInstalls>('/api/dashboard/play-installs');
   const data = query.isError ? undefined : query.data;
-  const latest = data?.daily.reduce<PlayInstalls['daily'][number] | undefined>(
-    (last, day) => (!last || day.date > last.date ? day : last),
-    undefined,
+  const isToday = range.from === range.to && range.to === kstToday();
+  const periodTotal = data?.daily.reduce(
+    (sum, day) =>
+      day.date >= range.from && day.date <= range.to ? sum + day.installs : sum,
+    0,
   );
+  const periodText = data?.daily.length
+    ? `${periodTotal!.toLocaleString('ko-KR')}대`
+    : '보고서 값 없음';
 
   return (
     <Card
@@ -33,8 +43,10 @@ export function PlayInstallsCard() {
           <HelpTooltip label="앱 설치(Android) 출처와 집계 안내">
             Google Play 설치 보고서 출처 지표입니다. 보고서는 며칠 늦게 반영되고
             날짜는 Play 기준 태평양 시간입니다. 누적 기기 설치 수는 보고서 전체
-            기간의 일별 기기 설치 수를 합산한 값입니다. 페이지에서 선택한 기간은
-            이 카드에 적용되지 않습니다.
+            기간의 일별 기기 설치 수를 합산한 값입니다. 기간 합계는 선택한
+            기간의 일별 기기 설치 수를 더한 값이며 최근 며칠은 아직 보고서에
+            없어 빠질 수 있습니다. 기간이 오늘 하루면 기간 합계를 표시하지
+            않습니다.
           </HelpTooltip>
         </span>
       </div>
@@ -58,19 +70,10 @@ export function PlayInstallsCard() {
               </span>
             </dd>
           </div>
-          <div className="mt-3 flex items-baseline gap-2 text-sm text-muted-foreground">
-            <dt>{latest?.date ?? data.asOf} 설치</dt>
-            <dd>
-              {latest ? (
-                <>
-                  <NumberValue value={latest.installs} />대
-                </>
-              ) : (
-                '보고서 값 없음'
-              )}
-            </dd>
-          </div>
         </dl>
+      ) : null}
+      {data && !isToday ? (
+        <p className="mt-2 text-xs leading-5 text-muted-foreground">{`${range.label} 합계 ${periodText}`}</p>
       ) : null}
     </Card>
   );

@@ -13,6 +13,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 
 import { FetchError } from '@/api/mutator/custom-instance';
 import { GET } from '@/app/api/dashboard/play-installs/route';
+import { kstToday } from '@/features/dashboard/date-range';
 import { PlayInstallsCard } from '@/features/dashboard/play-installs-card';
 import { PlayInstallsDetails } from '@/features/dashboard/play-installs-details';
 import type { PlayInstalls } from '@/features/dashboard/types';
@@ -39,6 +40,10 @@ vi.mock('@/features/shared/use-api', () => ({
     };
   },
 }));
+
+const week = { from: '2026-09-01', to: '2026-09-07', label: '최근 7일' };
+const card = (range = week) => createElement(PlayInstallsCard, { range });
+
 afterEach(() => {
   cleanup();
   state.data = null;
@@ -104,14 +109,15 @@ it('상세 탭에 Play 날짜와 계단선 및 0 기준 상하 막대를 표시�
     playInstalls.daily.length,
   );
 });
-it('누적과 최신 보고일 설치 수를 표시하고 상세 화면으로 연결한다', () => {
-  const view = render(createElement(PlayInstallsCard));
+it('누적과 선택 기간 설치 합계를 표시하고 상세 화면으로 연결한다', () => {
+  const view = render(card());
+  const weekTotal = playInstalls.daily
+    .slice(0, 7)
+    .reduce((sum, day) => sum + day.installs, 0);
 
+  expect(weekTotal).toBeLessThan(playInstalls.totalInstalls);
   expect(screen.getByText(String(playInstalls.totalInstalls))).toBeTruthy();
-  expect(
-    screen.getByText(`${playInstalls.asOf} 설치`).nextElementSibling!
-      .textContent,
-  ).toBe(`${playInstalls.daily.at(-1)!.installs}대`);
+  expect(screen.getByText(`최근 7일 합계 ${weekTotal}대`)).toBeTruthy();
   expect(
     screen.getByRole('link', { name: '앱 설치(Android)' }).getAttribute('href'),
   ).toBe('/analytics/acquisition?tab=installs');
@@ -122,7 +128,7 @@ it('503이면 설치 지표 사용 불가를 표시하고 재시도한다', () =
   state.error = new FetchError('unavailable', 503, {
     code: 'SERVICE_UNAVAILABLE',
   });
-  render(createElement(PlayInstallsCard));
+  render(card());
   expect(screen.getByText('설치 지표 사용 불가')).toBeTruthy();
   expect(screen.queryByText('Android 누적 기기 설치 수')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
@@ -131,7 +137,7 @@ it('503이면 설치 지표 사용 불가를 표시하고 재시도한다', () =
 it('다른 실패와 로딩도 카드 안에서 표시한다', () => {
   state.pending = true;
 
-  const view = render(createElement(PlayInstallsCard));
+  const view = render(card());
 
   expect(screen.getByRole('status').textContent).toContain('불러오는 중');
 
@@ -143,14 +149,14 @@ it('다른 실패와 로딩도 카드 안에서 표시한다', () => {
   expect(screen.getByRole('status').getAttribute('data-slot')).toBeNull();
   state.pending = false;
   state.error = new FetchError('failure', 500, {});
-  view.rerender(createElement(PlayInstallsCard));
+  view.rerender(card());
   expect(screen.getByText('데이터 불러오기 실패')).toBeTruthy();
   expect(
     screen.getByRole('region', { name: '앱 설치(Android)' }).className,
   ).toBe(cardClass);
   expect(screen.getByRole('alert').getAttribute('data-slot')).toBeNull();
   state.error = null;
-  view.rerender(createElement(PlayInstallsCard));
+  view.rerender(card());
   expect(
     screen.getByRole('region', { name: '앱 설치(Android)' }).className,
   ).toBe(cardClass);
@@ -182,29 +188,39 @@ it('활성 기기의 null은 보고서 값 없음으로 표시하고 실제 0은
   expect(rows[2].lastElementChild!.textContent).toBe('0');
 });
 
-it('보고일 순서와 무관하게 최신 날짜의 0을 유지하고 보고서 누락은 0으로 만들지 않는다', () => {
-  state.data = {
-    ...playInstalls,
-    daily: [
-      { ...playInstalls.daily.at(-1)!, date: '2026-10-20', installs: 0 },
-      { ...playInstalls.daily[0], date: '2026-10-01', installs: 99 },
-    ],
-  };
+it('기간 안 보고일이 없으면 0대를 표시하고 보고서 누락은 0으로 만들지 않는다', () => {
+  const range = { from: '2026-12-01', to: '2026-12-07', label: '지난주' };
+  const view = render(card(range));
 
-  const view = render(createElement(PlayInstallsCard));
-
-  expect(
-    screen.getByText('2026-10-20 설치').nextElementSibling!.textContent,
-  ).toBe('0대');
-  state.data = { ...state.data, daily: [] };
-  view.rerender(createElement(PlayInstallsCard));
-  expect(screen.getByText('보고서 값 없음')).toBeTruthy();
+  expect(screen.getByText('지난주 합계 0대')).toBeTruthy();
+  state.data = { ...playInstalls, daily: [] };
+  view.rerender(card(range));
+  expect(screen.getByText('지난주 합계 보고서 값 없음')).toBeTruthy();
 });
 
-it('설치 안내는 제목 옆 도움말에 포커스할 때 열고 보고일은 본문에 유지한다', async () => {
-  render(createElement(PlayInstallsCard));
+it('기간을 바꾸면 같은 설치 응답으로 다시 합산하고 마지막 보고일 뒤는 있는 날만 더한다', () => {
+  const view = render(card());
+  const range = { from: '2026-10-15', to: '2026-10-31', label: '이번 달' };
+  const tail = playInstalls.daily
+    .filter((day) => day.date >= range.from)
+    .reduce((sum, day) => sum + day.installs, 0);
+
+  view.rerender(card(range));
+  expect(screen.getByText(`이번 달 합계 ${tail}대`)).toBeTruthy();
+});
+
+it('선택 기간이 오늘이면 기간 합계 줄을 표시하지 않는다', () => {
+  const today = kstToday();
+
+  render(card({ from: today, to: today, label: '오늘' }));
+  expect(screen.getByText(String(playInstalls.totalInstalls))).toBeTruthy();
+  expect(screen.queryByText(/합계/)).toBeNull();
+});
+
+it('설치 안내는 제목 옆 도움말에 포커스할 때 열고 기간 합계는 본문에 유지한다', async () => {
+  render(card());
   expect(screen.queryByText(/보고서는 며칠 늦게/)).toBeNull();
-  expect(screen.getByText(`${playInstalls.asOf} 설치`)).toBeTruthy();
+  expect(screen.getByText(/^최근 7일 합계/)).toBeTruthy();
 
   const button = screen.getByRole('button', {
     name: '앱 설치(Android) 출처와 집계 안내',
@@ -217,5 +233,10 @@ it('설치 안내는 제목 옆 도움말에 포커스할 때 열고 보고일�
   expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
   expect(tooltip.textContent).toContain('Google Play 설치 보고서');
   expect(tooltip.textContent).toContain('보고서는 며칠 늦게');
-  expect(tooltip.textContent).toContain('기간은 이 카드에 적용되지 않습니다.');
+  expect(tooltip.textContent).toContain(
+    '기간 합계는 선택한 기간의 일별 기기 설치 수를 더한 값이며 최근 며칠은 아직 보고서에 없어 빠질 수 있습니다.',
+  );
+  expect(tooltip.textContent).toContain(
+    '기간이 오늘 하루면 기간 합계를 표시하지 않습니다.',
+  );
 });
