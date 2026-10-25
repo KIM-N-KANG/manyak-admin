@@ -69,6 +69,7 @@ export function AdminShell({
   const stored = fallback ?? parseSidebarState(raw);
   const expanded = expandedSidebar(pathname, stored);
   const current = currentSidebarGroup(pathname);
+  const name = nickname || '관리자';
 
   function toggle(group: SidebarGroup) {
     if (group === current) return;
@@ -170,15 +171,26 @@ export function AdminShell({
         </nav>
         <div className="mt-auto shrink-0 border-t p-4">
           <ExternalToolsPopover />
-          <p className="mb-3 truncate text-sm font-medium">
-            {nickname ?? '관리자'}
-          </p>
-          {preview ? (
-            <p className="text-xs text-muted-foreground">
-              고정 데이터 미리보기
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-2">
+            <span
+              aria-hidden="true"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sm font-semibold text-sidebar-accent-foreground">
+              {Array.from(name)[0]}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{name}</p>
+              {preview && (
+                <p className="truncate text-xs text-muted-foreground">
+                  고정 데이터 미리보기
+                </p>
+              )}
+            </div>
+            {!preview && <LogoutButton />}
+          </div>
+          {process.env.APP_VERSION_LABEL && (
+            <p className="mt-3 px-2 font-mono text-[11px] text-muted-foreground/70">
+              {process.env.APP_VERSION_LABEL}
             </p>
-          ) : (
-            <LogoutButton />
           )}
         </div>
       </aside>
