@@ -245,7 +245,7 @@ export function DashboardScreen() {
             </div>
           );
         })}
-        <PlayInstallsCard />
+        <PlayInstallsCard range={range} />
       </section>
       <QueryState
         skeleton={<ChartsSkeleton count={8} columns={4} compact />}
