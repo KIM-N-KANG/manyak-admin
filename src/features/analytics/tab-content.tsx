@@ -414,7 +414,7 @@ export function AcquisitionContent({
                       STORY_COMPLETED: '스토리 완성',
                       STORY_MODERATION_COMPLETED: '검수 완료',
                       ATTENDANCE_REMINDER: '출석 리마인드',
-                      CREDIT_EXPIRY_REMINDER: '이프 만료 예정 안내',
+                      CREDIT_EXPIRY_REMINDER: '이프 만료 예정',
                     }[row.type]
                   }
                 </td>

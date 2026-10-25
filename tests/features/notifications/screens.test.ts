@@ -328,7 +328,11 @@ describe('알림 화면의 BFF 연결', () => {
       name: '이프 만료 예정 안내',
       level: 2,
     });
-    expect(screen.getByText(/금액·수량을 넣지 마세요/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        '금액·수량·만료 시각을 넣지 마세요. 충전이나 이용을 권하는 문구가 포함되면 광고성 알림으로 분류됩니다.',
+      ),
+    ).toBeTruthy();
     expect(view.container.textContent).not.toContain('(광고)');
     fireEvent.change(view.container.querySelector('[name=title]')!, {
       target: { value: '만료 고지' },

@@ -132,8 +132,8 @@ function TemplateEditor({
         </p>
         {!marketing ? (
           <p className="mt-4 rounded-md border bg-muted p-3 text-sm">
-            금액·수량을 넣지 마세요. 충전·이용 권유 문구가 들어가면 광고성
-            알림이 됩니다.
+            금액·수량·만료 시각을 넣지 마세요. 충전이나 이용을 권하는 문구가
+            포함되면 광고성 알림으로 분류됩니다.
           </p>
         ) : null}
         <h3 className="mt-6 font-semibold">{previewTitle}</h3>
