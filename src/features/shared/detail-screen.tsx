@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import {
   DataTable,
@@ -17,6 +18,7 @@ import { ExternalToolLink } from '@/components/admin/external-tool-link';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { DetailSkeleton } from '@/components/admin/loading-ui';
 import { Card } from '@/components/ui/card';
+import { Tabs } from '@/components/ui/tabs';
 import type { ChatRoom } from '@/features/chats/types';
 import { MemberActions } from '@/features/members/member-actions';
 import { MemberHistoryList } from '@/features/members/member-history-list';
@@ -114,7 +116,29 @@ function StoryContent({ story: s }: { story: StoryDetail }) {
   );
 }
 
+const memberTabs = [
+  ['transactions', '이프 내역'],
+  ['payments', '결제 내역'],
+  ['chats', '채팅'],
+  ['stories', '만든 스토리'],
+  ['attendance', '출석 기록'],
+] as const;
+
 function MemberContent({ member: m }: { member: MemberDetail }) {
+  const params = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const tab =
+    memberTabs.find(([key]) => key === params.get('tab'))?.[0] ??
+    'transactions';
+
+  function selectTab(value: string) {
+    const next = new URLSearchParams(params);
+
+    next.set('tab', value);
+    router.push(`${pathname}?${next}`, { scroll: false });
+  }
+
   return (
     <>
       <div className="mb-5">
@@ -149,42 +173,60 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
                 이프
               </span>,
             ],
+            ['결제 금액', `${m.paidKrw.toLocaleString('ko-KR')}원`],
           ]}
         />
         <div className="mt-6 border-t pt-6">
-          <MemberActions nickname={m.nickname} />
+          <MemberActions member={m} />
         </div>
       </Card>
-      <Section title="이프 내역">
-        <MemberHistoryList memberId={m.memberId} kind="transactions" />
-      </Section>
-      <Section title="결제 내역">
-        <RelatedList kind="payments" scope={{ memberId: m.memberId }} />
-        <p className="mt-3">
-          <TextLink href={`/payments?memberId=${m.memberId}`}>
-            결제 전체 →
-          </TextLink>
-        </p>
-      </Section>
-      <Section title="채팅">
-        <RelatedList kind="chats" scope={{ memberId: m.memberId }} />
-        <p className="mt-3">
-          <TextLink href={`/chats?memberId=${m.memberId}`}>
-            채팅 전체 →
-          </TextLink>
-        </p>
-      </Section>
-      <Section title="만든 스토리">
-        <RelatedList kind="stories" scope={{ memberId: m.memberId }} />
-        <p className="mt-3">
-          <TextLink href={`/stories?memberId=${m.memberId}`}>
-            스토리 전체 →
-          </TextLink>
-        </p>
-      </Section>
-      <Section title="출석 기록">
-        <MemberHistoryList memberId={m.memberId} kind="attendance" />
-      </Section>
+      <Tabs.Root
+        className="mt-8"
+        value={tab}
+        onValueChange={(value) => selectTab(String(value))}>
+        <Tabs.List
+          aria-label="회원 상세 탭"
+          className="mb-5 flex overflow-x-auto border-b">
+          {memberTabs.map(([key, label]) => (
+            <Tabs.Tab
+              key={key}
+              value={key}
+              className="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm text-muted-foreground data-active:border-primary data-active:text-primary-text">
+              {label}
+            </Tabs.Tab>
+          ))}
+        </Tabs.List>
+        <Tabs.Panel value="transactions">
+          <MemberHistoryList memberId={m.memberId} kind="transactions" />
+        </Tabs.Panel>
+        <Tabs.Panel value="payments">
+          <RelatedList kind="payments" scope={{ memberId: m.memberId }} />
+          <p className="mt-3">
+            <TextLink href={`/payments?memberId=${m.memberId}`}>
+              결제 전체 →
+            </TextLink>
+          </p>
+        </Tabs.Panel>
+        <Tabs.Panel value="chats">
+          <RelatedList kind="chats" scope={{ memberId: m.memberId }} />
+          <p className="mt-3">
+            <TextLink href={`/chats?memberId=${m.memberId}`}>
+              채팅 전체 →
+            </TextLink>
+          </p>
+        </Tabs.Panel>
+        <Tabs.Panel value="stories">
+          <RelatedList kind="stories" scope={{ memberId: m.memberId }} />
+          <p className="mt-3">
+            <TextLink href={`/stories?memberId=${m.memberId}`}>
+              스토리 전체 →
+            </TextLink>
+          </p>
+        </Tabs.Panel>
+        <Tabs.Panel value="attendance">
+          <MemberHistoryList memberId={m.memberId} kind="attendance" />
+        </Tabs.Panel>
+      </Tabs.Root>
     </>
   );
 }

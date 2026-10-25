@@ -35,22 +35,26 @@ const titles = [
   '한밤의 탐정 사무소',
 ];
 
-export const members: MemberListItem[] = Array.from(
-  { length: 1240 },
-  (_, i) => ({
+// 라우트 번들마다 모듈이 따로 올라와도 회원 조치의 변경이 모든 고정 데이터 BFF에 보이도록 전역에 둔다.
+const fixtureGlobal = globalThis as typeof globalThis & {
+  manyakMembers?: MemberListItem[];
+  manyakMemberTransactions?: Map<string, CreditTransaction[]>;
+};
+
+export const members: MemberListItem[] = (fixtureGlobal.manyakMembers ??=
+  Array.from({ length: 1240 }, (_, i) => ({
     memberId: id(1, i),
     nickname:
       i === 4 ? '탈퇴한 회원' : names[i % 8] + (i >= 8 ? ` ${i + 1}` : ''),
     status: i === 4 ? 'DELETED' : i % 7 === 0 ? 'SUSPENDED' : 'ACTIVE',
-    isAdmin: false,
+    isAdmin: i === 1,
     createdAt: new Date(Date.UTC(2026, 9, 21 - (i % 90))).toISOString(),
     lastActiveAt: new Date(Date.UTC(2026, 9, 21 - (i % 10), 8)).toISOString(),
     creditsSpent: 1200 + i * 320,
     paidKrw: 4800 * (i % 6),
     chatCount: 0,
     periodChatCount: null,
-  }),
-);
+  })));
 
 members[0].nickname = '마냑';
 
@@ -181,50 +185,51 @@ export function getStoryDetail(storyId: string): StoryDetail | null {
     : null;
 }
 
-export const memberTransactions = new Map<string, CreditTransaction[]>(
-  members.map((member, index) => {
-    const direction = index % 3;
-    const rows: CreditTransaction[] = [
-      {
-        amount: 5000,
-        reason: 'PURCHASE',
-        balanceAfter: 5000,
-        createdAt: '2026-10-20T03:00:00Z',
-      },
-      {
-        amount: -30,
-        reason: 'CHAT_TURN',
-        balanceAfter: 4970,
-        createdAt:
-          direction === 0 ? '2026-10-21T04:00:00Z' : '2026-10-20T14:59:59Z',
-      },
-      {
-        amount: 250,
-        reason: 'ATTENDANCE_REWARD',
-        balanceAfter: 5220,
-        createdAt:
-          direction === 1 ? '2026-10-20T15:00:00Z' : '2026-10-19T15:00:00Z',
-      },
-      {
-        amount: 30,
-        reason: 'REFUND',
-        balanceAfter: 5250,
-        createdAt: '2026-10-21T02:00:00Z',
-      },
-      {
-        amount: -10,
-        reason: 'EXPIRE',
-        balanceAfter: 5240,
-        createdAt: '2026-10-21T02:00:00Z',
-      },
-    ];
+export const memberTransactions = (fixtureGlobal.manyakMemberTransactions ??=
+  new Map<string, CreditTransaction[]>(
+    members.map((member, index) => {
+      const direction = index % 3;
+      const rows: CreditTransaction[] = [
+        {
+          amount: 5000,
+          reason: 'PURCHASE',
+          balanceAfter: 5000,
+          createdAt: '2026-10-20T03:00:00Z',
+        },
+        {
+          amount: -30,
+          reason: 'CHAT_TURN',
+          balanceAfter: 4970,
+          createdAt:
+            direction === 0 ? '2026-10-21T04:00:00Z' : '2026-10-20T14:59:59Z',
+        },
+        {
+          amount: 250,
+          reason: 'ATTENDANCE_REWARD',
+          balanceAfter: 5220,
+          createdAt:
+            direction === 1 ? '2026-10-20T15:00:00Z' : '2026-10-19T15:00:00Z',
+        },
+        {
+          amount: 30,
+          reason: 'REFUND',
+          balanceAfter: 5250,
+          createdAt: '2026-10-21T02:00:00Z',
+        },
+        {
+          amount: -10,
+          reason: 'EXPIRE',
+          balanceAfter: 5240,
+          createdAt: '2026-10-21T02:00:00Z',
+        },
+      ];
 
-    return [
-      member.memberId,
-      rows.toSorted((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    ];
-  }),
-);
+      return [
+        member.memberId,
+        rows.toSorted((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      ];
+    }),
+  ));
 export function getMemberTransactions(memberId: string): CreditTransaction[] {
   return memberTransactions.get(memberId) ?? [];
 }

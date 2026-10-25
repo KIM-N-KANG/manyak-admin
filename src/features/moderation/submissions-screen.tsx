@@ -17,6 +17,7 @@ import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { ListFilterForm } from '@/components/admin/list-search';
 import { DetailSkeleton, TableSkeleton } from '@/components/admin/loading-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
+import { SuccessNotice } from '@/components/admin/reason-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useManagementList } from '@/features/management/use-management-list';
@@ -34,7 +35,7 @@ import {
   statusLabel,
   submissionStatuses,
 } from './labels';
-import { SuccessNotice, useSubmissionRelease } from './release-dialog';
+import { useSubmissionRelease } from './release-dialog';
 import type { Submission, SubmissionDetail } from './types';
 
 export function SubmissionsScreen() {
@@ -120,7 +121,9 @@ export function SubmissionsScreen() {
           ) : null,
         )}
       </ListFilterForm>
-      {release.success ? <SuccessNotice key={release.success} /> : null}
+      {release.success ? (
+        <SuccessNotice key={release.success} message="보류를 해제했습니다." />
+      ) : null}
       <QueryState
         skeleton={<TableSkeleton columns={11} />}
         pending={query.isPending}
@@ -280,7 +283,9 @@ export function SubmissionDetailScreen({ id }: { id: string }) {
           </Button>
         ) : null}
       </PageHeading>
-      {release.success ? <SuccessNotice key={release.success} /> : null}
+      {release.success ? (
+        <SuccessNotice key={release.success} message="보류를 해제했습니다." />
+      ) : null}
       {missing ? (
         <p role="alert">제출본을 찾을 수 없습니다.</p>
       ) : (
