@@ -296,8 +296,8 @@ const cases: [string, string, string, unknown?][] = [
     '/push/templates/credit_expiry_reminder',
     {
       ...reason,
-      title: '이프 소멸 예정 안내',
-      body: '곧 소멸되는 이프가 있어요',
+      title: '이프 만료 예정 안내',
+      body: '곧 만료되는 이프가 있어요',
     },
   ],
   [

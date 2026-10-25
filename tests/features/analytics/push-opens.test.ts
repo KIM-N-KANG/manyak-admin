@@ -187,7 +187,7 @@ it('공지 배지와 성격·천 구분·단위·소수 퍼센트 및 활동 알
     '스토리 완성',
     '검수 완료',
     '출석 리마인드',
-    '이프 소멸 예정 안내',
+    '이프 만료 예정 안내',
   ]);
   expect(activity[2].textContent).toContain('1,206명');
   expect(activity[3].textContent).toContain('80명');

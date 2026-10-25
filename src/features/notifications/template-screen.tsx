@@ -23,8 +23,8 @@ const templateOptions = {
     kind: '광고성',
   },
   credit_expiry_reminder: {
-    label: '이프 소멸 예정 안내',
-    heading: '이프 소멸 예정 안내',
+    label: '이프 만료 예정 안내',
+    heading: '이프 만료 예정 안내',
     kind: '정보성',
   },
 };

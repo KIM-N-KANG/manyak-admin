@@ -325,13 +325,13 @@ describe('알림 화면의 BFF 연결', () => {
       target: { value: 'credit_expiry_reminder' },
     });
     await screen.findByRole('heading', {
-      name: '이프 소멸 예정 안내',
+      name: '이프 만료 예정 안내',
       level: 2,
     });
     expect(screen.getByText(/금액·수량을 넣지 마세요/)).toBeTruthy();
     expect(view.container.textContent).not.toContain('(광고)');
     fireEvent.change(view.container.querySelector('[name=title]')!, {
-      target: { value: '소멸 고지' },
+      target: { value: '만료 고지' },
     });
     fireEvent.change(view.container.querySelector('[name=reason]')!, {
       target: { value: '문구 수정' },
@@ -352,7 +352,7 @@ describe('알림 화면의 BFF 연결', () => {
     expect(view.container.textContent).toContain('(광고)');
     expect(
       (view.container.querySelector('[name=title]') as HTMLInputElement).value,
-    ).not.toBe('소멸 고지');
+    ).not.toBe('만료 고지');
   });
   it('템플릿 전환 시 입력값과 오류를 초기화한다', async () => {
     const view = render(wrap(createElement(TemplateScreen)));
@@ -370,7 +370,7 @@ describe('알림 화면의 BFF 연결', () => {
       target: { value: 'credit_expiry_reminder' },
     });
     await screen.findByRole('heading', {
-      name: '이프 소멸 예정 안내',
+      name: '이프 만료 예정 안내',
       level: 2,
     });
     expect(screen.queryByRole('alert')).toBeNull();

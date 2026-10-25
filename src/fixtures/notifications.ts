@@ -219,8 +219,8 @@ const defaultCopy = {
     body: '출석하고 받아 가세요. 오늘은 어떤 스토리를 시작해 볼까요?',
   },
   credit_expiry_reminder: {
-    title: '이프 소멸 예정 안내',
-    body: '곧 소멸되는 이프가 있어요',
+    title: '이프 만료 예정 안내',
+    body: '곧 만료되는 이프가 있어요',
   },
 };
 

@@ -161,7 +161,7 @@ describe('알림 BFF', () => {
       result.items.every((i: { type: string }) => i.type === 'NOTICE'),
     ).toBe(true);
   });
-  it('이프 소멸 템플릿의 조회 변경 복귀는 출석 문구와 이력을 섞지 않는다', async () => {
+  it('이프 만료 템플릿의 조회 변경 복귀는 출석 문구와 이력을 섞지 않는다', async () => {
     const expiry = {
       params: Promise.resolve({ key: 'credit_expiry_reminder' }),
     };
@@ -169,15 +169,15 @@ describe('알림 BFF', () => {
     const initial = await (await template(req({}), expiry)).json();
 
     expect(initial.effective).toEqual({
-      title: '이프 소멸 예정 안내',
-      body: '곧 소멸되는 이프가 있어요',
+      title: '이프 만료 예정 안내',
+      body: '곧 만료되는 이프가 있어요',
       isDefault: true,
     });
     expect(
       (
         await PUT(
           req({
-            title: '소멸 안내',
+            title: '만료 안내',
             body: '이프 화면에서 확인하세요',
             reason: '안내 변경',
           }),
@@ -188,7 +188,7 @@ describe('알림 BFF', () => {
 
     const updated = await (await template(req({}), expiry)).json();
 
-    expect(updated.effective.title).toBe('소멸 안내');
+    expect(updated.effective.title).toBe('만료 안내');
     expect(updated.overrides).toHaveLength(1);
     expect(getTemplate('attendance_reminder')).toEqual(original);
     expect((await DELETE(req({ reason: '복귀' }), expiry)).status).toBe(200);
