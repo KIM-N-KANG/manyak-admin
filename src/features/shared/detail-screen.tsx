@@ -152,7 +152,7 @@ function MemberContent({ member: m }: { member: MemberDetail }) {
           ]}
         />
         <div className="mt-6 border-t pt-6">
-          <MemberActions nickname={m.nickname} />
+          <MemberActions member={m} />
         </div>
       </Card>
       <Section title="이프 내역">

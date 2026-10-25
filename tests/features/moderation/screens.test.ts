@@ -13,7 +13,7 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-import { SuccessNotice } from '@/features/moderation/release-dialog';
+import { SuccessNotice } from '@/components/admin/reason-dialog';
 import { SubmissionLinks } from '@/features/moderation/submission-links';
 import {
   SubmissionDetailScreen,
@@ -374,7 +374,7 @@ it('처리 중에는 두 버튼·입력이 비활성이고 Esc·바깥 누름·�
 });
 it('성공 알림은 4초 뒤 사라진다', () => {
   vi.useFakeTimers();
-  render(createElement(SuccessNotice));
+  render(createElement(SuccessNotice, { message: '보류를 해제했습니다.' }));
   expect(screen.getByRole('status').textContent).toBe('보류를 해제했습니다.');
   act(() => vi.advanceTimersByTime(4000));
   expect(screen.queryByRole('status')).toBeNull();
