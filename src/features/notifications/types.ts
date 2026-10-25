@@ -30,6 +30,11 @@ export type TargetCount = {
   nightNow: boolean;
   asOf: string;
 };
+export const templateKeys = [
+  'attendance_reminder',
+  'credit_expiry_reminder',
+] as const;
+export type TemplateKey = (typeof templateKeys)[number];
 export type Template = {
   templateKey: string;
   effective: { title: string; body: string; isDefault: boolean };
@@ -46,6 +51,7 @@ export const notificationTypes = [
   'STORY_MODERATION_COMPLETED',
   'NOTICE',
   'ATTENDANCE_REMINDER',
+  'CREDIT_EXPIRY_REMINDER',
   'PROMOTION',
 ] as const;
 export type DeliveryRow = {

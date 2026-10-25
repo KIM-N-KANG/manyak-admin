@@ -159,15 +159,16 @@ export function metricFixture(path: string, query: URLSearchParams) {
           'STORY_COMPLETED',
           'STORY_MODERATION_COMPLETED',
           'ATTENDANCE_REMINDER',
+          'CREDIT_EXPIRY_REMINDER',
         ] as const
       ).map((type, i) => ({
         type,
-        deliveredMembers: [61, 11, 1206][i],
+        deliveredMembers: [61, 11, 1206, 80][i],
         openState: activityFrom
           ? ('MEASURED' as const)
           : ('BEFORE_MEASUREMENT' as const),
-        pushOpens: activityFrom ? [27, 4, 104][i] : null,
-        pushOpenRate: activityFrom ? [0.4426, 0.3636, 0.0862][i] : null,
+        pushOpens: activityFrom ? [27, 4, 104, 12][i] : null,
+        pushOpenRate: activityFrom ? [0.4426, 0.3636, 0.0862, 0.15][i] : null,
       })),
     } satisfies T.PushOpensResponse;
   }

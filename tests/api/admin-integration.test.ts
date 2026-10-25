@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-import { adminEndpoints } from '@/api/admin-endpoints';
+import { adminEndpoints, findAdminEndpoint } from '@/api/admin-endpoints';
 import { GET as handle } from '@/app/api/admin-upstream/[...path]/route';
 import { sessionCookie } from '@/features/auth/session';
 import { proxy } from '@/proxy';
@@ -287,8 +287,29 @@ const cases: [string, string, string, unknown?][] = [
   ],
   [
     'GET',
-    '/notifications/delivery-stats?from=2026-10-01&kind=SERVICE',
-    '/push/delivery-stats?from=2026-10-01&kind=SERVICE',
+    '/notifications/templates/credit_expiry_reminder',
+    '/push/templates/credit_expiry_reminder',
+  ],
+  [
+    'PUT',
+    '/notifications/templates/credit_expiry_reminder',
+    '/push/templates/credit_expiry_reminder',
+    {
+      ...reason,
+      title: '이프 만료 예정 안내',
+      body: '곧 만료되는 이프가 있어요',
+    },
+  ],
+  [
+    'DELETE',
+    '/notifications/templates/credit_expiry_reminder',
+    '/push/templates/credit_expiry_reminder',
+    reason,
+  ],
+  [
+    'GET',
+    '/notifications/delivery-stats?from=2026-10-01&kind=SERVICE&type=CREDIT_EXPIRY_REMINDER',
+    '/push/delivery-stats?from=2026-10-01&kind=SERVICE&type=CREDIT_EXPIRY_REMINDER',
   ],
 ];
 
@@ -322,9 +343,23 @@ afterEach(() => {
 });
 
 it('로그인 외 모든 활성 HTTP 연산을 전달 표에서 검증한다', () => {
-  expect(cases).toHaveLength(
-    adminEndpoints.filter((e) => e.implemented).length,
+  const covered = new Set(
+    cases.map(([method, browser]) => {
+      const operation = findAdminEndpoint(
+        browser.split('?')[0],
+        method,
+      )?.operation;
+
+      return `${operation?.method} ${operation?.path}`;
+    }),
   );
+  const expected = new Set(
+    adminEndpoints
+      .filter((e) => e.implemented)
+      .map((e) => `${e.operation?.method} ${e.operation?.path}`),
+  );
+
+  expect(covered).toEqual(expected);
 });
 
 it.each(cases)(

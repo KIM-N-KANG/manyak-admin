@@ -268,7 +268,8 @@ export type PushOpensResponse = {
     type:
       | 'STORY_COMPLETED'
       | 'STORY_MODERATION_COMPLETED'
-      | 'ATTENDANCE_REMINDER';
+      | 'ATTENDANCE_REMINDER'
+      | 'CREDIT_EXPIRY_REMINDER';
     deliveredMembers: number;
     openState: 'MEASURED' | 'BEFORE_MEASUREMENT';
     pushOpens: number | null;

@@ -161,6 +161,42 @@ describe('알림 BFF', () => {
       result.items.every((i: { type: string }) => i.type === 'NOTICE'),
     ).toBe(true);
   });
+  it('이프 만료 템플릿의 조회 변경 복귀는 출석 문구와 이력을 섞지 않는다', async () => {
+    const expiry = {
+      params: Promise.resolve({ key: 'credit_expiry_reminder' }),
+    };
+    const original = getTemplate('attendance_reminder');
+    const initial = await (await template(req({}), expiry)).json();
+
+    expect(initial.effective).toEqual({
+      title: '이프 만료 예정 안내',
+      body: '곧 만료되는 이프가 있어요',
+      isDefault: true,
+    });
+    expect(
+      (
+        await PUT(
+          req({
+            title: '만료 안내',
+            body: '이프 화면에서 확인하세요',
+            reason: '안내 변경',
+          }),
+          expiry,
+        )
+      ).status,
+    ).toBe(200);
+
+    const updated = await (await template(req({}), expiry)).json();
+
+    expect(updated.effective.title).toBe('만료 안내');
+    expect(updated.overrides).toHaveLength(1);
+    expect(getTemplate('attendance_reminder')).toEqual(original);
+    expect((await DELETE(req({ reason: '복귀' }), expiry)).status).toBe(200);
+    expect(
+      (await (await template(req({}), expiry)).json()).effective.isDefault,
+    ).toBe(true);
+    expect(getTemplate('attendance_reminder')).toEqual(original);
+  });
   it('예약 문구는 현재 문구와 구분되며 기본 복귀는 미래 예약도 종료한다', async () => {
     const ctx = { params: Promise.resolve({ key: 'attendance_reminder' }) };
     const future = new Date(Date.now() + 86400000).toISOString();

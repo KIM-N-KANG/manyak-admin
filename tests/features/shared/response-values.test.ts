@@ -41,17 +41,20 @@ it('관계 회원만 정규화하고 감사 로그의 원문 before/after는 유
     ),
   ).toEqual({ owner: null, recentChats: [{ member: null }] });
 });
-it('템플릿의 default를 처리하고 기존 isDefault를 보존한다', () => {
-  expect(
-    adminResponseValues(
-      { effective: { default: true } },
-      '/api/notifications/templates/key',
-    ),
-  ).toEqual({ effective: { default: true, isDefault: true } });
+it.each(['attendance_reminder', 'credit_expiry_reminder'])(
+  '%s 템플릿의 default를 처리하고 기존 isDefault를 보존한다',
+  (key) => {
+    expect(
+      adminResponseValues(
+        { effective: { default: true } },
+        `/api/notifications/templates/${key}`,
+      ),
+    ).toEqual({ effective: { default: true, isDefault: true } });
 
-  const fixture = { effective: { isDefault: false } };
+    const fixture = { effective: { isDefault: false } };
 
-  expect(adminResponseValues(fixture, '/api/notifications/templates/key')).toBe(
-    fixture,
-  );
-});
+    expect(
+      adminResponseValues(fixture, `/api/notifications/templates/${key}`),
+    ).toBe(fixture);
+  },
+);
