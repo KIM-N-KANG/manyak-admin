@@ -6,9 +6,9 @@
     "version": "v1"
   },
   "x-source": {
-    "input": "../server-openapi.json",
-    "receivedAt": "2026-10-25T07:16:52.327Z",
-    "revision": "65beb5fb0c44e6054e40dfe6707285f8b3dba071"
+    "input": "https://dev-api.manyak.app/v3/api-docs",
+    "receivedAt": "2026-10-25T10:33:28.011Z",
+    "revision": "3ea4a0d"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -1173,6 +1173,42 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/admin/stories/{storyId}/settings": {
+      "get": {
+        "tags": ["admin-read-controller"],
+        "summary": "스토리 설정",
+        "description": "삭제되지 않은 모든 스토리의 현재 저장값 원문과 이미지 전부를 검수 상태와 함께 돌려줍니다. 승인 전 제출본은 반영하지 않으며 접속 기록은 남기지 않습니다.",
+        "operationId": "storySettings",
+        "parameters": [
+          {
+            "name": "storyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStorySettingsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/admin/quality/client": {
@@ -4129,6 +4165,223 @@
           }
         }
       },
+      "AdminStorySettingsResponse": {
+        "type": "object",
+        "description": "스토리 설정(현재 저장값 원문, 이미지 전부와 검수 상태)",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "oneLineIntro": {
+            "type": ["string", "null"]
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "protagonistName": {
+            "type": ["string", "null"]
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "storySettings": {
+            "$ref": "#/components/schemas/AdminStorySettingsText"
+          },
+          "startSettings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminStorySettingsStart"
+            }
+          },
+          "mainEvents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminStorySettingsMainEvent"
+            }
+          },
+          "visibility": {
+            "type": "string",
+            "enum": ["PUBLIC", "PRIVATE"]
+          },
+          "thumbnailUrl": {
+            "type": ["string", "null"]
+          },
+          "thumbnailModerationStatus": {
+            "type": "string",
+            "enum": ["APPROVED", "PENDING", "REJECTED"]
+          },
+          "characters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminStorySettingsCharacter"
+            }
+          }
+        },
+        "required": [
+          "characters",
+          "description",
+          "genres",
+          "mainEvents",
+          "oneLineIntro",
+          "protagonistName",
+          "startSettings",
+          "storySettings",
+          "thumbnailModerationStatus",
+          "thumbnailUrl",
+          "title",
+          "visibility"
+        ]
+      },
+      "AdminStorySettingsText": {
+        "type": "object",
+        "properties": {
+          "worldSetting": {
+            "type": ["string", "null"]
+          },
+          "characterSetting": {
+            "type": ["string", "null"]
+          },
+          "userRoleSetting": {
+            "type": ["string", "null"]
+          },
+          "ruleSetting": {
+            "type": ["string", "null"]
+          }
+        },
+        "required": [
+          "characterSetting",
+          "ruleSetting",
+          "userRoleSetting",
+          "worldSetting"
+        ]
+      },
+      "AdminStorySettingsStart": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prologue": {
+            "type": ["string", "null"]
+          },
+          "startSituation": {
+            "type": ["string", "null"]
+          },
+          "suggestedInputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "endings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminStorySettingsEnding"
+            }
+          }
+        },
+        "required": [
+          "endings",
+          "id",
+          "name",
+          "prologue",
+          "startSituation",
+          "suggestedInputs"
+        ]
+      },
+      "AdminStorySettingsEnding": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "requirement": {
+            "$ref": "#/components/schemas/AdminStorySettingsRequirement"
+          },
+          "epilogue": {
+            "type": "string"
+          }
+        },
+        "required": ["epilogue", "name", "requirement"]
+      },
+      "AdminStorySettingsRequirement": {
+        "type": "object",
+        "properties": {
+          "minTurns": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "achievementCondition": {
+            "type": "string"
+          }
+        },
+        "required": ["achievementCondition", "minTurns"]
+      },
+      "AdminStorySettingsMainEvent": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "keySentence": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": ["description", "keySentence", "name", "sortOrder"]
+      },
+      "AdminStorySettingsCharacter": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminStorySettingsImage"
+            }
+          }
+        },
+        "required": ["description", "id", "images", "name"]
+      },
+      "AdminStorySettingsImage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "imageName": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "moderationStatus": {
+            "type": "string",
+            "enum": ["APPROVED", "PENDING", "REJECTED"]
+          }
+        },
+        "required": ["id", "imageName", "imageUrl", "moderationStatus"]
+      },
       "QualityResponse": {
         "type": "object",
         "properties": {
@@ -6899,25 +7152,16 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "integralNumber": {
+          "string": {
             "type": "boolean"
           },
           "floatingPointNumber": {
             "type": "boolean"
           },
-          "container": {
-            "type": "boolean"
-          },
-          "object": {
-            "type": "boolean"
-          },
-          "string": {
-            "type": "boolean"
-          },
           "missingNode": {
             "type": "boolean"
           },
-          "number": {
+          "integralNumber": {
             "type": "boolean"
           },
           "nodeType": {
@@ -6934,7 +7178,10 @@
               "STRING"
             ]
           },
-          "valueNode": {
+          "int": {
+            "type": "boolean"
+          },
+          "long": {
             "type": "boolean"
           },
           "short": {
@@ -6949,6 +7196,15 @@
           "bigInteger": {
             "type": "boolean"
           },
+          "valueNode": {
+            "type": "boolean"
+          },
+          "object": {
+            "type": "boolean"
+          },
+          "pojo": {
+            "type": "boolean"
+          },
           "textual": {
             "type": "boolean",
             "deprecated": true
@@ -6959,13 +7215,10 @@
           "binary": {
             "type": "boolean"
           },
-          "pojo": {
+          "number": {
             "type": "boolean"
           },
-          "int": {
-            "type": "boolean"
-          },
-          "long": {
+          "container": {
             "type": "boolean"
           },
           "array": {

@@ -177,15 +177,15 @@ it('위치·종류·상태·기준·원인 표시는 정본과 미등록 코드 
 
 it.each([
   ['characters[0].name', '인물 1 이름'],
-  ['characters[1].description', '인물 2 설명'],
+  ['characters[1].description', '인물 2 소개'],
   ['characters[1].images[0]', '인물 2 이미지 1'],
   ['characters[1].images[0].imageUrl', '인물 2 이미지 1'],
-  ['startSettings[0].name', '시작 설정 1 이름'],
+  ['startSettings[0].name', '시작 설정 1 상황 이름'],
   ['startSettings[1].prologue', '시작 설정 2 프롤로그'],
   ['startSettings[2].startSituation', '시작 설정 3 시작 상황'],
   ['mainEvents[0].name', '주요 사건 1 이름'],
   ['mainEvents[1].description', '주요 사건 2 설명'],
-  ['mainEvents[2].keySentence', '주요 사건 3 핵심 문장'],
+  ['mainEvents[2].keySentence', '주요 사건 3 키 문장'],
   ['characters[0].unknown', 'characters[0].unknown'],
   ['unknownField', 'unknownField'],
 ])('위치 %s의 하위 필드 또는 미정 원문을 보존한다', (path, label) => {

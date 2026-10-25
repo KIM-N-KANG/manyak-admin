@@ -20,3 +20,48 @@ export type StoryDetail = Story & {
   retention: { turn: number; rate: number }[];
   recentChats: ChatRoom[];
 };
+export type StorySettings = {
+  title: string;
+  oneLineIntro: string | null;
+  description: string | null;
+  protagonistName: string | null;
+  genres: string[];
+  storySettings: {
+    worldSetting: string | null;
+    characterSetting: string | null;
+    userRoleSetting: string | null;
+    ruleSetting: string | null;
+  };
+  startSettings: {
+    id: string;
+    name: string;
+    prologue: string | null;
+    startSituation: string | null;
+    suggestedInputs: string[];
+    endings: {
+      name: string;
+      requirement: { minTurns: number; achievementCondition: string };
+      epilogue: string;
+    }[];
+  }[];
+  mainEvents: {
+    name: string;
+    description: string;
+    keySentence: string;
+    sortOrder: number;
+  }[];
+  visibility: 'PUBLIC' | 'PRIVATE';
+  thumbnailUrl: string | null;
+  thumbnailModerationStatus: string;
+  characters: {
+    id: string;
+    name: string;
+    description: string | null;
+    images: {
+      id: string;
+      imageName: string;
+      imageUrl: string;
+      moderationStatus: string;
+    }[];
+  }[];
+};
