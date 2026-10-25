@@ -198,6 +198,17 @@ it('기간 안 보고일이 없으면 0대를 표시하고 보고서 누락은 0
   expect(screen.getByText('지난주 합계 보고서 값 없음')).toBeTruthy();
 });
 
+it('기간을 바꾸면 같은 설치 응답으로 다시 합산하고 마지막 보고일 뒤는 있는 날만 더한다', () => {
+  const view = render(card());
+  const range = { from: '2026-10-15', to: '2026-10-31', label: '이번 달' };
+  const tail = playInstalls.daily
+    .filter((day) => day.date >= range.from)
+    .reduce((sum, day) => sum + day.installs, 0);
+
+  view.rerender(card(range));
+  expect(screen.getByText(`이번 달 합계 ${tail}대`)).toBeTruthy();
+});
+
 it('선택 기간이 오늘이면 기간 합계 줄을 표시하지 않는다', () => {
   const today = kstToday();
 
@@ -223,7 +234,9 @@ it('설치 안내는 제목 옆 도움말에 포커스할 때 열고 기간 합�
   expect(tooltip.textContent).toContain('Google Play 설치 보고서');
   expect(tooltip.textContent).toContain('보고서는 며칠 늦게');
   expect(tooltip.textContent).toContain(
-    '선택한 기간의 일별 기기 설치 수 합계입니다.',
+    '기간 합계는 선택한 기간의 일별 기기 설치 수를 더한 값이며 최근 며칠은 아직 보고서에 없어 빠질 수 있습니다.',
   );
-  expect(tooltip.textContent).toContain('오늘이면 표시하지 않습니다.');
+  expect(tooltip.textContent).toContain(
+    '기간이 오늘 하루면 기간 합계를 표시하지 않습니다.',
+  );
 });
