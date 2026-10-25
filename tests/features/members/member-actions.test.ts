@@ -170,8 +170,8 @@ it('이프 지급은 금액에 초점을 두고 범위 밖 금액·유효기간�
   draw();
 
   const { inside } = await openDialog('이프 지급', '이프 지급');
-  const amount = inside.getByRole('spinbutton', { name: '금액(이프)' });
-  const days = inside.getByRole('spinbutton', { name: '유효기간(일)' });
+  const amount = inside.getByRole('spinbutton', { name: '금액 (이프)' });
+  const days = inside.getByRole('spinbutton', { name: '유효기간 (일)' });
   const confirm = inside.getByRole('button', { name: '확인' });
 
   await waitFor(() => expect(document.activeElement).toBe(amount));
@@ -202,13 +202,13 @@ it('이프 지급 성공은 요청 본문·확인 문구·성공 알림·캐시 
 
   const { inside } = await openDialog('이프 지급', '이프 지급');
 
-  fireEvent.change(inside.getByRole('spinbutton', { name: '금액(이프)' }), {
+  fireEvent.change(inside.getByRole('spinbutton', { name: '금액 (이프)' }), {
     target: { value: '5000' },
   });
   expect(inside.getByText(/유효기간은 30일입니다/).textContent).toBe(
     `${member.nickname} 회원에게 5,000 이프를 지급합니다. 유효기간은 30일입니다.`,
   );
-  fireEvent.change(inside.getByRole('spinbutton', { name: '유효기간(일)' }), {
+  fireEvent.change(inside.getByRole('spinbutton', { name: '유효기간 (일)' }), {
     target: { value: '90' },
   });
   fireEvent.change(inside.getByRole('textbox', { name: '처리 사유' }), {
@@ -252,8 +252,10 @@ it('잔액보다 큰 회수는 잔액만큼만 회수됨을 안내하고 실제 
 
   const { inside } = await openDialog('이프 회수', '이프 회수');
 
-  expect(inside.queryByRole('spinbutton', { name: '유효기간(일)' })).toBeNull();
-  fireEvent.change(inside.getByRole('spinbutton', { name: '금액(이프)' }), {
+  expect(
+    inside.queryByRole('spinbutton', { name: '유효기간 (일)' }),
+  ).toBeNull();
+  fireEvent.change(inside.getByRole('spinbutton', { name: '금액 (이프)' }), {
     target: { value: '10000' },
   });
   expect(inside.getByText(/회수를 요청합니다/).textContent).toBe(
@@ -276,7 +278,7 @@ it('실패한 지급의 재시도는 같은 멱등 키를 쓰고 금액을 바�
   draw();
 
   const { inside } = await openDialog('이프 지급', '이프 지급');
-  const amount = inside.getByRole('spinbutton', { name: '금액(이프)' });
+  const amount = inside.getByRole('spinbutton', { name: '금액 (이프)' });
 
   fireEvent.change(amount, { target: { value: '100' } });
   fireEvent.change(inside.getByRole('textbox', { name: '처리 사유' }), {

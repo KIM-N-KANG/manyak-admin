@@ -223,7 +223,7 @@ export function MemberActions({ member }: { member: MemberDetail }) {
             : action === 'REVOKE'
               ? `${member.nickname} 회원의 이프를 회수합니다. 현재 잔액은 ${ifs(member.creditBalance)}이고, 잔액보다 큰 금액은 잔액만큼만 회수됩니다.`
               : action === 'SUSPEND'
-                ? `${member.nickname} 회원의 계정을 정지합니다. 정지된 회원은 로그인과 조회만 할 수 있고 제작과 채팅 같은 쓰기 요청이 막힙니다. 처리 사유는 감사 로그에만 남고 회원에게 보이지 않습니다.`
+                ? `${member.nickname} 회원의 계정을 정지합니다. 정지된 회원은 제작, 채팅, 프로필 수정 같은 서비스 이용이 막힙니다. 처리 사유는 감사 로그에만 남고 회원에게 보이지 않습니다.`
                 : `${member.nickname} 회원의 계정 정지를 해제합니다. 해제하면 다시 제작과 채팅을 할 수 있습니다.`
         }
         reason={reason}
@@ -249,7 +249,7 @@ export function MemberActions({ member }: { member: MemberDetail }) {
         {adjusting ? (
           <>
             <label className={fieldClass}>
-              금액(이프)
+              금액 (이프)
               <input
                 ref={amountInput}
                 className="control"
@@ -273,7 +273,7 @@ export function MemberActions({ member }: { member: MemberDetail }) {
             {action === 'GRANT' ? (
               <>
                 <label className={fieldClass}>
-                  유효기간(일)
+                  유효기간 (일)
                   <input
                     className="control"
                     type="number"
