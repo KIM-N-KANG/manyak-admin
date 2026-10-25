@@ -5,6 +5,7 @@ import type {
   NotificationKind,
   TargetCount,
   Template,
+  TemplateKey,
 } from '@/features/notifications/types';
 import { notificationTypes } from '@/features/notifications/types';
 import { stories } from '@/fixtures/entities';
@@ -21,7 +22,7 @@ import { kstDate, validateOptions, validatePeriod } from '@/fixtures/query';
 const shared = globalThis as typeof globalThis & {
   manyakNotificationFixtures?: {
     campaigns: Map<string, Campaign>;
-    overrides: Template['overrides'];
+    overrides: Partial<Record<TemplateKey, Template['overrides']>>;
   };
 };
 
@@ -68,7 +69,7 @@ function store() {
         ];
       }),
     ),
-    overrides: [],
+    overrides: {},
   });
 }
 
@@ -213,12 +214,18 @@ export function targetCount(kind: string | null): TargetCount {
 }
 
 const defaultCopy = {
-  title: '이프 250이 도착했어요',
-  body: '출석하고 받아 가세요. 오늘은 어떤 스토리를 시작해 볼까요?',
+  attendance_reminder: {
+    title: '이프 250이 도착했어요',
+    body: '출석하고 받아 가세요. 오늘은 어떤 스토리를 시작해 볼까요?',
+  },
+  credit_expiry_reminder: {
+    title: '이프 소멸 예정 안내',
+    body: '곧 소멸되는 이프가 있어요',
+  },
 };
 
-function checkTemplate(key: string) {
-  if (key !== 'attendance_reminder')
+function checkTemplate(key: string): asserts key is TemplateKey {
+  if (!Object.hasOwn(defaultCopy, key))
     throw new FixtureError(404, '문구 템플릿을 찾을 수 없습니다.');
 }
 
@@ -226,8 +233,8 @@ export function getTemplate(key: string): Template {
   checkTemplate(key);
 
   const now = Date.now();
-  const overrides = store()
-    .overrides.map((i) => ({
+  const overrides = (store().overrides[key] ?? [])
+    .map((i) => ({
       ...i,
       active:
         Date.parse(i.effectiveFrom) <= now &&
@@ -240,7 +247,7 @@ export function getTemplate(key: string): Template {
     templateKey: key,
     effective: active
       ? { title: active.title, body: active.body, isDefault: false }
-      : { ...defaultCopy, isDefault: true },
+      : { ...defaultCopy[key], isDefault: true },
     overrides,
   };
 }
@@ -260,7 +267,7 @@ export function updateTemplate(key: string, body: Record<string, unknown>) {
   if (effectiveUntil && effectiveUntil <= effectiveFrom)
     throw new Error('종료 시각은 시작 시각 이후여야 합니다.');
 
-  store().overrides.unshift({
+  (store().overrides[key] ??= []).unshift({
     title: textField(body, 'title', 100),
     body: textField(body, 'body', 300),
     effectiveFrom,
@@ -276,7 +283,7 @@ export function resetTemplate(key: string, body: Record<string, unknown>) {
 
   const now = new Date().toISOString();
 
-  store().overrides.forEach((i) => {
+  (store().overrides[key] ?? []).forEach((i) => {
     if (!i.effectiveUntil || i.effectiveUntil > now)
       i.effectiveUntil = i.effectiveFrom > now ? i.effectiveFrom : now;
   });

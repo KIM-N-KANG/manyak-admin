@@ -695,6 +695,7 @@ export const adminOperations = [
             'STORY_COMPLETED',
             'STORY_MODERATION_COMPLETED',
             'ATTENDANCE_REMINDER',
+            'CREDIT_EXPIRY_REMINDER',
             'PROMOTION',
             'NOTICE',
           ],
