@@ -64,7 +64,9 @@ function errorMessage(action: Action, failure: unknown) {
 export function MemberActions({ member }: { member: MemberDetail }) {
   // 조회를 모의한 상세 화면 테스트처럼 공급자가 없어도 버튼을 그릴 수 있게 문맥을 직접 읽는다.
   const client = useContext(QueryClientContext);
+  // 닫힘 애니메이션 동안에도 마지막 조치의 문구를 그리도록 열림 여부를 따로 둔다.
   const [action, setAction] = useState<Action | null>(null);
+  const [visible, setVisible] = useState(false);
   const [amount, setAmount] = useState('');
   const [days, setDays] = useState('');
   const [reason, setReason] = useState('');
@@ -93,6 +95,7 @@ export function MemberActions({ member }: { member: MemberDetail }) {
   function open(next: Action, element: HTMLElement) {
     trigger.current = element;
     setAction(next);
+    setVisible(true);
     setAmount('');
     setDays('');
     setReason('');
@@ -101,7 +104,7 @@ export function MemberActions({ member }: { member: MemberDetail }) {
   }
 
   function close() {
-    setAction(null);
+    setVisible(false);
     setError('');
   }
 
@@ -112,7 +115,7 @@ export function MemberActions({ member }: { member: MemberDetail }) {
   }
 
   async function confirm() {
-    if (!action || pending) return;
+    if (!visible || !action || pending) return;
 
     const current = action;
 
@@ -215,7 +218,7 @@ export function MemberActions({ member }: { member: MemberDetail }) {
         </p>
       ) : null}
       <ReasonDialog
-        open={action !== null}
+        open={visible}
         title={action ? titles[action] : ''}
         description={
           action === 'GRANT'

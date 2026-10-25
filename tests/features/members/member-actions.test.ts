@@ -408,3 +408,14 @@ it('처리 중에는 입력과 버튼이 비활성이고 Esc로 닫히지 않는
   );
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 });
+
+it('지급 대화상자는 닫히는 동안에도 지급 문구를 유지한다', async () => {
+  draw();
+
+  const { dialog, inside } = await openDialog('이프 지급', '이프 지급');
+
+  fireEvent.click(inside.getByRole('button', { name: '취소' }));
+  expect(dialog.textContent).toContain('이프 지급');
+  expect(dialog.textContent).not.toContain('해제');
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+});
