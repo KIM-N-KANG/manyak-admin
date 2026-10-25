@@ -169,3 +169,10 @@ it('미리보기 닉네임과 고정 데이터 표시를 노출하고 로그아�
   expect(screen.getByText('고정 데이터 미리보기')).toBeTruthy();
   expect(screen.queryByRole('button', { name: '로그아웃' })).toBeNull();
 });
+
+it('사이드바 하단에 빌드 시점 버전 표시를 노출한다', () => {
+  vi.stubEnv('APP_VERSION_LABEL', 'v0.7.0 · abc1234');
+  render(createElement(AdminShell, { nickname: '운영자 이름' }, '내용'));
+  expect(screen.getByText('v0.7.0 · abc1234')).toBeTruthy();
+  vi.unstubAllEnvs();
+});
