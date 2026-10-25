@@ -1,31 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
-import { Dialog } from '@base-ui/react/dialog';
 import { useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
 
 import { customInstance, FetchError } from '@/api/mutator/custom-instance';
-import { Button } from '@/components/ui/button';
-
-const reasonSchema = z.string().trim().min(1).max(500);
-
-export function SuccessNotice() {
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(false), 4000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  return visible ? (
-    <p role="status" className="mb-4 text-sm text-primary-text">
-      보류를 해제했습니다.
-    </p>
-  ) : null;
-}
+import { ReasonDialog, reasonSchema } from '@/components/admin/reason-dialog';
 
 export function useSubmissionRelease() {
   const client = useQueryClient();
@@ -35,7 +15,6 @@ export function useSubmissionRelease() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(0);
   const trigger = useRef<HTMLElement | null>(null);
-  const input = useRef<HTMLTextAreaElement | null>(null);
   const valid = reasonSchema.safeParse(reason).success;
 
   const refresh = async (id: string, missing = false) => {
@@ -110,66 +89,18 @@ export function useSubmissionRelease() {
   }
 
   const dialog = (
-    <Dialog.Root
+    <ReasonDialog
       open={selected !== null}
-      onOpenChange={(open, details) => {
-        if (pending) {
-          details.cancel();
-
-          return;
-        }
-
-        if (!open) close();
-      }}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-40 bg-foreground/30" />
-        <Dialog.Popup
-          initialFocus={input}
-          finalFocus={trigger}
-          className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-3rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md border bg-card p-6 shadow-lg">
-          <Dialog.Title className="text-xl font-semibold">
-            보류 해제
-          </Dialog.Title>
-          <Dialog.Description className="mt-4 text-sm leading-6 text-muted-foreground">
-            이 제출본을 대기로 돌려 다음 검수에서 새 회차로 다시 검수합니다.
-            재시도 예산도 처음으로 돌아갑니다.
-          </Dialog.Description>
-          <label className="mt-5 flex flex-col gap-2 text-sm">
-            처리 사유
-            <textarea
-              ref={input}
-              className="control min-h-24"
-              value={reason}
-              disabled={pending}
-              maxLength={500}
-              aria-invalid={Boolean(error) || (reason.length > 0 && !valid)}
-              aria-describedby={
-                error || (reason.length > 0 && !valid)
-                  ? 'release-error'
-                  : undefined
-              }
-              onChange={(event) => setReason(event.target.value)}
-            />
-          </label>
-          {error || (reason.length > 0 && !valid) ? (
-            <p
-              id="release-error"
-              role="alert"
-              className="mt-2 text-sm text-destructive">
-              {error || '처리 사유를 입력해 주세요.'}
-            </p>
-          ) : null}
-          <div className="mt-6 flex justify-end gap-2">
-            <Button variant="outline" disabled={pending} onClick={close}>
-              취소
-            </Button>
-            <Button disabled={!valid || pending} onClick={confirm}>
-              {pending ? '처리 중…' : '확인'}
-            </Button>
-          </div>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+      title="보류 해제"
+      description="이 제출본을 대기로 돌려 다음 검수에서 새 회차로 다시 검수합니다. 재시도 예산도 처음으로 돌아갑니다."
+      reason={reason}
+      onReasonChange={setReason}
+      pending={pending}
+      error={error}
+      finalFocus={trigger}
+      onClose={close}
+      onConfirm={confirm}
+    />
   );
 
   return {
