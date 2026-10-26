@@ -212,6 +212,87 @@ it.each([
   },
 );
 
+it.each([
+  ['stories', 'memberId', members[1].memberId, 'include'],
+  ['chats', 'storyId', stories[1].storyId, 'only'],
+] as const)(
+  '%s 범위 목록: %s=%s를 유지하며 제외에서 %s로 바꿔도 함께 열린 다른 목록 요청은 그대로다',
+  async (kind, scopeKey, id, value) => {
+    nav.pathname =
+      scopeKey === 'memberId' ? `/members/${id}` : `/stories/${id}`;
+    nav.search = 'storiesPage=3&chatsPage=2';
+
+    const otherKind = kind === 'stories' ? 'chats' : 'stories';
+    const label = kind === 'stories' ? '삭제된 스토리' : '삭제된 채팅';
+    const otherLabel = kind === 'stories' ? '삭제된 채팅' : '삭제된 스토리';
+    const requestsFor = (domain: string) =>
+      requested.filter((url) => url.pathname === `/api/${domain}`);
+    const node = () =>
+      wrap(
+        createElement(
+          'div',
+          null,
+          createElement(RelatedList, { kind, scope: { [scopeKey]: id } }),
+          createElement(RelatedList, {
+            kind: otherKind,
+            scope: { memberId: members[1].memberId },
+          }),
+        ),
+      );
+    const view = render(node());
+
+    for (const name of [label, otherLabel])
+      expect(
+        (screen.getByRole('combobox', { name }) as HTMLSelectElement).value,
+      ).toBe('');
+
+    await waitFor(() => {
+      expect(requestsFor(kind)).toHaveLength(1);
+      expect(requestsFor(otherKind)).toHaveLength(1);
+    });
+    expect(requestsFor(kind)[0].searchParams.has('deleted')).toBe(false);
+    expect(requestsFor(otherKind)[0].searchParams.has('deleted')).toBe(false);
+
+    const otherRequests = requestsFor(otherKind).map((url) => url.href);
+
+    fireEvent.change(screen.getByRole('combobox', { name: label }), {
+      target: { value },
+    });
+    expect(pushed().searchParams.get(`${kind}Deleted`)).toBe(value);
+    expect(pushed().searchParams.get(`${kind}Page`)).toBe('1');
+    expect(pushed().searchParams.get(`${otherKind}Page`)).toBe(
+      otherKind === 'stories' ? '3' : '2',
+    );
+    expect(pushed().searchParams.has(`${otherKind}Deleted`)).toBe(false);
+    nav.search = pushed().search.slice(1);
+    view.rerender(node());
+
+    await waitFor(() => {
+      expect(requestsFor(kind)).toHaveLength(2);
+      expect(requestsFor(kind).at(-1)!.searchParams.get('deleted')).toBe(value);
+    });
+
+    const params = requestsFor(kind).at(-1)!.searchParams;
+
+    expect(Object.fromEntries(params)).toEqual({
+      [scopeKey]: id,
+      page: '1',
+      deleted: value,
+    });
+    expect(
+      (screen.getByRole('combobox', { name: label }) as HTMLSelectElement)
+        .value,
+    ).toBe(value);
+    expect(
+      (screen.getByRole('combobox', { name: otherLabel }) as HTMLSelectElement)
+        .value,
+    ).toBe('');
+    expect(requestsFor(otherKind).map((url) => url.href)).toEqual(
+      otherRequests,
+    );
+  },
+);
+
 it.each(['stories', 'chats'] as const)(
   '%s 목록은 삭제된 행의 상세 링크 옆에만 배지를 둔다',
   async (domain) => {

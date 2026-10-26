@@ -326,6 +326,29 @@ it('성공률은 0~100 트랙과 % 수치이며 95% 미만에만 경고 아이�
   expect(onSelect).toHaveBeenCalledWith(data.points[0]);
 });
 
+it.each([
+  ['채팅 시작', '/chats'],
+  ['턴', '/chats?sort=turnCount'],
+  ['스토리', '/stories'],
+])(
+  '%s 콘텐츠 요약 카드는 deleted 없이 관련 목록으로 연결한다',
+  (label, href) => {
+    render(createElement(DashboardScreen));
+
+    const summary = screen.getByRole('region', { name: '요약 지표' });
+    const link = within(summary).getByRole('link', {
+      name: new RegExp(`^${label}`),
+    });
+
+    expect(link.getAttribute('href')).toBe(href);
+    expect(
+      new URL(link.getAttribute('href')!, 'http://localhost').searchParams.has(
+        'deleted',
+      ),
+    ).toBe(false);
+  },
+);
+
 it('요약 카드에는 차트를 넣지 않고 바로 아래의 기존 일별 차트로 추이를 통합한다', () => {
   const { container } = render(createElement(DashboardScreen));
   const summary = screen.getByRole('region', { name: '요약 지표' });
