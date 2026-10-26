@@ -31,6 +31,7 @@ type Filter = {
   key: string;
   label: string;
   options?: [string, string][];
+  emptyLabel?: string;
   type?: 'date' | 'search' | 'text';
   placeholder?: string;
 };
@@ -136,6 +137,15 @@ const configs: Record<Domain, { title: string; filters: Filter[] }> = {
           ['PRIVATE', '비공개'],
         ],
       },
+      {
+        key: 'deleted',
+        label: '삭제된 스토리',
+        emptyLabel: '제외',
+        options: [
+          ['include', '포함'],
+          ['only', '삭제된 스토리만'],
+        ],
+      },
       ...dates,
     ],
   },
@@ -187,6 +197,15 @@ const configs: Record<Domain, { title: string; filters: Filter[] }> = {
         type: 'text',
         placeholder: '회원 공개 식별자',
       },
+      {
+        key: 'deleted',
+        label: '삭제된 채팅',
+        emptyLabel: '제외',
+        options: [
+          ['include', '포함'],
+          ['only', '삭제된 채팅만'],
+        ],
+      },
       ...dates,
     ],
   },
@@ -236,6 +255,11 @@ export function StoryRows({ items }: { items: Story[] }) {
     <tr key={s.storyId}>
       <td>
         <TextLink href={`/stories/${s.storyId}`}>{s.title}</TextLink>
+        {s.deletedAt ? (
+          <span className="ml-2">
+            <Status value="삭제됨" />
+          </span>
+        ) : null}
       </td>
       <td>
         {s.genre} ·{' '}
@@ -265,6 +289,11 @@ export function ChatRows({ items }: { items: ChatRoom[] }) {
     <tr key={c.chatId}>
       <td>
         <TextLink href={`/chats/${c.chatId}`}>{c.chatId.slice(-8)}</TextLink>
+        {c.deletedAt ? (
+          <span className="ml-2">
+            <Status value="삭제됨" />
+          </span>
+        ) : null}
       </td>
       <td>
         <TextLink href={`/stories/${c.story.storyId}`}>
@@ -328,10 +357,31 @@ export function RelatedList({
   kind: 'stories' | 'chats' | 'payments';
   scope: Record<string, string>;
 }) {
-  const { query, sort, order, changeSort, href } = usePagedList(kind, scope);
+  const { query, sort, order, deleted, changeSort, changeDeleted, href } =
+    usePagedList(kind, scope);
+  const filter =
+    kind === 'payments'
+      ? null
+      : configs[kind].filters.find((f) => f.key === 'deleted')!;
 
   return (
     <>
+      {filter ? (
+        <label className="mb-4 flex w-fit min-w-32 flex-col gap-2 text-xs text-muted-foreground">
+          {filter.label}
+          <select
+            value={deleted}
+            onChange={(event) => changeDeleted(event.target.value)}
+            className="control">
+            <option value="">{filter.emptyLabel}</option>
+            {filter.options!.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <QueryState
         skeleton={<TableSkeleton columns={headers[kind].length} />}
         pending={query.isPending}
@@ -365,7 +415,8 @@ export function RelatedList({
 export function ListScreen({ domain }: { domain: Domain }) {
   const params = useSearchParams();
   const config = configs[domain];
-  const { query, sort, order, changeSort, href } = usePagedList(domain);
+  const { query, sort, order, deleted, changeSort, href } =
+    usePagedList(domain);
 
   const extras = [...params.entries()].filter(
     ([key]) =>
@@ -435,9 +486,11 @@ export function ListScreen({ domain }: { domain: Domain }) {
             {f.options ? (
               <select
                 name={f.key}
-                defaultValue={params.get(f.key) ?? ''}
+                defaultValue={
+                  f.key === 'deleted' ? deleted : (params.get(f.key) ?? '')
+                }
                 className="control">
-                <option value="">전체</option>
+                <option value="">{f.emptyLabel ?? '전체'}</option>
                 {f.options.map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}

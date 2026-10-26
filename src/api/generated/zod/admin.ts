@@ -528,6 +528,10 @@ export const StoriesQueryParams = zod.object({
     chatTo: zod.string().nullish(),
     creationFrom: zod.string().nullish(),
     creationTo: zod.string().nullish(),
+    deleted: zod
+      .enum(['include', 'only'])
+      .optional()
+      .describe('생략 시 삭제 제외, include는 포함, only는 삭제된 행만'),
   }),
 });
 
@@ -1117,6 +1121,10 @@ export const ChatsQueryParams = zod.object({
       .nullish(),
     hasFirstMessage: zod.boolean().nullish(),
     turnDate: zod.string().nullish(),
+    deleted: zod
+      .enum(['include', 'only'])
+      .optional()
+      .describe('생략 시 삭제 제외, include는 포함, only는 삭제된 행만'),
   }),
 });
 

@@ -569,6 +569,12 @@ export const adminOperations = [
             chatTo: { type: ['string', 'null'] },
             creationFrom: { type: ['string', 'null'] },
             creationTo: { type: ['string', 'null'] },
+            deleted: {
+              type: 'string',
+              enum: ['include', 'only'],
+              description:
+                '생략 시 삭제 제외, include는 포함, only는 삭제된 행만',
+            },
           },
         },
       },
@@ -1353,6 +1359,12 @@ export const adminOperations = [
             },
             hasFirstMessage: { type: ['boolean', 'null'] },
             turnDate: { type: ['string', 'null'] },
+            deleted: {
+              type: 'string',
+              enum: ['include', 'only'],
+              description:
+                '생략 시 삭제 제외, include는 포함, only는 삭제된 행만',
+            },
           },
         },
       },

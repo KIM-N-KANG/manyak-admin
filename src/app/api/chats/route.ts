@@ -1,6 +1,6 @@
 import { productionDataSourceError } from '@/api/data-source-guard';
 import { hasAiFilters, selectAiCalls, turnBounds } from '@/fixtures/cohorts';
-import { chats } from '@/fixtures/entities';
+import { chats, deletedChats } from '@/fixtures/entities';
 import {
   fixtureResponse,
   inPeriod,
@@ -25,37 +25,46 @@ export function GET(request: Request) {
       aiFeature: ['chat_response', 'choice_generation', 'chat_image'],
       aiStatus: ['SUCCEEDED', 'FAILED', 'STARTED', 'FINISHED'],
       hasLatency: ['true', 'false'],
+      deleted: ['include', 'only'],
     });
 
     const aiChatIds = hasAiFilters(q)
       ? new Set(selectAiCalls(q).map((call) => call.chatId))
       : null;
-    const filtered = chats.filter((c) => {
-      const bounds = q.has('turnBucket')
-        ? turnBounds[Number(q.get('turnBucket'))]
-        : null;
+    const filtered = [...chats, ...deletedChats]
+      .filter(
+        (row) =>
+          q.get('deleted') === 'include' ||
+          (q.get('deleted') === 'only'
+            ? row.deletedAt !== null
+            : row.deletedAt === null),
+      )
+      .filter((c) => {
+        const bounds = q.has('turnBucket')
+          ? turnBounds[Number(q.get('turnBucket'))]
+          : null;
 
-      return (
-        matchesSearch(
-          search,
-          [c.story.title, c.member?.nickname ?? ''],
-          [c.chatId],
-        ) &&
-        (!q.get('storyId') || c.story.storyId === q.get('storyId')) &&
-        (!q.get('memberId') || c.member?.memberId === q.get('memberId')) &&
-        (!q.get('startedAs') || c.startedAs === q.get('startedAs')) &&
-        (!bounds || (c.turnCount >= bounds[0] && c.turnCount <= bounds[1])) &&
-        (!q.get('hasFirstMessage') ||
-          (c.firstMessageSeconds !== null && c.firstMessageSeconds <= 900) ===
-            (q.get('hasFirstMessage') === 'true')) &&
-        (!aiChatIds || aiChatIds.has(c.chatId)) &&
-        inPeriod(c.startedAt, q) &&
-        (!q.get('turnDate') ||
-          new Date(c.lastActiveAt).toLocaleDateString('sv-SE', {
-            timeZone: 'Asia/Seoul',
-          }) === q.get('turnDate'))
-      );
-    });
+        return (
+          matchesSearch(
+            search,
+            [c.story.title, c.member?.nickname ?? ''],
+            [c.chatId],
+          ) &&
+          (!q.get('storyId') || c.story.storyId === q.get('storyId')) &&
+          (!q.get('memberId') || c.member?.memberId === q.get('memberId')) &&
+          (!q.get('startedAs') || c.startedAs === q.get('startedAs')) &&
+          (!bounds || (c.turnCount >= bounds[0] && c.turnCount <= bounds[1])) &&
+          (!q.get('hasFirstMessage') ||
+            (c.firstMessageSeconds !== null && c.firstMessageSeconds <= 900) ===
+              (q.get('hasFirstMessage') === 'true')) &&
+          (!aiChatIds || aiChatIds.has(c.chatId)) &&
+          inPeriod(c.startedAt, q) &&
+          (!q.get('turnDate') ||
+            new Date(c.lastActiveAt).toLocaleDateString('sv-SE', {
+              timeZone: 'Asia/Seoul',
+            }) === q.get('turnDate'))
+        );
+      });
 
     const sorted = sortList(filtered, q, 'chats', (item) => item.chatId);
 
