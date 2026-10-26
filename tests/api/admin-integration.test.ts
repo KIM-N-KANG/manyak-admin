@@ -11,6 +11,18 @@ const cookie = `${sessionCookie}=${Buffer.from(JSON.stringify({ accessToken: 'fo
 const reason = { reason: '테스트 사유' };
 const presign = { kind: 'COVER', contentType: 'image/png', contentLength: 32 };
 const cases: [string, string, string, unknown?][] = [
+  ['GET', '/stories?deleted=include', '/stories?deleted=include'],
+  [
+    'GET',
+    `/stories?memberId=${id}&deleted=only`,
+    `/stories?memberId=${id}&deleted=only`,
+  ],
+  ['GET', '/chats?deleted=only', '/chats?deleted=only'],
+  [
+    'GET',
+    `/chats?storyId=${id}&deleted=include`,
+    `/chats?storyId=${id}&deleted=include`,
+  ],
   [
     'GET',
     `/moderation/submissions?page=1&size=20&sort=decidedAt&order=desc&status=HELD&memberId=${id}&storyId=${id}&q=test&from=2026-10-01&to=2026-10-21`,
@@ -1175,4 +1187,17 @@ it('AI 비용의 보관 만료·null 받은 시각·서버 원가를 재계산 �
       await invoke('GET', '/quality/ai-cost?from=2026-10-21&to=2026-10-23')
     ).json(),
   ).toEqual(data);
+});
+
+it.each([
+  '/stories?deleted=all',
+  '/stories?deleted=exclude',
+  '/chats?deleted=INCLUDE',
+  '/chats?deleted=exclude',
+])('%s의 잘못된 삭제 필터는 업스트림 전에 거부한다', async (path) => {
+  const fetchMock = vi.fn();
+
+  vi.stubGlobal('fetch', fetchMock);
+  expect((await invoke('GET', path)).status).toBe(400);
+  expect(fetchMock).not.toHaveBeenCalled();
 });

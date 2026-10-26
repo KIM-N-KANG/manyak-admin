@@ -1,5 +1,5 @@
 import type { StorySettings } from '@/features/stories/types';
-import { stories } from '@/fixtures/entities';
+import { deletedStories, stories } from '@/fixtures/entities';
 
 function id(index: number, item: number) {
   return `00000009-0000-4000-8000-${String(index * 100 + item + 1).padStart(12, '0')}`;
@@ -124,11 +124,12 @@ function userEmpty(index: number): Partial<StorySettings> {
 }
 
 export function getStorySettings(storyId: string): StorySettings | null {
-  const index = stories.findIndex((s) => s.storyId === storyId);
+  const all = [...stories, ...deletedStories];
+  const index = all.findIndex((s) => s.storyId === storyId);
 
   if (index < 0) return null;
 
-  const story = stories[index];
+  const story = all[index];
   const variant =
     story.scope === 'original'
       ? original(index)
@@ -137,6 +138,7 @@ export function getStorySettings(storyId: string): StorySettings | null {
         : userEmpty(index);
 
   return {
+    deletedAt: story.deletedAt,
     title: story.title,
     oneLineIntro:
       '기억을 잃은 마법사 {username}이 금지된 숲에서 과거를 추적한다',

@@ -22,11 +22,15 @@ export function usePagedList(
   const apiParams = new URLSearchParams(scope ?? params);
 
   if (scope)
-    for (const name of ['page', 'size', 'sort', 'order']) {
+    for (const name of ['page', 'size', 'sort', 'order', 'deleted']) {
       const value = params.get(key(name));
 
       if (value !== null) apiParams.set(name, value);
     }
+
+  // 삭제 필터의 제외와 알 수 없는 값은 요청에 싣지 않는다.
+  if (!['include', 'only'].includes(apiParams.get('deleted') ?? ''))
+    apiParams.delete('deleted');
 
   const query = useApi<Page<Story | MemberListItem | PaymentOrder | ChatRoom>>(
     `/api/${domain}?${apiParams}`,
@@ -56,5 +60,23 @@ export function usePagedList(
     router.push(`${pathname}?${next}`);
   }
 
-  return { query, sort, order, changeSort, href };
+  function changeDeleted(value: string) {
+    const next = new URLSearchParams(params);
+
+    if (value) next.set(key('deleted'), value);
+    else next.delete(key('deleted'));
+
+    next.set(key('page'), '1');
+    router.push(`${pathname}?${next}`, { scroll: false });
+  }
+
+  return {
+    query,
+    sort,
+    order,
+    deleted: apiParams.get('deleted') ?? '',
+    changeSort,
+    changeDeleted,
+    href,
+  };
 }

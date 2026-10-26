@@ -31,6 +31,13 @@ import { StorySettingsSection } from '@/features/stories/story-settings';
 import type { StoryDetail } from '@/features/stories/types';
 import { externalLinks } from '@/lib/external-links';
 
+// 상세 머리의 삭제 시각을 KST의 날짜와 시분(2026-10-25 12:10)으로 보인다.
+const kstMinute = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'Asia/Seoul',
+  dateStyle: 'short',
+  timeStyle: 'short',
+});
+
 function StoryContent({ story: s }: { story: StoryDetail }) {
   return (
     <>
@@ -335,6 +342,10 @@ export function DetailScreen({
     `/api/${domain}/${encodeURIComponent(id)}`,
   );
   const d = query.data;
+  const deletedAt =
+    d && (domain === 'stories' || domain === 'chats')
+      ? (d as StoryDetail | ChatRoom).deletedAt
+      : null;
   const titles = {
     stories: '스토리',
     members: '회원',
@@ -358,6 +369,17 @@ export function DetailScreen({
                 ? d.nickname
                 : `${titles[domain]} 상세`
             : `${titles[domain]} 상세`
+        }
+        help={
+          deletedAt ? (
+            <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <Status value="삭제됨" />
+              <span>삭제 시각 (KST)</span>
+              <span className="font-mono">
+                {kstMinute.format(new Date(deletedAt))}
+              </span>
+            </span>
+          ) : undefined
         }>
         {domain === 'payments' && (
           <ExternalToolLink href={externalLinks.groble}>
