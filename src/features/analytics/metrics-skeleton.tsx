@@ -45,8 +45,8 @@ export function MetricsSkeleton({ tab }: { tab: string }) {
   if (tab === 'retention')
     return (
       <>
-        <SummarySkeleton count={3} />
-        <TableSkeleton columns={5} rows={10} pagination={false} />
+        <SummarySkeleton count={8} />
+        <TableSkeleton columns={10} rows={10} pagination={false} />
       </>
     );
 

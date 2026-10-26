@@ -171,7 +171,9 @@ export function UserContent({
     return (
       <>
         <SummaryCards
-          items={(['d1', 'd7', 'd30'] as const).map((key) => ({
+          items={(
+            ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd30'] as const
+          ).map((key) => ({
             label: `${key.toUpperCase()} 가중 평균`,
             value: percent(selected.summary[key], '관찰 전'),
           }))}
@@ -185,7 +187,18 @@ export function UserContent({
           </div>
           <div className="max-h-[560px] overflow-auto">
             <DataTable
-              headers={['신규 방문일', '신규 방문자 수', 'D1', 'D7', 'D30']}>
+              headers={[
+                '신규 방문일',
+                '신규 방문자 수',
+                'D1',
+                'D2',
+                'D3',
+                'D4',
+                'D5',
+                'D6',
+                'D7',
+                'D30',
+              ]}>
               {chartDates(d.from, d.to).map((date) => {
                 const row = byDate.get(date);
 
@@ -193,7 +206,9 @@ export function UserContent({
                   <tr key={date}>
                     <td>{date}</td>
                     <td>{row ? n(row.users, '명') : '준비 중'}</td>
-                    {(['d1', 'd7', 'd30'] as const).map((key) => (
+                    {(
+                      ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd30'] as const
+                    ).map((key) => (
                       <td
                         key={key}
                         style={
@@ -212,11 +227,27 @@ export function UserContent({
             </DataTable>
           </div>
           <NumericTable
-            headers={['신규 방문일', '신규 방문자 수', 'D1', 'D7', 'D30']}
+            headers={[
+              '신규 방문일',
+              '신규 방문자 수',
+              'D1',
+              'D2',
+              'D3',
+              'D4',
+              'D5',
+              'D6',
+              'D7',
+              'D30',
+            ]}
             rows={selected.cohorts.map((row) => [
               row.date,
               n(row.users, '명'),
               percent(row.d1, '관찰 전'),
+              percent(row.d2, '관찰 전'),
+              percent(row.d3, '관찰 전'),
+              percent(row.d4, '관찰 전'),
+              percent(row.d5, '관찰 전'),
+              percent(row.d6, '관찰 전'),
               percent(row.d7, '관찰 전'),
               percent(row.d30, '관찰 전'),
             ])}
