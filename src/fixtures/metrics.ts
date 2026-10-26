@@ -198,13 +198,42 @@ export function metricFixture(path: string, query: URLSearchParams) {
       pendingDates,
       platforms: ['all', 'web', 'android'].map((name, j) => ({
         platform: name,
-        summary: { d1: 0.25 + j * 0.03, d7: 0.12, d30: null },
+        summary: {
+          d1: 0.25 + j * 0.03,
+          d2: 0.23,
+          d3: 0.21,
+          d4: 0.19,
+          d5: 0.17,
+          d6: 0.15,
+          d7: 0.12,
+          d30: null,
+        },
         cohorts: ready.map((date, i) => ({
           date,
           users: 50 + i,
           d1:
             Date.parse(date) < Date.parse(kstToday()) - 86400000
               ? 0.22 + i * 0.01
+              : null,
+          d2:
+            Date.parse(date) < Date.parse(kstToday()) - 2 * 86400000
+              ? 0.19
+              : null,
+          d3:
+            Date.parse(date) < Date.parse(kstToday()) - 3 * 86400000
+              ? 0.175
+              : null,
+          d4:
+            Date.parse(date) < Date.parse(kstToday()) - 4 * 86400000
+              ? 0.16
+              : null,
+          d5:
+            Date.parse(date) < Date.parse(kstToday()) - 5 * 86400000
+              ? 0.145
+              : null,
+          d6:
+            Date.parse(date) < Date.parse(kstToday()) - 6 * 86400000
+              ? 0.13
               : null,
           d7:
             Date.parse(date) < Date.parse(kstToday()) - 7 * 86400000

@@ -3743,6 +3743,26 @@
             "type": ["number", "null"],
             "format": "double"
           },
+          "d2": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "d3": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "d4": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "d5": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "d6": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
           "d7": {
             "type": ["number", "null"],
             "format": "double"
@@ -3757,6 +3777,26 @@
         "type": "object",
         "properties": {
           "d1": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "d2": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "d3": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "d4": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "d5": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "d6": {
             "type": ["number", "null"],
             "format": "double"
           },
@@ -7295,6 +7335,15 @@
       "AdminStoryDetailResponse",
       "AdminChatResponse",
       "AdminStorySettingsResponse"
-    ]
+    ],
+    "retention": {
+      "issue": "KNK-1857",
+      "serverDependency": "KNK-1858",
+      "specRevision": "be70a95",
+      "receivedAt": "2026-10-26T08:10:44.068497+00:00",
+      "input": "knk-harness@be70a95:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-26",
+      "description": "미배포 리텐션 계약의 d2~d6을 코호트와 요약에 추가한다. 서버 선행 배포 후 실제 OpenAPI로 다시 추출한다.",
+      "schemas": ["RetentionCohort", "RetentionRates"]
+    }
   }
 }

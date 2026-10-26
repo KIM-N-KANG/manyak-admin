@@ -17,14 +17,17 @@ import {
   InfraServices,
   InfraStorage,
 } from '@/features/analytics/infra/content';
+import { MetricsSkeleton } from '@/features/analytics/metrics-skeleton';
 import { featureColor, modelSeries } from '@/features/analytics/series';
 import {
   ConversionContent,
   QualityContent,
+  UserContent,
 } from '@/features/analytics/tab-content';
 import { TURN_THRESHOLDS } from '@/features/analytics/turn-thresholds';
 import type {
   AiCostResponse,
+  RetentionResponse,
   TurnReachResponse,
 } from '@/features/analytics/types';
 import { getStoryDetail, stories } from '@/fixtures/entities';
@@ -38,6 +41,120 @@ vi.mock('next/navigation', () => ({
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+});
+
+it.each(['all', 'web', 'android'])(
+  '리텐션 %s는 요약 카드 8개와 두 표의 D1~D7·D30 순서, 서버 요약과 관찰 전을 유지한다',
+  (platform) => {
+    const data: RetentionResponse = {
+      asOf: '2026-10-23T03:00:00Z',
+      from: '2026-10-01',
+      to: '2026-10-01',
+      pendingDates: [],
+      platforms: ['all', 'web', 'android'].map((name, i) => ({
+        platform: name,
+        summary: {
+          d1: 0.25 + i * 0.01,
+          d2: 0.24,
+          d3: 0.23,
+          d4: 0,
+          d5: null,
+          d6: 0.21,
+          d7: 0.2,
+          d30: null,
+        },
+        cohorts: [
+          {
+            date: '2026-10-01',
+            users: 20 + i,
+            d1: 0.1,
+            d2: 0.2,
+            d3: 0.3,
+            d4: 0,
+            d5: null,
+            d6: 0.6,
+            d7: 0.7,
+            d30: null,
+          },
+        ],
+      })),
+    };
+    const { container } = render(
+      createElement(UserContent, { tab: 'retention', data, platform }),
+    );
+    const labels = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D30'];
+    const headings = screen.getAllByRole('heading', { name: / 가중 평균$/ });
+
+    expect(headings.map((node) => node.textContent)).toEqual(
+      labels.map((label) => `${label} 가중 평균`),
+    );
+    expect(headings[0].parentElement!.parentElement!.className).toContain(
+      'xl:grid-cols-4',
+    );
+    expect(
+      headings.map((node) => node.nextElementSibling!.textContent),
+    ).toEqual([
+      `${25 + ['all', 'web', 'android'].indexOf(platform)}.0%`,
+      '24.0%',
+      '23.0%',
+      '0.0%',
+      '관찰 전',
+      '21.0%',
+      '20.0%',
+      '관찰 전',
+    ]);
+
+    const tables = screen.getAllByRole('table', { hidden: true });
+
+    expect(tables).toHaveLength(2);
+
+    for (const table of tables) {
+      expect(
+        within(table)
+          .getAllByRole('columnheader', { hidden: true })
+          .map((node) => node.textContent),
+      ).toEqual(['신규 방문일', '신규 방문자 수', ...labels]);
+
+      const cells = within(table).getAllByRole('cell', { hidden: true });
+
+      expect(cells.map((node) => node.textContent)).toEqual([
+        '2026-10-01',
+        `${20 + ['all', 'web', 'android'].indexOf(platform)}명`,
+        '10.0%',
+        '20.0%',
+        '30.0%',
+        '0.0%',
+        '관찰 전',
+        '60.0%',
+        '70.0%',
+        '관찰 전',
+      ]);
+      expect(table.parentElement!.className).toContain('overflow-x-auto');
+    }
+
+    const cells = within(tables[0]).getAllByRole('cell');
+
+    expect(cells[3].style.backgroundColor).toContain('9%');
+    expect(cells[7].style.backgroundColor).toContain('27%');
+    expect(cells[5].style.backgroundColor).toContain('0%');
+    expect(cells[6].style.backgroundColor).toBe('');
+    expect(cells[9].style.backgroundColor).toBe('');
+    expect(container.querySelector('details')!.hasAttribute('open')).toBe(
+      false,
+    );
+  },
+);
+
+it('리텐션 스켈레톤은 4열 요약 카드 8개와 코호트 표 10열을 예약한다', () => {
+  const { container } = render(
+    createElement(MetricsSkeleton, { tab: 'retention' }),
+  );
+  const table = container.querySelector('[data-loading-layout="table"]')!;
+  const summaries = table.previousElementSibling!;
+
+  expect(summaries.children).toHaveLength(8);
+  expect(summaries.className).toContain('xl:grid-cols-4');
+  expect(table.querySelector('[style]')!.children).toHaveLength(10);
 });
 
 const aiCostStates = [

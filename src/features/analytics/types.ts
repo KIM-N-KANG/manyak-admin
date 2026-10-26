@@ -103,6 +103,11 @@ export type ActivityResponse = {
 };
 export type RetentionRates = {
   d1: number | null;
+  d2: number | null;
+  d3: number | null;
+  d4: number | null;
+  d5: number | null;
+  d6: number | null;
   d7: number | null;
   d30: number | null;
 };
@@ -110,6 +115,11 @@ export type RetentionCohort = {
   date: string;
   users: number;
   d1: number | null;
+  d2: number | null;
+  d3: number | null;
+  d4: number | null;
+  d5: number | null;
+  d6: number | null;
   d7: number | null;
   d30: number | null;
 };
