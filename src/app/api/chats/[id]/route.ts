@@ -1,6 +1,6 @@
 import { bffError } from '@/api/bff-error';
 import { productionDataSourceError } from '@/api/data-source-guard';
-import { chats } from '@/fixtures/entities';
+import { chats, deletedChats } from '@/fixtures/entities';
 import { validId } from '@/fixtures/query';
 
 export async function GET(
@@ -21,7 +21,7 @@ export async function GET(
       'chatId',
     );
 
-  const entity = chats.find((x) => x.chatId === id);
+  const entity = [...chats, ...deletedChats].find((x) => x.chatId === id);
 
   if (!entity) return bffError(request, 404, '대상을 찾을 수 없습니다.');
 

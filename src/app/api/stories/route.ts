@@ -1,6 +1,11 @@
 import { productionDataSourceError } from '@/api/data-source-guard';
 import { hasAiFilters, selectAiCalls } from '@/fixtures/cohorts';
-import { chats, creationSessions, stories } from '@/fixtures/entities';
+import {
+  chats,
+  creationSessions,
+  deletedStories,
+  stories,
+} from '@/fixtures/entities';
 import {
   fixtureResponse,
   inPeriod,
@@ -27,6 +32,7 @@ export function GET(request: Request) {
       supportingCharacterCount: ['0', '1', '2', '3', '4', '5'],
       visibility: ['PUBLIC', 'PRIVATE'],
       moderationStatus: ['HELD', 'APPROVED'],
+      deleted: ['include', 'only'],
     });
 
     const scopedChats =
@@ -57,7 +63,14 @@ export function GET(request: Request) {
             .map((call) => call.storyId),
         )
       : null;
-    const filtered = stories
+    const filtered = [...stories, ...deletedStories]
+      .filter(
+        (row) =>
+          q.get('deleted') === 'include' ||
+          (q.get('deleted') === 'only'
+            ? row.deletedAt !== null
+            : row.deletedAt === null),
+      )
       .filter(
         (s) =>
           matchesSearch(

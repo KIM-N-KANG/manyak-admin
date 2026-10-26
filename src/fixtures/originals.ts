@@ -312,6 +312,7 @@ function syncStory(record: StoredOriginal) {
     chatCount: record.chatCount,
     totalTurns: record.totalTurns,
     createdAt: index >= 0 ? stories[index].createdAt : record.updatedAt,
+    deletedAt: null,
   };
 
   if (index >= 0) stories[index] = story;

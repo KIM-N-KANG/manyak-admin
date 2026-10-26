@@ -3932,6 +3932,11 @@
           },
           "creationTo": {
             "type": ["string", "null"]
+          },
+          "deleted": {
+            "type": "string",
+            "enum": ["include", "only"],
+            "description": "생략 시 삭제 제외, include는 포함, only는 삭제된 행만"
           }
         }
       },
@@ -4018,6 +4023,10 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "deletedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
           }
         }
       },
@@ -4089,6 +4098,10 @@
             "items": {
               "$ref": "#/components/schemas/AdminChatResponse"
             }
+          },
+          "deletedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
           }
         }
       },
@@ -4147,6 +4160,10 @@
           "firstMessageSeconds": {
             "type": ["integer", "null"],
             "format": "int64"
+          },
+          "deletedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
           }
         }
       },
@@ -4218,10 +4235,15 @@
             "items": {
               "$ref": "#/components/schemas/AdminStorySettingsCharacter"
             }
+          },
+          "deletedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
           }
         },
         "required": [
           "characters",
+          "deletedAt",
           "description",
           "genres",
           "mainEvents",
@@ -6521,6 +6543,11 @@
           },
           "turnDate": {
             "type": ["string", "null"]
+          },
+          "deleted": {
+            "type": "string",
+            "enum": ["include", "only"],
+            "description": "생략 시 삭제 제외, include는 포함, only는 삭제된 행만"
           }
         }
       },
@@ -7255,5 +7282,19 @@
         "bearerFormat": "JWT"
       }
     }
+  },
+  "x-contract-overlay": {
+    "issue": "KNK-1856",
+    "serverDependency": "KNK-1855",
+    "specRevision": "6cd5e3c",
+    "description": "미배포 ADMIN/BACKEND 4-2-5~4-2-9 계약: 목록 deleted 필터와 응답 deletedAt. 서버 배포 후 실제 OpenAPI로 다시 추출한다.",
+    "schemas": [
+      "AdminStoriesRequest",
+      "AdminChatsRequest",
+      "AdminStoryListResponse",
+      "AdminStoryDetailResponse",
+      "AdminChatResponse",
+      "AdminStorySettingsResponse"
+    ]
   }
 }

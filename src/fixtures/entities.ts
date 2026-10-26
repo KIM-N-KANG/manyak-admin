@@ -90,6 +90,7 @@ export const stories: Story[] = Array.from({ length: 36 }, (_, i) => ({
   chatCount: 126 + i * 19,
   totalTurns: 1200 + i * 147,
   createdAt: new Date(Date.UTC(2026, 9, 21 - (i % 20), 6)).toISOString(),
+  deletedAt: null,
 }));
 export const chats: ChatRoom[] = Array.from({ length: 8210 }, (_, i) => ({
   chatId: id(3, i),
@@ -105,7 +106,30 @@ export const chats: ChatRoom[] = Array.from({ length: 8210 }, (_, i) => ({
   lastActiveAt: new Date(Date.UTC(2026, 9, 21 - (i % 28), 7)).toISOString(),
   creditsSpent: ((i * 7) % 63) * 30,
   firstMessageSeconds: i % 7 === 0 ? null : 12 + i * 3,
+  deletedAt: null,
 }));
+// 대시보드 집계에 섞이지 않도록 삭제된 행은 목록과 상세 BFF만 싣는다.
+export const deletedStories: Story[] = [
+  {
+    ...stories[1],
+    storyId: id(5, 0),
+    title: '삭제된 여름 일기',
+    owner: memberSummary(members[1]),
+    chatCount: 0,
+    totalTurns: 0,
+    deletedAt: '2026-10-25T03:10:00Z',
+  },
+];
+export const deletedChats: ChatRoom[] = [stories[1], deletedStories[0]].map(
+  (story, i) => ({
+    ...chats[1],
+    chatId: id(6, i),
+    story: { storyId: story.storyId, title: story.title, genre: story.genre },
+    member: memberSummary(members[1]),
+    deletedAt: '2026-10-25T03:10:00Z',
+  }),
+);
+
 export const payments: PaymentDetail[] = Array.from({ length: 32 }, (_, i) => ({
   orderId: id(4, i),
   member: memberSummary(members[i % members.length]),
@@ -158,7 +182,9 @@ export const memberEmails = new Map(
 );
 
 export function getStoryDetail(storyId: string): StoryDetail | null {
-  const story = stories.find((s) => s.storyId === storyId);
+  const story = [...stories, ...deletedStories].find(
+    (s) => s.storyId === storyId,
+  );
 
   return story
     ? {

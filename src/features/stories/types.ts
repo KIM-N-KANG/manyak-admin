@@ -15,12 +15,14 @@ export type Story = {
   chatCount: number;
   totalTurns: number;
   createdAt: string;
+  deletedAt: string | null;
 };
 export type StoryDetail = Story & {
   retention: { turn: number; rate: number }[];
   recentChats: ChatRoom[];
 };
 export type StorySettings = {
+  deletedAt: string | null;
   title: string;
   oneLineIntro: string | null;
   description: string | null;
