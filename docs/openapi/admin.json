@@ -999,6 +999,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "segment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["all", "guest", "member"]
+            }
           }
         ],
         "responses": {
@@ -1246,6 +1255,15 @@
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "segment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["all", "guest", "member"]
             }
           }
         ],
@@ -3724,6 +3742,9 @@
               "type": "string",
               "format": "date"
             }
+          },
+          "segment": {
+            "type": "string"
           }
         }
       },
@@ -4573,6 +4594,9 @@
               "type": "string",
               "format": "date"
             }
+          },
+          "segment": {
+            "type": "string"
           }
         }
       },
@@ -7632,9 +7656,9 @@
     "platformSplit": {
       "issue": "KNK-1877",
       "serverDependency": "KNK-1876",
-      "specRevision": "3e277a1",
-      "input": "knk-harness@3e277a1:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-21,4-2-28,4-2-30,4-2-32",
-      "description": "미배포 계약: 신규 가입자 signups.other 제거와 플랫폼별 가입, 턴 도달률과 채팅 옵션 비중의 segment 쿼리와 플랫폼 값, 캠페인 추이 androidSignups. 서버 배포 후 실제 OpenAPI로 다시 추출한다.",
+      "specRevision": "3e277a1, 319a79c",
+      "input": "knk-harness@3e277a1:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-21,4-2-28,4-2-30,4-2-32, knk-harness@319a79c:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-27,4-2-31",
+      "description": "미배포 계약: 신규 가입자 signups.other 제거와 플랫폼별 가입, 턴 도달률과 채팅 옵션 비중의 segment 쿼리와 플랫폼 값, 캠페인 추이 androidSignups. 서버 배포 후 실제 OpenAPI로 다시 추출한다. 사용자 세션과 기능 사용의 segment 쿼리와 응답 segment도 포함한다.",
       "schemas": [
         "SignupResponse",
         "SignupDay",
@@ -7644,11 +7668,15 @@
         "ChatOptionResponse",
         "ChatOptionDay",
         "CampaignDay",
-        "CampaignTotals"
+        "CampaignTotals",
+        "SessionResponse",
+        "QualityResponse"
       ],
       "parameters": [
         "GET /api/v1/admin/conversion/turn-reach segment",
-        "GET /api/v1/admin/quality/chat-options segment"
+        "GET /api/v1/admin/quality/chat-options segment",
+        "GET /api/v1/admin/users/sessions segment",
+        "GET /api/v1/admin/quality/client segment"
       ]
     }
   }

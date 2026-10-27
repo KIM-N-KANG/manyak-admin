@@ -470,6 +470,7 @@ export const SessionsQueryParams = zod.object({
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
 });
 
 export const SessionsResponse = zod.unknown();
@@ -558,6 +559,7 @@ export const QualityQueryParams = zod.object({
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
 });
 
 export const QualityResponse = zod.unknown();

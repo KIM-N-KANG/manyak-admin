@@ -5,6 +5,7 @@ import { type ReactNode, type RefObject, useId, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { dateTime, PageHeading, QueryState } from '@/components/admin/data-ui';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
@@ -17,6 +18,7 @@ import {
   type AnalyticsScreenName,
   approximation,
   audiences,
+  audienceText,
   funnels,
   pick,
   platformOptions,
@@ -42,16 +44,26 @@ export function Select({
   value,
   options,
   onChange,
+  help,
 }: {
   label: string;
   value: string;
   options: readonly (readonly [string, string])[];
   onChange: (value: string) => void;
+  help?: string;
 }) {
+  const id = useId();
+
   return (
-    <label className="flex flex-col gap-2 text-xs text-muted-foreground">
-      {label}
+    <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+      <span className="flex items-center gap-1">
+        <label htmlFor={id}>{label}</label>
+        {help ? (
+          <HelpTooltip label={`${label} 도움말`}>{help}</HelpTooltip>
+        ) : null}
+      </span>
       <select
+        id={id}
         className="control"
         value={value}
         onChange={(event) => onChange(event.target.value)}>
@@ -61,7 +73,7 @@ export function Select({
           </option>
         ))}
       </select>
-    </label>
+    </div>
   );
 }
 
@@ -212,6 +224,10 @@ function MetricsTab({
   const platformPending = ['signups', 'turn-reach', 'chat-options'].includes(
     tab,
   );
+  // 세션과 기능 사용의 대상은 탭의 모든 값에 적용돼 위쪽 조건 표시에 함께 보인다.
+  const wholeAudience = ['sessions', 'client'].includes(tab)
+    ? audienceText(data?.segment, platformText.segmentLabel)
+    : null;
   const db = ['signups', 'turn-reach', 'chat-options', 'ai-cost'].includes(tab);
 
   return (
@@ -235,13 +251,14 @@ function MetricsTab({
               {dateTime(data.asOf)} KST 집계 기준
             </p>
           ) : null}
-          {data.campaign || data.storyId || data.platform ? (
+          {data.campaign || data.storyId || data.platform || wholeAudience ? (
             <p className="mb-4 text-xs text-muted-foreground">
               {[
                 data.campaign && `광고 캠페인 ${data.campaign}`,
                 data.storyId && `대상 스토리 ${data.storyId}`,
                 data.platform &&
                   `플랫폼 ${platformOptions.find(([key]) => key === data.platform)?.[1] ?? data.platform}`,
+                wholeAudience,
               ]
                 .filter(Boolean)
                 .join(', ')}
@@ -421,9 +438,13 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
   const segment = pick(params.get('segment'), segments, 'all');
   const audience = pick(params.get('segment'), audiences, 'all');
   const funnelList = screen === 'conversion' && tab === 'funnels';
-  const needsAudience =
+  const platformAudience =
     (screen === 'conversion' && tab === 'turn-reach') ||
     (screen === 'quality' && tab === 'chat-options');
+  const wholeAudience =
+    (screen === 'users' && tab === 'sessions') ||
+    (screen === 'quality' && tab === 'client');
+  const needsAudience = platformAudience || wholeAudience;
   const needsCampaign =
     screen === 'acquisition' && !['sources', 'installs', 'push'].includes(tab);
   const story =
@@ -584,7 +605,12 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
           ) : null}
           {needsAudience ? (
             <Select
-              label={platformText.audienceLabel}
+              label={
+                platformAudience
+                  ? platformText.audienceLabel
+                  : platformText.segmentLabel
+              }
+              help={platformAudience ? undefined : platformText.segmentHelp}
               value={audience}
               options={audiences}
               onChange={(value) => update({ segment: value })}

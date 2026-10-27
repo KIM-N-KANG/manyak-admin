@@ -146,6 +146,7 @@ export type SessionResponse = {
   asOf: string;
   from: string;
   to: string;
+  segment?: string;
   daily: SessionDay[];
   pendingDates: string[];
 };
@@ -161,6 +162,7 @@ export type QualityResponse = {
   from: string;
   to: string;
   platform: string;
+  segment?: string;
   daily: QualityDay[];
   pendingDates: string[];
 };

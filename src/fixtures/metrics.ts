@@ -78,6 +78,8 @@ export function metricFixture(path: string, query: URLSearchParams) {
   const pendingDates = dates.length > 3 ? [dates[dates.length - 2]] : [];
   const ready = dates.filter((date) => !pendingDates.includes(date));
   const campaign = query.get('campaign') ?? 'FOURTH_2026';
+  const audience = query.get('segment') ?? 'all';
+  const sessionOffset = { guest: -90, member: 60 }[audience] ?? 0;
 
   if (path === '/campaigns/push-opens') {
     const measuredFrom = '2026-10-21';
@@ -251,18 +253,19 @@ export function metricFixture(path: string, query: URLSearchParams) {
     return {
       ...base,
       pendingDates,
+      segment: audience,
       daily: ready.map((date, i) => ({
         date,
+        // 대상마다 값이 달라 대상 선택이 차트 전체에 적용되는 것을 미리보기에서 볼 수 있다.
         averageSessionSeconds: {
-          all: 180 + i * 3,
-          web: 200 + i * 3,
-          android: 140 + i * 2,
+          all: 180 + i * 3 + sessionOffset,
+          web: 200 + i * 3 + sessionOffset,
+          android: 140 + i * 2 + sessionOffset,
           unknown: null,
         },
       })),
     } satisfies T.SessionResponse;
 
-  const audience = query.get('segment') ?? 'all';
   const platformMeta = {
     platformAsOf: ready.length ? `${to}T02:55:00Z` : null,
     pendingDates,
@@ -306,6 +309,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
       ...base,
       pendingDates,
       platform: query.get('platform') ?? 'all',
+      segment: audience,
       daily: ready.map((date, i) => ({
         date,
         messagesByInputMode:

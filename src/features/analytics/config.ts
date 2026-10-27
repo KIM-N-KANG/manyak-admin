@@ -62,6 +62,9 @@ export const audiences = [
 /** 플랫폼별 값(Amplitude)의 화면 문구다. 스펙 2-1-6~2-1-8 문구 표와 맞춘다. */
 export const platformText = {
   audienceLabel: '플랫폼별 지표 대상',
+  /** 기능 사용과 안정성, 세션처럼 탭의 모든 값에 적용되는 대상 선택의 라벨이다. */
+  segmentLabel: '대상',
+  segmentHelp: '게스트와 회원은 Amplitude의 회원 식별자가 있는지로 가릅니다.',
   signupCard: '플랫폼별 신규 가입자',
   signupHelp:
     'Amplitude의 가입 이벤트로 셉니다. 국가가 한국이거나 국가 정보가 없는 사용자만 셉니다. 구글과 카카오 경로별 수를 더하므로 같은 날 두 경로로 가입하면 두 번 셉니다. 팀 계정이 포함돼 서버 DB 신규 가입자와 다를 수 있습니다.',
@@ -77,9 +80,12 @@ export const platformText = {
     'Amplitude의 AI 응답 저장 이벤트를 선택 기간에 저장된 턴 기준으로 그 턴을 만든 모델별로 셉니다. 국가가 한국이거나 국가 정보가 없는 사용자만 세며 그 밖 국가에서 로그인한 앱 사용자는 넣지 않습니다. 재생성은 세지 않고 팀 계정을 포함합니다.',
 };
 /** 서버가 적용한 `segment`를 플랫폼별 영역 위의 조건 표시 문구로 바꾼다. */
-export const audienceText = (segment?: string) =>
+export const audienceText = (
+  segment?: string,
+  label = platformText.audienceLabel,
+) =>
   segment
-    ? `${platformText.audienceLabel} ${audiences.find(([key]) => key === segment)?.[1] ?? segment}`
+    ? `${label} ${audiences.find(([key]) => key === segment)?.[1] ?? segment}`
     : null;
 export const approximation =
   '로그인 성공은 구글과 카카오 경로를 더한 근사치라 두 경로를 모두 거친 사용자는 두 번 셉니다. 앞 단계보다 클 수 있습니다.';

@@ -177,7 +177,7 @@ it('사용자 기본 탭만 요청하며 MAU null, 0, 준비 중 날짜 행과 �
   view.go();
   await screen.findByRole('heading', { name: '평균 세션 길이' });
   expect(requests.at(-1)).toBe(
-    '/api/users/sessions?from=2026-10-10&to=2026-10-23',
+    '/api/users/sessions?from=2026-10-10&to=2026-10-23&segment=all',
   );
   expect(screen.queryByText('MAU')).toBeNull();
 });
@@ -1559,4 +1559,67 @@ it('페르소나 시작 클릭 비중과 플랫폼별 모델 턴 수는 준비�
       name: '플랫폼별 모델 턴 수 출처와 집계 안내',
     }).textContent,
   ).toContain('Amplitude');
+});
+it('세션 대상은 라벨 대상과 도움말로 보이고 회원 선택은 차트 전체를 회원 값으로 다시 요청한다', async () => {
+  nav.search = 'tab=sessions';
+
+  const view = draw('users');
+
+  await screen.findByRole('heading', { name: '평균 세션 길이' });
+  expect(requests.at(-1)).toBe(
+    '/api/users/sessions?from=2026-10-10&to=2026-10-23&segment=all',
+  );
+
+  const select = screen.getByRole('combobox', { name: '대상' });
+  const help = screen.getByRole('button', { name: '대상 도움말' });
+
+  act(() => help.focus());
+  expect((await screen.findByRole('tooltip')).textContent).toBe(
+    '게스트와 회원은 Amplitude의 회원 식별자가 있는지로 가릅니다.',
+  );
+  fireEvent.change(select, { target: { value: 'member' } });
+  expect(nav.push.mock.calls.at(-1)![0]).toContain('segment=member');
+  view.go();
+  await waitFor(() =>
+    expect(requests.at(-1)).toBe(
+      '/api/users/sessions?from=2026-10-10&to=2026-10-23&segment=member',
+    ),
+  );
+  await screen.findByText(/대상 회원/);
+
+  const expected = metricFixture(
+    '/users/sessions',
+    new URLSearchParams('from=2026-10-10&to=2026-10-23&segment=member'),
+  ) as { daily: { averageSessionSeconds: { all: number } }[] };
+
+  expect(chartRows('평균 세션 길이 추이')[0].all).toBe(
+    expected.daily[0].averageSessionSeconds.all,
+  );
+});
+it('기능 사용 대상 게스트는 platform과 함께 보내고 채팅 옵션 비중으로 옮겨도 URL 값을 유지한다', async () => {
+  const view = draw('quality');
+
+  await screen.findByRole('heading', { name: '입력 방식별 채팅 메시지 전송' });
+  expect(requests.at(-1)).toContain('platform=all&segment=all');
+  fireEvent.change(screen.getByRole('combobox', { name: '대상' }), {
+    target: { value: 'guest' },
+  });
+  view.go();
+  await waitFor(() =>
+    expect(requests.at(-1)).toContain('platform=all&segment=guest'),
+  );
+  await screen.findByText(/대상 게스트/);
+  fireEvent.click(screen.getByRole('tab', { name: '채팅 옵션 비중' }));
+  view.go();
+  expect(nav.search).toContain('segment=guest');
+  await screen.findByText('모델별 비중');
+  expect(requests.at(-1)).toContain('segment=guest');
+  expect(
+    (
+      screen.getByRole('combobox', {
+        name: '플랫폼별 지표 대상',
+      }) as HTMLSelectElement
+    ).value,
+  ).toBe('guest');
+  expect(screen.queryByRole('combobox', { name: '대상' })).toBeNull();
 });
