@@ -365,6 +365,15 @@ describe('발송 시각', () => {
 
     await waitFor(() => expect(box.textContent).toContain('180명'));
     expect(box.textContent).toContain('광고 수신 동의 412명 중');
+    expect(box.textContent).toContain(
+      'KST 21:00부터 다음 날 08:00 전까지는 야간 광고 수신에도 동의한 회원에게만 발송합니다.',
+    );
+    expect(box.textContent).toContain('지금 집계로는 180명이 받습니다');
+    expect(
+      screen.getByText('대상 회원', { selector: 'dt' }).nextSibling
+        ?.textContent,
+    ).toContain('180명');
+    expect(screen.getByText(/확정하면 곧 발송을 시작합니다\./)).toBeTruthy();
     expect(screen.getByText('야간 규칙 적용')).toBeTruthy();
 
     fireEvent.click(

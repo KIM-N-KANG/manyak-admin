@@ -59,16 +59,21 @@ export function NightWarning({
           야간 광고 시간대입니다
         </p>
         <p className="mt-1 leading-6 text-foreground-secondary">
-          KST 21:00~08:00에는 야간 광고 수신에도 동의한 회원에게만 갑니다. 지금
-          집계로는{' '}
-          <strong className="font-semibold text-foreground tabular-nums">
-            {nightEligible == null
-              ? '확인 중'
-              : `${nightEligible.toLocaleString('ko-KR')}명`}
-          </strong>
-          {target != null
-            ? `이 받습니다(광고 수신 동의 ${target.toLocaleString('ko-KR')}명 중).`
-            : '이 받습니다.'}
+          KST 21:00부터 다음 날 08:00 전까지는 야간 광고 수신에도 동의한
+          회원에게만 발송합니다.{' '}
+          {nightEligible == null ? (
+            '야간 발송 대상 회원 수를 확인하고 있습니다.'
+          ) : (
+            <>
+              지금 집계로는{' '}
+              <strong className="font-semibold text-foreground tabular-nums">
+                {nightEligible.toLocaleString('ko-KR')}명
+              </strong>
+              {target != null
+                ? `이 받습니다(광고 수신 동의 ${target.toLocaleString('ko-KR')}명 중).`
+                : '이 받습니다.'}
+            </>
+          )}
         </p>
         <Button
           type="button"
@@ -117,7 +122,7 @@ export function ScheduleField({
       />
       {mode === 'now' ? (
         <p className="text-sm text-muted-foreground">
-          확정하면 바로 발송을 시작합니다.
+          확정하면 곧 발송을 시작합니다.
           {now ? ` 지금은 KST ${formatKst(now)}입니다.` : null}
         </p>
       ) : (

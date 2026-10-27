@@ -349,9 +349,9 @@ export function CampaignFormScreen({
               : !reasonValid
                 ? '발송 사유를 입력해 주세요.'
                 : target.isError
-                  ? '받을 사람 수를 불러오지 못했습니다. 다시 집계해 주세요.'
+                  ? '대상 회원 수를 불러오지 못했습니다. 다시 집계해 주세요.'
                   : !target.data
-                    ? '받을 사람 수를 집계하고 있습니다.'
+                    ? '대상 회원 수를 집계하고 있습니다.'
                     : '';
   const sendLabel = mode === 'now' ? '발송' : '예약';
   const sendTime =
@@ -466,8 +466,9 @@ export function CampaignFormScreen({
                   정보성 알림은 공지와 함께 보냅니다.
                 </p>
                 <p className="mt-1 leading-6 text-muted-foreground">
-                  공지를 게시하면 서비스 알림을 켠 회원에게 야간 제한 없이
-                  알림이 갑니다. 이 화면에서는 광고성 알림만 만들 수 있습니다.
+                  공지사항·업데이트·점검 공지는 처음 게시할 때 서비스 알림을 켠
+                  회원에게 야간 제한 없이 알림을 보냅니다. 이 화면에서는 광고성
+                  알림만 만들 수 있습니다.
                 </p>
                 <Link
                   href="/notices/new"
@@ -542,7 +543,7 @@ export function CampaignFormScreen({
           <NotificationPreview kind={kind} title={title} body={body} />
           <Card className="p-0">
             <dl className="divide-y px-5 text-sm">
-              <SummaryRow label="받을 사람">
+              <SummaryRow label="대상 회원">
                 {target.data ? (
                   <>
                     <span className="text-2xl font-semibold tracking-tight tabular-nums">
@@ -578,7 +579,7 @@ export function CampaignFormScreen({
                     </button>
                   </span>
                 ) : (
-                  <span role="status" aria-label="받을 사람 수 집계 중">
+                  <span role="status" aria-label="대상 회원 수 집계 중">
                     <Skeleton className="h-8 w-24" />
                   </span>
                 )}
@@ -598,7 +599,7 @@ export function CampaignFormScreen({
                       </span>
                     ) : null}
                   </SummaryRow>
-                  <SummaryRow label="누르면">
+                  <SummaryRow label="이동 대상">
                     {story && !problem ? (
                       <span className="font-medium">{story.title}</span>
                     ) : problem ? (
@@ -629,8 +630,8 @@ export function CampaignFormScreen({
             </div>
           </Card>
           <p className="px-1 text-xs leading-5 text-muted-foreground">
-            받을 사람 수는 지금 기준입니다. 실제 대상은 발송할 때 다시 집계해
-            달라질 수 있습니다.
+            대상 회원 수는 표시된 집계 시각 기준입니다. 발송할 때 다시
+            집계하므로 달라질 수 있습니다.
           </p>
         </aside>
       </form>
@@ -659,7 +660,7 @@ export function CampaignFormScreen({
               </span>
             ) : null}
           </SummaryRow>
-          <SummaryRow label="대상 인원">
+          <SummaryRow label="대상 회원">
             {recipients != null ? `약 ${count(recipients)}명` : '확인 중'}
           </SummaryRow>
           <SummaryRow label="야간 규칙">

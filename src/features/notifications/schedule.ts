@@ -108,7 +108,7 @@ export function quickPicks(now: Date): QuickPick[] {
   const tomorrow = kstParts(new Date(now.getTime() + 24 * 3600_000)).date;
   const picks = [
     {
-      label: '1시간 뒤',
+      label: '약 1시간 뒤',
       at: ceilToFiveMinutes(new Date(now.getTime() + 3600_000)),
     },
     { label: '오늘 12:00', at: fromKst(today, 12, 0)! },

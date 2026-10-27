@@ -71,14 +71,14 @@ describe('KST 예약 시각', () => {
     expect(formatDuration(27 * 60 * 60_000)).toBe('1일 3시간');
     expect(formatDuration(30_000)).toBe('1분 미만');
   });
-  it('빠른 선택은 지난 시각을 비활성으로 두고 1시간 뒤를 5분 단위로 올린다', () => {
+  it('빠른 선택은 지난 시각을 비활성으로 두고 약 1시간 뒤를 5분 단위로 올린다', () => {
     const picks = quickPicks(kst('2026-10-28', 20, 31));
     const state = Object.fromEntries(
       picks.map((pick) => [pick.label, [formatKst(pick.at), pick.disabled]]),
     );
 
     expect(state).toEqual({
-      '1시간 뒤': ['2026년 10월 28일 (수) 오후 9:35', false],
+      '약 1시간 뒤': ['2026년 10월 28일 (수) 오후 9:35', false],
       '오늘 12:00': ['2026년 10월 28일 (수) 오후 12:00', true],
       '오늘 20:00': ['2026년 10월 28일 (수) 오후 8:00', true],
       '내일 10:00': ['2026년 10월 29일 (목) 오전 10:00', false],
