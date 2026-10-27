@@ -470,7 +470,9 @@ export function metricFixture(path: string, query: URLSearchParams) {
         ? (['all', 'web', 'android', 'unknown'] as const).map((name, j) => {
             const chats =
               [40, 25, 15, 0][j] *
-              ({ all: 3, member: 2 } as Record<string, number>)[audience]!;
+              ({ all: 3, guest: 1, member: 2 } as Record<string, number>)[
+                audience
+              ]!;
 
             return {
               platform: name,
