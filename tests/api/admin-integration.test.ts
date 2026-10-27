@@ -11,6 +11,18 @@ const cookie = `${sessionCookie}=${Buffer.from(JSON.stringify({ accessToken: 'fo
 const reason = { reason: '테스트 사유' };
 const presign = { kind: 'COVER', contentType: 'image/png', contentLength: 32 };
 const cases: [string, string, string, unknown?][] = [
+  [
+    'POST',
+    `/moderation/stories/${id}/takedown`,
+    `/moderation/stories/${id}/takedown`,
+    { reasonCode: 'COPYRIGHT_INFRINGEMENT', memo: '신고 3건 확인' },
+  ],
+  [
+    'POST',
+    `/moderation/stories/${id}/takedown`,
+    `/moderation/stories/${id}/takedown`,
+    { reasonCode: 'ETC', reasonDetail: '실존 인물 비방' },
+  ],
   ['GET', '/stories?deleted=include', '/stories?deleted=include'],
   [
     'GET',
@@ -1199,5 +1211,24 @@ it.each([
 
   vi.stubGlobal('fetch', fetchMock);
   expect((await invoke('GET', path)).status).toBe(400);
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it.each([
+  {},
+  { reasonCode: 'UNKNOWN' },
+  { reasonCode: 'ETC' },
+  { reasonCode: 'ETC', reasonDetail: '   ' },
+  { reasonCode: 'ETC', reasonDetail: 'x'.repeat(101) },
+  { reasonCode: 'SEXUAL_CONTENT', reasonDetail: '사유' },
+  { reasonCode: 'SEXUAL_CONTENT', memo: ' ' },
+  { reasonCode: 'SEXUAL_CONTENT', memo: 'x'.repeat(501) },
+])('공개 중단의 잘못된 본문 %j는 업스트림 호출 전에 거부한다', async (body) => {
+  const fetchMock = vi.fn();
+
+  vi.stubGlobal('fetch', fetchMock);
+  expect(
+    (await invoke('POST', `/moderation/stories/${id}/takedown`, body)).status,
+  ).toBe(400);
   expect(fetchMock).not.toHaveBeenCalled();
 });

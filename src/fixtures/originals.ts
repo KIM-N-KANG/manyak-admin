@@ -313,6 +313,9 @@ function syncStory(record: StoredOriginal) {
     totalTurns: record.totalTurns,
     createdAt: index >= 0 ? stories[index].createdAt : record.updatedAt,
     deletedAt: null,
+    takenDownAt: null,
+    takedownReason: null,
+    takedownReasonDetail: null,
   };
 
   if (index >= 0) stories[index] = story;

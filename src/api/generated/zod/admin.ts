@@ -1259,3 +1259,67 @@ export const DeleteThumbnail1Body = zod.object({
 });
 
 export const DeleteThumbnail1Response = zod.unknown();
+
+export const TakedownStoryParams = zod.object({
+  storyId: zod.uuid(),
+});
+
+export const takedownStoryBodyOneMemoMax = 500;
+
+export const takedownStoryBodyOneMemoRegExp = new RegExp(
+  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
+);
+export const takedownStoryBodyTwoReasonDetailMax = 100;
+
+export const takedownStoryBodyTwoReasonDetailRegExp = new RegExp(
+  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
+);
+export const takedownStoryBodyTwoMemoMax = 500;
+
+export const takedownStoryBodyTwoMemoRegExp = new RegExp(
+  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
+);
+
+export const TakedownStoryBody = zod.union([
+  zod.object({
+    reasonCode: zod.enum([
+      'SEXUAL_CONTENT',
+      'COPYRIGHT_INFRINGEMENT',
+      'HATE_SPEECH',
+    ]),
+    reasonDetail: zod.null().optional(),
+    memo: zod
+      .string()
+      .min(1)
+      .max(takedownStoryBodyOneMemoMax)
+      .regex(takedownStoryBodyOneMemoRegExp)
+      .nullish(),
+  }),
+  zod.object({
+    reasonCode: zod.enum(['ETC']),
+    reasonDetail: zod
+      .string()
+      .min(1)
+      .max(takedownStoryBodyTwoReasonDetailMax)
+      .regex(takedownStoryBodyTwoReasonDetailRegExp),
+    memo: zod
+      .string()
+      .min(1)
+      .max(takedownStoryBodyTwoMemoMax)
+      .regex(takedownStoryBodyTwoMemoRegExp)
+      .nullish(),
+  }),
+]);
+
+export const TakedownStoryResponse = zod.object({
+  storyId: zod.uuid(),
+  visibility: zod.enum(['PRIVATE']),
+  takenDownAt: zod.iso.datetime({ offset: true }),
+  takedownReason: zod.enum([
+    'SEXUAL_CONTENT',
+    'COPYRIGHT_INFRINGEMENT',
+    'HATE_SPEECH',
+    'ETC',
+  ]),
+  takedownReasonDetail: zod.string().nullable(),
+});
