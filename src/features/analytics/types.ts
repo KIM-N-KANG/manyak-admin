@@ -22,6 +22,8 @@ export type CampaignDay = {
   newVisitorsBySource: CampaignSources;
   signups: CampaignSegments;
   cumulativeSignups: CampaignSegments;
+  /** 서버 배포 전 응답에는 없다. */
+  androidSignups?: number;
   storylineRequests: number;
   completionRequests: number;
   chatMessages: number;
@@ -30,6 +32,7 @@ export type CampaignTotals = {
   activeUsersAverage: number;
   newVisitors: CampaignSegments;
   signups: CampaignSegments;
+  androidSignups?: number;
   adsShare: number | null;
   storylineRequests: number;
   completionRequests: number;
@@ -143,6 +146,7 @@ export type SessionResponse = {
   asOf: string;
   from: string;
   to: string;
+  segment?: string;
   daily: SessionDay[];
   pendingDates: string[];
 };
@@ -158,6 +162,7 @@ export type QualityResponse = {
   from: string;
   to: string;
   platform: string;
+  segment?: string;
   daily: QualityDay[];
   pendingDates: string[];
 };
@@ -186,26 +191,33 @@ export type GuestConversion = {
   chatsReached6: number;
   rate: number;
 };
-export type TurnReachResponse = {
+export type ReachPlatform = {
+  platform: string;
+  chats: number;
+  reached: ReachPoint[];
+};
+
+/** Amplitude 플랫폼 값의 공통 필드다. 서버 배포 전 응답에는 없어 선택 필드로 둔다. */
+type PlatformMeta = { platformAsOf?: string | null; pendingDates?: string[] };
+
+export type TurnReachResponse = PlatformMeta & {
   asOf: string;
   from: string;
   to: string;
+  segment?: string;
   segments: ReachSegment[];
   guestToMember: GuestConversion;
+  platforms?: ReachPlatform[] | null;
 };
-export type SignupCounts = {
-  total: number;
-  google: number;
-  kakao: number;
-  other: number;
-};
+export type SignupCounts = { total: number; google: number; kakao: number };
 export type SignupDay = {
   date: string;
   signups: SignupCounts;
   cumulativeSignups: number;
   migratedFromGuest: number;
+  signupsByPlatform?: PlatformCounts | null;
 };
-export type SignupResponse = {
+export type SignupResponse = PlatformMeta & {
   asOf: string;
   from: string;
   to: string;
@@ -217,11 +229,15 @@ export type ChatOptionDay = {
   withPersona: number;
   byModel: Record<string, number>;
   turnsByModel: Record<string, number>;
+  chatStarts?: PlatformCounts | null;
+  personaChatStarts?: PlatformCounts | null;
+  platformTurnsByModel?: Record<string, PlatformCounts> | null;
 };
-export type ChatOptionResponse = {
+export type ChatOptionResponse = PlatformMeta & {
   asOf: string;
   from: string;
   to: string;
+  segment?: string;
   daily: ChatOptionDay[];
 };
 export type AiCostDay = { date: string; byFeature: AiCostItem[] };

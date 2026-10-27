@@ -1,10 +1,11 @@
 'use client';
 
-import { type RefObject, useId, useRef, useState } from 'react';
+import { type ReactNode, type RefObject, useId, useRef, useState } from 'react';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { dateTime, PageHeading, QueryState } from '@/components/admin/data-ui';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
@@ -15,15 +16,19 @@ import { useApi } from '@/features/shared/use-api';
 
 import {
   type AnalyticsScreenName,
+  approximation,
+  audiences,
+  audienceText,
   funnels,
   pick,
   platformOptions,
+  platformText,
   screens,
   segments,
   sourceHelp,
 } from './config';
 import { kstTime } from './infra/data';
-import { PendingDates, Source } from './metric-ui';
+import { FunnelChart, PendingDates, Source } from './metric-ui';
 import { MetricsSkeleton } from './metrics-skeleton';
 import { analyticsRange, analyticsRefetch } from './range';
 import {
@@ -32,23 +37,33 @@ import {
   QualityContent,
   UserContent,
 } from './tab-content';
-import type { CampaignDefinition } from './types';
+import type { CampaignDefinition, ConversionResponse } from './types';
 
 export function Select({
   label,
   value,
   options,
   onChange,
+  help,
 }: {
   label: string;
   value: string;
   options: readonly (readonly [string, string])[];
   onChange: (value: string) => void;
+  help?: string;
 }) {
+  const id = useId();
+
   return (
-    <label className="flex flex-col gap-2 text-xs text-muted-foreground">
-      {label}
+    <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+      <span className="flex items-center gap-1">
+        <label htmlFor={id}>{label}</label>
+        {help ? (
+          <HelpTooltip label={`${label} 도움말`}>{help}</HelpTooltip>
+        ) : null}
+      </span>
       <select
+        id={id}
         className="control"
         value={value}
         onChange={(event) => onChange(event.target.value)}>
@@ -58,7 +73,7 @@ export function Select({
           </option>
         ))}
       </select>
-    </label>
+    </div>
   );
 }
 
@@ -202,8 +217,17 @@ function MetricsTab({
         campaign?: string;
         storyId?: string | null;
         platform?: string;
+        segment?: string;
       }
     | undefined;
+  // 세 탭의 준비 중 날짜와 대상은 플랫폼별 값에만 적용돼 그 영역 위에 따로 보인다.
+  const platformPending = ['signups', 'turn-reach', 'chat-options'].includes(
+    tab,
+  );
+  // 세션과 기능 사용의 대상은 탭의 모든 값에 적용돼 위쪽 조건 표시에 함께 보인다.
+  const wholeAudience = ['sessions', 'client'].includes(tab)
+    ? audienceText(data?.segment, platformText.segmentLabel)
+    : null;
   const db = ['signups', 'turn-reach', 'chat-options', 'ai-cost'].includes(tab);
 
   return (
@@ -227,31 +251,154 @@ function MetricsTab({
               {dateTime(data.asOf)} KST 집계 기준
             </p>
           ) : null}
-          {data.campaign || data.storyId || data.platform ? (
+          {data.campaign || data.storyId || data.platform || wholeAudience ? (
             <p className="mb-4 text-xs text-muted-foreground">
               {[
                 data.campaign && `광고 캠페인 ${data.campaign}`,
                 data.storyId && `대상 스토리 ${data.storyId}`,
                 data.platform &&
                   `플랫폼 ${platformOptions.find(([key]) => key === data.platform)?.[1] ?? data.platform}`,
+                wholeAudience,
               ]
                 .filter(Boolean)
                 .join(', ')}
             </p>
           ) : null}
-          <PendingDates dates={data.pendingDates ?? []} />
+          <PendingDates
+            dates={platformPending ? [] : (data.pendingDates ?? [])}
+          />
           {screen === 'acquisition' ? (
             <AcquisitionContent tab={tab} data={data} segment={segment} />
           ) : screen === 'users' ? (
             <UserContent tab={tab} data={data} platform={platform} />
           ) : screen === 'conversion' ? (
-            <ConversionContent tab={tab} data={data} />
+            <ConversionContent data={data} />
           ) : (
             <QualityContent tab={tab} data={data} />
           )}
         </>
       ) : null}
     </>
+  );
+}
+
+const storyPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** 전환 퍼널 하나를 따로 요청하고 그 카드 안에서만 상태를 보이는 카드다. */
+function FunnelCard({
+  label,
+  platform,
+  url,
+  children,
+  help,
+}: {
+  label: string;
+  platform: string;
+  url: string | null;
+  children?: ReactNode;
+  help?: string;
+}) {
+  const query = useApi<ConversionResponse>(url ?? '', url !== null);
+  const id = useId();
+
+  return (
+    <section aria-labelledby={id} className="border-t pt-5">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <h3 id={id} className="text-lg font-semibold">
+          {label}
+        </h3>
+        <span className="rounded-sm border bg-muted px-2 py-0.5 text-xs">
+          {platformOptions.find(([key]) => key === platform)?.[1]}
+        </span>
+      </div>
+      {children}
+      {url === null ? null : (
+        <>
+          <QueryState
+            skeleton={<MetricsSkeleton tab="funnels" />}
+            pending={query.isPending}
+            error={query.error}
+            retry={query.refetch}
+            source="amplitude"
+          />
+          {query.data && !query.isError ? (
+            <>
+              {query.data.asOf ? (
+                <p className="mb-4 text-xs text-muted-foreground">
+                  {dateTime(query.data.asOf)} KST 집계 기준
+                </p>
+              ) : null}
+              <FunnelChart steps={query.data.steps} help={help} />
+            </>
+          ) : null}
+        </>
+      )}
+    </section>
+  );
+}
+
+/** 전환 퍼널 다섯 개를 정해진 순서로 늘어놓고 퍼널마다 따로 요청한다. */
+function FunnelCards({
+  from,
+  to,
+  platform,
+  story,
+  onStory,
+}: {
+  from: string;
+  to: string;
+  platform: string;
+  story: string;
+  onStory: (value: string) => void;
+}) {
+  const invalidStory = story !== '' && !storyPattern.test(story);
+
+  return (
+    <div className="space-y-6">
+      {funnels.map(([funnel, label]) => {
+        const fixed =
+          funnel === 'web-first-visit'
+            ? 'web'
+            : funnel === 'android-first-visit'
+              ? 'android'
+              : null;
+        const query = new URLSearchParams({ from, to });
+        const detail = funnel === 'story-detail-chat';
+
+        if (detail && story) query.set('storyId', story);
+
+        if (!fixed) query.set('platform', platform);
+
+        return (
+          <FunnelCard
+            key={funnel}
+            label={label}
+            platform={fixed ?? platform}
+            url={
+              detail && invalidStory
+                ? null
+                : `/api/conversion/funnels/${funnel}?${query}`
+            }
+            help={funnel === 'guest-limit-login' ? approximation : undefined}>
+            {detail ? (
+              <div className="mb-4">
+                <TextCondition
+                  label="대상 스토리 공개 식별자"
+                  value={story}
+                  onApply={onStory}
+                />
+                {invalidStory ? (
+                  <p role="alert" className="mt-2 text-sm text-destructive">
+                    스토리 공개 식별자 형식을 확인해 주세요.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </FunnelCard>
+        );
+      })}
+    </div>
   );
 }
 
@@ -282,7 +429,6 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
     (item) => item.campaign === selectedCampaign,
   );
   const range = analyticsRange(new URLSearchParams(params), tab, campaign);
-  const funnel = pick(params.get('funnel'), funnels, 'web-first-visit');
   const platform = pick(
     params.get('platform'),
     platformOptions,
@@ -290,22 +436,22 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
   );
   const funnelPlatform = platform === 'all' ? 'web' : platform;
   const segment = pick(params.get('segment'), segments, 'all');
+  const audience = pick(params.get('segment'), audiences, 'all');
+  const funnelList = screen === 'conversion' && tab === 'funnels';
+  const platformAudience =
+    (screen === 'conversion' && tab === 'turn-reach') ||
+    (screen === 'quality' && tab === 'chat-options');
+  const wholeAudience =
+    (screen === 'users' && tab === 'sessions') ||
+    (screen === 'quality' && tab === 'client');
+  const needsAudience = platformAudience || wholeAudience;
   const needsCampaign =
     screen === 'acquisition' && !['sources', 'installs', 'push'].includes(tab);
   const story =
     params.get('storyId') ??
     (needsCampaign && tab === 'story-detail' ? (campaign?.storyId ?? '') : '');
-  const needsStory =
-    (needsCampaign && tab === 'story-detail') ||
-    (screen === 'conversion' &&
-      tab === 'funnels' &&
-      funnel === 'story-detail-chat');
-  const invalidStory =
-    needsStory &&
-    story !== '' &&
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      story,
-    );
+  const needsStory = needsCampaign && tab === 'story-detail';
+  const invalidStory = needsStory && story !== '' && !storyPattern.test(story);
   const missingCampaign = needsCampaign && (!selectedCampaign || custom);
   const missingStory = needsCampaign && tab === 'story-detail' && !story;
   const catalogPending = needsCampaign && catalog.isPending;
@@ -366,19 +512,12 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
             ? '/campaigns/sources'
             : `/campaigns/funnels/${tab}`
       : screen === 'conversion'
-        ? tab === 'funnels'
-          ? `/conversion/funnels/${funnel}`
-          : '/conversion/turn-reach'
+        ? '/conversion/turn-reach'
         : `/${screen}/${tab}`;
 
   if (screen === 'quality' && tab === 'client') query.set('platform', platform);
 
-  const showFunnelPlatform =
-    screen === 'conversion' &&
-    tab === 'funnels' &&
-    !['web-first-visit', 'android-first-visit'].includes(funnel);
-
-  if (showFunnelPlatform) query.set('platform', funnelPlatform);
+  if (needsAudience) query.set('segment', audience);
 
   path = `/api${path}?${query}`;
 
@@ -456,22 +595,25 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
               onChange={(value) => update({ segment: value })}
             />
           ) : null}
-          {screen === 'conversion' && tab === 'funnels' ? (
-            <Select
-              label="퍼널"
-              value={funnel}
-              options={funnels}
-              onChange={(value) => update({ funnel: value })}
-            />
-          ) : null}
-          {showFunnelPlatform || tab === 'retention' || tab === 'client' ? (
+          {funnelList || tab === 'retention' || tab === 'client' ? (
             <Select
               label="플랫폼"
-              value={showFunnelPlatform ? funnelPlatform : platform}
-              options={
-                showFunnelPlatform ? platformOptions.slice(1) : platformOptions
-              }
+              value={funnelList ? funnelPlatform : platform}
+              options={funnelList ? platformOptions.slice(1) : platformOptions}
               onChange={(value) => update({ platform: value })}
+            />
+          ) : null}
+          {needsAudience ? (
+            <Select
+              label={
+                platformAudience
+                  ? platformText.audienceLabel
+                  : platformText.segmentLabel
+              }
+              help={platformAudience ? undefined : platformText.segmentHelp}
+              value={audience}
+              options={audiences}
+              onChange={(value) => update({ segment: value })}
             />
           ) : null}
           {needsStory ? (
@@ -543,7 +685,18 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
                     스토리 공개 식별자 입력
                   </Button>
                 </div>
-              ) : invalidStory ? null : (
+              ) : invalidStory ? null : funnelList ? (
+                <>
+                  <TabHeading screen={screen} tab={tab} />
+                  <FunnelCards
+                    from={range.from}
+                    to={range.to}
+                    platform={funnelPlatform}
+                    story={params.get('storyId') ?? ''}
+                    onStory={(value) => update({ storyId: value })}
+                  />
+                </>
+              ) : (
                 <MetricsTab
                   key={`${screen}/${tab}`}
                   screen={screen}
