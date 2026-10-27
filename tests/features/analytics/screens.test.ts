@@ -1183,6 +1183,8 @@ it('보관 시작일 전이라도 expiredDates에 없으면 조합별 비용 기
   expect(screen.getAllByText('비용 기록 없음').length).toBeGreaterThan(0);
 });
 
+const precedes = (a: Node, b: Node) =>
+  Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 const chartRows = (label: string) =>
   JSON.parse(
     screen
@@ -1301,6 +1303,16 @@ it('플랫폼별 가입 준비 중 날짜는 플랫폼별 차트만 끊고 서�
     expect(rows.every((row) => !('pending' in row))).toBe(true);
   }
 
+  // 준비 중 알림은 서버 DB 차트 뒤, 플랫폼별 차트 바로 앞에 온다.
+  const notice = screen.getByText(/준비 중 날짜 1개/);
+
+  expect(precedes(screen.getByLabelText('게스트 이관 회원 추이'), notice)).toBe(
+    true,
+  );
+  expect(
+    precedes(notice, screen.getByLabelText('플랫폼별 신규 가입자 추이')),
+  ).toBe(true);
+
   const platformRows = chartRows('플랫폼별 신규 가입자 추이');
 
   expect(platformRows.at(-1)).toEqual({ date: '2026-10-23', pending: 1 });
@@ -1399,7 +1411,19 @@ it('턴 도달률의 플랫폼별 지표 대상은 기본 all을 보내고 회�
       '/api/conversion/turn-reach?from=2026-09-24&to=2026-10-23&segment=member',
     ),
   );
-  await screen.findByText(/플랫폼별 지표 대상 회원/);
+
+  // 대상 표시는 서버 DB 영역 뒤, 플랫폼별 영역 바로 앞에 온다.
+  const audience = await screen.findByText('플랫폼별 지표 대상 회원');
+
+  expect(precedes(screen.getByText('게스트에서 회원으로'), audience)).toBe(
+    true,
+  );
+  expect(
+    precedes(
+      audience,
+      screen.getByRole('heading', { name: '플랫폼별 1턴 대비 도달률' }),
+    ),
+  ).toBe(true);
   expect(
     Object.keys(
       JSON.parse(
@@ -1465,7 +1489,16 @@ it('채팅 옵션 대상 게스트는 segment=guest만 바꾸고 서버 DB 값�
   );
   view.go();
   await waitFor(() => expect(requests.at(-1)).toContain('segment=guest'));
-  await screen.findByText(/플랫폼별 지표 대상 게스트/);
+
+  const audience = await screen.findByText('플랫폼별 지표 대상 게스트');
+
+  expect(precedes(screen.getByText('모델별 비중'), audience)).toBe(true);
+  expect(
+    precedes(
+      audience,
+      screen.getByRole('heading', { name: '페르소나 시작 클릭 비중' }),
+    ),
+  ).toBe(true);
   expect(chats()).toBe(before);
 });
 it('페르소나 시작 클릭 비중과 플랫폼별 모델 턴 수는 준비된 날짜 합으로 계산한다', async () => {

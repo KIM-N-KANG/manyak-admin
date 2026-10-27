@@ -208,12 +208,10 @@ function MetricsTab({
         segment?: string;
       }
     | undefined;
-  // 두 탭의 준비 중 날짜는 플랫폼별 값에만 적용돼 그 차트와 표 위에 따로 보인다.
-  const platformPending = ['turn-reach', 'chat-options'].includes(tab);
-  const audience =
-    platformPending && data?.segment
-      ? `${platformText.audienceLabel} ${audiences.find(([key]) => key === data.segment)?.[1] ?? data.segment}`
-      : null;
+  // 세 탭의 준비 중 날짜와 대상은 플랫폼별 값에만 적용돼 그 영역 위에 따로 보인다.
+  const platformPending = ['signups', 'turn-reach', 'chat-options'].includes(
+    tab,
+  );
   const db = ['signups', 'turn-reach', 'chat-options', 'ai-cost'].includes(tab);
 
   return (
@@ -237,14 +235,13 @@ function MetricsTab({
               {dateTime(data.asOf)} KST 집계 기준
             </p>
           ) : null}
-          {data.campaign || data.storyId || data.platform || audience ? (
+          {data.campaign || data.storyId || data.platform ? (
             <p className="mb-4 text-xs text-muted-foreground">
               {[
                 data.campaign && `광고 캠페인 ${data.campaign}`,
                 data.storyId && `대상 스토리 ${data.storyId}`,
                 data.platform &&
                   `플랫폼 ${platformOptions.find(([key]) => key === data.platform)?.[1] ?? data.platform}`,
-                audience,
               ]
                 .filter(Boolean)
                 .join(', ')}

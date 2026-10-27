@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { aiFeatureLabel, aiFeatures } from '@/features/dashboard/chart-data';
 
 import {
+  audienceText,
   eventLabel,
   metricNumber as n,
   modelLabel,
@@ -95,6 +96,26 @@ function Charts({
           ),
         )}
       />
+    </>
+  );
+}
+
+/** 플랫폼별 값(Amplitude) 영역 위에 대상과 준비 중 날짜를 보인다. */
+function PlatformHeader({
+  segment,
+  pendingDates,
+}: {
+  segment?: string;
+  pendingDates?: string[];
+}) {
+  const audience = audienceText(segment);
+
+  return (
+    <>
+      {audience ? (
+        <p className="mb-4 text-xs text-muted-foreground">{audience}</p>
+      ) : null}
+      <PendingDates dates={pendingDates ?? []} />
     </>
   );
 }
@@ -348,14 +369,6 @@ export function UserContent({
           },
         ]}
       />
-      {hasPlatform ? null : (
-        <div className="mb-5">
-          <PlatformPlaceholder
-            title={platformText.signupCard}
-            aside={platformSource}
-          />
-        </div>
-      )}
       <Charts
         items={[
           {
@@ -365,7 +378,6 @@ export function UserContent({
             unit: '명',
             href: memberHref,
           },
-          ...(hasPlatform ? [platformChart] : []),
           {
             title: '누적 가입자',
             rows: dailyRows(db, (day) => ({ value: day.cumulativeSignups })),
@@ -382,6 +394,17 @@ export function UserContent({
           },
         ]}
       />
+      <div className="mt-5">
+        <PlatformHeader pendingDates={d.pendingDates} />
+        {hasPlatform ? (
+          <SeriesChart {...platformChart} />
+        ) : (
+          <PlatformPlaceholder
+            title={platformText.signupCard}
+            aside={platformSource}
+          />
+        )}
+      </div>
     </>
   );
 }
@@ -702,7 +725,7 @@ export function ConversionContent({ data }: { data: unknown }) {
           },
         ]}
       />
-      <PendingDates dates={d.pendingDates ?? []} />
+      <PlatformHeader segment={d.segment} pendingDates={d.pendingDates} />
       <PlatformReachChart
         platforms={d.platforms}
         aside={
@@ -1071,7 +1094,7 @@ function ChatOptionPlatforms({ data: d }: { data: T.ChatOptionResponse }) {
 
   return (
     <div className="mt-5">
-      <PendingDates dates={d.pendingDates ?? []} />
+      <PlatformHeader segment={d.segment} pendingDates={d.pendingDates} />
       <SummaryCards
         items={[
           {

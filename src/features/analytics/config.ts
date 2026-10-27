@@ -76,6 +76,11 @@ export const platformText = {
   modelTurnsHelp:
     'Amplitude의 AI 응답 저장 이벤트를 선택 기간에 저장된 턴 기준으로 그 턴을 만든 모델별로 셉니다. 국가가 한국이거나 국가 정보가 없는 사용자만 세며 그 밖 국가에서 로그인한 앱 사용자는 넣지 않습니다. 재생성은 세지 않고 팀 계정을 포함합니다.',
 };
+/** 서버가 적용한 `segment`를 플랫폼별 영역 위의 조건 표시 문구로 바꾼다. */
+export const audienceText = (segment?: string) =>
+  segment
+    ? `${platformText.audienceLabel} ${audiences.find(([key]) => key === segment)?.[1] ?? segment}`
+    : null;
 export const approximation =
   '로그인 성공은 구글과 카카오 경로를 더한 근사치라 두 경로를 모두 거친 사용자는 두 번 셉니다. 앞 단계보다 클 수 있습니다.';
 export const sourceHelp = {
