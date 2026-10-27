@@ -1,11 +1,14 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
+import { createKeyboardTestHelpers } from './story-takedown-helpers.mjs';
+
 const script = readFileSync(
   new URL('./story-takedown-keyboard.js', import.meta.url),
   'utf8',
 );
-const output = execFileSync('aside', ['repl', script], {
+const prelude = `const { pressKey, assertSinglePost, waitForResult } = (${createKeyboardTestHelpers.toString()})();`;
+const output = execFileSync('aside', ['repl', `${prelude}\n${script}`], {
   encoding: 'utf8',
   timeout: 120_000,
   maxBuffer: 1024 * 1024,

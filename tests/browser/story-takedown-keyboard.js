@@ -1,4 +1,4 @@
-/* global openTab, snapshot, sleep */
+/* global openTab, snapshot, sleep, pressKey, assertSinglePost, waitForResult */
 // 새 fixture 서버를 127.0.0.1:3187에서 실행한 뒤 Node 실행기로 검증한다.
 // 실행 명령은 node tests/browser/run-story-takedown-keyboard.mjs다.
 // JSDOM이 제공하지 않는 Tab 순서와 라디오 기본 키 동작을 실제 브라우저에서 검증한다.
@@ -26,13 +26,69 @@ for (const [suffix, submitKey] of [
   await browser.evaluate(() => {
     const original = window.fetch;
     const posts = [];
+    const events = [];
+    const trace = (event) => {
+      if (window.keyboardTakedownTest.recordKeys)
+        events.push({
+          type: event.type,
+          key: event.key,
+          code: event.code,
+          trusted: event.isTrusted,
+          target: event.target?.tagName,
+          text: event.target?.textContent?.trim(),
+        });
+    };
 
-    window.keyboardTakedownTest = { original, posts };
-    window.fetch = async (url, options) => {
-      if (options?.method === 'POST')
-        posts.push({ url: String(url), body: JSON.parse(options.body) });
+    window.keyboardTakedownTest = {
+      original,
+      posts,
+      events,
+      trace,
+      recordKeys: false,
+    };
 
-      return original(url, options);
+    for (const type of ['keydown', 'keyup', 'click'])
+      document.addEventListener(type, trace, true);
+
+    window.fetch = async (...args) => {
+      const [input, options] = args;
+      const method = (
+        options?.method ?? (input instanceof Request ? input.method : 'GET')
+      ).toUpperCase();
+      const post =
+        method === 'POST'
+          ? {
+              url:
+                input instanceof Request
+                  ? new URL(input.url).pathname
+                  : String(input),
+              body: null,
+              status: null,
+              error: null,
+            }
+          : null;
+
+      if (post) {
+        posts.push(post);
+
+        const body =
+          options?.body ??
+          (input instanceof Request ? await input.clone().text() : null);
+
+        post.body = typeof body === 'string' ? JSON.parse(body) : body;
+      }
+
+      try {
+        const response = await Reflect.apply(original, window, args);
+
+        if (post) post.status = response.status;
+
+        return response;
+      } catch (error) {
+        if (post) post.error = String(error);
+
+        throw error;
+      }
     };
   });
 
@@ -47,7 +103,7 @@ for (const [suffix, submitKey] of [
       )
         break;
 
-      await browser.keyboard.press('Tab');
+      await pressKey(browser, 'Tab');
     }
 
     assertKeyboard(
@@ -56,7 +112,7 @@ for (const [suffix, submitKey] of [
       ),
       'Tab으로 공개 중단 버튼에 도달해야 한다.',
     );
-    await browser.keyboard.press('Enter');
+    await pressKey(browser, 'Enter');
     console.log((await snapshot(browser, { selector: '[role=dialog]' })).tree);
     assertKeyboard(
       await browser.evaluate(
@@ -64,8 +120,8 @@ for (const [suffix, submitKey] of [
       ),
       '첫 사유에 초점이 있어야 한다.',
     );
-    await browser.keyboard.press('ArrowRight');
-    await browser.keyboard.press('Space');
+    await pressKey(browser, 'ArrowRight');
+    await pressKey(browser, 'Space');
     assertKeyboard(
       await browser.evaluate(
         () =>
@@ -75,7 +131,7 @@ for (const [suffix, submitKey] of [
       '방향키와 Space로 저작권 침해를 선택해야 한다.',
     );
 
-    await browser.keyboard.press('Tab');
+    await pressKey(browser, 'Tab');
     assertKeyboard(
       await browser.evaluate(
         () =>
@@ -83,7 +139,7 @@ for (const [suffix, submitKey] of [
       ),
       '사유 다음은 메모 도움말이어야 한다.',
     );
-    await browser.keyboard.press('Tab');
+    await pressKey(browser, 'Tab');
     assertKeyboard(
       await browser.evaluate(
         () => document.activeElement?.tagName === 'TEXTAREA',
@@ -92,63 +148,87 @@ for (const [suffix, submitKey] of [
     );
 
     for (const key of memo)
-      await browser.keyboard.press(key === '-' ? 'Minus' : key);
+      await pressKey(browser, key === '-' ? 'Minus' : key);
 
     assertKeyboard(
       (await browser.evaluate(() => document.activeElement?.value)) === memo,
       '키 입력으로 메모를 작성해야 한다.',
     );
-    await browser.keyboard.press('Tab');
+    await pressKey(browser, 'Tab');
     assertKeyboard(
       await browser.evaluate(
         () => document.activeElement?.textContent.trim() === '취소',
       ),
       '메모 다음은 취소여야 한다.',
     );
-    await browser.keyboard.press('Tab');
+    await pressKey(browser, 'Tab');
     assertKeyboard(
       await browser.evaluate(
         () => document.activeElement?.textContent.trim() === '공개 중단',
       ),
       'Tab으로 확인 버튼에 도달해야 한다.',
     );
-    await browser.keyboard.press(submitKey);
-    console.log(
-      (await snapshot(browser, { selector: 'main > div.mb-8' })).tree,
+    assertKeyboard(
+      await browser.evaluate(() => {
+        const button = document.activeElement;
+
+        return (
+          button?.tagName === 'BUTTON' &&
+          button.type === 'button' &&
+          !button.disabled &&
+          button.closest('[role=dialog]') !== null &&
+          button.textContent.trim() === '공개 중단'
+        );
+      }),
+      '활성 대화상자의 활성 확인 버튼에 초점이 있어야 한다.',
+    );
+    await browser.evaluate(() => {
+      window.keyboardTakedownTest.recordKeys = true;
+    });
+    await pressKey(browser, submitKey);
+
+    const result = await waitForResult(
+      () =>
+        browser.evaluate(() => ({
+          posts: window.keyboardTakedownTest.posts,
+          events: window.keyboardTakedownTest.events,
+          dialogOpen: Boolean(document.querySelector('[role=dialog]')),
+          takenDown: Boolean(
+            document.querySelector('main')?.innerText.includes('공개 중단됨'),
+          ),
+          alert: document.querySelector('[role=alert]')?.textContent,
+          activeElement: {
+            tag: document.activeElement?.tagName,
+            text: document.activeElement?.textContent?.trim(),
+          },
+        })),
+      sleep,
     );
 
-    for (let attempt = 0; attempt < 10; attempt++) {
-      if (
-        await browser.evaluate(() =>
-          document.querySelector('main')?.innerText.includes('공개 중단됨'),
-        )
-      )
-        break;
+    console.log(`${submitKey} observed=${JSON.stringify(result)}`);
 
-      await sleep(200);
+    if (submitKey === 'Space') {
+      const keys = result.events.filter(
+        (event) => event.type === 'keydown' || event.type === 'keyup',
+      );
+
+      assertKeyboard(
+        keys.length === 2 &&
+          keys.every(
+            (event) =>
+              event.key === ' ' && event.code === 'Space' && event.trusted,
+          ),
+        `표준 Space down/up을 수신해야 한다: ${JSON.stringify(keys)}`,
+      );
     }
 
-    const posts = await browser.evaluate(
-      () => window.keyboardTakedownTest.posts,
-    );
-
-    assertKeyboard(
-      JSON.stringify(posts) ===
-        JSON.stringify([
-          {
-            url: `/api/moderation/stories/${id}/takedown`,
-            body: { reasonCode: 'COPYRIGHT_INFRINGEMENT', memo },
-          },
-        ]),
-      `${submitKey} 확인은 정확한 POST 한 번을 보내야 한다.`,
-    );
-    assertKeyboard(
-      await browser.evaluate(
-        () =>
-          !document.querySelector('[role=dialog]') &&
-          document.querySelector('main')?.innerText.includes('공개 중단됨'),
-      ),
-      '성공 후 대화상자가 닫히고 상세가 갱신되어야 한다.',
+    assertSinglePost(result.posts, {
+      url: `/api/moderation/stories/${id}/takedown`,
+      reasonCode: 'COPYRIGHT_INFRINGEMENT',
+      memo,
+    });
+    console.log(
+      (await snapshot(browser, { selector: 'main > div.mb-8' })).tree,
     );
 
     const storage = await browser.evaluate(() =>
@@ -169,6 +249,14 @@ for (const [suffix, submitKey] of [
   } finally {
     await browser.evaluate(() => {
       window.fetch = window.keyboardTakedownTest.original;
+
+      for (const type of ['keydown', 'keyup', 'click'])
+        document.removeEventListener(
+          type,
+          window.keyboardTakedownTest.trace,
+          true,
+        );
+
       delete window.keyboardTakedownTest;
     });
   }
