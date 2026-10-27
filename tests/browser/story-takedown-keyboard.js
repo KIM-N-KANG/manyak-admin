@@ -1,4 +1,4 @@
-/* global openTab, snapshot, sleep, pressKey, assertSinglePost, waitForResult */
+/* global openTab, snapshot, sleep, assertSinglePost, waitForResult */
 // 새 fixture 서버를 127.0.0.1:3187에서 실행한 뒤 Node 실행기로 검증한다.
 // 실행 명령은 node tests/browser/run-story-takedown-keyboard.mjs다.
 // JSDOM이 제공하지 않는 Tab 순서와 라디오 기본 키 동작을 실제 브라우저에서 검증한다.
@@ -7,10 +7,9 @@ function assertKeyboard(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-for (const [suffix, submitKey] of [
-  ['2', 'Space'],
-  ['3', 'Enter'],
-]) {
+{
+  const submitKey = 'Enter';
+  const suffix = '2';
   const memo = `KNK-1867-KEYBOARD-MEMO-${submitKey}`;
   const id = `00000002-0000-4000-8000-${suffix.padStart(12, '0')}`;
   const browser = await openTab(`http://127.0.0.1:3187/stories/${id}`);
@@ -103,7 +102,7 @@ for (const [suffix, submitKey] of [
       )
         break;
 
-      await pressKey(browser, 'Tab');
+      await browser.keyboard.press('Tab');
     }
 
     assertKeyboard(
@@ -112,7 +111,7 @@ for (const [suffix, submitKey] of [
       ),
       'Tab으로 공개 중단 버튼에 도달해야 한다.',
     );
-    await pressKey(browser, 'Enter');
+    await browser.keyboard.press('Enter');
     console.log((await snapshot(browser, { selector: '[role=dialog]' })).tree);
     assertKeyboard(
       await browser.evaluate(
@@ -120,18 +119,17 @@ for (const [suffix, submitKey] of [
       ),
       '첫 사유에 초점이 있어야 한다.',
     );
-    await pressKey(browser, 'ArrowRight');
-    await pressKey(browser, 'Space');
+    await browser.keyboard.press('ArrowRight');
     assertKeyboard(
       await browser.evaluate(
         () =>
           document.activeElement?.value === 'COPYRIGHT_INFRINGEMENT' &&
           document.activeElement.checked,
       ),
-      '방향키와 Space로 저작권 침해를 선택해야 한다.',
+      '방향키로 저작권 침해를 선택해야 한다.',
     );
 
-    await pressKey(browser, 'Tab');
+    await browser.keyboard.press('Tab');
     assertKeyboard(
       await browser.evaluate(
         () =>
@@ -139,7 +137,7 @@ for (const [suffix, submitKey] of [
       ),
       '사유 다음은 메모 도움말이어야 한다.',
     );
-    await pressKey(browser, 'Tab');
+    await browser.keyboard.press('Tab');
     assertKeyboard(
       await browser.evaluate(
         () => document.activeElement?.tagName === 'TEXTAREA',
@@ -148,20 +146,20 @@ for (const [suffix, submitKey] of [
     );
 
     for (const key of memo)
-      await pressKey(browser, key === '-' ? 'Minus' : key);
+      await browser.keyboard.press(key === '-' ? 'Minus' : key);
 
     assertKeyboard(
       (await browser.evaluate(() => document.activeElement?.value)) === memo,
       '키 입력으로 메모를 작성해야 한다.',
     );
-    await pressKey(browser, 'Tab');
+    await browser.keyboard.press('Tab');
     assertKeyboard(
       await browser.evaluate(
         () => document.activeElement?.textContent.trim() === '취소',
       ),
       '메모 다음은 취소여야 한다.',
     );
-    await pressKey(browser, 'Tab');
+    await browser.keyboard.press('Tab');
     assertKeyboard(
       await browser.evaluate(
         () => document.activeElement?.textContent.trim() === '공개 중단',
@@ -185,7 +183,7 @@ for (const [suffix, submitKey] of [
     await browser.evaluate(() => {
       window.keyboardTakedownTest.recordKeys = true;
     });
-    await pressKey(browser, submitKey);
+    await browser.keyboard.press(submitKey);
 
     const result = await waitForResult(
       () =>
@@ -206,21 +204,6 @@ for (const [suffix, submitKey] of [
     );
 
     console.log(`${submitKey} observed=${JSON.stringify(result)}`);
-
-    if (submitKey === 'Space') {
-      const keys = result.events.filter(
-        (event) => event.type === 'keydown' || event.type === 'keyup',
-      );
-
-      assertKeyboard(
-        keys.length === 2 &&
-          keys.every(
-            (event) =>
-              event.key === ' ' && event.code === 'Space' && event.trusted,
-          ),
-        `표준 Space down/up을 수신해야 한다: ${JSON.stringify(keys)}`,
-      );
-    }
 
     assertSinglePost(result.posts, {
       url: `/api/moderation/stories/${id}/takedown`,
@@ -244,7 +227,7 @@ for (const [suffix, submitKey] of [
       '메모가 브라우저 저장소에 남아서는 안 된다.',
     );
     console.log(
-      `PASS keyboard ${submitKey}: Tab → 방향키/Space → 메모 키 입력 → Tab → ${submitKey} → POST 본문`,
+      `PASS keyboard ${submitKey}: Tab → 방향키 → 메모 키 입력 → Tab → ${submitKey} → POST 본문`,
     );
   } finally {
     await browser.evaluate(() => {

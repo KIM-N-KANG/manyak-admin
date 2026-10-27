@@ -1,24 +1,5 @@
 /** 외부 모듈이 없는 브라우저 REPL에도 같은 함수를 전달할 수 있는 검증 도구다. */
 export function createKeyboardTestHelpers() {
-  async function pressKey(browser, key) {
-    if (key !== 'Space') return browser.keyboard.press(key);
-
-    // Aside 1.26.1024.24의 Space 별칭은 key: 'Space'를 보낸다. DOM 표준 값은 공백이다.
-    const sessionId = await browser.resolveSessionId();
-    const keyEvent = { key: ' ', code: 'Space', windowsVirtualKeyCode: 32 };
-
-    await browser.cdp.send(
-      'Input.dispatchKeyEvent',
-      { ...keyEvent, type: 'keyDown', text: ' ', unmodifiedText: ' ' },
-      sessionId,
-    );
-    await browser.cdp.send(
-      'Input.dispatchKeyEvent',
-      { ...keyEvent, type: 'keyUp' },
-      sessionId,
-    );
-  }
-
   function assertSinglePost(posts, expected) {
     const post = posts[0];
     const body = post?.body;
@@ -73,5 +54,5 @@ export function createKeyboardTestHelpers() {
     );
   }
 
-  return { pressKey, assertSinglePost, waitForResult };
+  return { assertSinglePost, waitForResult };
 }

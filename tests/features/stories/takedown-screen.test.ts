@@ -528,3 +528,45 @@ it('상세에 모르는 공개 중단 사유를 코드 그대로 렌더링한다
   expect(await screen.findByText('NEW_REASON')).toBeTruthy();
   expect(screen.queryByRole('button', { name: '공개 중단' })).toBeNull();
 });
+
+it('확인 버튼은 네이티브 type=button이며 수동 key 핸들러 대신 click으로 한 번 제출한다', async () => {
+  draw();
+
+  const { dialog, radios, confirm } = await open();
+
+  fireEvent.click(radios[1]);
+  fireEvent.change(
+    within(dialog).getByRole('textbox', { name: '메모 (선택)' }),
+    { target: { value: 'KNK-1867-NATIVE-BUTTON-MEMO' } },
+  );
+
+  expect(confirm.tagName).toBe('BUTTON');
+  expect(confirm.getAttribute('type')).toBe('button');
+  expect(confirm.disabled).toBe(false);
+
+  // JSDOM은 네이티브 키의 기본 click을 생성하지 않는다. 별도 키 핸들러의 직접 제출이 없음을 검사한다.
+  for (const [key, code] of [
+    [' ', 'Space'],
+    ['Enter', 'Enter'],
+  ]) {
+    fireEvent.keyDown(confirm, { key, code });
+    fireEvent.keyUp(confirm, { key, code });
+  }
+
+  expect(requests.filter((request) => request.method === 'POST')).toHaveLength(
+    0,
+  );
+
+  fireEvent.click(confirm);
+  await screen.findByText('공개 중단 조치를 적용했습니다.');
+  expect(requests.filter((request) => request.method === 'POST')).toEqual([
+    {
+      url: `/api/moderation/stories/${story.storyId}/takedown`,
+      method: 'POST',
+      body: {
+        reasonCode: 'COPYRIGHT_INFRINGEMENT',
+        memo: 'KNK-1867-NATIVE-BUTTON-MEMO',
+      },
+    },
+  ]);
+});

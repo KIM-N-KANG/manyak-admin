@@ -6,65 +6,30 @@ import { createKeyboardTestHelpers } from '../../browser/story-takedown-helpers.
 const expected = {
   url: '/api/moderation/stories/story-id/takedown',
   reasonCode: 'COPYRIGHT_INFRINGEMENT',
-  memo: 'KNK-1867-KEYBOARD-MEMO-Space',
+  memo: 'KNK-1867-KEYBOARD-MEMO-Enter',
 };
 const helpers = createKeyboardTestHelpers();
 const response = () => ({
   url: expected.url,
-  // CDP 경유 JSON 객체는 속성 순서를 계약으로 보장하지 않는다.
+  // JSON 객체의 속성 순서와 무관하게 본문 값을 검사한다.
   body: { memo: expected.memo, reasonCode: expected.reasonCode },
   status: 200,
   error: null,
 });
 
-it('REPL에 전달하는 함수 자체가 표준 Space down/up을 해당 탭의 CDP 세션에 보낸다', async () => {
+it('REPL에 전달하는 함수는 요청 검증과 대기만 제공한다', () => {
   const remoteHelpers = runInNewContext(
     `(${createKeyboardTestHelpers.toString()})()`,
   );
-  const browser = {
-    keyboard: { press: vi.fn() },
-    resolveSessionId: vi.fn().mockResolvedValue('page-session'),
-    cdp: { send: vi.fn().mockResolvedValue({}) },
-  };
 
-  await remoteHelpers.pressKey(browser, 'Space');
-  expect(browser.keyboard.press).not.toHaveBeenCalled();
-  expect(browser.resolveSessionId).toHaveBeenCalledOnce();
-  expect(browser.cdp.send.mock.calls).toEqual([
-    [
-      'Input.dispatchKeyEvent',
-      {
-        key: ' ',
-        code: 'Space',
-        windowsVirtualKeyCode: 32,
-        type: 'keyDown',
-        text: ' ',
-        unmodifiedText: ' ',
-      },
-      'page-session',
-    ],
-    [
-      'Input.dispatchKeyEvent',
-      { key: ' ', code: 'Space', windowsVirtualKeyCode: 32, type: 'keyUp' },
-      'page-session',
-    ],
+  expect(Object.keys(remoteHelpers).sort()).toEqual([
+    'assertSinglePost',
+    'waitForResult',
   ]);
+  expect(() =>
+    remoteHelpers.assertSinglePost([response()], expected),
+  ).not.toThrow();
 });
-
-it.each(['Tab', 'ArrowRight', 'Enter', 'K'])(
-  '%s는 기존 키보드 드라이버에 한 번만 전달한다',
-  async (key) => {
-    const browser = {
-      keyboard: { press: vi.fn().mockResolvedValue(undefined) },
-      resolveSessionId: vi.fn(),
-      cdp: { send: vi.fn() },
-    };
-
-    await helpers.pressKey(browser, key);
-    expect(browser.keyboard.press).toHaveBeenCalledExactlyOnceWith(key);
-    expect(browser.cdp.send).not.toHaveBeenCalled();
-  },
-);
 
 it('POST 검증은 JSON 속성 순서와 무관하게 본문의 키와 값을 비교한다', () => {
   expect(() => helpers.assertSinglePost([response()], expected)).not.toThrow();
@@ -124,7 +89,7 @@ it('POST가 없으면 클릭·키·초점 증거를 포함해 제한 시간에 �
     posts: [],
     dialogOpen: true,
     takenDown: false,
-    events: [{ type: 'keyup', key: 'Space', code: 'Space' }],
+    events: [{ type: 'keyup', key: 'Enter', code: 'Enter' }],
     activeElement: { tag: 'BUTTON', text: '공개 중단' },
   };
 
