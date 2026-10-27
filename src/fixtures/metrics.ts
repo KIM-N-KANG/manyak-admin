@@ -262,28 +262,41 @@ export function metricFixture(path: string, query: URLSearchParams) {
       })),
     } satisfies T.SessionResponse;
 
+  const audience = query.get('segment') ?? 'all';
+  const platformMeta = {
+    platformAsOf: ready.length ? `${to}T02:55:00Z` : null,
+    pendingDates,
+  };
+
   if (path === '/users/signups')
     return {
       ...base,
+      ...platformMeta,
       daily: dates.map((date, i) => {
         const joined = members.filter(
           (member) => kstDate(member.createdAt) === date,
         );
-        const google = Math.floor(joined.length * 0.6);
-        const kakao = Math.floor(joined.length * 0.3);
+        const google = Math.ceil(joined.length * 0.6);
 
         return {
           date,
           signups: {
             total: joined.length,
             google,
-            kakao,
-            other: joined.length - google - kakao,
+            kakao: joined.length - google,
           },
           cumulativeSignups: members.filter(
             (member) => kstDate(member.createdAt) <= date,
           ).length,
           migratedFromGuest: Math.min(joined.length, i % 3),
+          signupsByPlatform: pendingDates.includes(date)
+            ? null
+            : {
+                all: 3 + (i % 4),
+                web: 1 + (i % 2),
+                android: 2,
+                unknown: (i % 4) - (i % 2),
+              },
         };
       }),
     } satisfies T.SignupResponse;
@@ -313,17 +326,43 @@ export function metricFixture(path: string, query: URLSearchParams) {
       })),
     } satisfies T.QualityResponse;
 
-  if (path === '/quality/chat-options')
+  if (path === '/quality/chat-options') {
+    // 게스트 대상이면 회원 전용 모델(오로라) 턴과 페르소나 클릭이 없다.
+    const guest = audience === 'guest';
+
     return {
       ...base,
-      daily: dates.map((date) => ({
-        date,
-        chats: 4,
-        withPersona: 2,
-        byModel: { AURORA: 1, LITE: 3, NOVA: 0 },
-        turnsByModel: { AURORA: 2, LITE: 4 },
-      })),
+      ...platformMeta,
+      segment: audience,
+      daily: dates.map((date) => {
+        const pending = pendingDates.includes(date);
+
+        return {
+          date,
+          chats: 4,
+          withPersona: 2,
+          byModel: { AURORA: 1, LITE: 3, NOVA: 0 },
+          turnsByModel: { AURORA: 2, LITE: 4 },
+          chatStarts: pending
+            ? null
+            : { all: 5, web: 3, android: 2, unknown: 0 },
+          personaChatStarts: pending
+            ? null
+            : guest
+              ? { all: 0, web: 0, android: 0, unknown: 0 }
+              : { all: 2, web: 1, android: 1, unknown: 0 },
+          platformTurnsByModel: pending
+            ? null
+            : {
+                AURORA: guest
+                  ? { all: 0, web: 0, android: 0, unknown: 0 }
+                  : { all: 2, web: 1, android: 1, unknown: 0 },
+                LITE: { all: 5, web: 3, android: 1, unknown: 1 },
+              },
+        };
+      }),
     } satisfies T.ChatOptionResponse;
+  }
 
   if (path === '/quality/ai-cost') {
     const retentionStartDate = shiftDate(kstToday(), -28);
@@ -421,6 +460,30 @@ export function metricFixture(path: string, query: URLSearchParams) {
         })),
       })),
       guestToMember: { chatsReached5: 0, chatsReached6: 0, rate: 0 },
+      ...platformMeta,
+      segment: audience,
+      platforms: ready.length
+        ? (['all', 'web', 'android', 'unknown'] as const).map((name, j) => {
+            const chats =
+              [40, 25, 15, 0][j] *
+              ({ all: 3, member: 2 } as Record<string, number>)[audience]!;
+
+            return {
+              platform: name,
+              chats,
+              reached: TURN_THRESHOLDS.map((turn, i) => {
+                // 기간 전에 시작한 채팅 때문에 2턴은 1턴보다 많을 수 있다.
+                const rate = chats
+                  ? i === 1
+                    ? 1.1
+                    : Math.max(0, 1 - i * (0.06 + j * 0.02))
+                  : 0;
+
+                return { turn, chats: Math.round(chats * rate), rate };
+              }),
+            };
+          })
+        : null,
     } satisfies T.TurnReachResponse;
 
   if (path.startsWith('/conversion/funnels/')) {
@@ -478,6 +541,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
       },
       signups: segment(10),
       cumulativeSignups: segment((i + 1) * 10),
+      androidSignups: 6,
       storylineRequests: 20,
       completionRequests: 12,
       chatMessages: 180,
@@ -492,6 +556,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
         activeUsersAverage: 210,
         newVisitors: segment(daily.reduce((s, d) => s + d.newVisitors.all, 0)),
         signups: segment(daily.length * 10),
+        androidSignups: daily.length * 6,
         adsShare: 0.7,
         storylineRequests: daily.length * 20,
         completionRequests: daily.length * 12,

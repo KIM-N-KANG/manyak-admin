@@ -49,7 +49,6 @@ export const seriesGroups = {
     ['total', '전체'],
     ['google', '구글'],
     ['kakao', '카카오'],
-    ['other', '그 외'],
   ]),
   owner: fixed(
     [

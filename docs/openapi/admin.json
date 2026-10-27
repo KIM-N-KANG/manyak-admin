@@ -1297,6 +1297,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "segment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["all", "guest", "member"]
+            }
           }
         ],
         "responses": {
@@ -2195,6 +2204,15 @@
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "segment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["all", "guest", "member"]
             }
           }
         ],
@@ -3618,6 +3636,17 @@
             "items": {
               "$ref": "#/components/schemas/SignupDay"
             }
+          },
+          "platformAsOf": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
           }
         }
       },
@@ -3638,6 +3667,16 @@
           "migratedFromGuest": {
             "type": "integer",
             "format": "int64"
+          },
+          "signupsByPlatform": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PlatformCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -3653,10 +3692,6 @@
             "format": "int64"
           },
           "kakao": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "other": {
             "type": "integer",
             "format": "int64"
           }
@@ -4592,6 +4627,20 @@
             "items": {
               "$ref": "#/components/schemas/ChatOptionDay"
             }
+          },
+          "segment": {
+            "type": "string"
+          },
+          "platformAsOf": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
           }
         }
       },
@@ -4622,6 +4671,32 @@
             "additionalProperties": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          "chatStarts": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PlatformCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "personaChatStarts": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PlatformCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "platformTurnsByModel": {
+            "type": ["object", "null"],
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PlatformCounts"
             }
           }
         }
@@ -6468,6 +6543,26 @@
           },
           "guestToMember": {
             "$ref": "#/components/schemas/GuestConversion"
+          },
+          "segment": {
+            "type": "string"
+          },
+          "platformAsOf": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "platforms": {
+            "type": ["array", "null"],
+            "items": {
+              "$ref": "#/components/schemas/ReachPlatform"
+            }
           }
         }
       },
@@ -7047,6 +7142,10 @@
           "chatMessages": {
             "type": "integer",
             "format": "int64"
+          },
+          "androidSignups": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -7101,6 +7200,10 @@
             "format": "int64"
           },
           "chatMessages": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "androidSignups": {
             "type": "integer",
             "format": "int64"
           }
@@ -7461,6 +7564,24 @@
           "takedownReason",
           "takedownReasonDetail"
         ]
+      },
+      "ReachPlatform": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "chats": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reached": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReachPoint"
+            }
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -7506,6 +7627,28 @@
         "AdminStoryTakenDown",
         "AdminStoryListResponse",
         "AdminStoryDetailResponse"
+      ]
+    },
+    "platformSplit": {
+      "issue": "KNK-1877",
+      "serverDependency": "KNK-1876",
+      "specRevision": "3e277a1",
+      "input": "knk-harness@3e277a1:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-21,4-2-28,4-2-30,4-2-32",
+      "description": "미배포 계약: 신규 가입자 signups.other 제거와 플랫폼별 가입, 턴 도달률과 채팅 옵션 비중의 segment 쿼리와 플랫폼 값, 캠페인 추이 androidSignups. 서버 배포 후 실제 OpenAPI로 다시 추출한다.",
+      "schemas": [
+        "SignupResponse",
+        "SignupDay",
+        "SignupCounts",
+        "TurnReachResponse",
+        "ReachPlatform",
+        "ChatOptionResponse",
+        "ChatOptionDay",
+        "CampaignDay",
+        "CampaignTotals"
+      ],
+      "parameters": [
+        "GET /api/v1/admin/conversion/turn-reach segment",
+        "GET /api/v1/admin/quality/chat-options segment"
       ]
     }
   }

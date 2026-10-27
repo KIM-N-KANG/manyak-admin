@@ -12,9 +12,9 @@ const layouts: Record<
   { summaries: number; charts: number; detail?: boolean }
 > = {
   activity: { summaries: 3, charts: 4, detail: true },
-  signups: { summaries: 3, charts: 3, detail: true },
+  signups: { summaries: 4, charts: 4, detail: true },
   sessions: { summaries: 0, charts: 1 },
-  trend: { summaries: 7, charts: 7, detail: true },
+  trend: { summaries: 8, charts: 8, detail: true },
   client: { summaries: 2, charts: 4 },
   'chat-options': { summaries: 3, charts: 3 },
   'ai-cost': { summaries: 3, charts: 1 },

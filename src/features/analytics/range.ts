@@ -91,12 +91,18 @@ export function analyticsRefetch({
   state,
 }: {
   state: {
-    data?: { pendingDates?: string[]; monthlyActiveUsers?: number | null };
+    data?: {
+      pendingDates?: string[];
+      monthlyActiveUsers?: number | null;
+      platforms?: unknown;
+    };
   };
 }) {
+  // 플랫폼 필드가 아예 없는 응답(서버 배포 전)은 재요청하지 않고 null일 때만 다시 요청한다.
   return state.data &&
     ((state.data.pendingDates?.length ?? 0) > 0 ||
-      state.data.monthlyActiveUsers === null)
+      state.data.monthlyActiveUsers === null ||
+      state.data.platforms === null)
     ? 60000
     : false;
 }

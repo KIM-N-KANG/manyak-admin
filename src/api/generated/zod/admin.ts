@@ -566,6 +566,7 @@ export const OptionsQueryParams = zod.object({
   days: zod.enum(['7', '30', '90']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
 });
 
 export const OptionsResponse = zod.unknown();
@@ -1069,6 +1070,7 @@ export const ReachQueryParams = zod.object({
   days: zod.enum(['7', '30', '90']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
 });
 
 export const ReachResponse = zod.unknown();

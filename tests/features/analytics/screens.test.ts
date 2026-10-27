@@ -16,11 +16,13 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { AnalyticsScreen } from '@/features/analytics/analytics-screen';
 import type { AnalyticsScreenName } from '@/features/analytics/config';
+import { analyticsRefetch } from '@/features/analytics/range';
 import type {
   ActivityResponse,
   AiCostResponse,
   CampaignAnalyticsResponse,
   ChatOptionResponse,
+  PlatformCounts,
   SignupResponse,
 } from '@/features/analytics/types';
 import { metricFixture } from '@/fixtures/metrics';
@@ -314,21 +316,83 @@ it('진행 중 캠페인 없음과 대상 스토리 누락·잘못된 식별자�
     '스토리 공개 식별자 형식',
   );
 });
-it('전환 퍼널의 플랫폼·스토리 전달과 100% 초과, 도달률의 빈 분모를 구분한다', async () => {
+
+const funnelUrl = (funnel: string, query = '') =>
+  `/api/conversion/funnels/${funnel}?from=2026-10-17&to=2026-10-23${query}`;
+
+it('전환 퍼널은 선택 없이 다섯 카드를 순서대로 동시에 요청하고 플랫폼 배지를 보인다', async () => {
+  draw('conversion');
+
+  await waitFor(() =>
+    expect(screen.getAllByText('첫 단계 사용자 수')).toHaveLength(5),
+  );
+  expect(screen.queryByRole('combobox', { name: '퍼널' })).toBeNull();
+  expect(
+    screen
+      .getAllByRole('heading', { level: 3 })
+      .map((node) => node.textContent)
+      .filter((text) =>
+        [
+          '웹 첫 접속',
+          '앱 첫 접속',
+          '간편 제작',
+          '상세 진입 채팅',
+          '게스트 한도 로그인',
+        ].includes(text ?? ''),
+      ),
+  ).toEqual([
+    '웹 첫 접속',
+    '앱 첫 접속',
+    '간편 제작',
+    '상세 진입 채팅',
+    '게스트 한도 로그인',
+  ]);
+  expect(requests.toSorted()).toEqual(
+    [
+      funnelUrl('web-first-visit'),
+      funnelUrl('android-first-visit'),
+      funnelUrl('story-creation', '&platform=web'),
+      funnelUrl('story-detail-chat', '&platform=web'),
+      funnelUrl('guest-limit-login', '&platform=web'),
+    ].toSorted(),
+  );
+
+  const badge = (title: string) =>
+    within(screen.getByRole('region', { name: title })).getAllByText(
+      /^(웹|앱)$/,
+    )[0].textContent;
+
+  expect(badge('웹 첫 접속')).toBe('웹');
+  expect(badge('앱 첫 접속')).toBe('앱');
+  expect(badge('간편 제작')).toBe('웹');
+  expect(badge('게스트 한도 로그인')).toBe('웹');
+});
+it('조건 줄의 앱은 세 퍼널만 다시 요청하고 첫 접속 두 카드는 다시 요청하지 않는다', async () => {
   const view = draw('conversion');
 
-  await screen.findByText('첫 단계 사용자 수');
-  expect(requests.at(-1)).toBe(
-    '/api/conversion/funnels/web-first-visit?from=2026-10-17&to=2026-10-23',
+  await waitFor(() =>
+    expect(screen.getAllByText('첫 단계 사용자 수')).toHaveLength(5),
   );
-  expect(screen.queryByRole('combobox', { name: '플랫폼' })).toBeNull();
-  view.change('funnel=guest-limit-login&platform=android');
+  fireEvent.change(screen.getByRole('combobox', { name: '플랫폼' }), {
+    target: { value: 'android' },
+  });
+  requests.length = 0;
+  view.go();
+  await waitFor(() => expect(requests).toHaveLength(3));
+  expect(requests.toSorted()).toEqual(
+    [
+      funnelUrl('story-creation', '&platform=android'),
+      funnelUrl('story-detail-chat', '&platform=android'),
+      funnelUrl('guest-limit-login', '&platform=android'),
+    ].toSorted(),
+  );
   await screen.findByText('로그인 성공 (구글과 카카오 합)');
-  expect(requests.at(-1)).toContain('platform=android');
   expect(screen.getByText('116.7%')).toBeTruthy();
   expect(screen.queryByText(/로그인 성공은 구글과 카카오/)).toBeNull();
 
-  const help = screen.getByRole('button', { name: '전환 집계 안내' });
+  const help = within(
+    screen.getByRole('region', { name: '게스트 한도 로그인' }),
+  ).getByRole('button', { name: '전환 집계 안내' });
 
   act(() => help.focus());
 
@@ -336,7 +400,37 @@ it('전환 퍼널의 플랫폼·스토리 전달과 100% 초과, 도달률의 �
 
   expect(help.getAttribute('aria-describedby')).toBe(tooltip.id);
   expect(tooltip.textContent).toContain('로그인 성공은 구글과 카카오');
-  view.change('tab=turn-reach');
+});
+it('간편 제작 요청만 503이면 그 카드에만 사용 불가를 보이고 다시 시도는 그 요청만 보낸다', async () => {
+  fail = '/conversion/funnels/story-creation';
+  draw('conversion');
+
+  const card = screen.getByRole('region', { name: '간편 제작' });
+
+  await within(card).findByText('Amplitude 지표를 불러올 수 없음');
+  await waitFor(() =>
+    expect(screen.getAllByText('첫 단계 사용자 수')).toHaveLength(4),
+  );
+  expect(screen.getAllByText('Amplitude 지표를 불러올 수 없음')).toHaveLength(
+    1,
+  );
+  requests.length = 0;
+  fail = '';
+  fireEvent.click(within(card).getByRole('button', { name: '다시 시도' }));
+  await within(card).findByText('첫 단계 사용자 수');
+  expect(requests).toEqual([funnelUrl('story-creation', '&platform=web')]);
+});
+it('예전 퍼널 링크의 funnel은 읽지 않고 다섯 카드를 모두 보인다', async () => {
+  nav.search = 'funnel=story-creation';
+  draw('conversion');
+  await waitFor(() =>
+    expect(screen.getAllByText('첫 단계 사용자 수')).toHaveLength(5),
+  );
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+it('도달률의 빈 분모는 채팅 없음과 대상 채팅 없음으로 구분한다', async () => {
+  nav.search = 'tab=turn-reach';
+  draw('conversion');
   await screen.findByText('게스트에서 회원으로');
   expect(screen.getAllByText('채팅 없음').length).toBeGreaterThan(0);
   expect(screen.getByText('대상 채팅 없음')).toBeTruthy();
@@ -456,23 +550,37 @@ it('직접 입력한 캠페인은 최근 30일을 쓰고 캠페인 변경은 기
   expect(next.searchParams.has('from')).toBe(false);
   expect(next.searchParams.has('storyId')).toBe(false);
 });
-it('상세 진입 채팅은 스토리가 비어 있으면 생략하고 입력 시 공개 식별자를 전달한다', async () => {
-  nav.search = 'funnel=story-detail-chat';
-
+it('상세 진입 채팅 카드의 대상 스토리는 그 카드 요청만 다시 보내고 잘못된 값은 그 카드만 막는다', async () => {
   const view = draw('conversion');
 
-  await screen.findByText('첫 단계 사용자 수');
-  expect(requests.at(-1)).toBe(
-    '/api/conversion/funnels/story-detail-chat?from=2026-10-17&to=2026-10-23&platform=web',
-  );
-  view.change(
-    'funnel=story-detail-chat&platform=android&storyId=3f2504e0-4f89-41d3-9a0c-0305e82c3301',
-  );
   await waitFor(() =>
-    expect(requests.at(-1)).toContain(
-      'storyId=3f2504e0-4f89-41d3-9a0c-0305e82c3301&platform=android',
+    expect(screen.getAllByText('첫 단계 사용자 수')).toHaveLength(5),
+  );
+  expect(requests).toContain(funnelUrl('story-detail-chat', '&platform=web'));
+
+  const card = screen.getByRole('region', { name: '상세 진입 채팅' });
+  const input = within(card).getByRole('textbox', {
+    name: '대상 스토리 공개 식별자',
+  });
+
+  fireEvent.change(input, {
+    target: { value: '3f2504e0-4f89-41d3-9a0c-0305e82c3301' },
+  });
+  fireEvent.submit(input.closest('form')!);
+  requests.length = 0;
+  view.go();
+  await waitFor(() => expect(requests).toHaveLength(1));
+  expect(requests[0]).toBe(
+    funnelUrl(
+      'story-detail-chat',
+      '&storyId=3f2504e0-4f89-41d3-9a0c-0305e82c3301&platform=web',
     ),
   );
+  view.change('storyId=abc');
+  expect(within(card).getByRole('alert').textContent).toContain(
+    '스토리 공개 식별자 형식',
+  );
+  expect(screen.getAllByText('첫 단계 사용자 수')).toHaveLength(4);
 });
 
 function modifyResponse(path: string, change: (data: unknown) => unknown) {
@@ -626,7 +734,6 @@ it('누적 가입자는 서비스 시작부터 받은 1293~1300을 표시하고 
       total: i === 6 ? 2 : 1,
       google: i === 6 ? 2 : 1,
       kakao: 0,
-      other: 0,
     },
     cumulativeSignups: i === 6 ? 1300 : 1293 + i,
   }));
@@ -664,7 +771,7 @@ it('누적 가입자는 서비스 시작부터 받은 1293~1300을 표시하고 
 
   act(() => help.focus());
   expect((await screen.findByRole('tooltip')).textContent).toBe(
-    '서버 DB 출처 지표입니다. 팀 계정은 제외합니다. 가입 경로는 처음 연결한 소셜 계정 기준입니다. 누적 가입자는 서비스 시작부터 센 값이며 탈퇴한 회원을 포함합니다.',
+    '서버 DB 출처 지표입니다. 팀 계정은 제외합니다. 가입 경로는 처음 연결한 소셜 계정 기준입니다. 누적 가입자는 서비스 시작부터 센 값이며 탈퇴한 회원을 포함합니다. 탈퇴 뒤 같은 소셜 계정으로 다시 가입한 회원은 새 계정만 셉니다.',
   );
   expect(vi.mocked(fetch).mock.calls.at(-1)?.[0]).toBe(
     '/api/users/signups?from=2026-10-17&to=2026-10-23',
@@ -1074,4 +1181,349 @@ it('보관 시작일 전이라도 expiredDates에 없으면 조합별 비용 기
   await screen.findByText('총 AI 비용');
   expect(screen.queryByText('보관 기간 지남')).toBeNull();
   expect(screen.getAllByText('비용 기록 없음').length).toBeGreaterThan(0);
+});
+
+const chartRows = (label: string) =>
+  JSON.parse(
+    screen
+      .getByLabelText(label)
+      .querySelector('[data-rows]')!
+      .getAttribute('data-rows')!,
+  ) as Record<string, unknown>[];
+
+it.each([false, true])(
+  '가입 경로는 구글과 카카오만 보이고 other(%s)를 읽지 않는다',
+  async (withOther) => {
+    nav.search = 'tab=signups&from=2026-10-22&to=2026-10-23';
+    modifyResponse('/api/users/signups', (value) => {
+      const data = value as SignupResponse;
+
+      data.daily = data.daily.map((day) => ({
+        ...day,
+        signups: {
+          total: 3,
+          google: 2,
+          kakao: 1,
+          ...(withOther ? { other: 9 } : {}),
+        },
+      }));
+
+      return data;
+    });
+    draw('users');
+    await screen.findByText('가입 경로');
+    expect(screen.getByText('구글 4명, 카카오 2명')).toBeTruthy();
+    expect(
+      Object.keys(
+        JSON.parse(
+          screen
+            .getByLabelText('신규 가입자 추이')
+            .getAttribute('data-config')!,
+        ),
+      ),
+    ).toEqual(['total', 'google', 'kakao']);
+    expect(screen.queryByText(/그 외/)).toBeNull();
+    expect(screen.queryByText(/9명/)).toBeNull();
+  },
+);
+it('플랫폼별 신규 가입자는 준비된 날짜의 웹, 앱, 플랫폼 없음 합과 Amplitude 출처를 보인다', async () => {
+  nav.search = 'tab=signups&from=2026-10-22&to=2026-10-23';
+  modifyResponse('/api/users/signups', (value) => {
+    const data = value as SignupResponse;
+
+    data.daily[0].signupsByPlatform = {
+      all: 12,
+      web: 4,
+      android: 7,
+      unknown: 1,
+    };
+    data.daily[1].signupsByPlatform = {
+      all: 5,
+      web: 2,
+      android: 3,
+      unknown: 0,
+    };
+
+    return data;
+  });
+  draw('users');
+  expect(
+    await screen.findByText('웹 6명, 앱 10명, 플랫폼 없음 1명'),
+  ).toBeTruthy();
+  expect(
+    Object.values(
+      JSON.parse(
+        screen
+          .getByLabelText('플랫폼별 신규 가입자 추이')
+          .getAttribute('data-config')!,
+      ) as Record<string, { label: string }>,
+    ).map((item) => item.label),
+  ).toEqual(['전체', '웹', '앱', '플랫폼 없음']);
+
+  const sources = screen.getAllByRole('button', {
+    name: '플랫폼별 신규 가입자 출처와 집계 안내',
+  });
+
+  expect(sources).toHaveLength(2);
+  expect(sources[0].textContent).toContain('Amplitude');
+  act(() => sources[0].focus());
+  expect((await screen.findByRole('tooltip')).textContent).toBe(
+    'Amplitude의 가입 이벤트로 셉니다. 국가가 한국이거나 국가 정보가 없는 사용자만 셉니다. 구글과 카카오 경로별 수를 더하므로 같은 날 두 경로로 가입하면 두 번 셉니다. 팀 계정이 포함돼 서버 DB 신규 가입자와 다를 수 있습니다. 2026. 10. 23. 오전 11:55 KST 집계 기준',
+  );
+});
+it('플랫폼별 가입 준비 중 날짜는 플랫폼별 차트만 끊고 서버 DB 차트는 모든 날짜를 그린다', async () => {
+  nav.search = 'tab=signups&from=2026-10-17&to=2026-10-23';
+  modifyResponse('/api/users/signups', (value) => {
+    const data = value as SignupResponse;
+
+    data.pendingDates = ['2026-10-23'];
+    data.daily = data.daily.map((day) => ({
+      ...day,
+      signupsByPlatform:
+        day.date === '2026-10-23'
+          ? null
+          : { all: 3, web: 1, android: 2, unknown: 0 },
+    }));
+
+    return data;
+  });
+  draw('users');
+  await screen.findByText(/준비 중 날짜 1개/);
+
+  for (const label of [
+    '신규 가입자 추이',
+    '누적 가입자 추이',
+    '게스트 이관 회원 추이',
+  ]) {
+    const rows = chartRows(label);
+
+    expect(rows).toHaveLength(7);
+    expect(rows.every((row) => !('pending' in row))).toBe(true);
+  }
+
+  const platformRows = chartRows('플랫폼별 신규 가입자 추이');
+
+  expect(platformRows.at(-1)).toEqual({ date: '2026-10-23', pending: 1 });
+  expect(platformRows[0].web).toBe(1);
+  expect(screen.getAllByText('준비 중').length).toBeGreaterThan(0);
+});
+it('플랫폼 필드가 없는 서버 응답은 플랫폼별 자리를 준비 중으로 두고 재요청하지 않는다', async () => {
+  nav.search = 'tab=signups&from=2026-10-17&to=2026-10-23';
+
+  let legacy: Record<string, unknown> = {};
+
+  modifyResponse('/api/users/signups', (value) => {
+    const data = value as SignupResponse;
+
+    legacy = {
+      ...data,
+      platformAsOf: undefined,
+      pendingDates: undefined,
+      daily: data.daily.map((day) => ({
+        ...day,
+        signupsByPlatform: undefined,
+      })),
+    };
+
+    return legacy;
+  });
+  draw('users');
+  await screen.findByRole('heading', { name: '누적 가입자' });
+  expect(screen.queryByLabelText('플랫폼별 신규 가입자 추이')).toBeNull();
+  expect(
+    screen.getAllByRole('heading', { name: '플랫폼별 신규 가입자' }),
+  ).toHaveLength(2);
+  expect(screen.getAllByText('준비 중')).toHaveLength(2);
+  expect(screen.queryByText(/준비 중 날짜/)).toBeNull();
+  expect(
+    analyticsRefetch({ state: { data: JSON.parse(JSON.stringify(legacy)) } }),
+  ).toBe(false);
+});
+it('캠페인 추이는 웹 신규 가입자와 앱 신규 가입자를 나눠 보인다', async () => {
+  modifyResponse('/api/campaigns/analytics', (value) => {
+    const data = value as CampaignAnalyticsResponse;
+
+    data.totals.signups = { all: 39, ads: 33, nonAds: 6 };
+    data.totals.androidSignups = 52;
+
+    return data;
+  });
+  draw('acquisition');
+
+  const web = (
+    await screen.findAllByRole('heading', {
+      name: '웹 신규 가입자',
+    })
+  )[0].parentElement!;
+
+  expect(within(web).getByText('39명')).toBeTruthy();
+  expect(
+    within(
+      screen.getAllByRole('heading', { name: '앱 신규 가입자' })[0]
+        .parentElement!,
+    ).getByText('52명'),
+  ).toBeTruthy();
+  expect(
+    chartRows('웹 신규 가입자 추이').every(
+      (row) => !('androidSignups' in row) && !('value' in row),
+    ),
+  ).toBe(true);
+  expect(chartRows('앱 신규 가입자 추이')[0].value).toBe(6);
+
+  const help = screen.getByRole('button', {
+    name: 'Amplitude 출처와 집계 안내',
+  });
+
+  act(() => help.focus());
+  expect((await screen.findByRole('tooltip')).textContent).toContain(
+    '앱 신규 가입자는 광고 구분 없이 따로 세고, 나머지 지표는 웹 사용자만 셉니다.',
+  );
+});
+it('턴 도달률의 플랫폼별 지표 대상은 기본 all을 보내고 회원 선택은 URL과 요청에 member를 싣는다', async () => {
+  nav.search = 'tab=turn-reach';
+
+  const view = draw('conversion');
+
+  await screen.findByText('게스트에서 회원으로');
+  expect(requests.at(-1)).toBe(
+    '/api/conversion/turn-reach?from=2026-09-24&to=2026-10-23&segment=all',
+  );
+  fireEvent.change(
+    screen.getByRole('combobox', { name: '플랫폼별 지표 대상' }),
+    { target: { value: 'member' } },
+  );
+  expect(nav.push.mock.calls.at(-1)![0]).toContain('segment=member');
+  view.go();
+  await waitFor(() =>
+    expect(requests.at(-1)).toBe(
+      '/api/conversion/turn-reach?from=2026-09-24&to=2026-10-23&segment=member',
+    ),
+  );
+  await screen.findByText(/플랫폼별 지표 대상 회원/);
+  expect(
+    Object.keys(
+      JSON.parse(
+        screen.getByLabelText('N턴 이상 도달률').getAttribute('data-config')!,
+      ),
+    ),
+  ).toEqual(['all', 'guest', 'member']);
+});
+it('플랫폼별 도달률 platforms null은 그 자리만 준비 중이고 60초 재요청 대상이다', async () => {
+  nav.search = 'tab=turn-reach&from=2026-10-17&to=2026-10-23';
+
+  let payload: Record<string, unknown> = {};
+
+  modifyResponse('/api/conversion/turn-reach', (value) => {
+    payload = {
+      ...(value as object),
+      platforms: null,
+      platformAsOf: null,
+      pendingDates: [
+        '2026-10-17',
+        '2026-10-18',
+        '2026-10-19',
+        '2026-10-20',
+        '2026-10-21',
+        '2026-10-22',
+        '2026-10-23',
+      ],
+    };
+
+    return payload;
+  });
+  draw('conversion');
+  await screen.findByText('게스트에서 회원으로');
+  expect(screen.getByText('전체 채팅 수')).toBeTruthy();
+  expect(screen.getByText(/준비 중 날짜 7개/)).toBeTruthy();
+  expect(
+    screen.getByRole('heading', { name: '플랫폼별 1턴 대비 도달률' }),
+  ).toBeTruthy();
+  expect(screen.getAllByText('준비 중').length).toBeGreaterThan(0);
+  expect(analyticsRefetch({ state: { data: payload } })).toBe(60000);
+  expect(
+    analyticsRefetch({
+      state: { data: { ...payload, pendingDates: [], platforms: undefined } },
+    }),
+  ).toBe(false);
+});
+it('채팅 옵션 대상 게스트는 segment=guest만 바꾸고 서버 DB 값은 그대로다', async () => {
+  nav.search = 'tab=chat-options';
+
+  const view = draw('quality');
+
+  await screen.findByText('모델별 비중');
+  expect(requests.at(-1)).toContain('segment=all');
+
+  const chats = () =>
+    screen.getAllByRole('heading', { name: '채팅 수' })[0].parentElement!
+      .textContent;
+  const before = chats();
+
+  fireEvent.change(
+    screen.getByRole('combobox', { name: '플랫폼별 지표 대상' }),
+    { target: { value: 'guest' } },
+  );
+  view.go();
+  await waitFor(() => expect(requests.at(-1)).toContain('segment=guest'));
+  await screen.findByText(/플랫폼별 지표 대상 게스트/);
+  expect(chats()).toBe(before);
+});
+it('페르소나 시작 클릭 비중과 플랫폼별 모델 턴 수는 준비된 날짜 합으로 계산한다', async () => {
+  nav.search = 'tab=chat-options&from=2026-10-22&to=2026-10-23';
+  modifyResponse('/api/quality/chat-options', (value) => {
+    const data = value as ChatOptionResponse;
+    const zero = { all: 0, web: 0, android: 0, unknown: 0 };
+
+    data.daily = data.daily.map((day, i) => ({
+      ...day,
+      chatStarts: i ? zero : { all: 15, web: 10, android: 5, unknown: 0 },
+      personaChatStarts: i ? zero : { all: 2, web: 2, android: 0, unknown: 0 },
+      platformTurnsByModel: i
+        ? ({} as Record<string, PlatformCounts>)
+        : {
+            LITE: { all: 7, web: 4, android: 3, unknown: 0 },
+            AURORA: { all: 1, web: 1, android: 0, unknown: 0 },
+          },
+    }));
+
+    return data;
+  });
+  draw('quality');
+
+  const persona = (
+    await screen.findByRole('heading', { name: '페르소나 시작 클릭 비중' })
+  ).parentElement!.parentElement!;
+
+  expect(
+    within(persona)
+      .getAllByRole('definition')
+      .map((node) => node.textContent),
+  ).toEqual(['13.3%', '20.0%', '0.0%', '집계 대상 클릭 없음']);
+  expect(
+    within(persona).getByRole('button', {
+      name: '페르소나 시작 클릭 비중 출처와 집계 안내',
+    }).textContent,
+  ).toContain('Amplitude');
+
+  const table = screen.getByRole('heading', { name: '플랫폼별 모델 턴 수' })
+    .parentElement!.parentElement!;
+
+  expect(
+    within(table)
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) =>
+        within(row)
+          .getAllByRole('cell')
+          .map((cell) => cell.textContent),
+      ),
+  ).toEqual([
+    ['오로라', '1턴', '1턴', '0턴', '0턴'],
+    ['라이트', '7턴', '4턴', '3턴', '0턴'],
+  ]);
+  expect(
+    within(table).getByRole('button', {
+      name: '플랫폼별 모델 턴 수 출처와 집계 안내',
+    }).textContent,
+  ).toContain('Amplitude');
 });
