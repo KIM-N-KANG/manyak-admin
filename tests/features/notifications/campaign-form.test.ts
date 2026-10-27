@@ -16,7 +16,10 @@ import { POST as createCampaign } from '@/app/api/notifications/campaigns/route'
 import { GET as count } from '@/app/api/notifications/campaigns/target-count/route';
 import { GET as storyDetail } from '@/app/api/stories/[id]/route';
 import { GET as storyList } from '@/app/api/stories/route';
-import { CampaignFormScreen } from '@/features/notifications/campaign-form-screen';
+import {
+  CampaignFormScreen,
+  displayBody,
+} from '@/features/notifications/campaign-form-screen';
 import { fromKst } from '@/features/notifications/schedule';
 
 vi.mock('next/navigation', () => ({
@@ -238,7 +241,9 @@ describe('알림 내용과 미리보기', () => {
     type('제목', '주말 이벤트');
     type('본문', '이프 두 배');
     expect(within(preview).getByText('(광고) 주말 이벤트')).toBeTruthy();
-    expect(within(preview).getByText('이프 두 배')).toBeTruthy();
+    expect(screen.getByTestId('preview-body').textContent).toBe(
+      '이프 두 배\n수신거부: 마이 > 알림 설정',
+    );
     expect(screen.getByText('6/100')).toBeTruthy();
     type('제목', '(광고) 주말 이벤트');
     expect(within(preview).getByText('(광고) 주말 이벤트')).toBeTruthy();
@@ -257,6 +262,39 @@ describe('알림 내용과 미리보기', () => {
     type('사유', '사유');
     expect(
       await screen.findByText('다음 단계에서 내용을 한 번 더 확인합니다.'),
+    ).toBeTruthy();
+  });
+});
+
+describe('수신거부 안내', () => {
+  it('광고성 본문 끝에 줄바꿈과 안내를 붙이고 이미 있으면 다시 붙이지 않는다', () => {
+    expect(displayBody('MARKETING', '본문')).toBe(
+      '본문\n수신거부: 마이 > 알림 설정',
+    );
+    expect(
+      displayBody('MARKETING', '본문\n수신거부: 마이 > 알림 설정  \n'),
+    ).toBe('본문\n수신거부: 마이 > 알림 설정  \n');
+    expect(displayBody('SERVICE', '본문')).toBe('본문');
+  });
+  it('미리보기에 안내를 한 번만 보이고 빈 본문에도 안내 자리를 보인다', () => {
+    renderForm();
+
+    const body = () => screen.getByTestId('preview-body').textContent;
+
+    expect(body()).toBe(
+      '본문을 입력하면 여기에 표시됩니다.\n수신거부: 마이 > 알림 설정',
+    );
+    type('본문', '이프 두 배\n수신거부: 마이 > 알림 설정');
+    expect(body()!.match(/수신거부/g)).toHaveLength(1);
+    expect(
+      screen.getByText(
+        '(광고) 표기와 수신거부 안내는 발송할 때 서버가 붙입니다.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        '본문 끝의 ‘수신거부: 마이 > 알림 설정’ 안내는 서버가 붙이니 빼고 입력합니다.',
+      ),
     ).toBeTruthy();
   });
 });

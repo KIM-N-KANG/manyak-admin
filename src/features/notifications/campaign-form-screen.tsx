@@ -45,6 +45,9 @@ const titleLimit = 100;
 const bodyLimit = 300;
 const reasonLimit = 500;
 const adMark = '(광고)';
+
+export const optOutNotice = '수신거부: 마이 > 알림 설정';
+
 const count = (value: number) => value.toLocaleString('ko-KR');
 
 // 30초마다 갱신하는 현재 시각이다. 서버 렌더링에서는 0을 돌려 하이드레이션 불일치를 막는다.
@@ -76,6 +79,13 @@ export function displayTitle(kind: NotificationKind, title: string) {
   return kind === 'MARKETING' && !title.startsWith(adMark)
     ? `${adMark} ${title}`
     : title;
+}
+
+/** 광고성이면 서버처럼 본문 끝에 줄바꿈과 수신거부 안내를 붙인다. 끝 공백을 뺀 본문이 이미 안내로 끝나면 그대로 둔다. */
+export function displayBody(kind: NotificationKind, body: string) {
+  return kind === 'MARKETING' && !body.trimEnd().endsWith(optOutNotice)
+    ? `${body}\n${optOutNotice}`
+    : body;
 }
 
 function notFound(error: Error | null) {
@@ -240,16 +250,22 @@ function NotificationPreview({
         </p>
         <p
           data-testid="preview-body"
-          className={cn(
-            'mt-0.5 line-clamp-4 text-sm leading-5 break-words whitespace-pre-line',
-            body.trim() ? 'text-foreground-secondary' : 'text-foreground-faint',
-          )}>
-          {body.trim() || '본문을 입력하면 여기에 표시됩니다.'}
+          className="mt-0.5 line-clamp-5 text-sm leading-5 break-words whitespace-pre-line text-foreground-secondary">
+          {body.trim() ? (
+            displayBody(kind, body.trim())
+          ) : (
+            <>
+              <span className="text-foreground-faint">
+                본문을 입력하면 여기에 표시됩니다.
+              </span>
+              {kind === 'MARKETING' ? `\n${optOutNotice}` : null}
+            </>
+          )}
         </p>
       </div>
       <figcaption className="mt-3 text-center text-xs text-muted-foreground">
         {kind === 'MARKETING'
-          ? '(광고) 표기는 발송할 때 서버가 제목 앞에 붙입니다.'
+          ? '(광고) 표기와 수신거부 안내는 발송할 때 서버가 붙입니다.'
           : '기기와 브라우저에 따라 긴 본문은 잘립니다.'}
       </figcaption>
     </figure>
@@ -439,6 +455,7 @@ export function CampaignFormScreen({
                   value={body}
                   limit={bodyLimit}
                   placeholder="예: 이번 주말 충전하면 이프를 두 배로 드려요."
+                  help={`본문 끝의 ‘${optOutNotice}’ 안내는 서버가 붙이니 빼고 입력합니다.`}
                   multiline
                   onChange={setBody}
                 />
