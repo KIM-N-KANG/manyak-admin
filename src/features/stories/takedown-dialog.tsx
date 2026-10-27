@@ -34,12 +34,10 @@ export function StoryTakedown({ story }: { story: Story }) {
   function changeOpen(value: boolean) {
     setOpen(value);
 
-    if (value) {
-      setReason('');
-      setDetail('');
-      setMemo('');
-      setError('');
-    }
+    setReason('');
+    setDetail('');
+    setMemo('');
+    setError('');
   }
 
   async function confirm() {
@@ -68,7 +66,7 @@ export function StoryTakedown({ story }: { story: Story }) {
           }),
         },
       );
-      setOpen(false);
+      changeOpen(false);
       setSuccess((count) => count + 1);
       await Promise.all([
         invalidateList(),

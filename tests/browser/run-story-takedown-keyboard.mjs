@@ -1,0 +1,20 @@
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+
+const script = readFileSync(
+  new URL('./story-takedown-keyboard.js', import.meta.url),
+  'utf8',
+);
+const output = execFileSync('aside', ['repl', script], {
+  encoding: 'utf8',
+  timeout: 120_000,
+  maxBuffer: 1024 * 1024,
+});
+
+process.stdout.write(output);
+
+// REPL이 스크립트 오류에도 종료 0을 반환할 수 있어 두 시나리오의 완료 표식을 검사한다.
+for (const key of ['Space', 'Enter']) {
+  if (!output.includes(`PASS keyboard ${key}:`))
+    throw new Error(`${key} 키보드 시나리오가 완료되지 않았다.`);
+}

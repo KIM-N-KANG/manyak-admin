@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { createElement } from 'react';
+import { type ComponentProps, createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -13,11 +14,30 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import type { ConfirmDialog } from '@/features/originals/confirm-dialog';
 import { DetailScreen } from '@/features/shared/detail-screen';
 import { StoryRows } from '@/features/shared/list-screen';
 import { StoryTakedown } from '@/features/stories/takedown-dialog';
 import type { Story } from '@/features/stories/types';
 import { stories } from '@/fixtures/entities';
+
+// Portal이 닫혀도 유지되는 폼 상태는 닫힌 시점의 전달 값으로 관측한다.
+const closedForm = vi.hoisted(() => vi.fn());
+
+vi.mock('@/features/originals/confirm-dialog', async (load) => {
+  const actual = await load<{ ConfirmDialog: typeof ConfirmDialog }>();
+
+  return {
+    ConfirmDialog: (props: ComponentProps<typeof ConfirmDialog>) => {
+      if (!props.open)
+        closedForm(
+          renderToStaticMarkup(createElement('div', null, props.children)),
+        );
+
+      return createElement(actual.ConfirmDialog, props);
+    },
+  };
+});
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
@@ -40,6 +60,25 @@ let resolve: ((value: Response) => void) | undefined;
 let pause = false;
 const list = '/api/stories?memberId=owner';
 
+function memoryStorage(): Storage {
+  const values = new Map<string, string>();
+
+  return {
+    get length() {
+      return values.size;
+    },
+    clear: () => values.clear(),
+    getItem: (key) => values.get(key) ?? null,
+    key: (index) => [...values.keys()][index] ?? null,
+    removeItem: (key) => {
+      values.delete(key);
+    },
+    setItem: (key, value) => {
+      values.set(key, value);
+    },
+  };
+}
+
 beforeEach(() => {
   client = new QueryClient({
     defaultOptions: {
@@ -51,6 +90,9 @@ beforeEach(() => {
   requests = [];
   pause = false;
   resolve = undefined;
+  closedForm.mockClear();
+  vi.stubGlobal('localStorage', memoryStorage());
+  vi.stubGlobal('sessionStorage', memoryStorage());
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init: RequestInit = {}) => {
@@ -89,6 +131,7 @@ afterEach(() => {
   cleanup();
   client.clear();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 function draw(detail = false) {
@@ -322,7 +365,7 @@ it('처리 중에는 취소·선택·입력·중복 확인·Esc·바깥 클릭�
   expect(requests).toHaveLength(1);
   await act(async () => resolve!(Response.json({})));
 });
-it('목록은 삭제 뒤 공개 중단 배지를 두고 상세는 기타·모르는 사유를 표시한다', async () => {
+it('목록은 삭제 뒤 공개 중단 배지를 두고 상세는 기타 사유를 표시한다', async () => {
   story.takenDownAt = '2026-10-27T02:00:00Z';
   story.deletedAt = story.takenDownAt;
   story.takedownReason = 'ETC';
@@ -366,3 +409,122 @@ it.each(['메모 도움말', '소유자에게 보일 사유 도움말'])(
     );
   },
 );
+
+const internalMemo = 'KNK-1867-PRIVATE-MEMO-닫기즉시폐기';
+const ownerReason = 'KNK-1867-OWNER-REASON';
+
+async function fillPrivateForm() {
+  const current = await open();
+
+  fireEvent.click(current.radios[3]);
+  fireEvent.change(
+    within(current.dialog).getByRole('textbox', {
+      name: '소유자에게 보일 사유',
+    }),
+    { target: { value: ownerReason } },
+  );
+  fireEvent.change(
+    within(current.dialog).getByRole('textbox', { name: '메모 (선택)' }),
+    { target: { value: internalMemo } },
+  );
+
+  return current;
+}
+
+async function expectDiscarded() {
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+
+  const markup = closedForm.mock.lastCall?.[0] as string;
+
+  expect(markup).toBeTruthy();
+  expect(markup).not.toContain(internalMemo);
+  expect(markup).not.toContain(ownerReason);
+  expect(markup).not.toContain('checked=""');
+  expect(markup).toContain('0/500');
+}
+
+it.each(['취소', 'Esc', '바깥 클릭', '성공'])(
+  '%s 종료 시 다음 열기 전부터 사유·입력 사유·메모를 폐기하고 저장하지 않는다',
+  async (how) => {
+    const writeLocal = vi.spyOn(localStorage, 'setItem');
+    const writeSession = vi.spyOn(sessionStorage, 'setItem');
+    const writeCookie = vi.spyOn(Document.prototype, 'cookie', 'set');
+    const cookiesBefore = document.cookie;
+
+    draw();
+
+    const { dialog, confirm } = await fillPrivateForm();
+
+    if (how === '취소')
+      fireEvent.click(within(dialog).getByRole('button', { name: '취소' }));
+    else if (how === 'Esc') fireEvent.keyDown(dialog, { key: 'Escape' });
+    else if (how === '바깥 클릭') {
+      fireEvent.pointerDown(document.body, { pointerType: 'mouse', button: 0 });
+      fireEvent.mouseDown(document.body, { button: 0 });
+      fireEvent.mouseUp(document.body, { button: 0 });
+      fireEvent.click(document.body);
+    } else fireEvent.click(confirm);
+
+    await expectDiscarded();
+    expect(writeLocal).not.toHaveBeenCalled();
+    expect(writeSession).not.toHaveBeenCalled();
+    expect(writeCookie).not.toHaveBeenCalled();
+    expect(localStorage.length).toBe(0);
+    expect(sessionStorage.length).toBe(0);
+    expect(document.cookie).toBe(cookiesBefore);
+    expect(
+      JSON.stringify(
+        client
+          .getQueryCache()
+          .getAll()
+          .map((query) => query.state.data),
+      ),
+    ).not.toContain(internalMemo);
+    expect(
+      requests.filter((request) => request.method === 'POST'),
+    ).toHaveLength(how === '성공' ? 1 : 0);
+
+    if (how !== '성공') {
+      const next = await open();
+
+      expect(next.radios.every((radio) => !radio.checked)).toBe(true);
+      expect(
+        (
+          within(next.dialog).getByRole('textbox', {
+            name: '메모 (선택)',
+          }) as HTMLTextAreaElement
+        ).value,
+      ).toBe('');
+      fireEvent.click(next.radios[3]);
+      expect(
+        (
+          within(next.dialog).getByRole('textbox', {
+            name: '소유자에게 보일 사유',
+          }) as HTMLInputElement
+        ).value,
+      ).toBe('');
+    }
+  },
+);
+
+it('기타 입력을 적고 선정성으로 변경해 확인하면 reasonDetail을 보내지 않는다', async () => {
+  draw();
+
+  const { radios, confirm } = await fillPrivateForm();
+
+  fireEvent.click(radios[0]);
+  fireEvent.click(confirm);
+  await screen.findByText('공개 중단 조치를 적용했습니다.');
+  expect(requests.find((request) => request.method === 'POST')?.body).toEqual({
+    reasonCode: 'SEXUAL_CONTENT',
+    memo: internalMemo,
+  });
+});
+
+it('상세에 모르는 공개 중단 사유를 코드 그대로 렌더링한다', async () => {
+  story.takenDownAt = '2026-10-27T02:00:00Z';
+  story.takedownReason = 'NEW_REASON';
+  draw(true);
+  expect(await screen.findByText('NEW_REASON')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: '공개 중단' })).toBeNull();
+});

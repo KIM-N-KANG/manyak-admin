@@ -51,7 +51,7 @@ it.each(['SEXUAL_CONTENT', 'COPYRIGHT_INFRINGEMENT', 'HATE_SPEECH', 'ETC'])(
       ...(reasonCode === 'ETC'
         ? { reasonDetail: '실존 인물 비방' }
         : { reasonDetail: null }),
-      memo: null,
+      memo: 'KNK-1867-INTERNAL-MEMO-응답목록상세-미노출',
     });
 
     expect(response.status).toBe(200);
@@ -79,7 +79,14 @@ it.each(['SEXUAL_CONTENT', 'COPYRIGHT_INFRINGEMENT', 'HATE_SPEECH', 'ETC'])(
         (s: { storyId: string }) => s.storyId === stories[1].storyId,
       ),
     ).toMatchObject(result);
-    expect(d).not.toHaveProperty('memo');
+
+    for (const payload of [result, rows, d, stories[1]]) {
+      expect(payload).not.toHaveProperty('memo');
+      expect(JSON.stringify(payload)).not.toContain(
+        'KNK-1867-INTERNAL-MEMO-응답목록상세-미노출',
+      );
+    }
+
     expect((await take({ reasonCode })).status).toBe(
       reasonCode === 'ETC' ? 400 : 409,
     );
