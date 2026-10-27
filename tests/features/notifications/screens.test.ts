@@ -112,9 +112,16 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   client.clear();
   vi.unstubAllGlobals();
 });
+
+/** 야간 규칙이 끼어들지 않도록 시계를 KST 정오로 고정한다. 타이머는 실제로 흐른다. */
+function freezeDaytime() {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-27T03:00:00Z'));
+}
 
 function wrap(node: ReactNode) {
   return createElement(QueryClientProvider, { client }, node);
@@ -167,11 +174,13 @@ describe('알림 화면의 BFF 연결', () => {
   );
 
   it('대상 수 확인 전 발송하지 않고 실패 후 문구를 유지해 재시도한다', async () => {
+    freezeDaytime();
+
     const view = render(wrap(createElement(CampaignFormScreen)));
 
     fill(view.container);
 
-    const submit = screen.getByRole('button', { name: '대상 확인 후 발송' });
+    const submit = screen.getByRole('button', { name: '검토 후 발송' });
 
     await waitFor(() =>
       expect((submit as HTMLButtonElement).disabled).toBe(false),
@@ -180,25 +189,21 @@ describe('알림 화면의 BFF 연결', () => {
 
     const dialog = await screen.findByRole('dialog');
 
-    expect(dialog.textContent).toContain('412명');
-    expect(dialog.textContent).toContain(
-      '광고성 알림은 광고 수신에 동의한 회원만 대상',
-    );
-    expect(dialog.textContent).toContain('야간 광고 수신 동의자에게만 발송');
-    expect(
-      screen
-        .getByText(/광고성 알림은 광고 수신에 동의한 회원만 대상.*정보성은/)
-        .textContent?.replace(/\s+/g, ' '),
-    ).toContain('정보성은 서비스 알림 동의자에게 야간 제한 없이 발송');
+    expect(dialog.textContent).toContain('약 412명');
+    expect(dialog.textContent).toContain('(광고) 이프 행사');
+    expect(dialog.textContent).toContain('지금 바로');
+    expect(dialog.textContent).toContain('적용 안 함');
     expect(writes).toHaveLength(0);
     fail = true;
-    fireEvent.click(within(dialog).getByRole('button', { name: '확인' }));
-    await screen.findByRole('alert');
+    fireEvent.click(within(dialog).getByRole('button', { name: '발송' }));
+    expect((await within(dialog).findByRole('alert')).textContent).toBe(
+      '다시 시도해 주세요.',
+    );
     expect(
       (view.container.querySelector('[name=title]') as HTMLInputElement).value,
     ).toBe('이프 행사');
     fail = false;
-    fireEvent.click(within(dialog).getByRole('button', { name: '확인' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: '발송' }));
     await waitFor(() =>
       expect(nav.push).toHaveBeenCalledWith(
         expect.stringMatching(/^\/notifications\/campaigns\//),
@@ -211,21 +216,19 @@ describe('알림 화면의 BFF 연결', () => {
     });
   });
   it('공개 스토리 storyId를 미리 채우고 확인 후 요청 본문에 보낸다', async () => {
-    const id = stories.find((story) => story.visibility === 'PUBLIC')!.storyId;
+    freezeDaytime();
+
+    const story = stories.find((item) => item.visibility === 'PUBLIC')!;
     const view = render(
-      wrap(createElement(CampaignFormScreen, { storyId: id })),
+      wrap(createElement(CampaignFormScreen, { storyId: story.storyId })),
     );
 
     fill(view.container);
     expect(
-      (
-        screen.getByRole('combobox', {
-          name: '이동 대상 스토리',
-        }) as HTMLSelectElement
-      ).value,
-    ).toBe(id);
+      await screen.findByText(story.title, { selector: 'p' }),
+    ).toBeTruthy();
 
-    const submit = screen.getByRole('button', { name: '대상 확인 후 발송' });
+    const submit = screen.getByRole('button', { name: '검토 후 발송' });
 
     await waitFor(() =>
       expect((submit as HTMLButtonElement).disabled).toBe(false),
@@ -234,13 +237,11 @@ describe('알림 화면의 BFF 연결', () => {
 
     const dialog = await screen.findByRole('dialog');
 
-    expect(dialog.textContent).toContain(
-      stories.find((s) => s.storyId === id)!.title,
-    );
+    expect(dialog.textContent).toContain(story.title);
     expect(writes).toHaveLength(0);
-    fireEvent.click(within(dialog).getByRole('button', { name: '확인' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: '발송' }));
     await waitFor(() => expect(nav.push).toHaveBeenCalled());
-    expect(writes[0].body).toMatchObject({ storyId: id });
+    expect(writes[0].body).toMatchObject({ storyId: story.storyId });
   });
   it('비공개 스토리 미리 채움은 발송을 막고 정보성은 공지 작성으로 안내한다', async () => {
     render(
@@ -250,17 +251,17 @@ describe('알림 화면의 BFF 연결', () => {
         }),
       ),
     );
-    await screen.findByRole('alert');
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      '비공개 스토리입니다.',
+    );
     expect(
       (
         screen.getByRole('button', {
-          name: '대상 확인 후 발송',
+          name: '검토 후 발송',
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(true);
-    fireEvent.change(screen.getByRole('combobox', { name: '종류' }), {
-      target: { value: 'SERVICE' },
-    });
+    fireEvent.click(screen.getByRole('radio', { name: '정보성' }));
     expect(
       screen
         .getByRole('link', { name: '공지 작성으로 이동' })
@@ -405,6 +406,8 @@ describe('알림 화면의 BFF 연결', () => {
 });
 
 it('서버 모드에서도 홍보 스토리를 검색·미리 채우고 확인 후 storyId를 전송한다', async () => {
+  freezeDaytime();
+
   const story = stories.find((item) => item.visibility === 'PUBLIC')!;
   const view = render(
     wrap(
@@ -416,22 +419,12 @@ it('서버 모드에서도 홍보 스토리를 검색·미리 채우고 확인 �
     ),
   );
 
-  expect(
-    screen.getByRole('combobox', { name: '이동 대상 스토리' }),
-  ).toBeTruthy();
-  expect(
-    screen.queryByText(/스토리 이동 대상 지정은 준비 중입니다/),
-  ).toBeNull();
-  await waitFor(() =>
-    expect(
-      vi
-        .mocked(fetch)
-        .mock.calls.some(([url]) => String(url).startsWith('/api/stories?')),
-    ).toBe(true),
+  await screen.findByText(story.title, { selector: 'p' });
+  fireEvent.click(screen.getByRole('button', { name: '변경' }));
+  fireEvent.change(
+    screen.getByRole('combobox', { name: '이동 대상 스토리 검색' }),
+    { target: { value: '이야기' } },
   );
-  fireEvent.change(screen.getByLabelText('홍보할 스토리 검색'), {
-    target: { value: '이야기' },
-  });
   await waitFor(() =>
     expect(
       vi
@@ -441,9 +434,13 @@ it('서버 모드에서도 홍보 스토리를 검색·미리 채우고 확인 �
         ),
     ).toBe(true),
   );
+  fireEvent.keyDown(
+    screen.getByRole('combobox', { name: '이동 대상 스토리 검색' }),
+    { key: 'Escape' },
+  );
   fill(view.container);
 
-  const submit = screen.getByRole('button', { name: '대상 확인 후 발송' });
+  const submit = screen.getByRole('button', { name: '검토 후 발송' });
 
   await waitFor(() => expect(submit.hasAttribute('disabled')).toBe(false));
   fireEvent.click(submit);
@@ -452,7 +449,7 @@ it('서버 모드에서도 홍보 스토리를 검색·미리 채우고 확인 �
 
   expect(dialog.textContent).toContain(story.title);
   expect(writes).toHaveLength(0);
-  fireEvent.click(within(dialog).getByRole('button', { name: '확인' }));
+  fireEvent.click(within(dialog).getByRole('button', { name: '발송' }));
   await waitFor(() => expect(writes).toHaveLength(1));
   expect(writes[0].body).toMatchObject({ storyId: story.storyId });
 });
