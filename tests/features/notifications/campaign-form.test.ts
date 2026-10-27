@@ -28,6 +28,8 @@ vi.mock('next/navigation', () => ({
 
 let client: QueryClient;
 const writes: unknown[] = [];
+/** 설정하면 검색어가 있는 스토리 목록 응답을 이 약속이 풀릴 때까지 미룬다. */
+let searchGate: Promise<void> | undefined;
 const storyQueries = () =>
   vi
     .mocked(fetch)
@@ -37,6 +39,7 @@ const storyQueries = () =>
 
 beforeEach(() => {
   writes.length = 0;
+  searchGate = undefined;
   client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: Infinity } },
   });
@@ -50,7 +53,11 @@ beforeEach(() => {
 
       if (url.includes('/target-count')) return count(request);
 
-      if (url.startsWith('/api/stories?')) return storyList(request);
+      if (url.startsWith('/api/stories?')) {
+        if (url.includes('q=')) await searchGate;
+
+        return storyList(request);
+      }
 
       if (url.startsWith('/api/stories/'))
         return storyDetail(request, {
@@ -172,6 +179,42 @@ describe('이동 대상 스토리 선택기', () => {
         ),
     ).toBe(true);
     expect(screen.getByText('‘별이 잠’ 검색 결과')).toBeTruthy();
+  });
+  it('검색 대기 중에는 이전 결과를 고르지 않고 새 결과가 오면 고른다', async () => {
+    let release!: () => void;
+
+    searchGate = new Promise((resolve) => (release = resolve));
+    renderForm();
+    fireEvent.click(screen.getByRole('button', { name: '스토리 선택' }));
+
+    const previous = await screen.findAllByRole('option');
+
+    fireEvent.change(combobox(), { target: { value: '별이 잠' } });
+    fireEvent.keyDown(combobox(), { key: 'Enter' });
+    expect(screen.queryByRole('combobox')).not.toBeNull();
+
+    await waitFor(() =>
+      expect(storyQueries().some((q) => q.get('q') === '별이 잠')).toBe(true),
+    );
+    expect(screen.getAllByRole('option')[0]).toBe(previous[0]);
+    fireEvent.keyDown(combobox(), { key: 'Enter' });
+    fireEvent.click(screen.getAllByRole('option')[0]);
+    expect(screen.queryByRole('combobox')).not.toBeNull();
+
+    release();
+    await waitFor(() =>
+      expect(screen.getAllByRole('option')[0].textContent).toContain(
+        '별이 잠든 도서관',
+      ),
+    );
+
+    const title = screen
+      .getAllByRole('option')[0]
+      .querySelector('.truncate')!.textContent!;
+
+    fireEvent.keyDown(combobox(), { key: 'Enter' });
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.getByText(title, { selector: 'p' })).toBeTruthy();
   });
   it('결과가 없으면 안내하고 지우기 버튼으로 기본 목록에 돌아간다', async () => {
     renderForm();

@@ -136,6 +136,8 @@ function StorySearch({
   const items = result.data?.items ?? [];
   const current = Math.min(active, items.length - 1);
   const typing = normalizeSearch(query) !== debounced;
+  // 디바운스 대기 중이거나 이전 결과가 남아 있으면 선택을 막아 엉뚱한 스토리가 붙지 않게 한다.
+  const stale = typing || result.isPlaceholderData;
 
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(normalizeSearch(query)), 300);
@@ -177,7 +179,7 @@ function StorySearch({
     } else if (event.key === 'Enter') {
       event.preventDefault();
 
-      if (current >= 0) onSelect(items[current]);
+      if (!stale && current >= 0) onSelect(items[current]);
     } else if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
@@ -291,7 +293,7 @@ function StorySearch({
                 aria-selected={index === current}
                 onPointerMove={() => index !== current && setActive(index)}
                 onMouseDown={(event) => event.preventDefault()}
-                onClick={() => onSelect(story)}
+                onClick={() => !stale && onSelect(story)}
                 className={cn(
                   'mx-1 grid cursor-pointer gap-1 rounded-sm px-3 py-2.5',
                   index === current && 'bg-muted',
