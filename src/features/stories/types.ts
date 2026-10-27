@@ -16,6 +16,9 @@ export type Story = {
   totalTurns: number;
   createdAt: string;
   deletedAt: string | null;
+  takenDownAt: string | null;
+  takedownReason: string | null;
+  takedownReasonDetail: string | null;
 };
 export type StoryDetail = Story & {
   retention: { turn: number; rate: number }[];

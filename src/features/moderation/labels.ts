@@ -49,6 +49,7 @@ export function causeLabel(code: string | null) {
           IMAGE_INVALID: '이미지 형식 또는 크기 오류',
           IMAGE_UNREADABLE: '이미지 판독 불가',
           APPLY_FAILED: '승인 뒤 적용 실패',
+          STORY_TAKEN_DOWN: '스토리 공개 중단으로 종료',
         } as Record<string, string>
       )[code] ?? code)
     : '';

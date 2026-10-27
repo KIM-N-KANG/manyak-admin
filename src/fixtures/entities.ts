@@ -35,8 +35,9 @@ const titles = [
   '한밤의 탐정 사무소',
 ];
 
-// 라우트 번들마다 모듈이 따로 올라와도 회원 조치의 변경이 모든 고정 데이터 BFF에 보이도록 전역에 둔다.
+// 라우트 번들마다 모듈이 따로 올라와도 회원 조치와 스토리 공개 중단이 모든 고정 데이터 BFF에 보이도록 전역에 둔다.
 const fixtureGlobal = globalThis as typeof globalThis & {
+  manyakStories?: Story[];
   manyakMembers?: MemberListItem[];
   manyakMemberTransactions?: Map<string, CreditTransaction[]>;
 };
@@ -71,27 +72,34 @@ const storyGenres = [
   ...new Set(['로맨스', '판타지', '일상', '미스터리', 'SF', ...originalGenres]),
 ].slice(0, 35);
 
-export const stories: Story[] = Array.from({ length: 36 }, (_, i) => ({
-  storyId: id(2, i),
-  title: titles[i % 8] + (i >= 8 ? ` ${i + 1}` : ''),
-  description: '선택에 따라 새로운 이야기가 펼쳐지는 인터랙티브 스토리입니다.',
-  genre: storyGenres[i % storyGenres.length],
-  scope: i % 3 === 0 ? 'original' : 'user',
-  visibility: i % 5 === 0 ? 'PRIVATE' : 'PUBLIC',
-  moderationStatus: i % 6 === 0 ? 'HELD' : 'APPROVED',
-  supportingCharacterCount: i % 7 === 0 ? null : i % 6,
-  tags: i % 7 === 0 ? [] : ['성장', '모험', i % 2 ? '동료' : '비밀'],
-  owner:
-    i % 3 === 0
-      ? memberSummary(officialMember)
-      : i % 8 === 0
-        ? null
-        : memberSummary(members[i % members.length]),
-  chatCount: 126 + i * 19,
-  totalTurns: 1200 + i * 147,
-  createdAt: new Date(Date.UTC(2026, 9, 21 - (i % 20), 6)).toISOString(),
-  deletedAt: null,
-}));
+export const stories: Story[] = (fixtureGlobal.manyakStories ??= Array.from(
+  { length: 36 },
+  (_, i) => ({
+    storyId: id(2, i),
+    title: titles[i % 8] + (i >= 8 ? ` ${i + 1}` : ''),
+    description:
+      '선택에 따라 새로운 이야기가 펼쳐지는 인터랙티브 스토리입니다.',
+    genre: storyGenres[i % storyGenres.length],
+    scope: i % 3 === 0 ? 'original' : 'user',
+    visibility: i % 5 === 0 ? 'PRIVATE' : 'PUBLIC',
+    moderationStatus: i % 6 === 0 ? 'HELD' : 'APPROVED',
+    supportingCharacterCount: i % 7 === 0 ? null : i % 6,
+    tags: i % 7 === 0 ? [] : ['성장', '모험', i % 2 ? '동료' : '비밀'],
+    owner:
+      i % 3 === 0
+        ? memberSummary(officialMember)
+        : i % 8 === 0
+          ? null
+          : memberSummary(members[i % members.length]),
+    chatCount: 126 + i * 19,
+    totalTurns: 1200 + i * 147,
+    createdAt: new Date(Date.UTC(2026, 9, 21 - (i % 20), 6)).toISOString(),
+    deletedAt: null,
+    takenDownAt: null,
+    takedownReason: null,
+    takedownReasonDetail: null,
+  }),
+));
 export const chats: ChatRoom[] = Array.from({ length: 8210 }, (_, i) => ({
   chatId: id(3, i),
   story: {

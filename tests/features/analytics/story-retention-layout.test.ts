@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { createElement } from 'react';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 
@@ -24,7 +25,14 @@ afterEach(cleanup);
 
 it('스토리 상세 기준 턴 12개를 작은 화면 2열·중간 4열·넓은 화면 6열로 배치한다', () => {
   render(
-    createElement(DetailScreen, { domain: 'stories', id: stories[0].storyId }),
+    createElement(
+      QueryClientProvider,
+      { client: new QueryClient() },
+      createElement(DetailScreen, {
+        domain: 'stories',
+        id: stories[0].storyId,
+      }),
+    ),
   );
 
   const heading = screen.getByRole('heading', { name: '턴 유지율' });

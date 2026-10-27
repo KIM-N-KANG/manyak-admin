@@ -1,22 +1,28 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import { DataTable, dateTime } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 import { aiFeatureLabel, aiFeatures } from '@/features/dashboard/chart-data';
 
 import {
-  approximation,
+  audienceText,
   eventLabel,
   metricNumber as n,
   modelLabel,
   percent,
+  platformText,
   ratio,
 } from './config';
 import {
   formatPlotValue,
   FunnelChart,
   NumericTable,
+  PendingDates,
+  PlatformPlaceholder,
+  PlatformSource,
   type PlotEmptyLabel,
   type PlotRow,
   Ranking,
@@ -32,7 +38,7 @@ import {
   type Series,
   seriesGroups,
 } from './series';
-import { TurnReachChart } from './turn-reach-chart';
+import { PlatformReachChart, TurnReachChart } from './turn-reach-chart';
 import type * as T from './types';
 
 const single = (key: string, label: string) => pairSeries([[key, label]]);
@@ -66,6 +72,7 @@ function Charts({
     unit: string;
     emptyLabel?: PlotEmptyLabel;
     href?: (date: string) => string;
+    aside?: ReactNode;
   }[];
 }) {
   return (
@@ -89,6 +96,26 @@ function Charts({
           ),
         )}
       />
+    </>
+  );
+}
+
+/** 플랫폼별 값(Amplitude) 영역 위에 대상과 준비 중 날짜를 보인다. */
+function PlatformHeader({
+  segment,
+  pendingDates,
+}: {
+  segment?: string;
+  pendingDates?: string[];
+}) {
+  const audience = audienceText(segment);
+
+  return (
+    <>
+      {audience ? (
+        <p className="mb-4 text-xs text-muted-foreground">{audience}</p>
+      ) : null}
+      <PendingDates dates={pendingDates ?? []} />
     </>
   );
 }
@@ -278,8 +305,35 @@ export function UserContent({
   }
 
   const d = data as T.SignupResponse;
+  // 준비 중 날짜는 플랫폼별 값에만 적용하고 서버 DB 값은 모든 날짜를 그린다.
+  const db = { ...d, pendingDates: [] };
   const sum = (key: keyof T.SignupCounts) =>
     d.daily.reduce((s, row) => s + row.signups[key], 0);
+  const hasPlatform = d.daily.some(
+    (day) => day.signupsByPlatform !== undefined,
+  );
+  const ready = d.daily.flatMap((day) =>
+    day.signupsByPlatform ? [day.signupsByPlatform] : [],
+  );
+  const platformSum = (key: keyof T.PlatformCounts) =>
+    n(
+      ready.reduce((s, row) => s + row[key], 0),
+      '명',
+    );
+  const platformSource = (
+    <PlatformSource
+      title={platformText.signupCard}
+      help={platformText.signupHelp}
+      asOf={d.platformAsOf}
+    />
+  );
+  const platformChart = {
+    title: platformText.signupCard,
+    aside: platformSource,
+    rows: dailyRows(d, (day) => day.signupsByPlatform ?? { pending: 1 }),
+    series: seriesGroups.platform,
+    unit: '명',
+  };
 
   return (
     <>
@@ -291,8 +345,8 @@ export function UserContent({
           },
           {
             label: '가입 경로',
-            value: n(sum('google') + sum('kakao') + sum('other'), '명'),
-            detail: `구글 ${n(sum('google'), '명')}, 카카오 ${n(sum('kakao'), '명')}, 그 외 ${n(sum('other'), '명')}`,
+            value: n(sum('google') + sum('kakao'), '명'),
+            detail: `구글 ${n(sum('google'), '명')}, 카카오 ${n(sum('kakao'), '명')}`,
           },
           {
             label: '게스트 이관 회원',
@@ -301,33 +355,56 @@ export function UserContent({
               '명',
             ),
           },
+          {
+            label: platformText.signupCard,
+            aside: platformSource,
+            value: ready.length ? (
+              <span className="text-lg">
+                웹 {platformSum('web')}, 앱 {platformSum('android')}, 플랫폼
+                없음 {platformSum('unknown')}
+              </span>
+            ) : (
+              <span role="status">준비 중</span>
+            ),
+          },
         ]}
       />
       <Charts
         items={[
           {
             title: '신규 가입자',
-            rows: dailyRows(d, (day) => day.signups),
+            rows: dailyRows(db, (day) => day.signups),
             series: seriesGroups.signup,
             unit: '명',
             href: memberHref,
           },
           {
             title: '누적 가입자',
-            rows: dailyRows(d, (day) => ({ value: day.cumulativeSignups })),
+            rows: dailyRows(db, (day) => ({ value: day.cumulativeSignups })),
             series: single('value', '전체'),
             unit: '명',
             href: memberHref,
           },
           {
             title: '게스트 이관 회원',
-            rows: dailyRows(d, (day) => ({ value: day.migratedFromGuest })),
+            rows: dailyRows(db, (day) => ({ value: day.migratedFromGuest })),
             series: single('value', '게스트 이관 회원'),
             unit: '명',
             href: memberHref,
           },
         ]}
       />
+      <div className="mt-5">
+        <PlatformHeader pendingDates={d.pendingDates} />
+        {hasPlatform ? (
+          <SeriesChart {...platformChart} />
+        ) : (
+          <PlatformPlaceholder
+            title={platformText.signupCard}
+            aside={platformSource}
+          />
+        )}
+      </div>
     </>
   );
 }
@@ -491,9 +568,18 @@ export function AcquisitionContent({
               value: percent(t.adsShare, '신규 방문자 없음'),
             },
             {
-              label: '신규 가입자',
+              label: '웹 신규 가입자',
               value: n(t.signups.all, '명'),
               detail: segmentDetail(t.signups),
+            },
+            {
+              label: '앱 신규 가입자',
+              value:
+                t.androidSignups === undefined ? (
+                  <span role="status">준비 중</span>
+                ) : (
+                  n(t.androidSignups, '명')
+                ),
             },
             {
               label: '스토리라인 생성 요청',
@@ -529,11 +615,19 @@ export function AcquisitionContent({
               unit: '명',
             },
             ...(['signups', 'cumulativeSignups'] as const).map((key, i) => ({
-              title: ['신규 가입자', '누적 신규 가입자'][i],
+              title: ['웹 신규 가입자', '누적 웹 신규 가입자'][i],
               rows: dailyRows(d, (day) => day[key]),
               series: seriesGroups.ads,
               unit: '명',
             })),
+            {
+              title: '앱 신규 가입자',
+              rows: dailyRows(d, (day) => ({
+                value: day.androidSignups ?? null,
+              })),
+              series: single('value', '앱'),
+              unit: '명',
+            },
             {
               title: '제작 요청',
               rows: dailyRows(d, (day) => ({
@@ -615,26 +709,7 @@ export function AcquisitionContent({
     </div>
   );
 }
-export function ConversionContent({
-  tab,
-  data,
-}: {
-  tab: string;
-  data: unknown;
-}) {
-  if (tab === 'funnels') {
-    const d = data as T.ConversionResponse;
-
-    return (
-      <>
-        <FunnelChart
-          steps={d.steps}
-          help={d.funnel === 'guest-limit-login' ? approximation : undefined}
-        />
-      </>
-    );
-  }
-
+export function ConversionContent({ data }: { data: unknown }) {
   const d = data as T.TurnReachResponse;
   const g = d.guestToMember;
 
@@ -649,6 +724,17 @@ export function ConversionContent({
             detail: `5턴 이상 ${n(g.chatsReached5, '개')}, 6턴 이상 ${n(g.chatsReached6, '개')}`,
           },
         ]}
+      />
+      <PlatformHeader segment={d.segment} pendingDates={d.pendingDates} />
+      <PlatformReachChart
+        platforms={d.platforms}
+        aside={
+          <PlatformSource
+            title={platformText.reachTitle}
+            help={platformText.reachHelp}
+            asOf={d.platformAsOf}
+          />
+        }
       />
     </>
   );
@@ -731,6 +817,7 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
 
   if (tab === 'chat-options') {
     const d = data as T.ChatOptionResponse;
+    const db = { ...d, pendingDates: [] };
     const chats = d.daily.reduce((s, row) => s + row.chats, 0),
       persona = d.daily.reduce((s, row) => s + row.withPersona, 0);
     const codes = [
@@ -776,7 +863,7 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
           items={[
             {
               title: '채팅 수',
-              rows: dailyRows(d, (day) => ({
+              rows: dailyRows(db, (day) => ({
                 chats: day.chats,
                 withPersona: day.withPersona,
               })),
@@ -788,7 +875,7 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
             },
             {
               title: '모델별 채팅 수',
-              rows: dailyRows(d, (day) =>
+              rows: dailyRows(db, (day) =>
                 Object.fromEntries(
                   models.map(({ key }) => [key, day.byModel[key] ?? 0]),
                 ),
@@ -800,7 +887,7 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
             },
             {
               title: '모델별 턴 수',
-              rows: dailyRows(d, (day) =>
+              rows: dailyRows(db, (day) =>
                 Object.fromEntries(
                   models.map(({ key }) => [key, day.turnsByModel[key] ?? 0]),
                 ),
@@ -835,6 +922,7 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
             ];
           })}
         />
+        <ChatOptionPlatforms data={d} />
       </>
     );
   }
@@ -977,5 +1065,105 @@ export function QualityContent({ tab, data }: { tab: string; data: unknown }) {
         ])}
       />
     </>
+  );
+}
+
+const platformKeys = ['all', 'web', 'android', 'unknown'] as const;
+
+/** 채팅 옵션 비중의 Amplitude 플랫폼별 카드와 표다. 준비된 날짜만 더한다. */
+function ChatOptionPlatforms({ data: d }: { data: T.ChatOptionResponse }) {
+  const ready = d.daily.filter(
+    (day) =>
+      day.chatStarts && day.personaChatStarts && day.platformTurnsByModel,
+  );
+  const total = (
+    pick: (day: T.ChatOptionDay) => T.PlatformCounts | undefined,
+  ) =>
+    Object.fromEntries(
+      platformKeys.map((key) => [
+        key,
+        ready.reduce((s, day) => s + (pick(day)?.[key] ?? 0), 0),
+      ]),
+    ) as T.PlatformCounts;
+  const starts = total((day) => day.chatStarts!);
+  const persona = total((day) => day.personaChatStarts!);
+  const models = modelSeries(
+    ready.flatMap((day) => Object.keys(day.platformTurnsByModel!)),
+  );
+  const pending = <span role="status">준비 중</span>;
+
+  return (
+    <div className="mt-5">
+      <PlatformHeader segment={d.segment} pendingDates={d.pendingDates} />
+      <SummaryCards
+        items={[
+          {
+            label: platformText.personaTitle,
+            aside: (
+              <PlatformSource
+                title={platformText.personaTitle}
+                help={platformText.personaHelp}
+                asOf={d.platformAsOf}
+              />
+            ),
+            value: ready.length ? (
+              <dl className="grid grid-cols-[auto_1fr] gap-x-3 text-base">
+                {seriesGroups.platform.map(({ key, label }) => (
+                  <div key={key} className="contents">
+                    <dt className="text-muted-foreground">{label}</dt>
+                    <dd>
+                      {percent(
+                        ratio(
+                          persona[key as keyof T.PlatformCounts],
+                          starts[key as keyof T.PlatformCounts],
+                        ),
+                        platformText.personaEmpty,
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              pending
+            ),
+          },
+        ]}
+      />
+      <Card>
+        <div className="mb-4 flex items-center gap-2">
+          <h3 className="font-semibold">{platformText.modelTurnsTitle}</h3>
+          <PlatformSource
+            title={platformText.modelTurnsTitle}
+            help={platformText.modelTurnsHelp}
+            asOf={d.platformAsOf}
+          />
+        </div>
+        {ready.length ? (
+          <DataTable
+            headers={['모델', ...seriesGroups.platform.map((s) => s.label)]}
+            empty={!models.length}>
+            {models.map(({ key: model }) => (
+              <tr key={model}>
+                <td>{modelLabel(model)}</td>
+                {platformKeys.map((key) => (
+                  <td key={key}>
+                    {n(
+                      ready.reduce(
+                        (s, day) =>
+                          s + (day.platformTurnsByModel![model]?.[key] ?? 0),
+                        0,
+                      ),
+                      '턴',
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </DataTable>
+        ) : (
+          <p className="text-sm">{pending}</p>
+        )}
+      </Card>
+    </div>
   );
 }

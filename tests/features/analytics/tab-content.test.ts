@@ -279,11 +279,14 @@ it.each(aiCostStates)(
 it('턴 도달률 차트의 X축에 기준 턴 라벨을 그대로 표시한다', () => {
   const { container } = render(
     createElement(ConversionContent, {
-      tab: 'turn-reach',
-      data: metricFixture(
-        '/conversion/turn-reach',
-        new URLSearchParams('from=2026-10-17&to=2026-10-23'),
-      ),
+      // 플랫폼별 차트를 빼고 서버 DB 차트만 본다.
+      data: {
+        ...(metricFixture(
+          '/conversion/turn-reach',
+          new URLSearchParams('from=2026-10-17&to=2026-10-23'),
+        ) as TurnReachResponse),
+        platforms: undefined,
+      },
     }),
   );
 
@@ -327,7 +330,9 @@ it('채팅이 있는 전체·게스트·회원은 세 선이며 실제 0 도달�
   data.segments[1].chats = 1;
 
   const { container } = render(
-    createElement(ConversionContent, { tab: 'turn-reach', data }),
+    createElement(ConversionContent, {
+      data: { ...data, platforms: undefined },
+    }),
   );
 
   expect(container.querySelectorAll('.recharts-line-curve')).toHaveLength(3);
@@ -579,7 +584,9 @@ it('동일한 도달률과 근접한 인프라 평균은 공용 끝 라벨로 �
   }
 
   const view = render(
-    createElement(ConversionContent, { tab: 'turn-reach', data }),
+    createElement(ConversionContent, {
+      data: { ...data, platforms: undefined },
+    }),
   );
   const labelYs = Array.from(
     view.container.querySelectorAll('.chart-end-labels text'),
@@ -610,4 +617,53 @@ it('동일한 도달률과 근접한 인프라 평균은 공용 끝 라벨로 �
   expect(ys[1] - ys[0]).toBeGreaterThanOrEqual(18);
   expect(ys[2] - ys[1]).toBeGreaterThanOrEqual(18);
   expect(container.textContent).toContain('7.4% / 21.0%');
+});
+
+it('플랫폼별 1턴 대비 도달률은 서버 DB 차트와 따로 선 4개를 그리고 100%를 넘어도 자르지 않는다', () => {
+  const data = metricFixture(
+    '/conversion/turn-reach',
+    new URLSearchParams('from=2026-10-21&to=2026-10-21'),
+  ) as TurnReachResponse;
+  const platforms = data.platforms!;
+
+  platforms[3].chats = 5;
+  platforms[1].chats = 10;
+  platforms[1].reached = platforms[1].reached.map((point) =>
+    point.turn === 5 ? { ...point, chats: 4, rate: 0.4 } : point,
+  );
+  platforms[0].reached = platforms[0].reached.map((point) =>
+    point.turn === 2 ? { ...point, rate: 1.5 } : point,
+  );
+  render(createElement(ConversionContent, { data }));
+
+  const chart = screen
+    .getByRole('heading', { name: '플랫폼별 1턴 대비 도달률' })
+    .closest('.rounded-md')!;
+
+  expect(chart.querySelectorAll('.recharts-line-curve')).toHaveLength(4);
+  expect(
+    within(chart as HTMLElement).getByRole('button', {
+      name: '플랫폼별 1턴 대비 도달률 출처와 집계 안내',
+    }).textContent,
+  ).toContain('Amplitude');
+
+  const table = within(chart as HTMLElement)
+    .getByText('플랫폼별 수치 표')
+    .closest('details')!;
+
+  expect(within(table).getAllByRole('columnheader')).toHaveLength(9);
+
+  const cells = (turn: string) =>
+    within(within(table).getByRole('cell', { name: turn }).closest('tr')!)
+      .getAllByRole('cell')
+      .map((cell) => cell.textContent);
+
+  // 열 순서는 기준 턴, 전체 수와 비율, 웹 수와 비율이다.
+  expect(cells('5턴')[4]).toBe('40.0%');
+  expect(cells('2턴')[2]).toBe('150.0%');
+  expect(
+    screen
+      .getByRole('heading', { name: 'N턴 이상 도달률' })
+      .closest('.rounded-md'),
+  ).not.toBe(chart);
 });

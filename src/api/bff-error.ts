@@ -1,6 +1,6 @@
 export function bffError(
   request: Request,
-  status: 400 | 404,
+  status: 400 | 404 | 409,
   message: string,
   field?: string,
 ) {
@@ -8,7 +8,7 @@ export function bffError(
     {
       timestamp: new Date().toISOString(),
       status,
-      code: status === 400 ? 'BAD_REQUEST' : 'NOT_FOUND',
+      code: { 400: 'BAD_REQUEST', 404: 'NOT_FOUND', 409: 'CONFLICT' }[status],
       message,
       path: new URL(request.url).pathname,
       details: field ? [{ field, message }] : [],

@@ -14,7 +14,7 @@ import {
   YAxis,
 } from 'recharts';
 
-import { DataTable, TextLink } from '@/components/admin/data-ui';
+import { DataTable, dateTime, TextLink } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 import {
@@ -37,16 +37,64 @@ export function Source({ source, help }: { source: string; help: string }) {
     </HelpTooltip>
   );
 }
+/** 서버 DB 탭 안의 플랫폼별 값 제목 옆에 두는 Amplitude 출처 표시다. */
+export function PlatformSource({
+  title,
+  help,
+  asOf,
+}: {
+  title: string;
+  help: string;
+  asOf?: string | null;
+}) {
+  return (
+    <HelpTooltip label={`${title} 출처와 집계 안내`} source="Amplitude">
+      {asOf ? `${help} ${dateTime(asOf)} KST 집계 기준` : help}
+    </HelpTooltip>
+  );
+}
+/** 플랫폼별 값이 아직 없을 때 그 자리에 두는 "준비 중" 카드다. */
+export function PlatformPlaceholder({
+  title,
+  aside,
+}: {
+  title: string;
+  aside: ReactNode;
+}) {
+  return (
+    <Card className="min-w-0">
+      <div className="flex items-center gap-2">
+        <h3 className="font-semibold">{title}</h3>
+        {aside}
+      </div>
+      <p role="status" className="mt-4 text-sm">
+        준비 중
+      </p>
+    </Card>
+  );
+}
 export function SummaryCards({
   items,
 }: {
-  items: { label: string; value: ReactNode; detail?: ReactNode }[];
+  items: {
+    label: string;
+    value: ReactNode;
+    detail?: ReactNode;
+    aside?: ReactNode;
+  }[];
 }) {
   return (
     <div className="mb-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
         <Card key={item.label} className="min-w-0">
-          <h3 className="text-sm text-muted-foreground">{item.label}</h3>
+          {item.aside ? (
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm text-muted-foreground">{item.label}</h3>
+              {item.aside}
+            </div>
+          ) : (
+            <h3 className="text-sm text-muted-foreground">{item.label}</h3>
+          )}
           <div className="mt-3 text-2xl font-semibold break-words">
             {item.value}
           </div>
@@ -137,8 +185,10 @@ export function SeriesChart({
   emptyLabel = '값 없음',
   href,
   grouped = false,
+  aside,
 }: {
   title: string;
+  aside?: ReactNode;
   categoryLabel?: string;
   rows: PlotRow[];
   series: Series[];
@@ -215,7 +265,14 @@ export function SeriesChart({
 
   return (
     <Card className="min-w-0">
-      <h3 className="font-semibold">{title}</h3>
+      {aside ? (
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold">{title}</h3>
+          {aside}
+        </div>
+      ) : (
+        <h3 className="font-semibold">{title}</h3>
+      )}
       <ChartContainer
         config={config}
         className="mt-5 h-72 w-full"

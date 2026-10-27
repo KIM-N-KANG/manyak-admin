@@ -9,7 +9,7 @@ import { adminResponseValues } from '@/features/shared/response-values';
 export function useApi<T>(
   url: string,
   enabled = true,
-  options: Pick<UseQueryOptions<T>, 'refetchInterval'> = {},
+  options: Pick<UseQueryOptions<T>, 'refetchInterval' | 'placeholderData'> = {},
 ) {
   return useQuery<T>({
     ...options,
