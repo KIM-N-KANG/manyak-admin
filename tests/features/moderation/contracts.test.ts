@@ -165,6 +165,7 @@ it('위치·종류·상태·기준·원인 표시는 정본과 미등록 코드 
   expect(ruleLabel('EXTREME_GORE')).toBe('극단적인 잔혹 표현');
   expect(ruleLabel('NEW_RULE')).toBe('NEW_RULE');
   expect(causeLabel('MODERATION_UNAVAILABLE')).toBe('검수 서버 응답 실패');
+  expect(causeLabel('STORY_TAKEN_DOWN')).toBe('스토리 공개 중단으로 종료');
   expect(causeLabel('NEW_CODE')).toBe('NEW_CODE');
   expect(pathLabel('storySettings.worldSetting')).toBe('세계관 설정');
   expect(pathLabel('characters[1].images[0].imageUrl')).toBe('인물 2 이미지 1');

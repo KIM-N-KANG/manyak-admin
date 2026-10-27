@@ -6,6 +6,8 @@ import { validateAdminRequest } from '@/api/admin-validation';
 import { bffError } from '@/api/bff-error';
 import { productionDataSourceError } from '@/api/data-source-guard';
 import { normalizeSearch } from '@/features/shared/search';
+import { canTakeDown } from '@/features/stories/takedown';
+import { deletedStories, stories } from '@/fixtures/entities';
 import { inPeriod, paginate, validatePeriod } from '@/fixtures/query';
 
 import { moderationRows } from './moderation';
@@ -119,6 +121,37 @@ export async function moderationRoute(request: Request) {
     }
 
     const id = decodeURIComponent(path.split('/')[3]);
+
+    if (path.startsWith('/moderation/stories/')) {
+      const story = [...stories, ...deletedStories].find(
+        (item) => item.storyId === id,
+      );
+
+      if (!story) return bffError(request, 404, '스토리를 찾을 수 없습니다.');
+
+      if (!canTakeDown(story))
+        return bffError(
+          request,
+          409,
+          '공개 중단할 수 없는 상태의 스토리입니다.',
+        );
+
+      const input = JSON.parse(body!);
+
+      story.visibility = 'PRIVATE';
+      story.takenDownAt = new Date().toISOString();
+      story.takedownReason = input.reasonCode;
+      story.takedownReasonDetail = input.reasonDetail ?? null;
+
+      return Response.json({
+        storyId: story.storyId,
+        visibility: story.visibility,
+        takenDownAt: story.takenDownAt,
+        takedownReason: story.takedownReason,
+        takedownReasonDetail: story.takedownReasonDetail,
+      });
+    }
+
     const row = moderationRows().find((row) => row.submissionId === id);
 
     if (!row) return bffError(request, 404, '제출본을 찾을 수 없습니다.');

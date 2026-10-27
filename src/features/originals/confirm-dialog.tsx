@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode, RefObject } from 'react';
+
 import { Dialog } from '@base-ui/react/dialog';
 
 import { Button } from '@/components/ui/button';
@@ -12,7 +14,19 @@ export function ConfirmDialog({
   pending,
   onConfirm,
   error,
+  children,
+  canConfirm = true,
+  confirmLabel = '확인',
+  confirmVariant,
+  initialFocus,
+  finalFocus,
 }: {
+  children?: ReactNode;
+  canConfirm?: boolean;
+  confirmLabel?: string;
+  confirmVariant?: 'destructive';
+  initialFocus?: RefObject<HTMLElement | null>;
+  finalFocus?: RefObject<HTMLElement | null>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -24,16 +38,21 @@ export function ConfirmDialog({
   return (
     <Dialog.Root
       open={open}
-      onOpenChange={(value) => {
-        if (!pending) onOpenChange(value);
+      onOpenChange={(value, details) => {
+        if (pending) details.cancel();
+        else onOpenChange(value);
       }}>
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-foreground/30" />
-        <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-3rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md border bg-card p-6 shadow-lg">
+        <Dialog.Popup
+          initialFocus={initialFocus}
+          finalFocus={finalFocus}
+          className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-3rem)] w-[calc(100%-3rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md border bg-card p-6 shadow-lg">
           <Dialog.Title className="text-xl font-semibold">{title}</Dialog.Title>
           <Dialog.Description className="mt-4 text-sm leading-6 text-muted-foreground">
             {description}
           </Dialog.Description>
+          {children}
           {error ? (
             <p role="alert" className="mt-4 text-sm text-destructive">
               {error}
@@ -44,8 +63,11 @@ export function ConfirmDialog({
               render={<Button variant="outline" disabled={pending} />}>
               취소
             </Dialog.Close>
-            <Button disabled={pending} onClick={onConfirm}>
-              {pending ? '처리 중…' : '확인'}
+            <Button
+              variant={confirmVariant}
+              disabled={pending || !canConfirm}
+              onClick={onConfirm}>
+              {pending ? '처리 중…' : confirmLabel}
             </Button>
           </div>
         </Dialog.Popup>

@@ -2715,6 +2715,50 @@
           }
         }
       }
+    },
+    "/api/v1/admin/moderation/stories/{storyId}/takedown": {
+      "post": {
+        "tags": ["admin-moderation-controller"],
+        "operationId": "takedownStory",
+        "parameters": [
+          {
+            "name": "storyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminStoryTakedownRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStoryTakenDown"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -4067,6 +4111,16 @@
           "deletedAt": {
             "type": ["string", "null"],
             "format": "date-time"
+          },
+          "takenDownAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "takedownReason": {
+            "type": ["string", "null"]
+          },
+          "takedownReasonDetail": {
+            "type": ["string", "null"]
           }
         }
       },
@@ -4142,6 +4196,16 @@
           "deletedAt": {
             "type": ["string", "null"],
             "format": "date-time"
+          },
+          "takenDownAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "takedownReason": {
+            "type": ["string", "null"]
+          },
+          "takedownReasonDetail": {
+            "type": ["string", "null"]
           }
         }
       },
@@ -7312,6 +7376,91 @@
             "type": "string"
           }
         }
+      },
+      "AdminStoryTakedownRequest": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "reasonCode": {
+                "type": "string",
+                "enum": [
+                  "SEXUAL_CONTENT",
+                  "COPYRIGHT_INFRINGEMENT",
+                  "HATE_SPEECH"
+                ]
+              },
+              "reasonDetail": {
+                "type": "null"
+              },
+              "memo": {
+                "type": ["string", "null"],
+                "minLength": 1,
+                "maxLength": 500,
+                "pattern": "(?sU).*\\S.*"
+              }
+            },
+            "required": ["reasonCode"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "reasonCode": {
+                "type": "string",
+                "enum": ["ETC"]
+              },
+              "reasonDetail": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "(?sU).*\\S.*"
+              },
+              "memo": {
+                "type": ["string", "null"],
+                "minLength": 1,
+                "maxLength": 500,
+                "pattern": "(?sU).*\\S.*"
+              }
+            },
+            "required": ["reasonCode", "reasonDetail"]
+          }
+        ]
+      },
+      "AdminStoryTakenDown": {
+        "type": "object",
+        "properties": {
+          "storyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": ["PRIVATE"]
+          },
+          "takenDownAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "takedownReason": {
+            "type": "string",
+            "enum": [
+              "SEXUAL_CONTENT",
+              "COPYRIGHT_INFRINGEMENT",
+              "HATE_SPEECH",
+              "ETC"
+            ]
+          },
+          "takedownReasonDetail": {
+            "type": ["string", "null"]
+          }
+        },
+        "required": [
+          "storyId",
+          "visibility",
+          "takenDownAt",
+          "takedownReason",
+          "takedownReasonDetail"
+        ]
       }
     },
     "securitySchemes": {
@@ -7344,6 +7493,20 @@
       "input": "knk-harness@be70a95:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-26",
       "description": "미배포 리텐션 계약의 d2~d6을 코호트와 요약에 추가한다. 서버 선행 배포 후 실제 OpenAPI로 다시 추출한다.",
       "schemas": ["RetentionCohort", "RetentionRates"]
+    },
+    "storyTakedown": {
+      "issue": "KNK-1867",
+      "serverDependency": "서버 공개 중단 API와 스토리 응답 필드 선행 배포",
+      "specRevision": "c4df3ad8a429077ee8e4fe62d6b28f5b7eb1d3ad",
+      "receivedAt": "2026-10-27T09:09:55.220782+00:00",
+      "input": "knk-harness:MODERATION/BACKEND 4-2-10, ADMIN/BACKEND 4-2-5",
+      "description": "미배포 공개 중단 계약. 서버 선행 배포 후 실제 OpenAPI로 다시 추출한다.",
+      "schemas": [
+        "AdminStoryTakedownRequest",
+        "AdminStoryTakenDown",
+        "AdminStoryListResponse",
+        "AdminStoryDetailResponse"
+      ]
     }
   }
 }

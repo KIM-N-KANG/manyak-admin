@@ -28,6 +28,8 @@ import type { PaymentDetail } from '@/features/payments/types';
 import { RelatedList } from '@/features/shared/list-screen';
 import { useApi } from '@/features/shared/use-api';
 import { StorySettingsSection } from '@/features/stories/story-settings';
+import { takedownReasonLabel } from '@/features/stories/takedown';
+import { StoryTakedown } from '@/features/stories/takedown-dialog';
 import type { StoryDetail } from '@/features/stories/types';
 import { externalLinks } from '@/lib/external-links';
 
@@ -346,6 +348,8 @@ export function DetailScreen({
     d && (domain === 'stories' || domain === 'chats')
       ? (d as StoryDetail | ChatRoom).deletedAt
       : null;
+  const story =
+    domain === 'stories' ? (d as StoryDetail | undefined) : undefined;
   const titles = {
     stories: '스토리',
     members: '회원',
@@ -371,16 +375,37 @@ export function DetailScreen({
             : `${titles[domain]} 상세`
         }
         help={
-          deletedAt ? (
+          deletedAt || story?.takenDownAt ? (
             <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <Status value="삭제됨" />
-              <span>삭제 시각 (KST)</span>
-              <span className="font-mono">
-                {kstMinute.format(new Date(deletedAt))}
-              </span>
+              {deletedAt ? (
+                <>
+                  <Status value="삭제됨" />
+                  <span>삭제 시각 (KST)</span>
+                  <span className="font-mono">
+                    {kstMinute.format(new Date(deletedAt))}
+                  </span>
+                </>
+              ) : null}
+              {story?.takenDownAt ? (
+                <>
+                  <Status value="공개 중단됨" />
+                  <span>공개 중단 시각 (KST)</span>
+                  <span className="font-mono">
+                    {kstMinute.format(new Date(story.takenDownAt))}
+                  </span>
+                  <span>공개 중단 사유</span>
+                  <span>
+                    {takedownReasonLabel(
+                      story.takedownReason,
+                      story.takedownReasonDetail,
+                    )}
+                  </span>
+                </>
+              ) : null}
             </span>
           ) : undefined
         }>
+        {story ? <StoryTakedown story={story} /> : null}
         {domain === 'payments' && (
           <ExternalToolLink href={externalLinks.groble}>
             그로블에서 보기

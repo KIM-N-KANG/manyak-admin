@@ -260,6 +260,11 @@ export function StoryRows({ items }: { items: Story[] }) {
             <Status value="삭제됨" />
           </span>
         ) : null}
+        {s.takenDownAt ? (
+          <span className="ml-2">
+            <Status value="공개 중단됨" />
+          </span>
+        ) : null}
       </td>
       <td>
         {s.genre} ·{' '}

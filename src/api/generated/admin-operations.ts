@@ -1635,4 +1635,20 @@ export const adminOperations = [
     body: schemas.DeleteThumbnail1Body,
     bodyRequired: true,
   },
+  {
+    path: '/api/v1/admin/moderation/stories/{storyId}/takedown',
+    method: 'POST',
+    parameters: [
+      {
+        name: 'storyId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string', format: 'uuid' },
+      },
+    ],
+    params: schemas.TakedownStoryParams,
+    query: undefined,
+    body: schemas.TakedownStoryBody,
+    bodyRequired: true,
+  },
 ];
