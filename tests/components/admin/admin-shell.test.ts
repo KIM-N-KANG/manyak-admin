@@ -13,12 +13,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AdminShell } from '@/components/admin/admin-shell';
 
-const navigation = vi.hoisted(() => ({ pathname: '/dashboard' }));
+const navigation = vi.hoisted(() => ({ pathname: '/dashboard', search: '' }));
 
-vi.mock('next/navigation', () => ({ usePathname: () => navigation.pathname }));
+vi.mock('next/navigation', () => ({
+  usePathname: () => navigation.pathname,
+  useSearchParams: () => new URLSearchParams(navigation.search),
+}));
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  navigation.search = '';
 });
 beforeEach(() => {
   const values = new Map<string, string>();
@@ -121,6 +125,32 @@ describe('관리자 메뉴 구조', () => {
 
     expect(active).toHaveLength(1);
     expect(active[0].textContent).toBe(label);
+  });
+
+  it('지표 화면 메뉴는 지금 URL의 platform과 segment만 붙여 열고 다른 메뉴와 기간은 붙이지 않는다', () => {
+    navigation.search =
+      'tab=sessions&platform=android&segment=member&range=last7d&storyId=x';
+    shell('/analytics/users');
+
+    const nav = screen.getByRole('navigation', { name: '관리자 메뉴' });
+    const href = (name: string) =>
+      within(nav).getByRole('link', { name }).getAttribute('href');
+
+    for (const name of ['유입', '사용자', '전환', '기능과 품질', '인프라'])
+      expect(href(name)).toMatch(
+        /^\/analytics\/[a-z]+\?platform=android&segment=member$/,
+      );
+
+    expect(href('전환')).toBe(
+      '/analytics/conversion?platform=android&segment=member',
+    );
+    expect(href('개요')).toBe('/dashboard');
+    expect(href('분석')).toBe('/dashboard/analytics');
+    expect(
+      within(nav)
+        .getByRole('link', { name: '사용자' })
+        .getAttribute('aria-current'),
+    ).toBe('page');
   });
 
   it('비슷한 접두사 경로를 활성 메뉴로 오인하지 않는다', () => {

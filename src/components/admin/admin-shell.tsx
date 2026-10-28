@@ -9,7 +9,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 import { ExternalToolsPopover } from '@/components/admin/external-tools-popover';
 import { ManyakLogo } from '@/components/admin/manyak-logo';
@@ -18,6 +18,7 @@ import {
   currentSidebarGroup,
   expandedSidebar,
   isMenuActive,
+  menuHref,
   navigation,
   parseSidebarState,
   saveSidebarState,
@@ -64,6 +65,7 @@ export function AdminShell({
   preview?: boolean;
 }) {
   const pathname = usePathname();
+  const search = useSearchParams();
   const raw = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const [fallback, setFallback] = useState<SidebarPreferences | null>(null);
   const stored = fallback ?? parseSidebarState(raw);
@@ -151,7 +153,7 @@ export function AdminShell({
                     {group.items.map(([href, label]) => (
                       <Link
                         key={href}
-                        href={href}
+                        href={menuHref(href, search)}
                         aria-current={
                           isMenuActive(pathname, href) ? 'page' : undefined
                         }

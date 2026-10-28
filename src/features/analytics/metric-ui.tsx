@@ -37,7 +37,13 @@ export function Source({ source, help }: { source: string; help: string }) {
     </HelpTooltip>
   );
 }
-/** 서버 DB 탭 안의 플랫폼별 값 제목 옆에 두는 Amplitude 출처 표시다. */
+/** 고른 플랫폼이나 대상을 적용하지 못한 값의 제목 옆에 두는 회색 표시다. 문구가 없으면 undefined다. */
+export function basisMark(text?: string | null) {
+  return text ? (
+    <span className="text-xs font-normal text-muted-foreground">{text}</span>
+  ) : undefined;
+}
+/** 서버 DB 탭 안의 Amplitude 값 제목 옆에 두는 Amplitude 출처 표시다. */
 export function PlatformSource({
   title,
   help,
@@ -53,13 +59,15 @@ export function PlatformSource({
     </HelpTooltip>
   );
 }
-/** 플랫폼별 값이 아직 없을 때 그 자리에 두는 "준비 중" 카드다. */
+/** 값을 그릴 수 없을 때 차트 자리에 두는 안내 카드다. 기본 문구는 "준비 중"이다. */
 export function PlatformPlaceholder({
   title,
   aside,
+  message = '준비 중',
 }: {
   title: string;
-  aside: ReactNode;
+  aside?: ReactNode;
+  message?: string;
 }) {
   return (
     <Card className="min-w-0">
@@ -68,7 +76,7 @@ export function PlatformPlaceholder({
         {aside}
       </div>
       <p role="status" className="mt-4 text-sm">
-        준비 중
+        {message}
       </p>
     </Card>
   );
@@ -123,15 +131,18 @@ export function NumericTable({
   headers,
   rows,
   title = '전체 수치 표',
+  basis,
 }: {
   headers: string[];
   rows: ReactNode[][];
   title?: string;
+  basis?: string | null;
 }) {
   return (
     <details className="mt-4">
       <summary className="cursor-pointer text-xs text-muted-foreground">
         {title}
+        {basis ? ` · ${basis}` : null}
       </summary>
       <div className="mt-3 max-h-80 overflow-auto">
         <DataTable headers={headers} empty={!rows.length}>

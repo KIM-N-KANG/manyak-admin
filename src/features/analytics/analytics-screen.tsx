@@ -15,6 +15,7 @@ import { RangePicker } from '@/features/dashboard/range-picker';
 import { useApi } from '@/features/shared/use-api';
 
 import {
+  adSegments,
   type AnalyticsScreenName,
   approximation,
   audiences,
@@ -22,9 +23,10 @@ import {
   funnels,
   pick,
   platformOptions,
+  platformTabs,
   platformText,
   screens,
-  segments,
+  segmentTabs,
   sourceHelp,
 } from './config';
 import { kstTime } from './infra/data';
@@ -188,12 +190,14 @@ function MetricsTab({
   url,
   platform,
   segment,
+  adSegment,
 }: {
   screen: AnalyticsScreenName;
   tab: string;
   url: string;
   platform: string;
   segment: string;
+  adSegment: string;
 }) {
   const query = useApi<unknown>(url, true, {
     refetchInterval: (query) =>
@@ -220,14 +224,11 @@ function MetricsTab({
         segment?: string;
       }
     | undefined;
-  // 세 탭의 준비 중 날짜와 대상은 플랫폼별 값에만 적용돼 그 영역 위에 따로 보인다.
+  // 세 탭의 준비 중 날짜는 Amplitude 값에만 적용돼 그 영역 위에 따로 보인다.
   const platformPending = ['signups', 'turn-reach', 'chat-options'].includes(
     tab,
   );
-  // 세션과 기능 사용의 대상은 탭의 모든 값에 적용돼 위쪽 조건 표시에 함께 보인다.
-  const wholeAudience = ['sessions', 'client'].includes(tab)
-    ? audienceText(data?.segment, platformText.segmentLabel)
-    : null;
+  const audience = audienceText(data?.segment);
   const db = ['signups', 'turn-reach', 'chat-options', 'ai-cost'].includes(tab);
 
   return (
@@ -251,14 +252,14 @@ function MetricsTab({
               {dateTime(data.asOf)} KST 집계 기준
             </p>
           ) : null}
-          {data.campaign || data.storyId || data.platform || wholeAudience ? (
+          {data.campaign || data.storyId || data.platform || audience ? (
             <p className="mb-4 text-xs text-muted-foreground">
               {[
                 data.campaign && `광고 캠페인 ${data.campaign}`,
                 data.storyId && `대상 스토리 ${data.storyId}`,
                 data.platform &&
                   `플랫폼 ${platformOptions.find(([key]) => key === data.platform)?.[1] ?? data.platform}`,
-                wholeAudience,
+                audience,
               ]
                 .filter(Boolean)
                 .join(', ')}
@@ -268,13 +269,22 @@ function MetricsTab({
             dates={platformPending ? [] : (data.pendingDates ?? [])}
           />
           {screen === 'acquisition' ? (
-            <AcquisitionContent tab={tab} data={data} segment={segment} />
+            <AcquisitionContent tab={tab} data={data} segment={adSegment} />
           ) : screen === 'users' ? (
             <UserContent tab={tab} data={data} platform={platform} />
           ) : screen === 'conversion' ? (
-            <ConversionContent data={data} />
+            <ConversionContent
+              data={data}
+              platform={platform}
+              segment={segment}
+            />
           ) : (
-            <QualityContent tab={tab} data={data} />
+            <QualityContent
+              tab={tab}
+              data={data}
+              platform={platform}
+              segment={segment}
+            />
           )}
         </>
       ) : null}
@@ -429,22 +439,19 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
     (item) => item.campaign === selectedCampaign,
   );
   const range = analyticsRange(new URLSearchParams(params), tab, campaign);
-  const platform = pick(
-    params.get('platform'),
-    platformOptions,
-    screen === 'conversion' ? 'web' : 'all',
-  );
+  // 플랫폼과 대상은 모든 지표 화면이 함께 쓰고 그 탭이 쓰지 않으면 읽지도 지우지도 않는다.
+  const hasPlatform = platformTabs.includes(tab);
+  const hasSegment = segmentTabs.includes(tab);
+  const platform = hasPlatform
+    ? pick(params.get('platform'), platformOptions, 'all')
+    : 'all';
+  const segment = hasSegment
+    ? pick(params.get('segment'), audiences, 'all')
+    : 'all';
+  // 전환 퍼널은 웹과 앱을 더해 세지 않아 전체를 웹으로 요청한다.
   const funnelPlatform = platform === 'all' ? 'web' : platform;
-  const segment = pick(params.get('segment'), segments, 'all');
-  const audience = pick(params.get('segment'), audiences, 'all');
+  const adSegment = pick(params.get('adSegment'), adSegments, 'all');
   const funnelList = screen === 'conversion' && tab === 'funnels';
-  const platformAudience =
-    (screen === 'conversion' && tab === 'turn-reach') ||
-    (screen === 'quality' && tab === 'chat-options');
-  const wholeAudience =
-    (screen === 'users' && tab === 'sessions') ||
-    (screen === 'quality' && tab === 'client');
-  const needsAudience = platformAudience || wholeAudience;
   const needsCampaign =
     screen === 'acquisition' && !['sources', 'installs', 'push'].includes(tab);
   const story =
@@ -517,27 +524,47 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
 
   if (screen === 'quality' && tab === 'client') query.set('platform', platform);
 
-  if (needsAudience) query.set('segment', audience);
+  if (hasSegment) query.set('segment', segment);
 
   path = `/api${path}?${query}`;
 
   return (
     <>
       <PageHeading title={config.title}>
-        <RangePicker
-          disabled={tab === 'installs'}
-          range={{
-            ...range,
-            label: tab === 'installs' ? '전체 기간' : range.label,
-            query: new URLSearchParams({
-              from: range.from,
-              to: range.to,
-            }).toString(),
-            select: selectRange,
-          }}
-          maxDays={range.maxDays}
-          endDate={range.endDate}
-        />
+        <div className="flex flex-wrap items-end gap-4">
+          {hasPlatform ? (
+            <Select
+              label="플랫폼"
+              value={platform}
+              options={platformOptions}
+              help={funnelList ? platformText.funnelHelp : undefined}
+              onChange={(value) => update({ platform: value })}
+            />
+          ) : null}
+          {hasSegment ? (
+            <Select
+              label={platformText.segmentLabel}
+              help={platformText.segmentHelp}
+              value={segment}
+              options={audiences}
+              onChange={(value) => update({ segment: value })}
+            />
+          ) : null}
+          <RangePicker
+            disabled={tab === 'installs'}
+            range={{
+              ...range,
+              label: tab === 'installs' ? '전체 기간' : range.label,
+              query: new URLSearchParams({
+                from: range.from,
+                to: range.to,
+              }).toString(),
+              select: selectRange,
+            }}
+            maxDays={range.maxDays}
+            endDate={range.endDate}
+          />
+        </div>
       </PageHeading>
       <Tabs.Root
         value={tab}
@@ -590,30 +617,9 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
           {tab === 'creation' ? (
             <Select
               label="광고 구분"
-              value={segment}
-              options={segments}
-              onChange={(value) => update({ segment: value })}
-            />
-          ) : null}
-          {funnelList || tab === 'retention' || tab === 'client' ? (
-            <Select
-              label="플랫폼"
-              value={funnelList ? funnelPlatform : platform}
-              options={funnelList ? platformOptions.slice(1) : platformOptions}
-              onChange={(value) => update({ platform: value })}
-            />
-          ) : null}
-          {needsAudience ? (
-            <Select
-              label={
-                platformAudience
-                  ? platformText.audienceLabel
-                  : platformText.segmentLabel
-              }
-              help={platformAudience ? undefined : platformText.segmentHelp}
-              value={audience}
-              options={audiences}
-              onChange={(value) => update({ segment: value })}
+              value={adSegment}
+              options={adSegments}
+              onChange={(value) => update({ adSegment: value })}
             />
           ) : null}
           {needsStory ? (
@@ -704,6 +710,7 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
                   url={path}
                   platform={platform}
                   segment={segment}
+                  adSegment={adSegment}
                 />
               )}
             </>
