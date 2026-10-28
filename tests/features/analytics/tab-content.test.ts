@@ -92,7 +92,10 @@ it.each(['all', 'web', 'android'])(
       'xl:grid-cols-4',
     );
     expect(
-      headings.map((node) => node.nextElementSibling!.textContent),
+      headings.map(
+        (node) =>
+          node.closest('[data-slot=card]')!.querySelector('.mt-3')!.textContent,
+      ),
     ).toEqual([
       `${25 + ['all', 'web', 'android'].indexOf(platform)}.0%`,
       '24.0%',
@@ -112,8 +115,8 @@ it.each(['all', 'web', 'android'])(
       expect(
         within(table)
           .getAllByRole('columnheader', { hidden: true })
-          .map((node) => node.textContent),
-      ).toEqual(['신규 방문일', '신규 방문자 수', ...labels]);
+          .map((node) => node.textContent?.replaceAll('?', '')),
+      ).toEqual(['시작일', '시작 인원', ...labels]);
 
       const cells = within(table).getAllByRole('cell', { hidden: true });
 
@@ -279,7 +282,7 @@ it.each(aiCostStates)(
 it('턴 도달률 차트의 X축에 기준 턴 라벨을 그대로 표시한다', () => {
   const { container } = render(
     createElement(ConversionContent, {
-      // 플랫폼별 차트를 빼고 서버 DB 차트만 본다.
+      // 1턴 대비 도달률 차트를 빼고 서버 DB 차트만 본다.
       data: {
         ...(metricFixture(
           '/conversion/turn-reach',
@@ -298,15 +301,17 @@ it('턴 도달률 차트의 X축에 기준 턴 라벨을 그대로 표시한다'
     ).map((node) => node.textContent),
   ).toEqual(TURN_THRESHOLDS.map((turn) => `${turn}턴`));
   expect(screen.getByRole('heading', { name: 'N턴 이상 도달률' })).toBeTruthy();
-  expect(screen.getByLabelText('도달률 범례').textContent).toContain(
-    '게스트 (채팅 없음)',
-  );
-  expect(container.querySelectorAll('.recharts-line-curve')).toHaveLength(2);
+  // 선택한 대상(기본 전체)의 선 하나만 그린다.
+  expect(container.querySelectorAll('.recharts-line-curve')).toHaveLength(1);
 
   const table = screen.getByText('전체 수치 표').closest('details')!;
 
   expect(within(table).getAllByRole('row')).toHaveLength(14);
-  expect(within(table).getAllByRole('columnheader')).toHaveLength(7);
+  expect(
+    within(table)
+      .getAllByRole('columnheader')
+      .map((node) => node.textContent),
+  ).toEqual(['기준 턴', '전체 도달 채팅 수', '전체 도달률']);
 
   const ticks = Array.from(
     container.querySelectorAll(
@@ -320,27 +325,32 @@ it('턴 도달률 차트의 X축에 기준 턴 라벨을 그대로 표시한다'
       positions[1] - positions[0],
     );
 });
+it.each([
+  ['all', '전체'],
+  ['guest', '게스트'],
+  ['member', '회원'],
+])(
+  '채팅이 있는 대상 %s는 선 하나를 그리고 실제 0 도달률도 그린다',
+  (segment, label) => {
+    const data = metricFixture(
+      '/conversion/turn-reach',
+      new URLSearchParams('from=2026-10-21&to=2026-10-21'),
+    ) as TurnReachResponse;
 
-it('채팅이 있는 전체·게스트·회원은 세 선이며 실제 0 도달률도 그린다', () => {
-  const data = metricFixture(
-    '/conversion/turn-reach',
-    new URLSearchParams('from=2026-10-21&to=2026-10-21'),
-  ) as TurnReachResponse;
+    data.segments[1].chats = 1;
 
-  data.segments[1].chats = 1;
+    const { container } = render(
+      createElement(ConversionContent, {
+        data: { ...data, platforms: undefined },
+        segment,
+      }),
+    );
 
-  const { container } = render(
-    createElement(ConversionContent, {
-      data: { ...data, platforms: undefined },
-    }),
-  );
-
-  expect(container.querySelectorAll('.recharts-line-curve')).toHaveLength(3);
-  expect(screen.getByLabelText('도달률 범례').textContent).not.toContain(
-    '채팅 없음',
-  );
-});
-
+    expect(container.querySelectorAll('.recharts-line-curve')).toHaveLength(1);
+    expect(screen.getByText(`${label} 채팅 수`)).toBeTruthy();
+    expect(screen.queryByText('채팅 없음')).toBeNull();
+  },
+);
 it('모델별 턴 비중은 턴 합계로 나누고 오로라·라이트 색은 단독일 때도 고정한다', () => {
   render(
     createElement(QualityContent, {
@@ -571,7 +581,7 @@ it('모델 집계 기준은 포커스 도움말의 목록이며 출처 안내는
   );
 });
 
-it('동일한 도달률과 근접한 인프라 평균은 공용 끝 라벨로 간격을 확보하고 최대는 표에 유지한다', () => {
+it('도달률 끝 라벨은 선택한 대상 하나이고 근접한 인프라 평균은 공용 끝 라벨로 간격을 확보하고 최대는 표에 유지한다', () => {
   const data = metricFixture(
     '/conversion/turn-reach',
     new URLSearchParams('from=2026-10-21&to=2026-10-21'),
@@ -588,15 +598,12 @@ it('동일한 도달률과 근접한 인프라 평균은 공용 끝 라벨로 �
       data: { ...data, platforms: undefined },
     }),
   );
-  const labelYs = Array.from(
-    view.container.querySelectorAll('.chart-end-labels text'),
-  )
-    .map((node) => Number(node.getAttribute('y')))
-    .toSorted((a, b) => a - b);
 
-  expect(labelYs).toHaveLength(3);
-  expect(labelYs[1] - labelYs[0]).toBeGreaterThanOrEqual(18);
-  expect(labelYs[2] - labelYs[1]).toBeGreaterThanOrEqual(18);
+  expect(
+    Array.from(view.container.querySelectorAll('.chart-end-labels text')).map(
+      (node) => node.textContent,
+    ),
+  ).toEqual(['전체 50.0%']);
   expect(view.container.querySelector('.recharts-label-list')).toBeNull();
   view.unmount();
 
@@ -618,15 +625,13 @@ it('동일한 도달률과 근접한 인프라 평균은 공용 끝 라벨로 �
   expect(ys[2] - ys[1]).toBeGreaterThanOrEqual(18);
   expect(container.textContent).toContain('7.4% / 21.0%');
 });
-
-it('플랫폼별 1턴 대비 도달률은 서버 DB 차트와 따로 선 4개를 그리고 100%를 넘어도 자르지 않는다', () => {
+it('1턴 대비 도달률은 서버 DB 차트와 따로 고른 플랫폼 선 하나를 그리고 100%를 넘어도 자르지 않는다', () => {
   const data = metricFixture(
     '/conversion/turn-reach',
     new URLSearchParams('from=2026-10-21&to=2026-10-21'),
   ) as TurnReachResponse;
   const platforms = data.platforms!;
 
-  platforms[3].chats = 5;
   platforms[1].chats = 10;
   platforms[1].reached = platforms[1].reached.map((point) =>
     point.turn === 5 ? { ...point, chats: 4, rate: 0.4 } : point,
@@ -634,36 +639,42 @@ it('플랫폼별 1턴 대비 도달률은 서버 DB 차트와 따로 선 4개를
   platforms[0].reached = platforms[0].reached.map((point) =>
     point.turn === 2 ? { ...point, rate: 1.5 } : point,
   );
-  render(createElement(ConversionContent, { data }));
 
-  const chart = screen
-    .getByRole('heading', { name: '플랫폼별 1턴 대비 도달률' })
-    .closest('.rounded-md')!;
+  const chart = () =>
+    screen
+      .getByRole('heading', { name: '1턴 대비 도달률' })
+      .closest('.rounded-md')! as HTMLElement;
+  const cells = (turn: string) => {
+    const table = within(chart())
+      .getByText('1턴 대비 수치 표')
+      .closest('details')!;
 
-  expect(chart.querySelectorAll('.recharts-line-curve')).toHaveLength(4);
-  expect(
-    within(chart as HTMLElement).getByRole('button', {
-      name: '플랫폼별 1턴 대비 도달률 출처와 집계 안내',
-    }).textContent,
-  ).toContain('Amplitude');
+    expect(within(table).getAllByRole('columnheader')).toHaveLength(3);
 
-  const table = within(chart as HTMLElement)
-    .getByText('플랫폼별 수치 표')
-    .closest('details')!;
-
-  expect(within(table).getAllByRole('columnheader')).toHaveLength(9);
-
-  const cells = (turn: string) =>
-    within(within(table).getByRole('cell', { name: turn }).closest('tr')!)
+    return within(
+      within(table).getByRole('cell', { name: turn }).closest('tr')!,
+    )
       .getAllByRole('cell')
       .map((cell) => cell.textContent);
+  };
+  const view = render(
+    createElement(ConversionContent, { data, platform: 'web' }),
+  );
 
-  // 열 순서는 기준 턴, 전체 수와 비율, 웹 수와 비율이다.
-  expect(cells('5턴')[4]).toBe('40.0%');
-  expect(cells('2턴')[2]).toBe('150.0%');
+  expect(chart().querySelectorAll('.recharts-line-curve')).toHaveLength(1);
+  expect(
+    within(chart()).getByRole('button', {
+      name: '1턴 대비 도달률 출처와 집계 안내',
+    }).textContent,
+  ).toContain('Amplitude');
+  // 열 순서는 기준 턴, 고른 플랫폼의 수와 비율이다.
+  expect(cells('5턴')[2]).toBe('40.0%');
   expect(
     screen
       .getByRole('heading', { name: 'N턴 이상 도달률' })
       .closest('.rounded-md'),
-  ).not.toBe(chart);
+  ).not.toBe(chart());
+  view.unmount();
+  render(createElement(ConversionContent, { data, platform: 'all' }));
+  expect(cells('2턴')[2]).toBe('150.0%');
 });

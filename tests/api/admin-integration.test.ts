@@ -80,6 +80,12 @@ const cases: [string, string, string, unknown?][] = [
     '/campaigns/push-opens?from=2026-10-18&to=2026-10-24',
     '/campaigns/push-opens?from=2026-10-18&to=2026-10-24',
   ],
+  [
+    'GET',
+    '/users/session-lengths?segment=member',
+    '/users/session-lengths?segment=member',
+  ],
+  ['GET', '/users/retention?cohort=signup', '/users/retention?cohort=signup'],
   ['GET', '/dashboard/summary', '/dashboard/summary'],
   [
     'GET',
@@ -174,6 +180,11 @@ const cases: [string, string, string, unknown?][] = [
     'GET',
     '/stories?scope=original&supportingCharacterCount=0&hasLatency=false',
     '/stories?scope=original&supportingCharacterCount=0&hasLatency=false',
+  ],
+  [
+    'GET',
+    '/stories?creationMode=SIMPLE&from=2026-10-01&to=2026-10-21',
+    '/stories?creationMode=SIMPLE&from=2026-10-01&to=2026-10-21',
   ],
   ['GET', `/stories/${id}`, `/stories/${id}`],
   ['GET', `/stories/${id}/settings`, `/stories/${id}/settings`],
@@ -457,6 +468,7 @@ it.each([
   ['GET', '/members?unexpected=1'],
   ['GET', '/stories?memberId=invalid'],
   ['GET', '/stories?supportingCharacterCount=6'],
+  ['GET', '/stories?creationMode=simple'],
   ['GET', '/chats?turnBucket=13'],
   ['GET', '/dashboard/analytics?days=abc'],
   ['GET', '/notifications/campaigns?status=UNKNOWN'],

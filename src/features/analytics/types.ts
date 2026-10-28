@@ -132,6 +132,7 @@ export type RetentionPlatform = {
   summary: RetentionRates;
 };
 export type RetentionResponse = {
+  cohort?: 'visitor' | 'signup' | 'first-chat';
   asOf: string;
   from: string;
   to: string;
@@ -158,6 +159,12 @@ export type QualityDay = {
   users: Record<string, number>;
 };
 export type QualityResponse = {
+  storyCompletion?: {
+    date: string;
+    requests: number;
+    failed: number;
+    failureRate: number | null;
+  }[];
   asOf: string;
   from: string;
   to: string;
@@ -300,5 +307,20 @@ export type PushOpensResponse = {
     openState: 'MEASURED' | 'BEFORE_MEASUREMENT';
     pushOpens: number | null;
     pushOpenRate: number | null;
+  }[];
+};
+
+export type SessionLengthResponse = {
+  asOf: string;
+  from: string;
+  to: string;
+  segment: string;
+  pendingDates: string[];
+  bins: { fromSeconds: number; toSeconds: number }[];
+  platforms: {
+    platform: string;
+    sessions: number[];
+    totalSessions: number;
+    medianBin: number | null;
   }[];
 };

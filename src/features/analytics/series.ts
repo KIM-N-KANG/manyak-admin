@@ -29,7 +29,6 @@ export const seriesGroups = {
       ['all', '전체'],
       ['web', '웹'],
       ['android', '앱'],
-      ['unknown', '플랫폼 없음'],
     ],
     colors,
   ),

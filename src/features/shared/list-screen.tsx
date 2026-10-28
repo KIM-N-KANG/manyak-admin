@@ -42,6 +42,7 @@ const filterLabels: Record<string, string> = {
   storyId: '스토리 ID',
   moderationStatus: '검수 상태',
   supportingCharacterCount: '주변 인물 수',
+  creationMode: '제작 방식',
   startedAs: '채팅 소유자 유형',
   turnBucket: '턴 구간',
   chatBucket: '채팅 생성 구간',
@@ -79,6 +80,8 @@ const filterValues: Record<string, string> = {
   choice_generation: '선택지 생성',
   storyline_generation: '스토리라인 생성',
   story_completion: '간편 제작',
+  GENERAL: '일반 제작',
+  SIMPLE: '간편 제작',
 };
 const turnBuckets = [
   '0턴',

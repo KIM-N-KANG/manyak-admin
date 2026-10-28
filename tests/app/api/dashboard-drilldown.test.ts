@@ -119,6 +119,7 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
             'turns',
             'started-as',
             'first-message',
+            'creation-mode',
             'characters',
           ].includes(chart.chartId)
         )
@@ -160,6 +161,14 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
             expect(point.value).toBeCloseTo(
               count ? total(stories.map((s) => s.totalTurns)) / count : 0,
             );
+          } else if (chart.chartId === 'creation-mode') {
+            const stories = await all<Story>(
+              getDistributionHref(point.link),
+              storyList,
+            );
+
+            expect(point.value).toBe(stories.length);
+            expect(stories.every((s) => within(s.createdAt))).toBe(true);
           } else if (chart.chartId === 'characters') {
             const stories = await all<Story>(
               getDistributionHref(point.link),
@@ -178,10 +187,17 @@ describe('차트 → 목록 → 상세 모집단 회귀 검증', () => {
             if (chart.chartId === 'turns')
               expect(point.value).toBe(selected.length);
 
-            if (chart.chartId === 'started-as')
+            if (chart.chartId === 'started-as') {
               expect(point.value).toBeCloseTo(
                 rooms.length ? (selected.length / rooms.length) * 100 : 0,
               );
+              expect(point.chats).toBe(selected.length);
+
+              if (point.link.params.startedAs === 'MEMBER')
+                expect(point.users).toBe(
+                  new Set(selected.map((c) => c.member?.memberId)).size,
+                );
+            }
 
             if (chart.chartId === 'first-message') {
               expect(

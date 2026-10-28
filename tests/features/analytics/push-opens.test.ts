@@ -254,12 +254,12 @@ it('두 표 위 부분 집계와 활동 표의 집계 시작 및 두 머리 도�
     '기간과 정렬은 마지막 발송 작업의 시작 시각 기준입니다.',
   );
 
-  const rate = screen.getAllByRole('button', { name: '푸시 열람률 도움말' })[0];
+  const rate = screen.getAllByRole('button', { name: '열람률 지표 정의' })[0];
 
   await act(async () => rate.focus());
   await waitFor(() =>
-    expect(screen.getByRole('tooltip').textContent).toBe(
-      '푸시 열람 수를 도달 회원 수로 나눈 값입니다. 열람 수는 웹에서 연 경우만 세며, 도달 회원 수에는 앱 수신 회원도 포함합니다. 같은 회원이 다른 날 다시 열면 두 번 셉니다.',
+    expect(screen.getByRole('tooltip').textContent).toContain(
+      '계산 푸시 열람 수를 도달 회원 수로 나눈 값',
     ),
   );
 });

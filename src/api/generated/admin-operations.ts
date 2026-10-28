@@ -501,6 +501,12 @@ export const adminOperations = [
         required: false,
         schema: { type: 'string' },
       },
+      {
+        name: 'cohort',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', enum: ['visitor', 'signup', 'first-chat'] },
+      },
     ],
     params: undefined,
     query: schemas.RetentionQueryParams,
@@ -570,6 +576,12 @@ export const adminOperations = [
               format: 'int32',
               maximum: 5,
               minimum: 0,
+            },
+            creationMode: {
+              type: 'string',
+              enum: ['GENERAL', 'SIMPLE'],
+              description:
+                'SIMPLE은 스토리를 완성한 제작 세션이 있는 간편 제작, GENERAL은 그 밖의 일반 제작',
             },
             chatFrom: { type: ['string', 'null'] },
             chatTo: { type: ['string', 'null'] },
@@ -1674,5 +1686,34 @@ export const adminOperations = [
     query: undefined,
     body: schemas.TakedownStoryBody,
     bodyRequired: true,
+  },
+  {
+    path: '/api/v1/admin/users/session-lengths',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'from',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
+      {
+        name: 'days',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      {
+        name: 'segment',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
+      },
+    ],
+    params: undefined,
+    query: schemas.SessionLengthsQueryParams,
+    body: undefined,
+    bodyRequired: false,
   },
 ];

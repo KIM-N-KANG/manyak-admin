@@ -1057,6 +1057,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "cohort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["visitor", "signup", "first-chat"]
+            }
           }
         ],
         "responses": {
@@ -2795,6 +2804,64 @@
           }
         ]
       }
+    },
+    "/api/v1/admin/users/session-lengths": {
+      "get": {
+        "tags": ["admin-metrics-controller"],
+        "operationId": "sessionLengths",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "segment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["all", "guest", "member"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionLengthResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -3808,6 +3875,10 @@
               "type": "string",
               "format": "date"
             }
+          },
+          "cohort": {
+            "type": "string",
+            "enum": ["visitor", "signup", "first-chat"]
           }
         }
       },
@@ -4060,6 +4131,11 @@
             "format": "int32",
             "maximum": 5,
             "minimum": 0
+          },
+          "creationMode": {
+            "type": "string",
+            "enum": ["GENERAL", "SIMPLE"],
+            "description": "SIMPLE은 스토리를 완성한 제작 세션이 있는 간편 제작, GENERAL은 그 밖의 일반 제작"
           },
           "chatFrom": {
             "type": ["string", "null"]
@@ -4597,6 +4673,12 @@
           },
           "segment": {
             "type": "string"
+          },
+          "storyCompletion": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryCompletionDay"
+            }
           }
         }
       },
@@ -6395,6 +6477,11 @@
             "type": ["integer", "null"],
             "format": "int64"
           },
+          "users": {
+            "type": ["integer", "null"],
+            "format": "int64",
+            "description": "started-as에만 있음. 그 소유자 유형 채팅의 사용자 수, 게스트는 AI 호출을 보낸 기기 수"
+          },
           "totalTurns": {
             "type": ["integer", "null"],
             "format": "int64"
@@ -7606,6 +7693,103 @@
             }
           }
         }
+      },
+      "SessionLengthResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "segment": {
+            "type": "string"
+          },
+          "bins": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionLengthBin"
+            }
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionLengthPlatform"
+            }
+          }
+        }
+      },
+      "SessionLengthBin": {
+        "type": "object",
+        "properties": {
+          "fromSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "toSeconds": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SessionLengthPlatform": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "totalSessions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "medianBin": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "StoryCompletionDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "requests": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "failureRate": {
+            "type": "number",
+            "nullable": true
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -7677,6 +7861,29 @@
         "GET /api/v1/admin/quality/chat-options segment",
         "GET /api/v1/admin/users/sessions segment",
         "GET /api/v1/admin/quality/client segment"
+      ]
+    },
+    "analyticsCards": {
+      "issue": "KNK-1891",
+      "serverDependency": "서버 started-as users·creation-mode 차트·스토리 목록 creationMode 선행 배포",
+      "specRevision": "미커밋(knk-harness-KNK-1728 작업 트리)",
+      "input": "knk-harness:ADMIN/BACKEND 4-2-4, 4-2-5",
+      "description": "미배포 계약: started-as 점의 users와 스토리 목록 creationMode 쿼리. 서버 배포 후 실제 OpenAPI로 다시 추출한다.",
+      "schemas": ["AdminChartPoint", "AdminStoriesRequest"]
+    },
+    "metricDefinitions": {
+      "issue": "KNK-1891",
+      "specRevision": "3d6cfe7",
+      "receivedAt": "2026-10-28T07:26:14.546545+00:00",
+      "input": "knk-harness@3d6cfe7:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-26,4-2-27,4-2-31",
+      "description": "리텐션 cohort, 세션 길이 분포, 서버 DB storyCompletion 계약이다. 웹 선행 배포를 위해 새 응답 필드는 선택으로 둔다. 서버 배포 뒤 실제 OpenAPI로 재추출한다.",
+      "schemas": [
+        "RetentionResponse",
+        "SessionLengthResponse",
+        "SessionLengthBin",
+        "SessionLengthPlatform",
+        "QualityResponse",
+        "StoryCompletionDay"
       ]
     }
   }

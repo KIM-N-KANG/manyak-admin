@@ -48,44 +48,65 @@ export const platformOptions = [
   ['web', '웹'],
   ['android', '앱'],
 ] as const;
-export const segments = [
+/** 유입 분석 간편 제작 퍼널의 광고 구분(URL `adSegment`)이다. 서버로 보내지 않는다. */
+export const adSegments = [
   ['all', '전체'],
   ['ads', '광고 유입'],
   ['nonAds', '광고 외 유입'],
 ] as const;
-/** 채팅 턴 도달률과 채팅 옵션 비중의 플랫폼별 지표 대상(URL·요청 `segment`)이다. */
+/** 지표 화면 공통 대상(URL·요청 `segment`)이다. */
 export const audiences = [
   ['all', '전체'],
   ['guest', '게스트'],
   ['member', '회원'],
 ] as const;
-/** 플랫폼별 값(Amplitude)의 화면 문구다. 스펙 2-1-6~2-1-8 문구 표와 맞춘다. */
+/** 플랫폼 선택을 쓰는 탭이다. 스펙 2-1-2 "4. 플랫폼과 대상" 표와 맞춘다. */
+export const platformTabs: readonly string[] = [
+  'activity',
+  'retention',
+  'sessions',
+  'signups',
+  'funnels',
+  'turn-reach',
+  'client',
+  'chat-options',
+];
+/** 대상 선택을 쓰는 탭이다. 이 탭만 요청에 `segment`를 싣는다. */
+export const segmentTabs: readonly string[] = [
+  'sessions',
+  'turn-reach',
+  'client',
+  'chat-options',
+];
+/** 고른 구분을 적용하지 못한 값의 제목 옆 표시 문구다. 적용하지 못한 구분이 없으면 null이다. */
+export function basisText(platform: boolean, segment: boolean) {
+  return platform && segment
+    ? '플랫폼과 대상 전체 기준'
+    : platform
+      ? '플랫폼 전체 기준'
+      : segment
+        ? '대상 전체 기준'
+        : null;
+}
+/** 플랫폼과 대상, 서버 DB 탭 안 Amplitude 값의 화면 문구다. 스펙 2-1-2, 2-1-6~2-1-8 문구 표와 맞춘다. */
 export const platformText = {
-  audienceLabel: '플랫폼별 지표 대상',
-  /** 기능 사용과 안정성, 세션처럼 탭의 모든 값에 적용되는 대상 선택의 라벨이다. */
   segmentLabel: '대상',
-  segmentHelp: '게스트와 회원은 Amplitude의 회원 식별자가 있는지로 가릅니다.',
-  signupCard: '플랫폼별 신규 가입자',
-  signupHelp:
-    'Amplitude의 가입 이벤트로 셉니다. 국가가 한국이거나 국가 정보가 없는 사용자만 셉니다. 구글과 카카오 경로별 수를 더하므로 같은 날 두 경로로 가입하면 두 번 셉니다. 팀 계정이 포함돼 서버 DB 신규 가입자와 다를 수 있습니다.',
-  reachTitle: '플랫폼별 1턴 대비 도달률',
-  reachHelp:
-    'Amplitude의 AI 응답 저장 이벤트로 셉니다. 선택 기간에 기준 턴 응답을 저장한 채팅 수를 같은 기간에 1턴 응답을 저장한 채팅 수로 나누며 재생성은 뺍니다. 게스트와 회원은 응답을 저장할 때 회원 식별자가 있었는지로 가릅니다. 삭제된 채팅과 팀 계정이 포함되고 100%를 넘을 수 있습니다.',
+  segmentHelp:
+    'Amplitude에서는 이벤트 발생 당시 회원 식별자가 있으면 회원, 없으면 게스트로 구분합니다. 서버 DB에서는 채팅의 현재 소유자가 회원인지 게스트인지로 구분합니다.',
+  funnelHelp:
+    '웹과 앱을 합산한 전환 퍼널은 제공하지 않습니다. 플랫폼에서 전체를 선택하면 간편 제작, 상세 진입 채팅, 게스트 한도 로그인은 웹 기준으로 표시합니다. 웹 첫 접속과 앱 첫 접속은 플랫폼 선택과 관계없이 각각 웹과 앱 기준으로 표시합니다.',
+  messagesPerUserEmpty:
+    '전체 값이 없습니다. 플랫폼을 웹이나 앱으로 골라 주세요.',
+  signupCard: '가입 이벤트 기준 신규 가입자',
+  reachTitle: '1턴 대비 도달률',
   personaTitle: '페르소나 시작 클릭 비중',
-  personaHelp:
-    'Amplitude의 채팅 시작 버튼 클릭 가운데 페르소나를 주인공으로 고른 클릭의 비중입니다. 주인공 종류가 기록된 클릭만 분모에 듭니다. 국가가 한국이거나 국가 정보가 없는 사용자만 세고 팀 계정을 포함합니다. 클릭 수라 실제 채팅 생성 수와 다를 수 있습니다.',
   personaEmpty: '집계 대상 클릭 없음',
-  modelTurnsTitle: '플랫폼별 모델 턴 수',
-  modelTurnsHelp:
-    'Amplitude의 AI 응답 저장 이벤트를 선택 기간에 저장된 턴 기준으로 그 턴을 만든 모델별로 셉니다. 국가가 한국이거나 국가 정보가 없는 사용자만 세며 그 밖 국가에서 로그인한 앱 사용자는 넣지 않습니다. 재생성은 세지 않고 팀 계정을 포함합니다.',
+  modelTurnsTitle: '응답 저장 기준 모델별 턴 수',
 };
-/** 서버가 적용한 `segment`를 플랫폼별 영역 위의 조건 표시 문구로 바꾼다. */
-export const audienceText = (
-  segment?: string,
-  label = platformText.audienceLabel,
-) =>
+/** 서버가 적용한 `segment`를 조건 표시 문구로 바꾼다. */
+export const audienceText = (segment?: string) =>
   segment
-    ? `${label} ${audiences.find(([key]) => key === segment)?.[1] ?? segment}`
+    ? `${platformText.segmentLabel} ${audiences.find(([key]) => key === segment)?.[1] ?? segment}`
     : null;
 export const approximation =
   '로그인 성공은 구글과 카카오 경로를 더한 근사치라 두 경로를 모두 거친 사용자는 두 번 셉니다. 앞 단계보다 클 수 있습니다.';
@@ -94,7 +115,7 @@ export const sourceHelp = {
   acquisition:
     'Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 유입 분석은 팀 계정을 제외하지 않습니다. 국가가 한국이거나 국가 정보가 없는 사용자를 집계합니다. 앱 신규 가입자는 광고 구분 없이 따로 세고, 나머지 지표는 웹 사용자만 셉니다.',
   users:
-    'Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 국가가 한국이거나 국가 정보가 없는 사용자를 집계하고 앱 활성 사용자는 그 밖 국가에서 로그인한 사용자도 더하며 팀 계정은 제외하지 않습니다. 신규 방문자, 리텐션, 사용자당 전송 수, 평균 세션 길이는 국가가 한국이거나 국가 정보가 없는 사용자만 셉니다. 플랫폼 정보가 없는 사용자는 전체와 플랫폼 없음에 들어갑니다. 활성 사용자와 신규 방문자의 전체는 조건별 사용자 수를 더한 값이라 같은 날 여러 조건으로 활동한 사람은 두 번 셉니다. 리텐션과 평균 세션 길이의 전체는 국내 조건으로 별도 조회한 값입니다.',
+    'Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 국가가 한국이거나 국가 정보가 없는 사용자를 집계하고 앱 활성 사용자는 그 밖 국가에서 로그인한 사용자도 더하며 팀 계정은 제외하지 않습니다. 신규 방문자, 리텐션, 사용자당 전송 수, 평균 세션 길이는 국가가 한국이거나 국가 정보가 없는 사용자만 셉니다. 플랫폼 정보가 없는 사용자는 전체에만 들어갑니다. 활성 사용자와 신규 방문자의 전체는 조건별 사용자 수를 더한 값이라 같은 날 여러 조건으로 활동한 사람은 두 번 셉니다. 리텐션과 평균 세션 길이의 전체는 국내 조건으로 별도 조회한 값입니다.',
   signups:
     '서버 DB 출처 지표입니다. 팀 계정은 제외합니다. 가입 경로는 처음 연결한 소셜 계정 기준입니다. 누적 가입자는 서비스 시작부터 센 값이며 탈퇴한 회원을 포함합니다. 탈퇴 뒤 같은 소셜 계정으로 다시 가입한 회원은 새 계정만 셉니다.',
   conversion:
@@ -117,6 +138,8 @@ export function pick<T extends string>(
 }
 export function eventLabel(event: string, turnNumber?: number | null) {
   const labels: Record<string, string> = {
+    client_storyList_viewed: '홈 진입',
+    client_storyCreate_viewed: '간편 제작 진입',
     client_onboarding_viewed: '환영 다이얼로그 조회',
     client_onboarding_createButton_clicked: '제작 버튼 클릭',
     client_storyCreate_storyGeneration_requested: '스토리라인 생성 요청',

@@ -479,6 +479,7 @@ export const RetentionQueryParams = zod.object({
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
+  cohort: zod.enum(['visitor', 'signup', 'first-chat']).optional(),
 });
 
 export const RetentionResponse = zod.unknown();
@@ -525,6 +526,12 @@ export const StoriesQueryParams = zod.object({
       .min(storiesQueryRequestSupportingCharacterCountMin)
       .max(storiesQueryRequestSupportingCharacterCountMax)
       .nullish(),
+    creationMode: zod
+      .enum(['GENERAL', 'SIMPLE'])
+      .optional()
+      .describe(
+        'SIMPLE은 스토리를 완성한 제작 세션이 있는 간편 제작, GENERAL은 그 밖의 일반 제작',
+      ),
     chatFrom: zod.string().nullish(),
     chatTo: zod.string().nullish(),
     creationFrom: zod.string().nullish(),
@@ -1327,3 +1334,12 @@ export const TakedownStoryResponse = zod.object({
   ]),
   takedownReasonDetail: zod.string().nullable(),
 });
+
+export const SessionLengthsQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
+});
+
+export const SessionLengthsResponse = zod.unknown();

@@ -10,30 +10,24 @@ import {
   type LabelProps,
   Pie,
   PieChart,
-  Scatter,
-  ScatterChart,
-  type ScatterShapeProps,
   XAxis,
   YAxis,
 } from 'recharts';
 
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartTooltip,
-} from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import {
   aiFeatureColor,
   chartNumber,
   distributionNumber,
+  firstMessagePoints,
   genreDepthTitle,
   MIN_GENRE_CHATS,
   orderedAiPoints,
+  ownerSummary,
+  ownerTooltip,
   rankedPoints,
 } from '@/features/dashboard/chart-data';
 import type { ChartPoint, Distribution } from '@/features/dashboard/types';
-
-import { ChartEndLabels } from './chart-end-labels';
 
 type ChartProps = {
   distribution: Distribution;
@@ -45,11 +39,13 @@ function DistributionTooltip({
   payload,
   unit,
   genre = false,
+  owner = false,
 }: {
   active?: boolean;
   payload?: readonly { payload?: unknown }[];
   unit: string;
   genre?: boolean;
+  owner?: boolean;
 }) {
   const point = payload?.[0]?.payload;
 
@@ -63,6 +59,13 @@ function DistributionTooltip({
     typeof point.value !== 'number'
   )
     return null;
+
+  if (owner)
+    return (
+      <div className="rounded-md border bg-card px-3 py-2 text-xs shadow-sm">
+        <p>{ownerTooltip(point as ChartPoint)}</p>
+      </div>
+    );
 
   return (
     <div className="rounded-md border bg-card px-3 py-2 text-xs shadow-sm">
@@ -265,133 +268,133 @@ function StartedAsDonut({ distribution, onSelect }: ChartProps) {
     );
 
   return (
-    <ChartContainer
-      config={{ value: { label: '비율', color: 'var(--primary)' } }}
-      className="mt-5 h-[260px] w-full"
-      aria-label={distribution.title}>
-      <PieChart accessibilityLayer>
-        <ChartTooltip
-          isAnimationActive={false}
-          content={<DistributionTooltip unit="%" />}
-        />
-        <Pie
-          data={points}
-          dataKey="value"
-          nameKey="label"
-          innerRadius={50}
-          outerRadius={76}
-          stroke="var(--card)"
-          strokeWidth={2}
-          labelLine={false}
-          label={({ x, y, name, value, textAnchor }) => (
-            <text
-              x={x}
-              y={y}
-              textAnchor={textAnchor}
-              dominantBaseline="central"
-              fill="var(--foreground)">
-              {name} {distributionNumber(Number(value), '%')}%
-            </text>
-          )}
-          isAnimationActive={false}
-          className="cursor-pointer"
-          onClick={(_data, index) => onSelect(points[index])}>
-          <Label
-            position="center"
-            content={<DonutCenter guestPercent={guest} />}
+    <>
+      <ChartContainer
+        config={{ value: { label: '비율', color: 'var(--primary)' } }}
+        className="mt-5 h-[220px] w-full"
+        aria-label={distribution.title}>
+        <PieChart accessibilityLayer>
+          <ChartTooltip
+            isAnimationActive={false}
+            content={<DistributionTooltip unit="%" owner />}
           />
-        </Pie>
-        <ChartLegend
-          formatter={(value) => (
-            <span className="text-foreground">{value}</span>
-          )}
-        />
-      </PieChart>
-    </ChartContainer>
+          <Pie
+            data={points}
+            dataKey="value"
+            nameKey="label"
+            innerRadius={50}
+            outerRadius={76}
+            stroke="var(--card)"
+            strokeWidth={2}
+            labelLine={false}
+            label={({ x, y, name, value, textAnchor }) => (
+              <text
+                x={x}
+                y={y}
+                textAnchor={textAnchor}
+                dominantBaseline="central"
+                fill="var(--foreground)">
+                {name} {distributionNumber(Number(value), '%')}%
+              </text>
+            )}
+            isAnimationActive={false}
+            className="cursor-pointer"
+            onClick={(_data, index) => onSelect(points[index])}>
+            <Label
+              position="center"
+              content={<DonutCenter guestPercent={guest} />}
+            />
+          </Pie>
+        </PieChart>
+      </ChartContainer>
+      <ul className="mt-2 space-y-1 text-sm">
+        {points.map((point) => (
+          <li key={point.label} className="flex items-center gap-2">
+            <span
+              aria-hidden="true"
+              className="size-2.5 rounded-xs"
+              style={{ background: point.fill }}
+            />
+            {ownerSummary(point)}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
-function FirstMessagePlot({ distribution, onSelect }: ChartProps) {
-  const percentiles = ['P50', 'P75', 'P90'].flatMap((label) =>
-    distribution.points
-      .filter((point) => point.label === label)
-      .map((point) => ({ ...point, position: 1 })),
-  );
-  const means = distribution.points
-    .filter((point) => point.label === '평균')
-    .map((point) => ({ ...point, position: 1 }));
-
-  function percentileShape({ cx, cy, index }: ScatterShapeProps) {
-    const point = percentiles[index];
-
-    if (cx === undefined || cy === undefined || !point) return <g />;
-
-    return <circle cx={cx} cy={cy} r={5} fill="var(--primary)" />;
-  }
+function FirstMessageStats({ distribution, onSelect }: ChartProps) {
+  const points = firstMessagePoints(distribution.points);
+  const value = (label: string) =>
+    points.find((point) => point.label === label)?.value ?? 0;
+  const max = Math.max(0, ...points.map((point) => point.value));
+  const at = (seconds: number) => (max ? (seconds / max) * 100 : 0);
+  const seconds = (seconds: number) =>
+    `${chartNumber(seconds)}${distribution.unit}`;
 
   return (
-    <ChartContainer
-      config={{
-        percentiles: { label: '백분위', color: 'var(--primary)' },
-        mean: { label: '평균', color: 'var(--chart-2)' },
-      }}
-      className="mt-5 h-[220px] w-full"
-      aria-label={distribution.title}>
-      <ScatterChart
-        accessibilityLayer
-        margin={{ top: 48, right: 48, bottom: 20, left: 24 }}>
-        <CartesianGrid horizontal={false} />
-        <XAxis
-          type="number"
-          dataKey="value"
-          domain={[0, 'auto']}
-          name="시간"
-          unit="초"
-          tickLine={false}
-          axisLine={false}
+    <div className="mt-5">
+      <div className="grid grid-cols-4 gap-2">
+        {points.map((point) => (
+          <button
+            key={point.label}
+            type="button"
+            className="cursor-pointer rounded-md border px-3 py-2 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            onClick={() => onSelect(point)}>
+            <span className="block text-xs text-muted-foreground">
+              {point.label}
+            </span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {seconds(point.value)}
+            </span>
+          </button>
+        ))}
+      </div>
+      <div
+        role="img"
+        aria-label={`0${distribution.unit}부터 ${seconds(max)}까지, P50 ${seconds(value('P50'))}부터 P90 ${seconds(value('P90'))}까지 칠함, P75 ${seconds(value('P75'))}, 평균 ${seconds(value('평균'))}`}
+        className="relative mt-6 h-2 rounded-full bg-muted">
+        <span
+          data-range="p50-p90"
+          className="absolute inset-y-0 rounded-full bg-primary"
+          style={{
+            left: `${at(value('P50'))}%`,
+            width: `${at(value('P90')) - at(value('P50'))}%`,
+          }}
         />
-        <YAxis type="number" dataKey="position" domain={[0, 2]} hide />
-        <ChartTooltip
-          isAnimationActive={false}
-          content={<DistributionTooltip unit={distribution.unit} />}
+        <span
+          data-marker="P75"
+          className="absolute -top-1 h-4 w-0.5 -translate-x-1/2 bg-foreground"
+          style={{ left: `${at(value('P75'))}%` }}
         />
-        <Scatter
-          name="백분위"
-          data={percentiles}
-          line={{ stroke: 'var(--primary)' }}
-          fill="var(--primary)"
-          shape={percentileShape}
-          isAnimationActive={false}
-          onClick={(_data, index) => onSelect(percentiles[index])}
-          className="cursor-pointer"
+        <span
+          data-marker="평균"
+          className="absolute top-1/2 size-2.5 -translate-1/2 rotate-45 border border-card bg-chart-2"
+          style={{ left: `${at(value('평균'))}%` }}
         />
-        <Scatter
-          name="평균"
-          legendType="diamond"
-          data={means}
-          fill="var(--chart-2)"
-          shape="diamond"
-          isAnimationActive={false}
-          onClick={(_data, index) => onSelect(means[index])}
-          className="cursor-pointer"
-        />
-        <ChartEndLabels
-          labels={[...percentiles, ...means].map((point, index) => ({
-            id: point.label,
-            x: point.value,
-            y: 1,
-            centered: true,
-            offsetY: index < percentiles.length ? -20 - index * 18 : 24,
-            text: `${point.label} ${chartNumber(point.value)}초`,
-          }))}
-        />
-        <ChartLegend
-          formatter={(value) => (
-            <span className="text-foreground">{value}</span>
-          )}
-        />
-      </ScatterChart>
-    </ChartContainer>
+      </div>
+      <div className="mt-1.5 flex justify-between font-mono text-xs text-muted-foreground">
+        <span>0{distribution.unit}</span>
+        <span>{seconds(max)}</span>
+      </div>
+      <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="h-2 w-4 rounded-full bg-primary"
+          />
+          P50~P90
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="h-3 w-0.5 bg-foreground" />
+          P75
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="size-2 rotate-45 bg-chart-2" />
+          평균
+        </span>
+      </p>
+    </div>
   );
 }
 
@@ -501,7 +504,7 @@ export function DistributionChart(props: ChartProps) {
     case 'started-as':
       return <StartedAsDonut {...props} />;
     case 'first-message':
-      return <FirstMessagePlot {...props} />;
+      return <FirstMessageStats {...props} />;
     case 'ai-success':
       return <SuccessMeters {...props} />;
 
