@@ -52,6 +52,22 @@ export function isMenuActive(pathname: string, href: string) {
     ? pathname === href
     : pathname === href || pathname.startsWith(`${href}/`);
 }
+/** 지표 화면 메뉴에 지금 URL의 `platform`과 `segment`만 붙인다. 기간과 그 밖의 조건은 붙이지 않는다. */
+export function menuHref(href: string, search: Pick<URLSearchParams, 'get'>) {
+  if (!href.startsWith('/analytics/')) return href;
+
+  const kept = new URLSearchParams();
+
+  for (const key of ['platform', 'segment']) {
+    const value = search.get(key);
+
+    if (value) kept.set(key, value);
+  }
+
+  const query = kept.toString();
+
+  return query ? `${href}?${query}` : href;
+}
 export function currentSidebarGroup(pathname: string): SidebarGroup | null {
   return (
     navigation.find((group) =>
