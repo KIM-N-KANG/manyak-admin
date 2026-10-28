@@ -30,6 +30,7 @@ export function GET(request: Request) {
       aiStatus: ['SUCCEEDED', 'FAILED', 'STARTED', 'FINISHED'],
       hasLatency: ['true', 'false'],
       supportingCharacterCount: ['0', '1', '2', '3', '4', '5'],
+      creationMode: ['GENERAL', 'SIMPLE'],
       visibility: ['PUBLIC', 'PRIVATE'],
       moderationStatus: ['HELD', 'APPROVED'],
       deleted: ['include', 'only'],
@@ -52,6 +53,7 @@ export function GET(request: Request) {
               .map((session) => session.storyId),
           )
         : null;
+    const simpleStoryIds = new Set(creationSessions.map((s) => s.storyId));
     const aiStoryIds = hasAiFilters(q)
       ? new Set(
           selectAiCalls(q)
@@ -90,6 +92,9 @@ export function GET(request: Request) {
           (!q.has('supportingCharacterCount') ||
             s.supportingCharacterCount ===
               Number(q.get('supportingCharacterCount'))) &&
+          (!q.get('creationMode') ||
+            simpleStoryIds.has(s.storyId) ===
+              (q.get('creationMode') === 'SIMPLE')) &&
           (!q.get('visibility') || s.visibility === q.get('visibility')) &&
           (!q.get('memberId') || s.owner?.memberId === q.get('memberId')) &&
           (!q.get('moderationStatus') ||

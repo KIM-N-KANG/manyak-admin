@@ -4061,6 +4061,11 @@
             "maximum": 5,
             "minimum": 0
           },
+          "creationMode": {
+            "type": "string",
+            "enum": ["GENERAL", "SIMPLE"],
+            "description": "SIMPLE은 스토리를 완성한 제작 세션이 있는 간편 제작, GENERAL은 그 밖의 일반 제작"
+          },
           "chatFrom": {
             "type": ["string", "null"]
           },
@@ -6395,6 +6400,11 @@
             "type": ["integer", "null"],
             "format": "int64"
           },
+          "users": {
+            "type": ["integer", "null"],
+            "format": "int64",
+            "description": "started-as에만 있음. 그 소유자 유형 채팅의 사용자 수, 게스트는 AI 호출을 보낸 기기 수"
+          },
           "totalTurns": {
             "type": ["integer", "null"],
             "format": "int64"
@@ -7678,6 +7688,14 @@
         "GET /api/v1/admin/users/sessions segment",
         "GET /api/v1/admin/quality/client segment"
       ]
+    },
+    "analyticsCards": {
+      "issue": "KNK-1891",
+      "serverDependency": "서버 started-as users·creation-mode 차트·스토리 목록 creationMode 선행 배포",
+      "specRevision": "미커밋(knk-harness-KNK-1728 작업 트리)",
+      "input": "knk-harness:ADMIN/BACKEND 4-2-4, 4-2-5",
+      "description": "미배포 계약: started-as 점의 users와 스토리 목록 creationMode 쿼리. 서버 배포 후 실제 OpenAPI로 다시 추출한다.",
+      "schemas": ["AdminChartPoint", "AdminStoriesRequest"]
     }
   }
 }

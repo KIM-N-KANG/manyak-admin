@@ -52,14 +52,14 @@ describe('관리자 고정 데이터 BFF', () => {
   });
 
   it.each([7, 30, 90])(
-    '%i일의 일별 지표와 8종 분포를 제공한다',
+    '%i일의 일별 지표와 9종 분포를 제공한다',
     async (days) => {
       const data: DashboardCharts = await charts(
         request(`dashboard/charts?days=${days}`),
       ).json();
 
       expect(data.daily).toHaveLength(days);
-      expect(data.distributions).toHaveLength(8);
+      expect(data.distributions).toHaveLength(9);
       expect(Object.keys(data.daily[0])).toHaveLength(10);
 
       for (const distribution of data.distributions) {

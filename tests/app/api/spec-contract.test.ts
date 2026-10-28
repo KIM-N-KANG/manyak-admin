@@ -17,7 +17,50 @@ describe('ADMIN 응답 계약 회귀', () => {
   it('차트는 구조화된 링크·AI 기능 5종·일별 출석을 반환한다', async () => {
     const data = await charts(req('dashboard/charts?days=7')).json();
 
-    expect(data.distributions).toHaveLength(8);
+    expect(data.distributions).toHaveLength(9);
+    expect(
+      data.distributions.map((d: { chartId: string }) => d.chartId),
+    ).toEqual([
+      'genre-depth',
+      'turns',
+      'started-as',
+      'member-chats',
+      'first-message',
+      'ai-latency',
+      'ai-success',
+      'creation-mode',
+      'characters',
+    ]);
+
+    const owners = data.distributions.find(
+      (d: { chartId: string }) => d.chartId === 'started-as',
+    );
+
+    expect(owners.title).toBe('채팅 소유자 게스트와 회원');
+    expect(
+      owners.points.every(
+        (p: { chats: unknown; users: unknown }) =>
+          Number.isInteger(p.chats) && Number.isInteger(p.users),
+      ),
+    ).toBe(true);
+    expect(
+      data.distributions.find(
+        (d: { chartId: string }) => d.chartId === 'creation-mode',
+      ),
+    ).toMatchObject({
+      category: 'content',
+      unit: '개',
+      points: [
+        {
+          label: '일반 제작',
+          link: { list: 'stories', params: { creationMode: 'GENERAL' } },
+        },
+        {
+          label: '간편 제작',
+          link: { list: 'stories', params: { creationMode: 'SIMPLE' } },
+        },
+      ],
+    });
     expect(
       data.distributions.some(
         (d: { chartId: string }) => d.chartId === 'attendance',
@@ -49,6 +92,24 @@ describe('ADMIN 응답 계약 회귀', () => {
       'storyline_generation',
       'story_completion',
     ]);
+  });
+  it('스토리 목록은 제작 방식으로 나누고 대문자 값만 받는다', async () => {
+    const page = async (mode: string) =>
+      (await stories(req(`stories?size=100&creationMode=${mode}`)).json())
+        .items as { storyId: string }[];
+    const all = (await stories(req('stories?size=100')).json())
+      .totalElements as number;
+    const simple = await page('SIMPLE');
+    const general = await page('GENERAL');
+    const simpleIds = new Set(simple.map((s) => s.storyId));
+
+    expect(simple.length).toBeGreaterThan(0);
+    expect(general.length).toBeGreaterThan(0);
+    expect(simple.length + general.length).toBe(all);
+    expect(general.some((s) => simpleIds.has(s.storyId))).toBe(false);
+    expect((await stories(req('stories?creationMode=simple'))).status).toBe(
+      400,
+    );
   });
   it('스토리는 게스트 소유와 제작 세션 없는 null을 보존한다', async () => {
     const page = await stories(req('stories?size=100')).json();

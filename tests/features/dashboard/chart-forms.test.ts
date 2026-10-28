@@ -202,13 +202,17 @@ it.each(['turns', 'member-chats', 'characters'])(
   },
 );
 
-it('게스트·회원 비율은 도넛 조각·퍼센트 라벨·범례·가운데 게스트 값으로 표시한다', () => {
+it('게스트·회원 비율은 도넛 조각·퍼센트 라벨·가운데 게스트 값과 아래 사용자 수·채팅 수 줄로 표시한다', async () => {
   const guest = {
-    ...point('게스트', 60),
+    ...point('게스트', 25),
+    chats: 30,
+    users: 12,
     link: { list: 'chats' as const, params: { startedAs: 'GUEST' } },
   };
   const member = {
-    ...point('회원', 40),
+    ...point('회원', 75),
+    chats: 90,
+    users: 40,
     link: { list: 'chats' as const, params: { startedAs: 'MEMBER' } },
   };
   const { container, onSelect } = draw(
@@ -217,15 +221,21 @@ it('게스트·회원 비율은 도넛 조각·퍼센트 라벨·범례·가운�
   const sectors = container.querySelectorAll('.recharts-pie-sector');
 
   expect(sectors).toHaveLength(2);
-  expect(screen.getByText('60.0%')).toBeTruthy();
-  expect(screen.getByText('게스트 60.0%')).toBeTruthy();
-  expect(screen.getByText('회원 40.0%')).toBeTruthy();
+  expect(screen.getByText('25.0%')).toBeTruthy();
+  expect(screen.getByText('게스트 25.0%')).toBeTruthy();
+  expect(screen.getByText('회원 75.0%')).toBeTruthy();
   expect(
-    container.querySelector('.recharts-legend-wrapper')?.textContent,
-  ).toContain('게스트');
+    Array.from(container.querySelectorAll('li'), (node) => node.textContent),
+  ).toEqual(['게스트 12명, 채팅 30개', '회원 40명, 채팅 90개']);
   expect(
     container.querySelector('.recharts-sector')?.getAttribute('stroke-width'),
   ).toBe('2');
+  fireEvent.mouseEnter(sectors[0]);
+  await waitFor(() =>
+    expect(
+      container.querySelector('.recharts-tooltip-wrapper')?.textContent,
+    ).toBe('게스트 25.0%, 12명, 채팅 30개'),
+  );
   fireEvent.click(sectors[1]);
   expect(onSelect).toHaveBeenCalledWith(expect.objectContaining(member));
 });
@@ -239,69 +249,43 @@ it('채팅이 없는 비율에서는 가짜 도넛 대신 빈 상태를 표시�
   expect(container.querySelector('.recharts-pie-sector')).toBeNull();
 });
 
-it('첫 메시지 백분위는 한 축 위 연결 점이며 평균은 별도 마름모이고 점 링크를 보존한다', () => {
+it('첫 입력 시간은 산점 차트 대신 평균·P50·P75·P90 숫자 칸과 P50~P90을 칠한 범위 막대이고 숫자 칸 링크를 보존한다', () => {
   const data = distribution(
     'first-message',
     [
-      point('평균', 120),
-      point('P50', 80),
-      point('P75', 150),
-      point('P90', 220),
+      point('P50', 31),
+      point('P75', 64),
+      point('P90', 180),
+      point('평균', 52.3),
     ],
     '초',
   );
   const { container, onSelect } = draw(data);
+  const cells = screen.getAllByRole('button');
 
-  expect(container.querySelectorAll('.recharts-scatter-symbol')).toHaveLength(
-    4,
-  );
-  expect(container.querySelector('.recharts-scatter-line')).toBeTruthy();
-  expect(screen.getByText('P50 80초')).toBeTruthy();
-  expect(screen.getByText('P90 220초')).toBeTruthy();
-  expect(screen.getByText('평균 120초')).toBeTruthy();
-  expect(container.querySelector('.recharts-legend-wrapper')?.textContent).toBe(
-    '백분위평균',
-  );
+  expect(container.querySelector('.recharts-scatter')).toBeNull();
+  expect(cells.map((cell) => cell.textContent)).toEqual([
+    '평균52.3초',
+    'P5031초',
+    'P7564초',
+    'P90180초',
+  ]);
 
-  const legendItems = container.querySelectorAll('.recharts-legend-item');
-  const meanLegend = Array.from(legendItems).find(
-    (item) => item.textContent === '평균',
-  )!;
-  const percentileLegend = Array.from(legendItems).find(
-    (item) => item.textContent === '백분위',
-  )!;
-  const diamond = meanLegend.querySelector('path')!;
+  const bar = screen.getByRole('img');
+  const range = bar.querySelector<HTMLElement>('[data-range="p50-p90"]')!;
+  const p75 = bar.querySelector<HTMLElement>('[data-marker="P75"]')!;
+  const mean = bar.querySelector<HTMLElement>('[data-marker="평균"]')!;
 
-  expect(diamond.getAttribute('d')).toMatch(
-    /^M[^A-Z]+L[^A-Z]+L[^A-Z]+L[^A-Z]+Z$/,
-  );
-
-  const coordinates = diamond
-    .getAttribute('d')!
-    .match(/-?\d+(?:\.\d+)?/g)!
-    .map(Number);
-
-  expect(coordinates).toHaveLength(8);
-  expect([
-    coordinates[0],
-    coordinates[3],
-    coordinates[4],
-    coordinates[7],
-  ]).toEqual([0, 0, 0, 0]);
-  expect(coordinates[1]).toBeLessThan(0);
-  expect(coordinates[2]).toBeGreaterThan(0);
-  expect(coordinates[5]).toBeGreaterThan(0);
-  expect(coordinates[6]).toBeLessThan(0);
-  expect(diamond.getAttribute('fill')).toBe('var(--chart-2)');
-  expect(percentileLegend.querySelector('path')?.getAttribute('d')).toContain(
-    'A',
-  );
-  expect(percentileLegend.querySelector('path')?.getAttribute('fill')).toBe(
-    'var(--primary)',
-  );
-  fireEvent.click(container.querySelectorAll('.recharts-scatter-symbol')[1]);
+  expect(parseFloat(range.style.left)).toBeCloseTo((31 / 180) * 100);
+  expect(parseFloat(range.style.width)).toBeCloseTo(((180 - 31) / 180) * 100);
+  expect(parseFloat(p75.style.left)).toBeCloseTo((64 / 180) * 100);
+  expect(parseFloat(mean.style.left)).toBeCloseTo((52.3 / 180) * 100);
+  expect(range.classList.contains('bg-primary')).toBe(true);
+  expect(mean.classList.contains('bg-chart-2')).toBe(true);
+  expect(screen.getByText('0초')).toBeTruthy();
+  fireEvent.click(cells[2]);
   expect(onSelect).toHaveBeenCalledWith(
-    expect.objectContaining(data.points[2]),
+    expect.objectContaining(data.points[1]),
   );
 });
 
@@ -647,11 +631,90 @@ it('정본의 구역 순서와 서버 제목·설명을 유지하고 기능 표�
     ).toBeTruthy();
   }
 
-  expect(screen.getAllByText('간편 제작 →')).toHaveLength(2);
+  expect(screen.getAllByText('간편 제작 →')).toHaveLength(3);
   expect(screen.queryByText('story_completion →')).toBeNull();
-  expect(screen.getByRole('region', { name: '콘텐츠' }).textContent).toContain(
-    '값 (건)',
+
+  const content = screen.getByRole('region', { name: '콘텐츠' });
+
+  expect(content.textContent).toContain('값 (건)');
+  expect(
+    within(content)
+      .getAllByRole('heading', { level: 2 })
+      .map((node) => node.textContent),
+  ).toEqual([
+    '콘텐츠',
+    '제작 방식별 스토리 수',
+    '간편 제작별 입력 주변 인물 수',
+  ]);
+  expect(
+    within(content).getByRole('link', { name: '일반 제작 →' }),
+  ).toBeTruthy();
+});
+
+it('채팅 소유자 수치 표는 비율·채팅 수·사용자 수이고 첫 입력 카드는 같은 줄 높이로 늘지 않는다', () => {
+  const owners = distribution(
+    'started-as',
+    [
+      {
+        ...point('게스트', 25),
+        chats: 30,
+        users: 12,
+        link: { list: 'chats', params: { startedAs: 'GUEST' } },
+      },
+      {
+        ...point('회원', 75),
+        chats: 90,
+        users: 40,
+        link: { list: 'chats', params: { startedAs: 'MEMBER' } },
+      },
+    ],
+    '%',
   );
+
+  state.charts = {
+    ...state.charts!,
+    distributions: [
+      owners,
+      ...state.charts!.distributions.filter((d) => d.chartId !== 'started-as'),
+    ],
+  };
+  render(createElement(DashboardAnalysisScreen));
+
+  const table = screen
+    .getByRole('heading', { name: owners.title })
+    .closest('section')!
+    .querySelector('details')!;
+
+  expect(
+    Array.from(table.querySelectorAll('th'), (node) => node.textContent),
+  ).toEqual(['구분 및 관련 목록', '비율 (%)', '채팅 수', '사용자 수']);
+  expect(
+    Array.from(
+      table.querySelectorAll('tbody tr')[0].querySelectorAll('td'),
+      (node) => node.textContent,
+    ),
+  ).toEqual(['게스트 →', '25.0 %', '30개', '12명']);
+
+  const card = (title: string) =>
+    screen.getByRole('heading', { name: title }).closest('section')!;
+  const firstMessage = state.charts!.distributions.find(
+    (d) => d.chartId === 'first-message',
+  )!;
+  const turns = state.charts!.distributions.find((d) => d.chartId === 'turns')!;
+
+  expect(card(firstMessage.title).classList.contains('self-start')).toBe(true);
+  expect(card(turns.title).classList.contains('self-start')).toBe(false);
+  fireEvent.click(
+    within(card(firstMessage.title)).getByRole('button', { name: /^평균/ }),
+  );
+  expect(state.push).toHaveBeenCalledWith(
+    getDistributionHref(firstMessage.points[0].link),
+  );
+  expect(
+    new URL(state.push.mock.calls[0][0], 'http://localhost').searchParams.get(
+      'hasFirstMessage',
+    ),
+  ).toBe('true');
 });
 
 it('분포 설명은 본문에 없고 제목 옆 도움말에 포커스하면 응답 문구 그대로 열린다', async () => {
@@ -705,7 +768,7 @@ it('가입자 카드는 탈퇴 포함 누적과 오늘 값을 표시하고 전�
   expect(document.activeElement).toBe(button);
 });
 
-it('인프라의 근접한 끝 값과 첫 입력 시간 라벨은 실제 SVG에서 최소 18px 간격을 유지한다', () => {
+it('인프라의 근접한 끝 값은 실제 SVG에서 최소 18px 간격을 유지하고 첫 입력 시간은 SVG 라벨이 없다', () => {
   const data = infraMetricsFixture('2026-10-20', '2026-10-20');
   const at = data.alb!.requests.at(-1)!.at;
   const series = ['서버', 'AI', '알림'].map((label, i) => ({
@@ -742,18 +805,10 @@ it('인프라의 근접한 끝 값과 첫 입력 시간 라벨은 실제 SVG에�
       '초',
     ),
   );
-  const percentileLabels = Array.from(
-    container.querySelectorAll('.chart-end-labels text'),
-  );
 
-  expect(percentileLabels).toHaveLength(4);
-
-  const positions = percentileLabels
-    .map((node) => Number(node.getAttribute('y')))
-    .toSorted((a, b) => a - b);
-
-  for (let i = 1; i < positions.length; i++)
-    expect(positions[i] - positions[i - 1]).toBeGreaterThanOrEqual(18);
+  // 첫 입력 시간은 SVG 끝 값 라벨 대신 숫자 칸으로 표시하므로 겹칠 라벨이 없다.
+  expect(container.querySelectorAll('.chart-end-labels text')).toHaveLength(0);
+  expect(screen.getAllByRole('button')).toHaveLength(4);
 });
 
 it('요약 카드 10개는 고정 최소 높이 없이 같은 행의 내용 높이에 맞춘다', () => {

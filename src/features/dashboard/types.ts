@@ -49,6 +49,7 @@ export type ChartPoint = {
   value: number;
   link: ChartLink;
   chats?: number | null;
+  users?: number | null;
   totalTurns?: number | null;
 };
 export type Distribution = {

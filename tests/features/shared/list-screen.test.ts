@@ -285,6 +285,28 @@ describe('채팅 턴 구간 필터', () => {
   });
 });
 
+describe('제작 방식 목록 조건', () => {
+  it.each([
+    ['SIMPLE', '간편 제작'],
+    ['GENERAL', '일반 제작'],
+  ])(
+    'creationMode=%s는 "제작 방식: %s"로 표시하고 그대로 요청한다',
+    async (mode, label) => {
+      navigation.pathname = '/stories';
+      navigation.search = `creationMode=${mode}&from=2026-10-01&to=2026-10-21`;
+      render(list('stories'));
+      await screen.findByRole('navigation', { name: '목록 페이지' });
+
+      expect(screen.getByText(`제작 방식: ${label}`)).toBeTruthy();
+      expect(
+        new URL(requested.at(-1)!, 'http://localhost').searchParams.get(
+          'creationMode',
+        ),
+      ).toBe(mode);
+    },
+  );
+});
+
 describe('숫자 페이지 이동', () => {
   it.each([1, 5, 10])(
     '%i페이지에서 처음·끝과 주변 번호만 표시하고 경계를 비활성화한다',

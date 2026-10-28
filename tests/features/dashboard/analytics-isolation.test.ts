@@ -268,7 +268,7 @@ describe('Amplitude 실패 격리', () => {
 });
 
 describe('개요와 분석 화면 분리', () => {
-  it('분석은 분포 8종과 기존 목록 링크만 표시하고 개요·Amplitude 요청은 하지 않는다', async () => {
+  it('분석은 분포 9종과 기존 목록 링크만 표시하고 개요·Amplitude 요청은 하지 않는다', async () => {
     navigation.pathname = '/dashboard/analytics';
 
     const view = render(
@@ -287,7 +287,7 @@ describe('개요와 분석 화면 분리', () => {
     expect(
       screen.queryByRole('region', { name: '오늘 활성 사용자' }),
     ).toBeNull();
-    expect(screen.getAllByText('수치 및 관련 목록')).toHaveLength(8);
+    expect(screen.getAllByText('수치 및 관련 목록')).toHaveLength(9);
     expect(requested).toEqual([
       '/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
     ]);
