@@ -267,7 +267,7 @@ export function SeriesChart({
   const series = originalSeries.filter((s) => !missing.includes(s));
   const router = useRouter();
   const values = (row: PlotRow, key: string) =>
-    missing.some((s) => s.key === key)
+    row.pending !== 1 && missing.some((s) => s.key === key)
       ? '이벤트 수신 없음'
       : formatPlotValue(row, key, { title, unit, emptyLabel });
   const config = Object.fromEntries(

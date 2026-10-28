@@ -2611,3 +2611,60 @@ it('리텐션 접힌 표를 열면 제목·시작 인원·D열에서 코호트 �
     expect(text).toContain('요약 카드는 시작 인원으로 가중한 평균');
   }
 });
+
+it.each(['activity', 'client'])(
+  '수신 없는 %s 계열의 수치 표도 준비 중 날짜 행은 준비 중으로 유지한다',
+  async (tab) => {
+    nav.search = `tab=${tab}&from=2026-10-20&to=2026-10-21`;
+
+    const path = tab === 'activity' ? '/users/activity' : '/quality/client';
+    const data = metricFixture(path, new URLSearchParams(nav.search));
+
+    if ('pendingDates' in data) data.pendingDates = ['2026-10-21'];
+
+    if (tab === 'activity') {
+      (data as ActivityResponse).daily.forEach((day, i) => {
+        day.activeUsers.all = i ? 9 : 0;
+      });
+    } else {
+      (data as QualityResponse).daily.forEach((day, i) => {
+        day.users.chatLoadError = i ? 9 : 0;
+        day.users.storyListLoadError = 3;
+      });
+    }
+
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+    draw(tab === 'activity' ? 'users' : 'quality');
+
+    const title =
+      tab === 'activity' ? '일별 활성 사용자 (DAU)' : '오류 표시 사용자';
+    const heading = await screen.findByRole('heading', { name: title });
+    const card = heading.closest<HTMLElement>('[data-slot=card]')!;
+    const details = card.querySelector('details')!;
+
+    details.open = true;
+
+    const rows = within(details).getAllByRole('row').slice(1);
+
+    expect(rows).toHaveLength(2);
+
+    const ready = within(rows[0])
+      .getAllByRole('cell')
+      .map((cell) => cell.textContent);
+    const pending = within(rows[1])
+      .getAllByRole('cell')
+      .map((cell) => cell.textContent);
+
+    expect(ready).toEqual(
+      tab === 'activity'
+        ? ['2026-10-20', '이벤트 수신 없음']
+        : ['2026-10-20', '이벤트 수신 없음', '3명'],
+    );
+    expect(pending).toEqual(
+      tab === 'activity'
+        ? ['2026-10-21', '준비 중']
+        : ['2026-10-21', '준비 중', '준비 중'],
+    );
+    expect(within(rows[1]).queryByText('이벤트 수신 없음')).toBeNull();
+  },
+);
