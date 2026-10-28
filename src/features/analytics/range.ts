@@ -31,7 +31,7 @@ export function defaultPeriod(
 
   const days = ['retention', 'sources', 'funnels', 'push'].includes(tab)
     ? 7
-    : tab === 'sessions'
+    : ['sessions', 'session-lengths'].includes(tab)
       ? 14
       : 30;
   const to = tab === 'retention' ? shiftDate(today, -1) : today;

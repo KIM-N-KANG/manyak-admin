@@ -16,6 +16,7 @@ import {
   platformText,
   ratio,
 } from './config';
+import { allZero, MetricHelp } from './metric-definition';
 import {
   basisMark,
   formatPlotValue,
@@ -31,6 +32,7 @@ import {
   SummaryCards,
 } from './metric-ui';
 import { chartDates } from './range';
+import { retentionHelp } from './retention';
 import {
   featureSeries,
   listedSeries,
@@ -63,7 +65,7 @@ export function dailyRows<D extends { date: string }>(
   });
 }
 
-function Charts({
+export function Charts({
   items,
 }: {
   items: {
@@ -84,6 +86,8 @@ function Charts({
   const shared = items.every((item) => item.basis === items[0]?.basis)
     ? items[0]?.basis
     : undefined;
+
+  const definitions = items.map((item) => item.title);
 
   return (
     <>
@@ -107,17 +111,24 @@ function Charts({
       </div>
       <NumericTable
         title="전체 수치 표"
-        headers={['지표', '날짜', '계열', shared ? `값 · ${shared}` : '값']}
+        definitionTitle={definitions}
+        headers={[
+          { label: '지표', definitionTitle: definitions },
+          { label: '날짜', definitionTitle: null },
+          { label: '계열', definitionTitle: definitions },
+          {
+            label: shared ? `값 · ${shared}` : '값',
+            definitionTitle: definitions,
+          },
+        ]}
         rows={items.flatMap((item) =>
           (item.empty ? [] : item.rows).flatMap((row) =>
             item.series.map((series) => [
-              item.basis && !shared ? (
-                <>
-                  {item.title} {basisMark(item.basis)}
-                </>
-              ) : (
-                item.title
-              ),
+              <span key="metric" className="inline-flex items-center gap-2">
+                {item.title}
+                {item.basis && !shared ? basisMark(item.basis) : null}
+                <MetricHelp title={item.title} />
+              </span>,
               row.date,
               series.label,
               formatPlotValue(row, series.key, item),
@@ -167,14 +178,28 @@ export function UserContent({
             },
             {
               label: '마지막 날 DAU',
-              value: last ? n(last.activeUsers[key], '명') : '준비 중',
+              value: allZero(
+                d.daily
+                  .filter((day) => !d.pendingDates.includes(day.date))
+                  .map((day) => day.activeUsers[key]),
+              )
+                ? '이벤트 수신 없음'
+                : last
+                  ? n(last.activeUsers[key], '명')
+                  : '준비 중',
               detail: last?.date,
             },
             {
               label: '누적 신규 방문자',
-              value: last
-                ? n(last.cumulativeNewVisitors[key], '명')
-                : '준비 중',
+              value: allZero(
+                d.daily
+                  .filter((day) => !d.pendingDates.includes(day.date))
+                  .map((day) => day.newVisitors[key]),
+              )
+                ? '이벤트 수신 없음'
+                : last
+                  ? n(last.cumulativeNewVisitors[key], '명')
+                  : '준비 중',
               detail: last?.date,
             },
           ]}
@@ -228,16 +253,14 @@ export function UserContent({
         />
         <Card>
           <div className="mb-5 flex items-center gap-2">
-            <h3 className="font-semibold">신규 방문일별 리텐션</h3>
-            <HelpTooltip label="리텐션 관찰 기간 안내">
-              신규 방문일 기준이며 D30은 30일이 지난 뒤에 채워집니다.
-            </HelpTooltip>
+            <h3 className="font-semibold">코호트 표</h3>
+            <MetricHelp title="코호트 표">{retentionHelp(d.cohort)}</MetricHelp>
           </div>
           <div className="max-h-[560px] overflow-auto">
             <DataTable
               headers={[
-                '신규 방문일',
-                '신규 방문자 수',
+                '시작일',
+                '시작 인원',
                 'D1',
                 'D2',
                 'D3',
@@ -246,7 +269,15 @@ export function UserContent({
                 'D6',
                 'D7',
                 'D30',
-              ]}>
+              ].map((label) => ({
+                label,
+                help:
+                  label === '시작일' ? undefined : (
+                    <MetricHelp
+                      title={label === '시작 인원' ? '코호트 표' : label}
+                    />
+                  ),
+              }))}>
               {chartDates(d.from, d.to).map((date) => {
                 const row = byDate.get(date);
 
@@ -275,9 +306,10 @@ export function UserContent({
             </DataTable>
           </div>
           <NumericTable
+            definitionTitle="코호트 표"
             headers={[
-              '신규 방문일',
-              '신규 방문자 수',
+              '시작일',
+              '시작 인원',
               'D1',
               'D2',
               'D3',
@@ -340,11 +372,7 @@ export function UserContent({
     '명',
   );
   const platformSource = (
-    <PlatformSource
-      title={platformText.signupCard}
-      help={platformText.signupHelp}
-      asOf={d.platformAsOf}
-    />
+    <PlatformSource title={platformText.signupCard} asOf={d.platformAsOf} />
   );
   const platformChart = {
     title: platformText.signupCard,
@@ -385,7 +413,15 @@ export function UserContent({
             label: platformText.signupCard,
             aside: platformSource,
             value: ready.length ? (
-              platformSum
+              allZero(
+                d.daily
+                  .filter((day) => !d.pendingDates?.includes(day.date))
+                  .map((day) => day.signupsByPlatform?.[key]),
+              ) ? (
+                '이벤트 수신 없음'
+              ) : (
+                platformSum
+              )
             ) : (
               <span role="status">준비 중</span>
             ),
@@ -450,13 +486,7 @@ export function AcquisitionContent({
       NO_LINK: '링크 없음',
       PENDING: '발송 기록 없음',
     };
-    const rateHelp = (
-      <HelpTooltip label="푸시 열람률 도움말">
-        푸시 열람 수를 도달 회원 수로 나눈 값입니다. 열람 수는 웹에서 연 경우만
-        세며, 도달 회원 수에는 앱 수신 회원도 포함합니다. 같은 회원이 다른 날
-        다시 열면 두 번 셉니다.
-      </HelpTooltip>
-    );
+    const rateHelp = <MetricHelp title="열람률" />;
     const activities = (
       [
         'STORY_COMPLETED',
@@ -490,8 +520,8 @@ export function AcquisitionContent({
                   </HelpTooltip>
                 ),
               },
-              '도달 회원',
-              '푸시 열람',
+              { label: '도달 회원', help: <MetricHelp title="도달 회원" /> },
+              { label: '푸시 열람', help: <MetricHelp title="푸시 열람" /> },
               { label: '열람률', help: rateHelp },
             ]}
             empty={!d.campaigns.length}
@@ -535,8 +565,8 @@ export function AcquisitionContent({
           <DataTable
             headers={[
               '종류',
-              '도달 회원',
-              '푸시 열람',
+              { label: '도달 회원', help: <MetricHelp title="도달 회원" /> },
+              { label: '푸시 열람', help: <MetricHelp title="푸시 열람" /> },
               { label: '열람률', help: rateHelp },
             ]}
             empty={!activities.length}>
@@ -583,10 +613,19 @@ export function AcquisitionContent({
       <>
         <SummaryCards
           items={[
-            { label: '웹 DAU 평균', value: n(t.activeUsersAverage, '명', 1) },
+            {
+              label: '웹 DAU 평균',
+              value: n(t.activeUsersAverage, '명', 1),
+            },
             {
               label: '신규 방문자',
-              value: n(t.newVisitors.all, '명'),
+              value: allZero(
+                d.daily
+                  .filter((day) => !d.pendingDates.includes(day.date))
+                  .map((day) => day.newVisitors.all),
+              )
+                ? '이벤트 수신 없음'
+                : n(t.newVisitors.all, '명'),
               detail: segmentDetail(t.newVisitors),
             },
             {
@@ -595,7 +634,13 @@ export function AcquisitionContent({
             },
             {
               label: '웹 신규 가입자',
-              value: n(t.signups.all, '명'),
+              value: allZero(
+                d.daily
+                  .filter((day) => !d.pendingDates.includes(day.date))
+                  .map((day) => day.signups.all),
+              )
+                ? '이벤트 수신 없음'
+                : n(t.signups.all, '명'),
               detail: segmentDetail(t.signups),
             },
             {
@@ -603,16 +648,46 @@ export function AcquisitionContent({
               value:
                 t.androidSignups === undefined ? (
                   <span role="status">준비 중</span>
+                ) : allZero(
+                    d.daily
+                      .filter((day) => !d.pendingDates.includes(day.date))
+                      .map((day) => day.androidSignups),
+                  ) ? (
+                  '이벤트 수신 없음'
                 ) : (
                   n(t.androidSignups, '명')
                 ),
             },
             {
               label: '스토리라인 생성 요청',
-              value: n(t.storylineRequests, '회'),
+              value: allZero(
+                d.daily
+                  .filter((day) => !d.pendingDates.includes(day.date))
+                  .map((day) => day.storylineRequests),
+              )
+                ? '이벤트 수신 없음'
+                : n(t.storylineRequests, '회'),
             },
-            { label: '간편 제작 요청', value: n(t.completionRequests, '회') },
-            { label: '채팅 메시지 전송', value: n(t.chatMessages, '회') },
+            {
+              label: '간편 제작 요청',
+              value: allZero(
+                d.daily
+                  .filter((day) => !d.pendingDates.includes(day.date))
+                  .map((day) => day.completionRequests),
+              )
+                ? '이벤트 수신 없음'
+                : n(t.completionRequests, '회'),
+            },
+            {
+              label: '채팅 메시지 전송',
+              value: allZero(
+                d.daily
+                  .filter((day) => !d.pendingDates.includes(day.date))
+                  .map((day) => day.chatMessages),
+              )
+                ? '이벤트 수신 없음'
+                : n(t.chatMessages, '회'),
+            },
           ]}
         />
         {d.pendingDates.length ? (
@@ -684,9 +759,11 @@ export function AcquisitionContent({
 
     return (
       <FunnelChart
+        definitionTitle="간편 제작 퍼널"
         steps={d.steps.map((step) => ({ ...step, users: step.users[key] }))}
         extraTable={
           <NumericTable
+            definitionTitle="간편 제작 퍼널"
             headers={[
               '단계',
               '전체',
@@ -712,7 +789,12 @@ export function AcquisitionContent({
   }
 
   if (tab === 'story-detail')
-    return <FunnelChart steps={(data as T.CampaignStoryResponse).steps} />;
+    return (
+      <FunnelChart
+        steps={(data as T.CampaignStoryResponse).steps}
+        definitionTitle="상세 진입 퍼널"
+      />
+    );
 
   const d = data as T.CampaignSourceResponse;
 
@@ -773,7 +855,6 @@ export function ConversionContent({
           aside={
             <PlatformSource
               title={platformText.reachTitle}
-              help={platformText.reachHelp}
               asOf={d.platformAsOf}
             />
           }
@@ -798,7 +879,6 @@ export function QualityContent({
     const errors = listedSeries([
       ['chatLoadError', '채팅 불러오기 오류'],
       ['storyListLoadError', '스토리 목록 불러오기 오류'],
-      ['storyCompleteError', '간편 제작 오류'],
     ]);
     const signals = listedSeries([
       ['creditShortage', '이프 부족 안내'],
@@ -813,25 +893,46 @@ export function QualityContent({
           items={[
             {
               label: '채팅 메시지 전송',
-              value: n(
-                d.daily.reduce(
-                  (s, row) =>
-                    s +
-                    Object.values(row.messagesByInputMode).reduce(
+              value: allZero(
+                d.daily
+                  .filter((day) => !d.pendingDates.includes(day.date))
+                  .map((day) =>
+                    Object.values(day.messagesByInputMode).reduce(
                       (a, b) => a + b,
                       0,
                     ),
-                  0,
-                ),
-                '회',
-              ),
+                  ),
+              )
+                ? '이벤트 수신 없음'
+                : n(
+                    d.daily
+                      .filter((day) => !d.pendingDates.includes(day.date))
+                      .reduce(
+                        (s, row) =>
+                          s +
+                          Object.values(row.messagesByInputMode).reduce(
+                            (a, b) => a + b,
+                            0,
+                          ),
+                        0,
+                      ),
+                    '회',
+                  ),
             },
             {
               label: '스트림 오류 표시',
-              value: n(
-                d.daily.reduce((s, row) => s + row.streamErrors, 0),
-                '회',
-              ),
+              value: allZero(
+                d.daily
+                  .filter((day) => !d.pendingDates.includes(day.date))
+                  .map((day) => day.streamErrors),
+              )
+                ? '이벤트 수신 없음'
+                : n(
+                    d.daily
+                      .filter((day) => !d.pendingDates.includes(day.date))
+                      .reduce((s, row) => s + row.streamErrors, 0),
+                    '회',
+                  ),
             },
           ]}
         />
@@ -861,6 +962,23 @@ export function QualityContent({
               rows: dailyRows(d, (day) => day.users),
               series: signals,
               unit: '명',
+            },
+            {
+              title: '간편 제작 실패율',
+              rows: dailyRows(
+                { ...d, daily: d.storyCompletion ?? [], pendingDates: [] },
+                (day) => ({ value: day.failureRate }),
+              ),
+              series: single('value', '간편 제작 실패율'),
+              unit: '%',
+              emptyLabel: '요청 없음',
+              aside: (
+                <>
+                  <span className="text-xs text-muted-foreground">서버 DB</span>
+                  {basisMark(basisText(platform !== 'all', segment !== 'all'))}
+                </>
+              ),
+              empty: d.storyCompletion === undefined ? '준비 중' : undefined,
             },
           ]}
         />
@@ -962,7 +1080,13 @@ export function QualityContent({
         <NumericTable
           title="모델별 비중"
           basis={basis}
-          headers={['모델', '채팅 수', '채팅 비중', '턴 수', '턴 비중']}
+          headers={[
+            '모델',
+            { label: '채팅 수', definitionTitle: '모델별 채팅 수' },
+            { label: '채팅 비중', definitionTitle: '모델별 채팅 수' },
+            { label: '턴 수', definitionTitle: '모델별 턴 수' },
+            { label: '턴 비중', definitionTitle: '모델별 턴 수' },
+          ]}
           rows={models.map(({ key: model }) => {
             const count = d.daily.reduce(
               (s, row) => s + (row.byModel[model] ?? 0),
@@ -1159,7 +1283,6 @@ function ChatOptionPlatforms({
             aside: (
               <PlatformSource
                 title={platformText.personaTitle}
-                help={platformText.personaHelp}
                 asOf={d.platformAsOf}
               />
             ),
@@ -1178,14 +1301,22 @@ function ChatOptionPlatforms({
       <Card>
         <div className="mb-4 flex items-center gap-2">
           <h3 className="font-semibold">{platformText.modelTurnsTitle}</h3>
+          <MetricHelp title={platformText.modelTurnsTitle} />
           <PlatformSource
             title={platformText.modelTurnsTitle}
-            help={platformText.modelTurnsHelp}
             asOf={d.platformAsOf}
           />
         </div>
         {ready.length ? (
-          <DataTable headers={['모델', '턴 수']} empty={!models.length}>
+          <DataTable
+            headers={[
+              '모델',
+              {
+                label: '턴 수',
+                help: <MetricHelp title={platformText.modelTurnsTitle} />,
+              },
+            ]}
+            empty={!models.length}>
             {models.map(({ key: model }) => (
               <tr key={model}>
                 <td>{modelLabel(model)}</td>

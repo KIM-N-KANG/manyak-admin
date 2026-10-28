@@ -479,6 +479,7 @@ export const RetentionQueryParams = zod.object({
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
+  cohort: zod.enum(['visitor', 'signup', 'first-chat']).optional(),
 });
 
 export const RetentionResponse = zod.unknown();
@@ -1333,3 +1334,12 @@ export const TakedownStoryResponse = zod.object({
   ]),
   takedownReasonDetail: zod.string().nullable(),
 });
+
+export const SessionLengthsQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
+});
+
+export const SessionLengthsResponse = zod.unknown();

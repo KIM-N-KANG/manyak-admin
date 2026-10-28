@@ -92,7 +92,10 @@ it.each(['all', 'web', 'android'])(
       'xl:grid-cols-4',
     );
     expect(
-      headings.map((node) => node.nextElementSibling!.textContent),
+      headings.map(
+        (node) =>
+          node.closest('[data-slot=card]')!.querySelector('.mt-3')!.textContent,
+      ),
     ).toEqual([
       `${25 + ['all', 'web', 'android'].indexOf(platform)}.0%`,
       '24.0%',
@@ -112,8 +115,8 @@ it.each(['all', 'web', 'android'])(
       expect(
         within(table)
           .getAllByRole('columnheader', { hidden: true })
-          .map((node) => node.textContent),
-      ).toEqual(['신규 방문일', '신규 방문자 수', ...labels]);
+          .map((node) => node.textContent?.replaceAll('?', '')),
+      ).toEqual(['시작일', '시작 인원', ...labels]);
 
       const cells = within(table).getAllByRole('cell', { hidden: true });
 

@@ -60,8 +60,8 @@ const segment = (all: number): T.CampaignSegments => ({
   nonAds: all - Math.round(all * 0.7),
 });
 const events = [
-  'client_onboarding_viewed',
-  'client_onboarding_createButton_clicked',
+  'client_storyList_viewed',
+  'client_storyCreate_viewed',
   'client_storyCreate_storyGeneration_requested',
   'client_storyCreate_storylineOption_selected',
   'client_storyCreate_storyCompletion_requested',
@@ -196,6 +196,8 @@ export function metricFixture(path: string, query: URLSearchParams) {
 
   if (path === '/users/retention')
     return {
+      cohort: (query.get('cohort') ??
+        'visitor') as T.RetentionResponse['cohort'],
       ...base,
       pendingDates,
       platforms: ['all', 'web', 'android'].map((name, j) => ({
@@ -248,6 +250,31 @@ export function metricFixture(path: string, query: URLSearchParams) {
         })),
       })),
     } satisfies T.RetentionResponse;
+
+  if (path === '/users/session-lengths') {
+    const edges = [0, 3, 10, 30, 60, 180, 600, 1800, 3600, 86400];
+
+    return {
+      ...base,
+      segment: query.get('segment') ?? 'all',
+      pendingDates,
+      bins: edges
+        .slice(0, -1)
+        .map((fromSeconds, i) => ({ fromSeconds, toSeconds: edges[i + 1] })),
+      platforms: ['all', 'web', 'android'].map((platform, i) => {
+        const sessions = [973, 211, 187, 164, 290, 247, 158, 52, 35].map((n) =>
+          Math.round(n / (i + 1)),
+        );
+
+        return {
+          platform,
+          sessions,
+          totalSessions: sessions.reduce((a, b) => a + b, 0),
+          medianBin: 1,
+        };
+      }),
+    } satisfies T.SessionLengthResponse;
+  }
 
   if (path === '/users/sessions')
     return {
@@ -306,6 +333,12 @@ export function metricFixture(path: string, query: URLSearchParams) {
 
   if (path === '/quality/client')
     return {
+      storyCompletion: dates.map((date, i) => ({
+        date,
+        requests: i % 3 ? 20 : 0,
+        failed: i % 3 ? 5 : 0,
+        failureRate: i % 3 ? 0.25 : null,
+      })),
       ...base,
       pendingDates,
       platform: query.get('platform') ?? 'all',
@@ -321,7 +354,6 @@ export function metricFixture(path: string, query: URLSearchParams) {
         users: {
           chatLoadError: i % 4,
           storyListLoadError: 2,
-          storyCompleteError: 1,
           creditShortage: 10,
           creditChargeViewed: 8,
           attendanceClicked: 4,

@@ -30,9 +30,12 @@ import {
   sourceHelp,
 } from './config';
 import { kstTime } from './infra/data';
+import { MetricHelp, MetricScope } from './metric-definition';
 import { FunnelChart, PendingDates, Source } from './metric-ui';
 import { MetricsSkeleton } from './metrics-skeleton';
 import { analyticsRange, analyticsRefetch } from './range';
+import { cohorts } from './retention';
+import { SessionLengths } from './session-lengths';
 import {
   AcquisitionContent,
   ConversionContent,
@@ -175,6 +178,7 @@ function TabHeading({
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
       <h2 className="text-xl font-semibold">{title}</h2>
+      <MetricHelp title={title} />
       {help ? (
         <Source source={source} help={help} />
       ) : (
@@ -288,6 +292,12 @@ function MetricsTab({
           )}
         </>
       ) : null}
+      {tab === 'sessions' ? (
+        <SessionLengths
+          url={url.replace('/users/sessions?', '/users/session-lengths?')}
+          platform={platform}
+        />
+      ) : null}
     </>
   );
 }
@@ -318,6 +328,9 @@ function FunnelCard({
         <h3 id={id} className="text-lg font-semibold">
           {label}
         </h3>
+        <MetricHelp title={label} noEvents={query.data?.steps[0]?.users === 0}>
+          {help}
+        </MetricHelp>
         <span className="rounded-sm border bg-muted px-2 py-0.5 text-xs">
           {platformOptions.find(([key]) => key === platform)?.[1]}
         </span>
@@ -339,7 +352,11 @@ function FunnelCard({
                   {dateTime(query.data.asOf)} KST 집계 기준
                 </p>
               ) : null}
-              <FunnelChart steps={query.data.steps} help={help} />
+              <FunnelChart
+                steps={query.data.steps}
+                help={help}
+                definitionTitle={label}
+              />
             </>
           ) : null}
         </>
@@ -526,10 +543,13 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
 
   if (hasSegment) query.set('segment', segment);
 
+  if (tab === 'retention')
+    query.set('cohort', pick(params.get('cohort'), cohorts, 'visitor'));
+
   path = `/api${path}?${query}`;
 
   return (
-    <>
+    <MetricScope value={screen}>
       <PageHeading title={config.title}>
         <div className="flex flex-wrap items-end gap-4">
           {hasPlatform ? (
@@ -582,6 +602,14 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
           ))}
         </Tabs.List>
         <div className="mb-6 flex flex-wrap items-end gap-4">
+          {tab === 'retention' ? (
+            <RetentionSelect
+              enabled={!range.error}
+              url={path}
+              value={pick(params.get('cohort'), cohorts, 'visitor')}
+              onChange={(value) => update({ cohort: value })}
+            />
+          ) : null}
           {needsCampaign ? (
             <>
               <Select
@@ -663,7 +691,7 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
                   <h2 className="font-semibold">기간 확인 필요</h2>
                   <p className="my-3 text-sm">
                     {range.error === 'retention'
-                      ? '리텐션은 어제까지의 신규 방문일만 볼 수 있습니다. 끝 날짜를 어제 이전으로 선택해 주세요.'
+                      ? '리텐션은 어제까지의 시작일만 볼 수 있습니다. 끝 날짜를 어제 이전으로 선택해 주세요.'
                       : `이 탭은 최대 ${range.maxDays}일까지 볼 수 있습니다. 기간을 ${range.maxDays}일 이내로 선택해 주세요.`}
                   </p>
                   <Button
@@ -717,6 +745,29 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
           )}
         </Tabs.Panel>
       </Tabs.Root>
-    </>
+    </MetricScope>
+  );
+}
+
+function RetentionSelect({
+  enabled,
+  url,
+  value,
+  onChange,
+}: {
+  enabled: boolean;
+  url: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const query = useApi<{ cohort?: string }>(url, enabled);
+
+  return (
+    <Select
+      label="시작 집단"
+      value={query.data ? (query.data.cohort ?? 'visitor') : value}
+      options={cohorts}
+      onChange={onChange}
+    />
   );
 }
