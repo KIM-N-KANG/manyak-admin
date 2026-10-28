@@ -233,6 +233,39 @@ export function formatPlotValue(
       );
 }
 
+/** 차트와 통합 표가 같은 계열 판정과 행별 값 표기를 사용하게 한다. */
+export function plotValues(
+  scope: string,
+  {
+    title,
+    unit,
+    rows,
+    series,
+    emptyLabel,
+  }: {
+    title: string;
+    unit: string;
+    rows: PlotRow[];
+    series: Series[];
+    emptyLabel?: PlotEmptyLabel;
+  },
+) {
+  const ready = rows.filter((row) => row.pending !== 1);
+  const missing = eventMetric(scope, title)
+    ? series.filter((s) =>
+        allZero(ready.map((row) => row[s.key] as number | null | undefined)),
+      )
+    : [];
+
+  return {
+    missing,
+    format: (row: PlotRow, key: string) =>
+      row.pending !== 1 && missing.some((s) => s.key === key)
+        ? '이벤트 수신 없음'
+        : formatPlotValue(row, key, { title, unit, emptyLabel }),
+  };
+}
+
 export function SeriesChart({
   title,
   categoryLabel = '날짜',
@@ -255,21 +288,15 @@ export function SeriesChart({
   grouped?: boolean;
 }) {
   const scope = useContext(MetricScope);
-  const missing = originalSeries.filter(
-    (s) =>
-      eventMetric(scope, title) &&
-      allZero(
-        rows
-          .filter((row) => row.pending !== 1)
-          .map((row) => row[s.key] as number | null | undefined),
-      ),
-  );
+  const { missing, format: values } = plotValues(scope, {
+    title,
+    unit,
+    rows,
+    series: originalSeries,
+    emptyLabel,
+  });
   const series = originalSeries.filter((s) => !missing.includes(s));
   const router = useRouter();
-  const values = (row: PlotRow, key: string) =>
-    row.pending !== 1 && missing.some((s) => s.key === key)
-      ? '이벤트 수신 없음'
-      : formatPlotValue(row, key, { title, unit, emptyLabel });
   const config = Object.fromEntries(
     series.map((s) => [s.key, { label: s.label, color: s.color }]),
   );

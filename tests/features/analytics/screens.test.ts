@@ -2668,3 +2668,138 @@ it.each(['activity', 'client'])(
     expect(within(rows[1]).queryByText('이벤트 수신 없음')).toBeNull();
   },
 );
+
+it.each(['activity', 'client'])(
+  '%s의 통합 표와 차트별 표는 수신 없음·준비 중·정상 값을 동일하게 표시한다',
+  async (tab) => {
+    nav.search = `tab=${tab}&from=2026-10-20&to=2026-10-21`;
+
+    const path = tab === 'activity' ? '/users/activity' : '/quality/client';
+    const data = metricFixture(path, new URLSearchParams(nav.search));
+
+    if ('pendingDates' in data) data.pendingDates = ['2026-10-21'];
+
+    if (tab === 'activity') {
+      (data as ActivityResponse).daily.forEach((day, i) => {
+        day.activeUsers.all = i ? 9 : 0;
+      });
+    } else {
+      (data as QualityResponse).daily.forEach((day, i) => {
+        day.users.chatLoadError = i ? 9 : 0;
+        day.users.storyListLoadError = 3;
+      });
+    }
+
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+
+    const view = draw(tab === 'activity' ? 'users' : 'quality');
+    const title =
+      tab === 'activity' ? '일별 활성 사용자 (DAU)' : '오류 표시 사용자';
+    const heading = await screen.findByRole('heading', { name: title });
+    const detail = heading
+      .closest('[data-slot=card]')!
+      .querySelector('details')!;
+
+    detail.open = true;
+
+    const individual = within(detail)
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) =>
+        within(row)
+          .getAllByRole('cell')
+          .map((cell) => cell.textContent),
+      );
+    const aggregate = Array.from(
+      view.container.querySelectorAll('details'),
+    ).find((details) =>
+      Array.from(details.children).some(
+        (child) =>
+          child.tagName === 'DIV' &&
+          child.querySelector('thead')?.textContent?.startsWith('지표'),
+      ),
+    )!;
+
+    aggregate.open = true;
+
+    const rows = within(aggregate)
+      .getAllByRole('row')
+      .slice(1)
+      .filter((row) =>
+        within(row).getAllByRole('cell')[0].textContent?.startsWith(title),
+      );
+    const values = rows.map((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    );
+
+    expect(values.map((cells) => cells[3])).toEqual(
+      individual.flatMap((cells) => cells.slice(1)),
+    );
+    expect(values[0][3]).toBe('이벤트 수신 없음');
+    expect(
+      values
+        .filter((cells) => cells[1] === '2026-10-21')
+        .map((cells) => cells[3]),
+    ).toEqual(tab === 'activity' ? ['준비 중'] : ['준비 중', '준비 중']);
+
+    if (tab === 'client') expect(values[1][3]).toBe('3명');
+  },
+);
+
+it.each([
+  ['all', 'all', null],
+  ['web', 'all', '플랫폼 전체 기준'],
+  ['all', 'guest', '대상 전체 기준'],
+  ['web', 'guest', '플랫폼과 대상 전체 기준'],
+] as const)(
+  '실패율 통합 표는 플랫폼 %s·대상 %s의 전체 기준을 보존한다',
+  async (platform, segment, basis) => {
+    nav.search = `tab=client&platform=${platform}&segment=${segment}&from=2026-10-20&to=2026-10-21`;
+
+    const view = draw('quality');
+
+    await screen.findByRole('heading', { name: '간편 제작 실패율' });
+
+    const aggregate = Array.from(
+      view.container.querySelectorAll('details'),
+    ).find((details) =>
+      Array.from(details.children).some(
+        (child) =>
+          child.tagName === 'DIV' &&
+          child.querySelector('thead')?.textContent?.startsWith('지표'),
+      ),
+    )!;
+
+    aggregate.open = true;
+
+    const rows = within(aggregate).getAllByRole('row').slice(1);
+    const failed = rows.filter((row) =>
+      within(row)
+        .getAllByRole('cell')[0]
+        .textContent?.startsWith('간편 제작 실패율'),
+    );
+
+    expect(failed).toHaveLength(2);
+
+    for (const row of failed) {
+      const metric = within(row).getAllByRole('cell')[0];
+
+      if (basis) expect(within(metric).getByText(basis)).toBeTruthy();
+      else expect(metric.textContent).not.toContain('전체 기준');
+
+      expect(
+        within(metric).getByRole('button', {
+          name: '간편 제작 실패율 지표 정의',
+        }),
+      ).toBeTruthy();
+    }
+
+    for (const row of rows.filter((row) => !failed.includes(row))) {
+      expect(within(row).getAllByRole('cell')[0].textContent).not.toContain(
+        '전체 기준',
+      );
+    }
+  },
+);

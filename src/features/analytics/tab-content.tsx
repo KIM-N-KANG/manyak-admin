@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { type ReactNode, useContext } from 'react';
 
 import { DataTable, dateTime } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
@@ -16,10 +16,9 @@ import {
   platformText,
   ratio,
 } from './config';
-import { allZero, MetricHelp } from './metric-definition';
+import { allZero, MetricHelp, MetricScope } from './metric-definition';
 import {
   basisMark,
-  formatPlotValue,
   FunnelChart,
   NumericTable,
   PendingDates,
@@ -27,6 +26,7 @@ import {
   PlatformSource,
   type PlotEmptyLabel,
   type PlotRow,
+  plotValues,
   Ranking,
   SeriesChart,
   SummaryCards,
@@ -88,6 +88,11 @@ export function Charts({
     : undefined;
 
   const definitions = items.map((item) => item.title);
+  const scope = useContext(MetricScope);
+  const prepared = items.map((item) => ({
+    ...item,
+    values: plotValues(scope, item),
+  }));
 
   return (
     <>
@@ -121,7 +126,7 @@ export function Charts({
             definitionTitle: definitions,
           },
         ]}
-        rows={items.flatMap((item) =>
+        rows={prepared.flatMap((item) =>
           (item.empty ? [] : item.rows).flatMap((row) =>
             item.series.map((series) => [
               <span key="metric" className="inline-flex items-center gap-2">
@@ -131,7 +136,7 @@ export function Charts({
               </span>,
               row.date,
               series.label,
-              formatPlotValue(row, series.key, item),
+              item.values.format(row, series.key),
             ]),
           ),
         )}
@@ -972,6 +977,7 @@ export function QualityContent({
               series: single('value', '간편 제작 실패율'),
               unit: '%',
               emptyLabel: '요청 없음',
+              basis: basisText(platform !== 'all', segment !== 'all'),
               aside: (
                 <>
                   <span className="text-xs text-muted-foreground">서버 DB</span>
