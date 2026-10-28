@@ -571,6 +571,12 @@ export const adminOperations = [
               maximum: 5,
               minimum: 0,
             },
+            creationMode: {
+              type: 'string',
+              enum: ['GENERAL', 'SIMPLE'],
+              description:
+                'SIMPLE은 스토리를 완성한 제작 세션이 있는 간편 제작, GENERAL은 그 밖의 일반 제작',
+            },
             chatFrom: { type: ['string', 'null'] },
             chatTo: { type: ['string', 'null'] },
             creationFrom: { type: ['string', 'null'] },

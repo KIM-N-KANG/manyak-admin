@@ -525,6 +525,12 @@ export const StoriesQueryParams = zod.object({
       .min(storiesQueryRequestSupportingCharacterCountMin)
       .max(storiesQueryRequestSupportingCharacterCountMax)
       .nullish(),
+    creationMode: zod
+      .enum(['GENERAL', 'SIMPLE'])
+      .optional()
+      .describe(
+        'SIMPLE은 스토리를 완성한 제작 세션이 있는 간편 제작, GENERAL은 그 밖의 일반 제작',
+      ),
     chatFrom: zod.string().nullish(),
     chatTo: zod.string().nullish(),
     creationFrom: zod.string().nullish(),

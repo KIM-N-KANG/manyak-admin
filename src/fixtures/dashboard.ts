@@ -1,3 +1,4 @@
+import type { ChatRoom } from '@/features/chats/types';
 import { aiFeatures, genreDepthTitle } from '@/features/dashboard/chart-data';
 import type { DateRange } from '@/features/dashboard/date-range';
 import type {
@@ -170,7 +171,7 @@ function distribution(
     category:
       chartId === 'started-as' || chartId === 'member-chats'
         ? 'users'
-        : chartId === 'characters'
+        : chartId === 'characters' || chartId === 'creation-mode'
           ? 'content'
           : chartId.startsWith('ai-')
             ? 'ai-quality'
@@ -182,6 +183,26 @@ function distribution(
       label,
       value: value(label, index),
       link: link(label, index),
+    })),
+  };
+}
+
+const simpleStoryIds = new Set(creationSessions.map((s) => s.storyId));
+
+/** 게스트 기기 식별자가 없는 고정 데이터에서는 스토리마다 기기 하나로 보고 턴 0 게스트 채팅은 기기를 모른다고 본다. */
+function withOwnerCounts(chart: Distribution, owners: ChatRoom[][]) {
+  return {
+    ...chart,
+    points: chart.points.map((point, i) => ({
+      ...point,
+      chats: owners[i].length,
+      users: new Set(
+        i
+          ? owners[i].map((c) => c.member?.memberId)
+          : owners[i]
+              .filter((c) => c.turnCount > 0)
+              .map((c) => c.story.storyId),
+      ).size,
     })),
   };
 }
@@ -225,6 +246,10 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
   const sessions = creationSessions.filter((session) =>
     inPeriod(session.createdAt, period),
   );
+  const ownerChats = ['GUEST', 'MEMBER'].map((owner) =>
+    periodChats.filter((c) => c.startedAs === owner),
+  );
+  const periodStories = stories.filter((s) => inPeriod(s.createdAt, period));
   const eligible = periodChats
     .filter(
       (c) => c.firstMessageSeconds !== null && c.firstMessageSeconds <= 900,
@@ -325,21 +350,20 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
           ).length,
         (_, i) => link('chats', { turnBucket: String(i) }),
       ),
-      distribution(
-        'started-as',
-        '채팅 소유자 게스트와 회원',
-        '현재 소유 회원 유무 기준, 게스트 이관은 회원으로 집계',
-        '%',
-        ['게스트', '회원'],
-        (_, i) =>
-          periodChats.length
-            ? (periodChats.filter(
-                (c) => c.startedAs === (i ? 'MEMBER' : 'GUEST'),
-              ).length /
-                periodChats.length) *
-              100
-            : 0,
-        (_, i) => link('chats', { startedAs: i ? 'MEMBER' : 'GUEST' }),
+      withOwnerCounts(
+        distribution(
+          'started-as',
+          '채팅 소유자 게스트와 회원',
+          '기간 채팅을 현재 소유자로 나눈 채팅 수 비율, 게스트 이관 채팅은 회원, 게스트 사용자 수는 AI 호출을 보낸 기기 수(턴 0 게스트 채팅 제외)',
+          '%',
+          ['게스트', '회원'],
+          (_, i) =>
+            periodChats.length
+              ? (ownerChats[i].length / periodChats.length) * 100
+              : 0,
+          (_, i) => link('chats', { startedAs: i ? 'MEMBER' : 'GUEST' }),
+        ),
+        ownerChats,
       ),
       distribution(
         'member-chats',
@@ -397,6 +421,17 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
             : 0;
         },
         (feature) => aiLink(feature, false),
+      ),
+      distribution(
+        'creation-mode',
+        '제작 방식별 스토리 수',
+        '스토리 생성일 기준, 스토리를 완성한 제작 세션이 있으면 간편 제작, 그 밖은 일반 제작',
+        '개',
+        ['일반 제작', '간편 제작'],
+        (_, i) =>
+          periodStories.filter((s) => simpleStoryIds.has(s.storyId) === !!i)
+            .length,
+        (_, i) => link('stories', { creationMode: i ? 'SIMPLE' : 'GENERAL' }),
       ),
       distribution(
         'characters',

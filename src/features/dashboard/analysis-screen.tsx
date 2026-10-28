@@ -25,6 +25,7 @@ import {
 } from '@/features/dashboard/range-picker';
 import type { DashboardCharts, Distribution } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
+import { cn } from '@/lib/utils';
 
 function DistributionCard({
   distribution: response,
@@ -45,11 +46,11 @@ function DistributionCard({
 
   return (
     <Card
-      className={
-        distribution.chartId === 'genre-depth'
-          ? 'min-w-0 xl:col-span-2'
-          : 'min-w-0'
-      }>
+      className={cn(
+        'min-w-0',
+        distribution.chartId === 'genre-depth' && 'xl:col-span-2',
+        distribution.chartId === 'first-message' && 'self-start',
+      )}>
       <div className="flex items-center gap-2">
         <h2 className="font-semibold">{distribution.title}</h2>
         {distribution.description ? (
@@ -77,7 +78,9 @@ function DistributionCard({
                     '총 턴 수',
                     '차트 표시',
                   ]
-                : ['구분 및 관련 목록', `값 (${distribution.unit})`]
+                : distribution.chartId === 'started-as'
+                  ? ['구분 및 관련 목록', '비율 (%)', '채팅 수', '사용자 수']
+                  : ['구분 및 관련 목록', `값 (${distribution.unit})`]
             }
             empty={!distribution.points.length}>
             {distribution.points.map((point) => (
@@ -99,6 +102,19 @@ function DistributionCard({
                       {(point.chats ?? 0) < MIN_GENRE_CHATS
                         ? '차트 제외(채팅 5개 미만)'
                         : '차트 포함'}
+                    </td>
+                  </>
+                ) : distribution.chartId === 'started-as' ? (
+                  <>
+                    <td>
+                      {point.chats == null
+                        ? '—'
+                        : `${point.chats.toLocaleString('ko-KR')}개`}
+                    </td>
+                    <td>
+                      {point.users == null
+                        ? '—'
+                        : `${point.users.toLocaleString('ko-KR')}명`}
                     </td>
                   </>
                 ) : null}

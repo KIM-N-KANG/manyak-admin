@@ -74,3 +74,25 @@ export function aiFeatureColor(point: ChartPoint) {
     ? `var(--chart-${index + 1})`
     : 'var(--muted-foreground)';
 }
+
+const firstMessageLabels = ['평균', 'P50', 'P75', 'P90'];
+
+/** 첫 입력 숫자 칸을 평균, P50, P75, P90 순서로 반환한다. */
+export function firstMessagePoints(points: ChartPoint[]) {
+  return firstMessageLabels.flatMap((label) =>
+    points.filter((point) => point.label === label),
+  );
+}
+
+const count = (value: number | null | undefined) =>
+  value == null ? '—' : value.toLocaleString('ko-KR');
+
+/** 채팅 소유자 줄 문구를 반환한다. */
+export function ownerSummary(point: ChartPoint) {
+  return `${point.label} ${count(point.users)}명, 채팅 ${count(point.chats)}개`;
+}
+
+/** 채팅 소유자 조각 툴팁 문구를 반환한다. */
+export function ownerTooltip(point: ChartPoint) {
+  return `${point.label} ${distributionNumber(point.value, '%')}%, ${count(point.users)}명, 채팅 ${count(point.chats)}개`;
+}
