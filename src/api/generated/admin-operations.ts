@@ -501,6 +501,12 @@ export const adminOperations = [
         required: false,
         schema: { type: 'string' },
       },
+      {
+        name: 'cohort',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', enum: ['visitor', 'signup', 'first-chat'] },
+      },
     ],
     params: undefined,
     query: schemas.RetentionQueryParams,
@@ -1680,5 +1686,34 @@ export const adminOperations = [
     query: undefined,
     body: schemas.TakedownStoryBody,
     bodyRequired: true,
+  },
+  {
+    path: '/api/v1/admin/users/session-lengths',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'from',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
+      {
+        name: 'days',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      {
+        name: 'segment',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
+      },
+    ],
+    params: undefined,
+    query: schemas.SessionLengthsQueryParams,
+    body: undefined,
+    bodyRequired: false,
   },
 ];

@@ -22,6 +22,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MetricHelp } from '@/features/analytics/metric-definition';
 import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
 import { ChartEndLabels } from '@/features/dashboard/chart-end-labels';
 import type { PlayInstalls } from '@/features/dashboard/types';
@@ -69,6 +70,8 @@ export function PlayInstallsDetails() {
               <h3 className="text-sm font-medium">
                 누적 기기 설치 수와 활성 기기 수
               </h3>
+              <MetricHelp title="Android 누적 기기 설치 수" />
+              <MetricHelp title="활성 기기 수" />
               <ChartContainer
                 config={config}
                 className="mt-3 h-64 w-full"
@@ -140,6 +143,7 @@ export function PlayInstallsDetails() {
               <h3 className="text-sm font-medium">
                 일별 기기 설치 수와 앱 삭제 수
               </h3>
+              <MetricHelp title="일별 기기 설치 수와 앱 삭제 수" />
               <ChartContainer
                 config={config}
                 className="mt-3 h-64 w-full"
@@ -209,7 +213,10 @@ export function PlayInstallsDetails() {
                     '일별 앱 삭제 수',
                     'Android 누적 기기 설치 수',
                     '활성 기기 수',
-                  ]}
+                  ].map((label) => ({
+                    label,
+                    help: <MetricHelp title={label} />,
+                  }))}
                   empty={!data.daily.length}>
                   {data.daily.map((day) => (
                     <tr key={day.date}>

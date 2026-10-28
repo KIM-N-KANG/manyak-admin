@@ -14,6 +14,7 @@ import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
 import { ChartEndLabels } from '@/features/dashboard/chart-end-labels';
 
 import { metricNumber, percent, platformText } from './config';
+import { MetricHelp } from './metric-definition';
 import {
   basisMark,
   NumericTable,
@@ -62,6 +63,7 @@ function ReachChart({
     <Card className="min-w-0">
       <div className="flex items-center gap-2">
         <h3 className="font-semibold">{title}</h3>
+        <MetricHelp title={title} />
         {aside}
         {basisMark(basis)}
       </div>
@@ -142,6 +144,7 @@ function ReachChart({
       )}
       <NumericTable
         title={tableTitle}
+        definitionTitle={title}
         basis={basis}
         headers={['기준 턴', `${label} 도달 채팅 수`, `${label} ${rateLabel}`]}
         rows={[

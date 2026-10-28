@@ -80,6 +80,12 @@ const cases: [string, string, string, unknown?][] = [
     '/campaigns/push-opens?from=2026-10-18&to=2026-10-24',
     '/campaigns/push-opens?from=2026-10-18&to=2026-10-24',
   ],
+  [
+    'GET',
+    '/users/session-lengths?segment=member',
+    '/users/session-lengths?segment=member',
+  ],
+  ['GET', '/users/retention?cohort=signup', '/users/retention?cohort=signup'],
   ['GET', '/dashboard/summary', '/dashboard/summary'],
   [
     'GET',

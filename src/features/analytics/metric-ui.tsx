@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { type ReactNode, useContext } from 'react';
 
 import { useRouter } from 'next/navigation';
 import {
@@ -28,6 +28,13 @@ import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
 import { ChartEndLabels } from '@/features/dashboard/chart-end-labels';
 
 import { eventLabel, metricNumber, percent, ratio } from './config';
+import {
+  allZero,
+  eventMetric,
+  type MetricDefinitionTitle,
+  MetricHelp,
+  MetricScope,
+} from './metric-definition';
 import type { Series } from './series';
 
 export function Source({ source, help }: { source: string; help: string }) {
@@ -46,16 +53,14 @@ export function basisMark(text?: string | null) {
 /** 서버 DB 탭 안의 Amplitude 값 제목 옆에 두는 Amplitude 출처 표시다. */
 export function PlatformSource({
   title,
-  help,
   asOf,
 }: {
   title: string;
-  help: string;
   asOf?: string | null;
 }) {
   return (
     <HelpTooltip label={`${title} 출처와 집계 안내`} source="Amplitude">
-      {asOf ? `${help} ${dateTime(asOf)} KST 집계 기준` : help}
+      {asOf ? `${dateTime(asOf)} KST 집계 기준` : 'Amplitude 출처 지표입니다.'}
     </HelpTooltip>
   );
 }
@@ -73,6 +78,7 @@ export function PlatformPlaceholder({
     <Card className="min-w-0">
       <div className="flex items-center gap-2">
         <h3 className="font-semibold">{title}</h3>
+        <MetricHelp title={title} />
         {aside}
       </div>
       <p role="status" className="mt-4 text-sm">
@@ -89,6 +95,8 @@ export function SummaryCards({
     value: ReactNode;
     detail?: ReactNode;
     aside?: ReactNode;
+    definitionTitle?: string;
+    help?: ReactNode;
   }[];
 }) {
   return (
@@ -98,10 +106,26 @@ export function SummaryCards({
           {item.aside ? (
             <div className="flex items-center gap-2">
               <h3 className="text-sm text-muted-foreground">{item.label}</h3>
+              <MetricHelp
+                title={item.label}
+                definitionTitle={item.definitionTitle}
+                noEvents={item.value === '이벤트 수신 없음'}>
+                {item.help}
+              </MetricHelp>
               {item.aside}
             </div>
           ) : (
-            <h3 className="text-sm text-muted-foreground">{item.label}</h3>
+            <>
+              <h3 className="inline text-sm text-muted-foreground">
+                {item.label}
+              </h3>{' '}
+              <MetricHelp
+                title={item.label}
+                definitionTitle={item.definitionTitle}
+                noEvents={item.value === '이벤트 수신 없음'}>
+                {item.help}
+              </MetricHelp>
+            </>
           )}
           <div className="mt-3 text-2xl font-semibold break-words">
             {item.value}
@@ -132,8 +156,13 @@ export function NumericTable({
   rows,
   title = '전체 수치 표',
   basis,
+  definitionTitle,
 }: {
-  headers: string[];
+  definitionTitle?: MetricDefinitionTitle;
+  headers: (
+    | string
+    | { label: string; definitionTitle?: MetricDefinitionTitle | null }
+  )[];
   rows: ReactNode[][];
   title?: string;
   basis?: string | null;
@@ -142,10 +171,27 @@ export function NumericTable({
     <details className="mt-4">
       <summary className="cursor-pointer text-xs text-muted-foreground">
         {title}
+        <MetricHelp title={title} definitionTitle={definitionTitle} />
         {basis ? ` · ${basis}` : null}
       </summary>
       <div className="mt-3 max-h-80 overflow-auto">
-        <DataTable headers={headers} empty={!rows.length}>
+        <DataTable
+          headers={headers.map((header, index) => {
+            const label = typeof header === 'string' ? header : header.label;
+            const explicit =
+              typeof header !== 'string' && 'definitionTitle' in header;
+            const definition = explicit
+              ? header.definitionTitle
+              : definitionTitle && index !== 0
+                ? definitionTitle
+                : label;
+
+            return {
+              label,
+              help: <MetricHelp title={label} definitionTitle={definition} />,
+            };
+          })}
+          empty={!rows.length}>
           {rows.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => (
@@ -187,11 +233,44 @@ export function formatPlotValue(
       );
 }
 
+/** 차트와 통합 표가 같은 계열 판정과 행별 값 표기를 사용하게 한다. */
+export function plotValues(
+  scope: string,
+  {
+    title,
+    unit,
+    rows,
+    series,
+    emptyLabel,
+  }: {
+    title: string;
+    unit: string;
+    rows: PlotRow[];
+    series: Series[];
+    emptyLabel?: PlotEmptyLabel;
+  },
+) {
+  const ready = rows.filter((row) => row.pending !== 1);
+  const missing = eventMetric(scope, title)
+    ? series.filter((s) =>
+        allZero(ready.map((row) => row[s.key] as number | null | undefined)),
+      )
+    : [];
+
+  return {
+    missing,
+    format: (row: PlotRow, key: string) =>
+      row.pending !== 1 && missing.some((s) => s.key === key)
+        ? '이벤트 수신 없음'
+        : formatPlotValue(row, key, { title, unit, emptyLabel }),
+  };
+}
+
 export function SeriesChart({
   title,
   categoryLabel = '날짜',
   rows,
-  series,
+  series: originalSeries,
   unit,
   emptyLabel = '값 없음',
   href,
@@ -208,9 +287,16 @@ export function SeriesChart({
   href?: (date: string) => string;
   grouped?: boolean;
 }) {
+  const scope = useContext(MetricScope);
+  const { missing, format: values } = plotValues(scope, {
+    title,
+    unit,
+    rows,
+    series: originalSeries,
+    emptyLabel,
+  });
+  const series = originalSeries.filter((s) => !missing.includes(s));
   const router = useRouter();
-  const values = (row: PlotRow, key: string) =>
-    formatPlotValue(row, key, { title, unit, emptyLabel });
   const config = Object.fromEntries(
     series.map((s) => [s.key, { label: s.label, color: s.color }]),
   );
@@ -279,89 +365,107 @@ export function SeriesChart({
       {aside ? (
         <div className="flex items-center gap-2">
           <h3 className="font-semibold">{title}</h3>
+          <MetricHelp title={title} noEvents={missing.length > 0} />
           {aside}
         </div>
       ) : (
-        <h3 className="font-semibold">{title}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold">{title}</h3>
+          <MetricHelp title={title} noEvents={missing.length > 0} />
+        </div>
       )}
-      <ChartContainer
-        config={config}
-        className="mt-5 h-72 w-full"
-        aria-label={`${title} 추이`}>
-        {grouped ? (
-          <BarChart accessibilityLayer data={rows} onClick={click}>
-            {axes}
-            {series.map((s) => (
-              <Bar
-                key={s.key}
-                dataKey={s.key}
-                fill={s.color}
-                isAnimationActive={false}
-              />
-            ))}
-          </BarChart>
-        ) : (
-          <LineChart
-            accessibilityLayer
-            data={rows}
-            margin={{
-              top: 64,
-              right:
-                series.length > 1 ||
-                series.some((s) => s.color === 'var(--chart-3)')
-                  ? 100
-                  : 16,
-              bottom: 8,
-              left: 0,
-            }}
-            onClick={click}>
-            {axes}
-            {series.map((s) => (
-              <Line
-                key={s.key}
-                dataKey={s.key}
-                type="linear"
-                stroke={s.color}
-                strokeDasharray={s.dash}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4 }}
-                connectNulls={false}
-                isAnimationActive={false}
-              />
-            ))}
-            {series.length > 1 ||
-            series.some((s) => s.color === 'var(--chart-3)') ? (
-              <ChartEndLabels
-                labels={series.flatMap((s) => {
-                  const row = rows.find((row) => row.date === last.get(s.key));
-                  const value = row?.[s.key];
+      {missing.length ? (
+        <div className="mt-4 flex flex-wrap gap-3 text-xs" role="status">
+          {missing.map((s) => (
+            <span key={s.key}>
+              {originalSeries.length > 1 ? `${s.label} ` : ''}이벤트 수신 없음
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {series.length ? (
+        <ChartContainer
+          config={config}
+          className="mt-5 h-72 w-full"
+          aria-label={`${title} 추이`}>
+          {grouped ? (
+            <BarChart accessibilityLayer data={rows} onClick={click}>
+              {axes}
+              {series.map((s) => (
+                <Bar
+                  key={s.key}
+                  dataKey={s.key}
+                  fill={s.color}
+                  isAnimationActive={false}
+                />
+              ))}
+            </BarChart>
+          ) : (
+            <LineChart
+              accessibilityLayer
+              data={rows}
+              margin={{
+                top: 64,
+                right:
+                  series.length > 1 ||
+                  series.some((s) => s.color === 'var(--chart-3)')
+                    ? 100
+                    : 16,
+                bottom: 8,
+                left: 0,
+              }}
+              onClick={click}>
+              {axes}
+              {series.map((s) => (
+                <Line
+                  key={s.key}
+                  dataKey={s.key}
+                  type="linear"
+                  stroke={s.color}
+                  strokeDasharray={s.dash}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                  connectNulls={false}
+                  isAnimationActive={false}
+                />
+              ))}
+              {series.length > 1 ||
+              series.some((s) => s.color === 'var(--chart-3)') ? (
+                <ChartEndLabels
+                  labels={series.flatMap((s) => {
+                    const row = rows.find(
+                      (row) => row.date === last.get(s.key),
+                    );
+                    const value = row?.[s.key];
 
-                  return row && typeof value === 'number'
-                    ? [
-                        {
-                          id: s.key,
-                          x: row.date,
-                          y: value,
-                          text: `${s.label} ${values(row, s.key)}`,
-                        },
-                      ]
-                    : [];
-                })}
-              />
-            ) : null}
-          </LineChart>
-        )}
-      </ChartContainer>
+                    return row && typeof value === 'number'
+                      ? [
+                          {
+                            id: s.key,
+                            x: row.date,
+                            y: value,
+                            text: `${s.label} ${values(row, s.key)}`,
+                          },
+                        ]
+                      : [];
+                  })}
+                />
+              ) : null}
+            </LineChart>
+          )}
+        </ChartContainer>
+      ) : null}
       <NumericTable
+        definitionTitle={title}
         headers={[
           categoryLabel,
-          ...series.map((s) => `${s.label} (${unit})`),
+          ...originalSeries.map((s) => `${s.label} (${unit})`),
           ...(href ? ['관련 목록'] : []),
         ]}
         rows={rows.map((row) => [
           row.date,
-          ...series.map((s) => values(row, s.key)),
+          ...originalSeries.map((s) => values(row, s.key)),
           ...(href
             ? [
                 <TextLink key="link" href={href(row.date)}>
@@ -383,11 +487,31 @@ export function FunnelChart({
   steps,
   extraTable,
   help,
+  definitionTitle,
 }: {
+  definitionTitle?: string;
   steps: FunnelStep[];
   extraTable?: ReactNode;
   help?: string;
 }) {
+  if (steps[0]?.users === 0)
+    return (
+      <Card>
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold">단계별 전환</h3>
+          <MetricHelp
+            title="단계별 전환"
+            definitionTitle={definitionTitle}
+            noEvents>
+            {help}
+          </MetricHelp>
+        </div>
+        <p role="status" className="mt-4">
+          이벤트 수신 없음
+        </p>
+      </Card>
+    );
+
   const rows = steps.map((s, i) => ({
     ...s,
     label: eventLabel(s.event, s.turnNumber),
@@ -400,14 +524,20 @@ export function FunnelChart({
         items={[
           {
             label: '첫 단계 사용자 수',
+            definitionTitle,
+            help,
             value: metricNumber(steps[0]?.users ?? 0, '명'),
           },
           {
             label: '마지막 단계 사용자 수',
+            definitionTitle,
+            help,
             value: metricNumber(steps.at(-1)?.users ?? 0, '명'),
           },
           {
             label: '첫 단계 대비 마지막 단계 전환율',
+            definitionTitle,
+            help,
             value: percent(
               ratio(steps.at(-1)?.users ?? 0, steps[0]?.users ?? 0),
             ),
@@ -417,9 +547,9 @@ export function FunnelChart({
       <Card className="xl:col-span-2">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold">단계별 전환</h3>
-          {help ? (
-            <HelpTooltip label="전환 집계 안내">{help}</HelpTooltip>
-          ) : null}
+          <MetricHelp title="단계별 전환" definitionTitle={definitionTitle}>
+            {help}
+          </MetricHelp>
         </div>
         <div className="overflow-x-auto">
           {' '}
@@ -468,6 +598,7 @@ export function FunnelChart({
         </div>
         {extraTable ?? (
           <NumericTable
+            definitionTitle={definitionTitle}
             headers={['단계', '사용자 수', '앞 단계 대비 전환율']}
             rows={rows.map((row) => [
               row.label,
@@ -492,6 +623,7 @@ export function Ranking({
   return (
     <Card className="min-w-0">
       <h3 className="font-semibold">{title}</h3>
+      <MetricHelp title={title} />
       <ChartContainer
         config={{ value: { label: '방문자', color: 'var(--primary)' } }}
         className="mt-5 w-full"
@@ -525,6 +657,7 @@ export function Ranking({
         </BarChart>
       </ChartContainer>
       <NumericTable
+        definitionTitle={title}
         headers={['구분', '방문자 (명)']}
         rows={items.map((row) => [row.label, metricNumber(row.value, '명')])}
       />

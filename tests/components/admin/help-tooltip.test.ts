@@ -57,3 +57,30 @@ it('마우스 hover에서도 설명을 열고 서로 다른 도움말 ID를 사�
   expect(tooltip.textContent).toBe('첫 설명');
   expect(first.getAttribute('aria-describedby')).toBe(tooltip.id);
 });
+
+it('긴 도움말은 뷰포트 안에서 스크롤하고 팝업에 키보드 포커스를 둘 수 있다', async () => {
+  render(
+    createElement(
+      HelpTooltip,
+      { label: '여러 지표 정의' },
+      createElement(
+        'div',
+        null,
+        ...Array.from({ length: 30 }, (_, index) =>
+          createElement('p', { key: index }, `정의 ${index + 1} 날짜`),
+        ),
+      ),
+    ),
+  );
+  act(() => screen.getByRole('button', { name: '여러 지표 정의' }).focus());
+
+  const tooltip = await screen.findByRole('tooltip');
+
+  expect(tooltip.classList.contains('max-h-[min(70vh,32rem)]')).toBe(true);
+  expect(tooltip.classList.contains('overflow-y-auto')).toBe(true);
+  expect(tooltip.getAttribute('tabindex')).toBe('0');
+  act(() => tooltip.focus());
+  expect(document.activeElement).toBe(tooltip);
+  expect(screen.getByRole('tooltip')).toBe(tooltip);
+  expect(tooltip.textContent).toContain('정의 30 날짜');
+});

@@ -270,3 +270,65 @@ it('AI 비용 fixture는 보관 기간 밖 날짜에도 이미지 비용을 남�
       ?.costKrw,
   ).toBeNull();
 });
+
+it.each(['visitor', 'signup', 'first-chat'])(
+  '리텐션 cohort=%s는 생성 검증 뒤 fixture와 upstream 경로에 반영한다',
+  async (cohort) => {
+    const response = await metricsRoute(
+      new Request(
+        `http://localhost/api/users/retention?from=2026-10-01&to=2026-10-02&cohort=${cohort}`,
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).cohort).toBe(cohort);
+  },
+);
+it('지원하지 않는 시작 집단은 fixture BFF에서 400이다', async () => {
+  const response = await metricsRoute(
+    new Request(
+      'http://localhost/api/users/retention?from=2026-10-01&to=2026-10-02&cohort=unknown',
+    ),
+  );
+
+  expect(response.status).toBe(400);
+});
+it.each(['all', 'guest', 'member'])(
+  '세션 길이 분포 segment=%s 경로는 생성 검증과 구간 순서를 따른다',
+  async (segment) => {
+    const response = await metricsRoute(
+      new Request(
+        `http://localhost/api/users/session-lengths?from=2026-10-01&to=2026-10-02&segment=${segment}`,
+      ),
+    );
+
+    expect(response.status).toBe(200);
+
+    const body = await response.json();
+
+    expect(body.segment).toBe(segment);
+    expect(body.bins).toHaveLength(9);
+    expect(body.bins[0]).toEqual({ fromSeconds: 0, toSeconds: 3 });
+    expect(body.bins.at(-1)).toEqual({ fromSeconds: 3600, toSeconds: 86400 });
+    expect(body.platforms.map((p: { platform: string }) => p.platform)).toEqual(
+      ['all', 'web', 'android'],
+    );
+  },
+);
+it.each([
+  'segment=unknown',
+  'from=2026-10-01',
+  'from=2026-10-02&to=2026-10-01',
+])('세션 길이 분포의 잘못된 조건 %s는 400이다', async (query) => {
+  expect(
+    (
+      await metricsRoute(
+        new Request(`http://localhost/api/users/session-lengths?${query}`),
+      )
+    ).status,
+  ).toBe(400);
+});
+it('새 퍼널 단계 이름은 홈 진입과 간편 제작 진입이다', () => {
+  expect(eventLabel('client_storyList_viewed')).toBe('홈 진입');
+  expect(eventLabel('client_storyCreate_viewed')).toBe('간편 제작 진입');
+});

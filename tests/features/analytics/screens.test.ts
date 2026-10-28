@@ -16,13 +16,17 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { AnalyticsScreen } from '@/features/analytics/analytics-screen';
 import type { AnalyticsScreenName } from '@/features/analytics/config';
+import { MetricScope } from '@/features/analytics/metric-definition';
+import { metricDefinitions } from '@/features/analytics/metric-definitions-data';
 import { analyticsRefetch } from '@/features/analytics/range';
+import { AcquisitionContent, Charts } from '@/features/analytics/tab-content';
 import type {
   ActivityResponse,
   AiCostResponse,
   CampaignAnalyticsResponse,
   ChatOptionResponse,
   PlatformCounts,
+  QualityResponse,
   SignupResponse,
 } from '@/features/analytics/types';
 import { metricFixture } from '@/fixtures/metrics';
@@ -195,7 +199,7 @@ it('리텐션 탭은 선택 기간을 유지해 요청을 막고 어제까지 �
   view.go();
   await screen.findByText('D1 가중 평균');
   expect(requests.at(-1)).toBe(
-    '/api/users/retention?from=2026-10-17&to=2026-10-22',
+    '/api/users/retention?from=2026-10-17&to=2026-10-22&cohort=visitor',
   );
   expect(screen.getAllByText('관찰 전').length).toBeGreaterThan(0);
 
@@ -392,7 +396,7 @@ it('플랫폼 앱은 세 퍼널만 다시 요청하고 첫 접속 두 카드는 
 
   const help = within(
     screen.getByRole('region', { name: '게스트 한도 로그인' }),
-  ).getByRole('button', { name: '전환 집계 안내' });
+  ).getByRole('button', { name: '단계별 전환 지표 정의' });
 
   act(() => help.focus());
 
@@ -703,7 +707,7 @@ it('사용자 활동은 고른 플랫폼 값 하나를 그대로 그리고 플�
 
   expect(requests.length).toBe(count);
   // MAU만 플랫폼으로 나눌 수 없어 전체 기준 표시를 붙인다.
-  expect(mau().textContent).toBe('MAU플랫폼 전체 기준');
+  expect(mau().textContent).toBe('MAU?플랫폼 전체 기준');
   expect(dau().textContent).not.toContain('전체 기준');
   expect(
     screen.getAllByText('누적 신규 방문자', { selector: 'h3' })[0]
@@ -823,9 +827,11 @@ it('누적 가입자는 서비스 시작부터 받은 1293~1300을 표시하고 
     screen.queryByRole('heading', { name: '누적 신규 가입자' }),
   ).toBeNull();
 
-  const chart = screen.getByRole('heading', {
-    name: '누적 가입자',
-  }).parentElement!;
+  const chart = screen
+    .getByRole('heading', {
+      name: '누적 가입자',
+    })
+    .closest<HTMLElement>('[data-slot=card]')!;
   const rows = JSON.parse(
     chart.querySelector('[data-rows]')!.getAttribute('data-rows')!,
   );
@@ -918,9 +924,11 @@ it.each([48, 72])(
       within(row as HTMLElement).getByText(`${3 * unitCost}원`),
     ).toBeTruthy();
 
-    const chart = screen.getByRole('heading', {
-      name: '기능별 일별 비용',
-    }).parentElement!;
+    const chart = screen
+      .getByRole('heading', {
+        name: '기능별 일별 비용',
+      })
+      .closest<HTMLElement>('[data-slot=card]')!;
     const rows = JSON.parse(
       chart.querySelector('[data-rows]')!.getAttribute('data-rows')!,
     );
@@ -1008,9 +1016,11 @@ it('Langfuse 비용은 실제 0·기록 없음·준비 중을 구분하고 미�
   expect(rows[1].textContent).toContain('준비 중');
   expect(rows[2].textContent).toContain('0원');
 
-  const chart = screen.getByRole('heading', {
-    name: '기능별 일별 비용',
-  }).parentElement!;
+  const chart = screen
+    .getByRole('heading', {
+      name: '기능별 일별 비용',
+    })
+    .closest<HTMLElement>('[data-slot=card]')!;
   const points = JSON.parse(
     chart.querySelector('[data-rows]')!.getAttribute('data-rows')!,
   );
@@ -1187,9 +1197,11 @@ it('AI 비용은 보관 만료·준비 중·조합 기록 없음과 이미지 �
   expect(rows[2].textContent).toContain('준비 중');
   expect(rows[4].textContent).toContain('비용 기록 없음');
 
-  const chart = screen.getByRole('heading', {
-    name: '기능별 일별 비용',
-  }).parentElement!;
+  const chart = screen
+    .getByRole('heading', {
+      name: '기능별 일별 비용',
+    })
+    .closest<HTMLElement>('[data-slot=card]')!;
   const points = JSON.parse(
     chart.querySelector('[data-rows]')!.getAttribute('data-rows')!,
   );
@@ -1363,7 +1375,7 @@ it('가입 이벤트 기준 신규 가입자는 고른 플랫폼의 준비된 �
   expect(sources[0].textContent).toContain('Amplitude');
   act(() => sources[0].focus());
   expect((await screen.findByRole('tooltip')).textContent).toBe(
-    'Amplitude의 가입 이벤트로 셉니다. 국가가 한국이거나 국가 정보가 없는 사용자만 셉니다. 구글과 카카오 경로별 수를 더하므로 같은 날 두 경로로 가입하면 두 번 셉니다. 팀 계정이 포함돼 서버 DB 신규 가입자와 다를 수 있습니다. 2026. 10. 23. 오전 11:55 KST 집계 기준',
+    '2026. 10. 23. 오전 11:55 KST 집계 기준',
   );
 });
 it('신규 가입자 탭의 서버 DB 값은 플랫폼을 고르면 플랫폼 전체 기준을 붙이고 전체면 뗀다', async () => {
@@ -1562,7 +1574,7 @@ it('도달률은 플랫폼을 고르면 서버 DB 값에 플랫폼 전체 기준
     screen.getByRole('heading', { name }).parentElement!.textContent!;
 
   expect(screen.getByText('회원 채팅 수').parentElement!.textContent).toBe(
-    '회원 채팅 수플랫폼 전체 기준',
+    '회원 채팅 수?플랫폼 전체 기준',
   );
   expect(title('N턴 이상 도달률')).toContain('플랫폼 전체 기준');
   expect(screen.getByText('전체 수치 표 · 플랫폼 전체 기준')).toBeTruthy();
@@ -1593,7 +1605,7 @@ it('도달률은 플랫폼을 고르면 서버 DB 값에 플랫폼 전체 기준
   await screen.findByText('게스트에서 회원으로');
   expect(
     screen.getByText('게스트에서 회원으로').parentElement!.textContent,
-  ).toBe('게스트에서 회원으로플랫폼 전체 기준');
+  ).toBe('게스트에서 회원으로?플랫폼 전체 기준');
   view.change('tab=turn-reach&platform=web&segment=guest');
   await screen.findByText('게스트 채팅 수');
   expect(screen.queryByText('게스트에서 회원으로')).toBeNull();
@@ -1655,7 +1667,7 @@ it('채팅 옵션 대상 게스트는 segment=guest로 다시 요청하고 서�
   expect(
     screen.getAllByRole('heading', { name: '채팅 수', level: 3 })[0]
       .parentElement!.textContent,
-  ).toBe('채팅 수대상 전체 기준');
+  ).toBe('채팅 수?대상 전체 기준');
   expect(screen.getByText('모델별 비중 · 대상 전체 기준')).toBeTruthy();
 });
 it('채팅 옵션은 플랫폼만 바꾸면 다시 요청하지 않고 서버 DB 값에만 전체 기준을 붙인다', async () => {
@@ -1668,7 +1680,9 @@ it('채팅 옵션은 플랫폼만 바꾸면 다시 요청하지 않고 서버 DB
   const marks = (name: string) =>
     screen
       .getAllByRole('heading', { name, level: 3 })
-      .map((heading) => heading.parentElement!.textContent!.replace(name, ''));
+      .map((heading) =>
+        heading.parentElement!.textContent!.replace(name, '').replace('?', ''),
+      );
 
   expect(marks('채팅 수')).toEqual(['플랫폼 전체 기준', '플랫폼 전체 기준']);
   expect(marks('페르소나 사용 채팅 수')).toEqual(['플랫폼 전체 기준']);
@@ -2012,3 +2026,780 @@ it('전환 퍼널은 플랫폼 전체를 웹으로 요청하고 도움말로 알
   );
   expect(requests.length).toBe(count);
 });
+
+it('시작 집단은 visitor를 보내고 signup 캐시와 플랫폼 선택을 분리한다', async () => {
+  nav.search = 'tab=retention';
+
+  const view = draw('users');
+
+  await screen.findByText('D1 가중 평균');
+  expect(requests.filter((url) => url.includes('/retention'))).toHaveLength(1);
+  expect(requests.at(-1)).toContain('cohort=visitor');
+  fireEvent.change(screen.getByRole('combobox', { name: '시작 집단' }), {
+    target: { value: 'signup' },
+  });
+  view.go();
+  await waitFor(() =>
+    expect(
+      (screen.getByRole('combobox', { name: '시작 집단' }) as HTMLSelectElement)
+        .value,
+    ).toBe('signup'),
+  );
+  expect(requests.at(-1)).toContain('cohort=signup');
+
+  const count = requests.length;
+
+  fireEvent.change(screen.getByRole('combobox', { name: '플랫폼' }), {
+    target: { value: 'android' },
+  });
+  view.go();
+  expect(requests).toHaveLength(count);
+  fireEvent.change(screen.getByRole('combobox', { name: '시작 집단' }), {
+    target: { value: 'visitor' },
+  });
+  view.go();
+  await waitFor(() =>
+    expect(
+      (screen.getByRole('combobox', { name: '시작 집단' }) as HTMLSelectElement)
+        .value,
+    ).toBe('visitor'),
+  );
+  expect(requests).toHaveLength(count);
+  expect(
+    screen
+      .getAllByRole('columnheader')
+      .slice(0, 2)
+      .map((node) => node.textContent?.replaceAll('?', '')),
+  ).toEqual(['시작일', '시작 인원']);
+});
+
+it('시작 집단 없는 이전 서버 응답은 URL signup이어도 방문자로 표시한다', async () => {
+  nav.search = 'tab=retention&cohort=signup';
+
+  const data = metricFixture(
+    '/users/retention',
+    new URLSearchParams('from=2026-10-20&to=2026-10-21'),
+  ) as Record<string, unknown>;
+
+  delete data.cohort;
+  vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+  draw('users');
+  await screen.findByText('D1 가중 평균');
+  expect(
+    (screen.getByRole('combobox', { name: '시작 집단' }) as HTMLSelectElement)
+      .value,
+  ).toBe('visitor');
+});
+
+it.each(['sessions', 'session-lengths'])(
+  '세션의 %s만 실패해도 다른 영역을 유지한다',
+  async (failed) => {
+    nav.search = 'tab=sessions';
+    fail = `/users/${failed}`;
+    draw('users');
+    await screen.findByRole('alert');
+    expect(screen.getByText('Amplitude 지표를 불러올 수 없음')).toBeTruthy();
+    expect(
+      screen.getByRole('heading', {
+        name: failed === 'sessions' ? '세션 길이 분포' : '평균 세션 길이',
+      }),
+    ).toBeTruthy();
+    expect(requests).toHaveLength(2);
+  },
+);
+
+it('세션 두 요청은 회원 선택 때 다시 보내고 플랫폼은 응답에서 고른다', async () => {
+  nav.search = 'tab=sessions';
+
+  const view = draw('users');
+
+  await screen.findByText('2,317개');
+  expect(requests).toHaveLength(2);
+  expect(requests.every((url) => url.includes('segment=all'))).toBe(true);
+  fireEvent.change(screen.getByRole('combobox', { name: '대상' }), {
+    target: { value: 'member' },
+  });
+  view.go();
+  await waitFor(() =>
+    expect(
+      requests.filter((url) => url.includes('segment=member')),
+    ).toHaveLength(2),
+  );
+  await screen.findByText('2,317개');
+
+  const count = requests.length;
+
+  fireEvent.change(screen.getByRole('combobox', { name: '플랫폼' }), {
+    target: { value: 'web' },
+  });
+  view.go();
+  expect(requests).toHaveLength(count);
+  expect(screen.getByRole('heading', { name: '세션 길이 분포' })).toBeTruthy();
+});
+
+it('수신 없는 퍼널은 단계·전환율을 감추고 제목 정의 아래에 안내한다', async () => {
+  nav.search = 'tab=funnels';
+
+  const original = vi.mocked(fetch).getMockImplementation()!;
+
+  vi.mocked(fetch).mockImplementation(async (url, init) => {
+    const response = await original(url, init);
+    const data = await response.json();
+
+    if (String(url).includes('guest-limit-login')) data.steps[0].users = 0;
+
+    return Response.json(data);
+  });
+  draw('conversion');
+  await screen.findByText('이벤트 수신 없음');
+
+  const heading = screen.getByRole('heading', { name: '게스트 한도 로그인' });
+  const section = heading.closest('section')!;
+
+  expect(within(section).queryByText('첫 단계 사용자 수')).toBeNull();
+  expect(section.querySelector('[data-rows]')).toBeNull();
+  act(() =>
+    within(section)
+      .getByRole('button', { name: '게스트 한도 로그인 지표 정의' })
+      .focus(),
+  );
+  expect((await screen.findByRole('tooltip')).textContent).toContain(
+    '그 행동이 없었거나 이벤트를 더 이상 보내지 않는 경우입니다.',
+  );
+});
+
+it.each([0, 2])(
+  '오류 사용자 계열은 준비된 날짜 전체 0일 때만 숨기며 비율은 0%%로 유지한다 (%s)',
+  async (chatError) => {
+    nav.search = 'tab=client&from=2026-10-20&to=2026-10-21';
+
+    const data = metricFixture(
+      '/quality/client',
+      new URLSearchParams(nav.search),
+    ) as QualityResponse;
+
+    data.daily.forEach((day, i) => {
+      day.users.chatLoadError = i ? 0 : chatError;
+      day.users.storyListLoadError = i ? 0 : 3;
+      day.streamErrors = 0;
+      day.streamErrorRate = 0;
+      day.users.storyCompleteError = 88;
+    });
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+    draw('quality');
+    await screen.findByRole('heading', { name: '오류 표시 사용자' });
+
+    const chart = screen
+      .getByRole('heading', { name: '오류 표시 사용자' })
+      .closest('[data-slot=card]')!;
+    const config = chart
+      .querySelector('[data-config]')!
+      .getAttribute('data-config')!;
+
+    expect(config.includes('chatLoadError')).toBe(chatError !== 0);
+    expect(config).not.toContain('storyCompleteError');
+    expect(config).toContain('storyListLoadError');
+    expect(screen.getAllByText('이벤트 수신 없음').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('0.0%').length).toBeGreaterThan(0);
+  },
+);
+
+it('간편 제작 실패율은 DB 출처로 pending 날짜도 그리고 null은 요청 없음이다', async () => {
+  nav.search =
+    'tab=client&platform=web&segment=guest&from=2026-10-20&to=2026-10-21';
+
+  const data = metricFixture(
+    '/quality/client',
+    new URLSearchParams(nav.search),
+  ) as QualityResponse;
+
+  data.pendingDates = ['2026-10-20'];
+  data.storyCompletion = [
+    { date: '2026-10-20', requests: 4, failed: 1, failureRate: 0.25 },
+    { date: '2026-10-21', requests: 0, failed: 0, failureRate: null },
+  ];
+  vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+  draw('quality');
+  await screen.findByRole('heading', { name: '간편 제작 실패율' });
+
+  const chart = screen
+    .getByRole('heading', { name: '간편 제작 실패율' })
+    .closest<HTMLElement>('[data-slot=card]')!;
+
+  expect(within(chart).getByText('서버 DB')).toBeTruthy();
+  expect(within(chart).getByText('플랫폼과 대상 전체 기준')).toBeTruthy();
+  expect(
+    chart.querySelector('[data-rows]')!.getAttribute('data-rows'),
+  ).toContain('"value":0.25');
+  expect(within(chart).getByText('25.0%')).toBeTruthy();
+  expect(within(chart).getByText('요청 없음')).toBeTruthy();
+});
+
+it('실패율 필드 없는 이전 서버는 그 차트만 준비 중이고 별도 재요청하지 않는다', async () => {
+  nav.search = 'tab=client';
+
+  const data = metricFixture(
+    '/quality/client',
+    new URLSearchParams('from=2026-10-20&to=2026-10-21'),
+  ) as QualityResponse;
+
+  delete data.storyCompletion;
+  vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+  draw('quality');
+  await screen.findByRole('heading', { name: '간편 제작 실패율' });
+
+  const chart = screen
+    .getByRole('heading', { name: '간편 제작 실패율' })
+    .closest<HTMLElement>('[data-slot=card]')!;
+
+  expect(within(chart).getByText('준비 중')).toBeTruthy();
+  expect(
+    screen.getByRole('heading', { name: '입력 방식별 채팅 메시지 전송' }),
+  ).toBeTruthy();
+  expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+  expect(analyticsRefetch({ state: { data } })).toBe(false);
+});
+
+it('세션 분포 경로가 미구현이면 분포만 기능 준비 중이다', async () => {
+  nav.search = 'tab=sessions';
+
+  const original = vi.mocked(fetch).getMockImplementation()!;
+
+  vi.mocked(fetch).mockImplementation(async (url, init) =>
+    String(url).includes('/session-lengths')
+      ? Response.json({ message: '서버 미구현' }, { status: 503 })
+      : original(url, init),
+  );
+  draw('users');
+  await screen.findByText('기능 준비 중');
+  expect(screen.getByRole('heading', { name: '평균 세션 길이' })).toBeTruthy();
+  expect(screen.queryByRole('heading', { name: '세션 수' })).toBeNull();
+});
+
+it('수신 없음은 준비 중인 날짜의 양수 이벤트를 판정에서 뺀다', async () => {
+  nav.search = 'tab=client&from=2026-10-20&to=2026-10-21';
+
+  const data = metricFixture(
+    '/quality/client',
+    new URLSearchParams(nav.search),
+  ) as QualityResponse;
+
+  data.pendingDates = ['2026-10-21'];
+  data.daily.forEach((day, i) => {
+    day.users.chatLoadError = i ? 9 : 0;
+  });
+  vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+  draw('quality');
+  await screen.findByRole('heading', { name: '오류 표시 사용자' });
+
+  const chart = screen
+    .getByRole('heading', { name: '오류 표시 사용자' })
+    .closest<HTMLElement>('[data-slot=card]')!;
+
+  expect(
+    chart.querySelector('[data-config]')!.getAttribute('data-config'),
+  ).not.toContain('chatLoadError');
+  expect(
+    within(chart).getByText('채팅 불러오기 오류 이벤트 수신 없음'),
+  ).toBeTruthy();
+});
+
+async function focusDefinition(button: HTMLElement) {
+  await act(async () => button.focus());
+
+  return (await screen.findByRole('tooltip')).textContent!;
+}
+
+it.each([false, true])(
+  '실제 DAU 차트는 정확한 제목의 정의를 보이고 전체 0일 때만 숨긴다 (%s)',
+  async (zero) => {
+    nav.search = 'tab=activity&from=2026-10-20&to=2026-10-21';
+
+    const data = metricFixture(
+      '/users/activity',
+      new URLSearchParams(nav.search),
+    ) as ActivityResponse;
+
+    data.pendingDates = [];
+    data.daily.forEach((day) => {
+      day.activeUsers.all = zero ? 0 : 5;
+    });
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+    draw('users');
+
+    const heading = await screen.findByRole('heading', {
+      name: '일별 활성 사용자 (DAU)',
+    });
+    const card = heading.closest<HTMLElement>('[data-slot=card]')!;
+    const text = await focusDefinition(
+      within(card).getByRole('button', {
+        name: '일별 활성 사용자 (DAU) 지표 정의',
+      }),
+    );
+
+    expect(text).toContain('계산 그날 활성 이벤트가 하나 이상인 사용자 수');
+    expect(text).toContain('서버 이벤트도 듦');
+    expect(
+      card.querySelector('[aria-label="일별 활성 사용자 (DAU) 추이"]') !== null,
+    ).toBe(!zero);
+    expect(within(card).queryByRole('status')?.textContent).toBe(
+      zero ? '이벤트 수신 없음' : undefined,
+    );
+
+    if (zero) expect(text).toContain('기준 이벤트를 한 건도 받지 못했습니다.');
+
+    const details = card.querySelector('details')!;
+
+    details.open = true;
+    expect(
+      await focusDefinition(
+        within(details).getByRole('button', { name: '전체 수치 표 지표 정의' }),
+      ),
+    ).toContain('계산 그날 활성 이벤트가 하나 이상인 사용자 수');
+  },
+);
+
+const funnelDefinitionCases = [
+  ['conversion', 'web-first-visit', '웹 첫 접속', 29],
+  ['conversion', 'android-first-visit', '앱 첫 접속', 30],
+  ['conversion', 'story-creation', '간편 제작', 31],
+  ['conversion', 'story-detail-chat', '상세 진입 채팅', 32],
+  ['conversion', 'guest-limit-login', '게스트 한도 로그인', 33],
+  ['acquisition', 'creation', '간편 제작 퍼널', 7],
+  ['acquisition', 'story-detail', '상세 진입 퍼널', 8],
+] as const;
+
+it.each(funnelDefinitionCases)(
+  '%s의 %s는 내부 카드 셋과 단계 제목에 해당 퍼널 정의를 연결한다',
+  async (scope, funnel, title, index) => {
+    let section: HTMLElement;
+
+    if (scope === 'conversion') {
+      nav.search = 'tab=funnels';
+      draw('conversion');
+      section = screen.getByRole('region', { name: title });
+      await within(section).findByText('첫 단계 사용자 수');
+    } else {
+      const data = metricFixture(
+        `/campaigns/funnels/${funnel}`,
+        new URLSearchParams('from=2026-10-20&to=2026-10-21'),
+      );
+      const view = render(
+        createElement(
+          MetricScope,
+          { value: scope },
+          createElement(AcquisitionContent, {
+            tab: funnel,
+            data,
+            segment: 'all',
+          }),
+        ),
+      );
+
+      section = view.container;
+    }
+
+    for (const label of [
+      '첫 단계 사용자 수',
+      '마지막 단계 사용자 수',
+      '첫 단계 대비 마지막 단계 전환율',
+      '단계별 전환',
+    ]) {
+      const text = await focusDefinition(
+        within(section).getByRole('button', { name: `${label} 지표 정의` }),
+      );
+
+      expect(text).toContain(
+        `계산 ${metricDefinitions[index][4].replaceAll('<br>', '')}`,
+      );
+      expect(text).toContain('날짜 선택 기간 전체');
+
+      if (funnel === 'guest-limit-login') {
+        expect(text.indexOf('로그인 성공은 구글과 카카오')).toBeGreaterThan(
+          text.indexOf('날짜 선택 기간 전체'),
+        );
+      }
+    }
+  },
+);
+
+it.each(funnelDefinitionCases)(
+  '%s의 %s는 첫 단계 0 분기에도 정의와 수신 없음 도움말을 보인다',
+  async (scope, funnel, title, index) => {
+    let section: HTMLElement;
+
+    if (scope === 'conversion') {
+      nav.search = 'tab=funnels';
+
+      const original = vi.mocked(fetch).getMockImplementation()!;
+
+      vi.mocked(fetch).mockImplementation(async (url, init) => {
+        const response = await original(url, init);
+        const data = await response.json();
+
+        if (String(url).includes(`/funnels/${funnel}?`))
+          data.steps[0].users = 0;
+
+        return Response.json(data);
+      });
+      draw('conversion');
+      section = screen.getByRole('region', { name: title });
+      await within(section).findByText('이벤트 수신 없음');
+    } else {
+      const data = metricFixture(
+        `/campaigns/funnels/${funnel}`,
+        new URLSearchParams('from=2026-10-20&to=2026-10-21'),
+      );
+
+      if ('steps' in data) {
+        if (scope === 'acquisition' && funnel === 'creation')
+          (data.steps[0].users as { all: number }).all = 0;
+        else data.steps[0].users = 0;
+      }
+
+      const view = render(
+        createElement(
+          MetricScope,
+          { value: scope },
+          createElement(AcquisitionContent, {
+            tab: funnel,
+            data,
+            segment: 'all',
+          }),
+        ),
+      );
+
+      section = view.container;
+    }
+
+    const text = await focusDefinition(
+      within(section).getByRole('button', { name: '단계별 전환 지표 정의' }),
+    );
+
+    expect(text).toContain(
+      `계산 ${metricDefinitions[index][4].replaceAll('<br>', '')}`,
+    );
+    expect(text).toContain('기준 이벤트를 한 건도 받지 못했습니다.');
+    expect(within(section).queryByText('첫 단계 사용자 수')).toBeNull();
+
+    if (funnel === 'guest-limit-login')
+      expect(text.indexOf('로그인 성공은 구글과 카카오')).toBeGreaterThan(
+        text.indexOf('날짜 선택 기간 전체'),
+      );
+  },
+);
+
+it('모델별 비중의 채팅 두 열과 턴 두 열은 각각 모델 집계 정의를 보인다', async () => {
+  nav.search = 'tab=chat-options';
+  draw('quality');
+  await screen.findByRole('heading', { name: '모델별 채팅 수' });
+
+  const details = screen.getByText('모델별 비중').closest('details')!;
+
+  details.open = true;
+
+  for (const label of ['채팅 수', '채팅 비중', '턴 수', '턴 비중']) {
+    const text = await focusDefinition(
+      within(details).getByRole('button', { name: `${label} 지표 정의` }),
+    );
+
+    expect(text).toContain(
+      label.startsWith('채팅')
+        ? '계산 채팅에 지금 선택된 모델별 채팅 수'
+        : '계산 AI 응답 수를 그 턴을 만든 모델별로 셈',
+    );
+    expect(text).not.toContain('페르소나를 주인공으로 고른 채팅 수');
+  }
+});
+
+it.each([true, false])(
+  '통합 수치 표는 혼합 전체 기준 %s에서도 제목·열·각 지표의 정의를 독립해서 보인다',
+  async (mixed) => {
+    const basis = '플랫폼 전체 기준';
+    const items = [
+      {
+        title: '신규 가입자',
+        basis,
+        unit: '명',
+        rows: [{ date: '2026-10-20', value: 2 }],
+        series: [{ key: 'value', label: '전체', color: 'var(--primary)' }],
+      },
+      {
+        title: '가입 이벤트 기준 신규 가입자',
+        basis: mixed ? undefined : basis,
+        unit: '명',
+        rows: [{ date: '2026-10-20', value: 3 }],
+        series: [{ key: 'value', label: '전체', color: 'var(--primary)' }],
+      },
+    ];
+    const view = render(
+      createElement(
+        MetricScope,
+        { value: 'users' },
+        createElement(Charts, { items }),
+      ),
+    );
+    const details = view.container.querySelector(
+      ':scope > details',
+    )! as HTMLDetailsElement;
+
+    details.open = true;
+
+    for (const label of [
+      '전체 수치 표',
+      '지표',
+      '계열',
+      mixed ? '값' : `값 · ${basis}`,
+    ]) {
+      const text = await focusDefinition(
+        within(details).getByRole('button', { name: `${label} 지표 정의` }),
+      );
+
+      expect(text).toContain('계산 그날 만들어진 회원 계정 수');
+      expect(text).toContain('계산 구글과 카카오 로그인 성공 이벤트');
+    }
+
+    const rows = within(details).getAllByRole('row').slice(1);
+
+    for (const [i, title] of [
+      '신규 가입자',
+      '가입 이벤트 기준 신규 가입자',
+    ].entries()) {
+      const cell = within(rows[i]).getAllByRole('cell')[0];
+
+      expect(
+        await focusDefinition(
+          within(cell).getByRole('button', { name: `${title} 지표 정의` }),
+        ),
+      ).toContain(
+        i === 0
+          ? '계산 그날 만들어진 회원 계정 수'
+          : '계산 구글과 카카오 로그인 성공 이벤트',
+      );
+      expect(cell.textContent!.includes(basis)).toBe(mixed && i === 0);
+    }
+
+    expect(
+      within(details)
+        .getAllByRole('columnheader')
+        .at(-1)!
+        .textContent!.includes(basis),
+    ).toBe(!mixed);
+  },
+);
+
+it('리텐션 접힌 표를 열면 제목·시작 인원·D열에서 코호트 정의를 보인다', async () => {
+  nav.search = 'tab=retention';
+  draw('users');
+
+  const heading = await screen.findByRole('heading', { name: '코호트 표' });
+  const details = heading
+    .closest('[data-slot=card]')!
+    .querySelector('details')!;
+
+  expect(details.open).toBe(false);
+  details.open = true;
+
+  for (const label of ['전체 수치 표', '시작 인원', 'D1', 'D30']) {
+    const text = await focusDefinition(
+      within(details).getByRole('button', { name: `${label} 지표 정의` }),
+    );
+
+    expect(text).toContain(
+      '계산 시작일로부터 N일 뒤 그날 활성 이벤트가 있는 사람의 비율',
+    );
+    expect(text).toContain('요약 카드는 시작 인원으로 가중한 평균');
+  }
+});
+
+it.each(['activity', 'client'])(
+  '수신 없는 %s 계열의 수치 표도 준비 중 날짜 행은 준비 중으로 유지한다',
+  async (tab) => {
+    nav.search = `tab=${tab}&from=2026-10-20&to=2026-10-21`;
+
+    const path = tab === 'activity' ? '/users/activity' : '/quality/client';
+    const data = metricFixture(path, new URLSearchParams(nav.search));
+
+    if ('pendingDates' in data) data.pendingDates = ['2026-10-21'];
+
+    if (tab === 'activity') {
+      (data as ActivityResponse).daily.forEach((day, i) => {
+        day.activeUsers.all = i ? 9 : 0;
+      });
+    } else {
+      (data as QualityResponse).daily.forEach((day, i) => {
+        day.users.chatLoadError = i ? 9 : 0;
+        day.users.storyListLoadError = 3;
+      });
+    }
+
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+    draw(tab === 'activity' ? 'users' : 'quality');
+
+    const title =
+      tab === 'activity' ? '일별 활성 사용자 (DAU)' : '오류 표시 사용자';
+    const heading = await screen.findByRole('heading', { name: title });
+    const card = heading.closest<HTMLElement>('[data-slot=card]')!;
+    const details = card.querySelector('details')!;
+
+    details.open = true;
+
+    const rows = within(details).getAllByRole('row').slice(1);
+
+    expect(rows).toHaveLength(2);
+
+    const ready = within(rows[0])
+      .getAllByRole('cell')
+      .map((cell) => cell.textContent);
+    const pending = within(rows[1])
+      .getAllByRole('cell')
+      .map((cell) => cell.textContent);
+
+    expect(ready).toEqual(
+      tab === 'activity'
+        ? ['2026-10-20', '이벤트 수신 없음']
+        : ['2026-10-20', '이벤트 수신 없음', '3명'],
+    );
+    expect(pending).toEqual(
+      tab === 'activity'
+        ? ['2026-10-21', '준비 중']
+        : ['2026-10-21', '준비 중', '준비 중'],
+    );
+    expect(within(rows[1]).queryByText('이벤트 수신 없음')).toBeNull();
+  },
+);
+
+it.each(['activity', 'client'])(
+  '%s의 통합 표와 차트별 표는 수신 없음·준비 중·정상 값을 동일하게 표시한다',
+  async (tab) => {
+    nav.search = `tab=${tab}&from=2026-10-20&to=2026-10-21`;
+
+    const path = tab === 'activity' ? '/users/activity' : '/quality/client';
+    const data = metricFixture(path, new URLSearchParams(nav.search));
+
+    if ('pendingDates' in data) data.pendingDates = ['2026-10-21'];
+
+    if (tab === 'activity') {
+      (data as ActivityResponse).daily.forEach((day, i) => {
+        day.activeUsers.all = i ? 9 : 0;
+      });
+    } else {
+      (data as QualityResponse).daily.forEach((day, i) => {
+        day.users.chatLoadError = i ? 9 : 0;
+        day.users.storyListLoadError = 3;
+      });
+    }
+
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+
+    const view = draw(tab === 'activity' ? 'users' : 'quality');
+    const title =
+      tab === 'activity' ? '일별 활성 사용자 (DAU)' : '오류 표시 사용자';
+    const heading = await screen.findByRole('heading', { name: title });
+    const detail = heading
+      .closest('[data-slot=card]')!
+      .querySelector('details')!;
+
+    detail.open = true;
+
+    const individual = within(detail)
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) =>
+        within(row)
+          .getAllByRole('cell')
+          .map((cell) => cell.textContent),
+      );
+    const aggregate = Array.from(
+      view.container.querySelectorAll('details'),
+    ).find((details) =>
+      Array.from(details.children).some(
+        (child) =>
+          child.tagName === 'DIV' &&
+          child.querySelector('thead')?.textContent?.startsWith('지표'),
+      ),
+    )!;
+
+    aggregate.open = true;
+
+    const rows = within(aggregate)
+      .getAllByRole('row')
+      .slice(1)
+      .filter((row) =>
+        within(row).getAllByRole('cell')[0].textContent?.startsWith(title),
+      );
+    const values = rows.map((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    );
+
+    expect(values.map((cells) => cells[3])).toEqual(
+      individual.flatMap((cells) => cells.slice(1)),
+    );
+    expect(values[0][3]).toBe('이벤트 수신 없음');
+    expect(
+      values
+        .filter((cells) => cells[1] === '2026-10-21')
+        .map((cells) => cells[3]),
+    ).toEqual(tab === 'activity' ? ['준비 중'] : ['준비 중', '준비 중']);
+
+    if (tab === 'client') expect(values[1][3]).toBe('3명');
+  },
+);
+
+it.each([
+  ['all', 'all', null],
+  ['web', 'all', '플랫폼 전체 기준'],
+  ['all', 'guest', '대상 전체 기준'],
+  ['web', 'guest', '플랫폼과 대상 전체 기준'],
+] as const)(
+  '실패율 통합 표는 플랫폼 %s·대상 %s의 전체 기준을 보존한다',
+  async (platform, segment, basis) => {
+    nav.search = `tab=client&platform=${platform}&segment=${segment}&from=2026-10-20&to=2026-10-21`;
+
+    const view = draw('quality');
+
+    await screen.findByRole('heading', { name: '간편 제작 실패율' });
+
+    const aggregate = Array.from(
+      view.container.querySelectorAll('details'),
+    ).find((details) =>
+      Array.from(details.children).some(
+        (child) =>
+          child.tagName === 'DIV' &&
+          child.querySelector('thead')?.textContent?.startsWith('지표'),
+      ),
+    )!;
+
+    aggregate.open = true;
+
+    const rows = within(aggregate).getAllByRole('row').slice(1);
+    const failed = rows.filter((row) =>
+      within(row)
+        .getAllByRole('cell')[0]
+        .textContent?.startsWith('간편 제작 실패율'),
+    );
+
+    expect(failed).toHaveLength(2);
+
+    for (const row of failed) {
+      const metric = within(row).getAllByRole('cell')[0];
+
+      if (basis) expect(within(metric).getByText(basis)).toBeTruthy();
+      else expect(metric.textContent).not.toContain('전체 기준');
+
+      expect(
+        within(metric).getByRole('button', {
+          name: '간편 제작 실패율 지표 정의',
+        }),
+      ).toBeTruthy();
+    }
+
+    for (const row of rows.filter((row) => !failed.includes(row))) {
+      expect(within(row).getAllByRole('cell')[0].textContent).not.toContain(
+        '전체 기준',
+      );
+    }
+  },
+);

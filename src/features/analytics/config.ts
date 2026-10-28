@@ -98,18 +98,10 @@ export const platformText = {
   messagesPerUserEmpty:
     '전체 값이 없습니다. 플랫폼을 웹이나 앱으로 골라 주세요.',
   signupCard: '가입 이벤트 기준 신규 가입자',
-  signupHelp:
-    'Amplitude의 가입 이벤트로 셉니다. 국가가 한국이거나 국가 정보가 없는 사용자만 셉니다. 구글과 카카오 경로별 수를 더하므로 같은 날 두 경로로 가입하면 두 번 셉니다. 팀 계정이 포함돼 서버 DB 신규 가입자와 다를 수 있습니다.',
   reachTitle: '1턴 대비 도달률',
-  reachHelp:
-    'Amplitude의 AI 응답 저장 이벤트로 셉니다. 선택 기간에 기준 턴 응답을 저장한 채팅 수를 같은 기간에 1턴 응답을 저장한 채팅 수로 나누며 재생성은 뺍니다. 게스트와 회원은 응답을 저장할 때 회원 식별자가 있었는지로 가릅니다. 삭제된 채팅과 팀 계정이 포함되고 100%를 넘을 수 있습니다.',
   personaTitle: '페르소나 시작 클릭 비중',
-  personaHelp:
-    'Amplitude의 채팅 시작 버튼 클릭 가운데 페르소나를 주인공으로 고른 클릭의 비중입니다. 주인공 종류가 기록된 클릭만 분모에 듭니다. 국가가 한국이거나 국가 정보가 없는 사용자만 세고 팀 계정을 포함합니다. 클릭 수라 실제 채팅 생성 수와 다를 수 있습니다.',
   personaEmpty: '집계 대상 클릭 없음',
   modelTurnsTitle: '응답 저장 기준 모델별 턴 수',
-  modelTurnsHelp:
-    'Amplitude의 AI 응답 저장 이벤트를 선택 기간에 저장된 턴 기준으로 그 턴을 만든 모델별로 셉니다. 국가가 한국이거나 국가 정보가 없는 사용자만 세며 그 밖 국가에서 로그인한 앱 사용자는 넣지 않습니다. 재생성은 세지 않고 팀 계정을 포함합니다.',
 };
 /** 서버가 적용한 `segment`를 조건 표시 문구로 바꾼다. */
 export const audienceText = (segment?: string) =>
@@ -146,6 +138,8 @@ export function pick<T extends string>(
 }
 export function eventLabel(event: string, turnNumber?: number | null) {
   const labels: Record<string, string> = {
+    client_storyList_viewed: '홈 진입',
+    client_storyCreate_viewed: '간편 제작 진입',
     client_onboarding_viewed: '환영 다이얼로그 조회',
     client_onboarding_createButton_clicked: '제작 버튼 클릭',
     client_storyCreate_storyGeneration_requested: '스토리라인 생성 요청',

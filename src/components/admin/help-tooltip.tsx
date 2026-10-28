@@ -35,7 +35,8 @@ export function HelpTooltip({
             <Tooltip.Popup
               id={descriptionId}
               role="tooltip"
-              className="z-50 max-w-80 rounded-sm border bg-popover p-3 text-xs leading-5 text-popover-foreground shadow-sm">
+              tabIndex={0}
+              className="z-50 max-h-[min(70vh,32rem)] max-w-80 overflow-y-auto rounded-sm border bg-popover p-3 text-xs leading-5 text-popover-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
               {children}
             </Tooltip.Popup>
           </Tooltip.Positioner>
