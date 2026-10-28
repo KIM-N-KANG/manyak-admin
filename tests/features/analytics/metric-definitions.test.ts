@@ -60,6 +60,7 @@ it.each(examples)(
   },
 );
 it('연결 끊김 안내는 방문자에서 없고 배포일이 비면 둘째 문장을 숨긴다', () => {
+  expect(retentionHelp('signup')).toContain('2026-10-28 전 시작일은');
   expect(retentionHelp('visitor', '2026-11-03')).not.toContain('2026-10-22');
   expect(retentionHelp('signup', '')).toContain('2026-10-22');
   expect(retentionHelp('first-chat', '')).not.toContain('앱 요청');
