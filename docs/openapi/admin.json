@@ -4400,6 +4400,10 @@
           "deletedAt": {
             "type": ["string", "null"],
             "format": "date-time"
+          },
+          "summaryThroughTurn": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -7885,6 +7889,14 @@
         "QualityResponse",
         "StoryCompletionDay"
       ]
+    },
+    "chatCompact": {
+      "issue": "KNK-1913",
+      "specRevision": "1283a82",
+      "input": "knk-harness@1283a82:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-8",
+      "receivedAt": "2026-10-29T06:09:00.739057+00:00",
+      "description": "서버 PR #431 계약: 채팅 목록과 상세의 요약 끝 턴을 추가한다. AI 기능 필드는 기존 string 계약이므로 enum 제한을 새로 두지 않는다. 서버 배포 후 실제 OpenAPI로 대조한다.",
+      "schemas": ["AdminChatResponse"]
     }
   }
 }

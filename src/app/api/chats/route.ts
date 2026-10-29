@@ -22,7 +22,12 @@ export function GET(request: Request) {
       startedAs: ['GUEST', 'MEMBER'],
       turnBucket: turnBounds.map((_, i) => String(i)),
       hasFirstMessage: ['true', 'false'],
-      aiFeature: ['chat_response', 'choice_generation', 'chat_image'],
+      aiFeature: [
+        'chat_response',
+        'choice_generation',
+        'chat_image',
+        'chat_compact',
+      ],
       aiStatus: ['SUCCEEDED', 'FAILED', 'STARTED', 'FINISHED'],
       hasLatency: ['true', 'false'],
       deleted: ['include', 'only'],

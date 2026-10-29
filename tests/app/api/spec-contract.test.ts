@@ -91,6 +91,7 @@ describe('ADMIN 응답 계약 회귀', () => {
       'chat_image',
       'storyline_generation',
       'story_completion',
+      'chat_compact',
     ]);
   });
   it('스토리 목록은 제작 방식으로 나누고 대문자 값만 받는다', async () => {

@@ -223,6 +223,7 @@ it.each(aiCostStates)(
       `${state.imageCost}원`,
       state.label,
       state.label,
+      state.label,
     ]);
 
     const allRows = within(tables[1].closest('details')!).getAllByRole('row');
@@ -678,3 +679,73 @@ it('1턴 대비 도달률은 서버 DB 차트와 따로 고른 플랫폼 선 하
   render(createElement(ConversionContent, { data, platform: 'all' }));
   expect(cells('2턴')[2]).toBe('150.0%');
 });
+
+it.each([0, 1])(
+  '대화 요약 비용은 두 모델 행의 토큰 세 칸을 기록하지 않음으로 표시하고 다른 기능 누락 %i회만 안내한다',
+  (missing) => {
+    const data = metricFixture(
+      '/quality/ai-cost',
+      new URLSearchParams('from=2026-10-21&to=2026-10-21'),
+    ) as AiCostResponse;
+
+    data.pendingDates = [];
+    data.expiredDates = [];
+    data.daily[0].byFeature = [
+      {
+        feature: 'chat_compact',
+        model: null,
+        calls: 2,
+        callsWithoutTokens: 2,
+        inputTokens: 0,
+        outputTokens: 0,
+        costKrw: null,
+      },
+      {
+        feature: 'chat_compact',
+        model: 'claude-x',
+        calls: 0,
+        callsWithoutTokens: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+        costKrw: 14,
+      },
+      {
+        feature: 'chat_response',
+        model: 'AURORA',
+        calls: 2,
+        callsWithoutTokens: missing,
+        inputTokens: 1,
+        outputTokens: 1,
+        costKrw: 7,
+      },
+    ];
+    render(createElement(QualityContent, { tab: 'ai-cost', data }));
+
+    const rows = within(screen.getByText('비용 표').closest('details')!)
+      .getAllByText('대화 요약', { selector: 'td' })
+      .map((cell) => cell.closest('tr')!);
+
+    expect(rows).toHaveLength(2);
+    rows.forEach((row) =>
+      expect(within(row).getAllByText('기록하지 않음')).toHaveLength(3),
+    );
+    expect(rows[0].textContent).toContain('비용 기록 없음');
+    expect(rows[1].textContent).toContain('14원');
+
+    const chart = screen.getAllByText('전체 수치 표')[0].closest('details')!;
+
+    expect(
+      within(chart).getByRole('columnheader', { name: /대화 요약/ }),
+    ).toBeTruthy();
+    expect(within(chart).getByText('14원')).toBeTruthy();
+    expect(featureColor('chat_compact')).toBe('var(--muted-foreground)');
+
+    if (missing)
+      expect(
+        screen.getByText(
+          '토큰 수가 기록되지 않은 호출 1회가 있어 토큰 합이 실제보다 작을 수 있습니다.',
+        ),
+      ).toBeTruthy();
+    else expect(screen.queryByText(/토큰 수가 기록되지 않은 호출/)).toBeNull();
+  },
+);

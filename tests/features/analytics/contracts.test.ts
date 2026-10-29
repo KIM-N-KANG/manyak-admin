@@ -332,3 +332,35 @@ it('새 퍼널 단계 이름은 홈 진입과 간편 제작 진입이다', () =>
   expect(eventLabel('client_storyList_viewed')).toBe('홈 진입');
   expect(eventLabel('client_storyCreate_viewed')).toBe('간편 제작 진입');
 });
+
+it('대화 요약 fixture는 모델 없는 호출과 Langfuse 모델 비용을 나누고 총 비용과 턴당 원가에 포함한다', () => {
+  const data = metricFixture(
+    '/quality/ai-cost',
+    new URLSearchParams('from=2026-10-21&to=2026-10-21'),
+  ) as AiCostResponse;
+
+  expect(
+    data.daily[0].byFeature.filter((item) => item.feature === 'chat_compact'),
+  ).toEqual([
+    {
+      feature: 'chat_compact',
+      model: null,
+      calls: 2,
+      callsWithoutTokens: 2,
+      inputTokens: 0,
+      outputTokens: 0,
+      costKrw: null,
+    },
+    {
+      feature: 'chat_compact',
+      model: 'claude-x',
+      calls: 0,
+      callsWithoutTokens: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      costKrw: 14,
+    },
+  ]);
+  expect(data.totals.costKrw).toBe(166.8);
+  expect(data.totals.costPerTurnKrw).toBe(10);
+});
