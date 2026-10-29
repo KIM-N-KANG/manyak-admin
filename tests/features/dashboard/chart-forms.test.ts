@@ -13,7 +13,6 @@ import {
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { InfraChart } from '@/features/analytics/infra/infra-chart';
-import { DashboardAnalysisScreen } from '@/features/dashboard/analysis-screen';
 import {
   aiFeatureLabel,
   aiFeatures,
@@ -34,6 +33,8 @@ import { getDashboardAnalytics } from '@/fixtures/analytics';
 import { getDashboardCharts, summary } from '@/fixtures/dashboard';
 import { infraMetricsFixture } from '@/fixtures/infra';
 import { playInstalls } from '@/fixtures/play-installs';
+
+import { DistributionCards } from '../../helpers/distribution-cards';
 
 const state = vi.hoisted(() => ({
   charts: undefined as DashboardCharts | undefined,
@@ -379,12 +380,12 @@ it('요약 카드에는 차트를 넣지 않고 바로 아래의 기존 일별 �
     within(summary)
       .getByRole('link', { name: '오늘 활성 사용자' })
       .getAttribute('href'),
-  ).toBe('/analytics/users?tab=activity');
+  ).toBe('/analytics/growth?tab=activity');
   expect(
     within(summary)
       .getByRole('link', { name: '앱 설치(Android)' })
       .getAttribute('href'),
-  ).toBe('/analytics/acquisition?tab=installs');
+  ).toBe('/analytics/growth?tab=installs');
 
   expect(screen.queryByRole('combobox', { name: '지표' })).toBeNull();
 
@@ -461,7 +462,7 @@ it('미리보기는 35개 장르 중 상위 30개와 나머지 안내·전체 �
     distributions: [{ ...genre, title: '서버 장르 제목' }],
   };
 
-  const { container } = render(createElement(DashboardAnalysisScreen));
+  const { container } = render(createElement(DistributionCards));
 
   expect(screen.getByRole('heading', { name: '서버 장르 제목' })).toBeTruthy();
   expect(
@@ -610,9 +611,9 @@ it.each(['success', 'pending', 'error'])(
 );
 
 it('정본의 구역 순서와 서버 제목·설명을 유지하고 기능 표시 이름만 바꾼다', () => {
-  render(createElement(DashboardAnalysisScreen));
+  render(createElement(DistributionCards));
 
-  const categories = ['사용자', '채팅 참여', '콘텐츠', 'AI 품질'];
+  const categories = ['채팅 참여', '채팅 소유자', '콘텐츠', 'AI 품질'];
 
   expect(
     screen
@@ -678,7 +679,7 @@ it('채팅 소유자 수치 표는 비율·채팅 수·사용자 수이고 첫 �
       ...state.charts!.distributions.filter((d) => d.chartId !== 'started-as'),
     ],
   };
-  render(createElement(DashboardAnalysisScreen));
+  render(createElement(DistributionCards));
 
   const table = screen
     .getByRole('heading', { name: owners.title })
@@ -718,7 +719,7 @@ it('채팅 소유자 수치 표는 비율·채팅 수·사용자 수이고 첫 �
 });
 
 it('분포 설명은 본문에 없고 제목 옆 도움말에 포커스하면 응답 문구 그대로 열린다', async () => {
-  render(createElement(DashboardAnalysisScreen));
+  render(createElement(DistributionCards));
 
   const item = state.charts!.distributions[0];
 
@@ -833,7 +834,7 @@ it('AI 품질은 기능 다섯 개의 고정 순서와 색을 유지하며 실�
   )!;
 
   source.points.reverse();
-  render(createElement(DashboardAnalysisScreen));
+  render(createElement(DistributionCards));
 
   const card = screen
     .getByRole('heading', { name: source.title })
@@ -864,7 +865,7 @@ it('AI 지연도 값 순위 대신 다섯 기능 순서·색을 쓰고 이미지
   )!;
 
   source.points.reverse();
-  render(createElement(DashboardAnalysisScreen));
+  render(createElement(DistributionCards));
 
   const card = screen
     .getByRole('heading', { name: source.title })
@@ -904,7 +905,7 @@ it('장르 소표본은 표에만 남기며 응답 순서·평균·채팅 수·�
 
   state.charts = { ...state.charts!, distributions: [genre] };
 
-  const view = render(createElement(DashboardAnalysisScreen));
+  const view = render(createElement(DistributionCards));
 
   expect(
     view.container.querySelectorAll('.recharts-bar-rectangle'),
@@ -934,7 +935,7 @@ it('장르 소표본은 표에만 남기며 응답 순서·평균·채팅 수·�
     ...state.charts!,
     distributions: [{ ...genre, points: [points[0]] }],
   };
-  view.rerender(createElement(DashboardAnalysisScreen));
+  view.rerender(createElement(DistributionCards));
   expect(screen.getByText('채팅이 5개 이상인 장르가 없습니다.')).toBeTruthy();
   expect(
     view.container.querySelectorAll('.recharts-bar-rectangle'),

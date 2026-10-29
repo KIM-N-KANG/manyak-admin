@@ -472,7 +472,16 @@ export function ListScreen({ domain }: { domain: Domain }) {
 
   return (
     <>
-      <PageHeading title={config.title}>
+      <PageHeading
+        title={config.title}
+        help={
+          {
+            members: <TextLink href="/analytics/growth">성장 지표</TextLink>,
+            stories: <TextLink href="/analytics/stories">스토리 지표</TextLink>,
+            chats: <TextLink href="/analytics/chats">채팅 지표</TextLink>,
+            payments: <TextLink href="/analytics/payments">결제 지표</TextLink>,
+          }[domain as 'members' | 'stories' | 'chats' | 'payments']
+        }>
         {domain === 'payments' && (
           <ExternalToolLink href={externalLinks.groble}>
             그로블에서 보기

@@ -34,7 +34,7 @@ export function AnalyticsSection() {
       <div className="flex items-center gap-2">
         <h3 className="text-sm text-muted-foreground">
           <Link
-            href="/analytics/users?tab=activity"
+            href="/analytics/growth?tab=activity"
             className="after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring">
             오늘 활성 사용자
           </Link>

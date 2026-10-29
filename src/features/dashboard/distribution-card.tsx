@@ -2,14 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 
-import {
-  DataTable,
-  PageHeading,
-  QueryState,
-  TextLink,
-} from '@/components/admin/data-ui';
+import { DataTable, TextLink } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
-import { ChartsSkeleton } from '@/components/admin/loading-ui';
 import { Card } from '@/components/ui/card';
 import {
   aiFeatureLabel,
@@ -19,18 +13,17 @@ import {
 } from '@/features/dashboard/chart-data';
 import { DistributionChart } from '@/features/dashboard/distribution-chart';
 import { getDistributionHref } from '@/features/dashboard/links';
-import {
-  RangePicker,
-  useDashboardRange,
-} from '@/features/dashboard/range-picker';
-import type { DashboardCharts, Distribution } from '@/features/dashboard/types';
-import { useApi } from '@/features/shared/use-api';
+import type { Distribution } from '@/features/dashboard/types';
 import { cn } from '@/lib/utils';
 
-function DistributionCard({
+export function DistributionCard({
   distribution: response,
+  basis,
+  fullWidth = response.chartId === 'genre-depth',
 }: {
   distribution: Distribution;
+  basis?: string | null;
+  fullWidth?: boolean;
 }) {
   const distribution = {
     ...response,
@@ -48,11 +41,14 @@ function DistributionCard({
     <Card
       className={cn(
         'min-w-0',
-        distribution.chartId === 'genre-depth' && 'xl:col-span-2',
+        fullWidth && 'xl:col-span-2',
         distribution.chartId === 'first-message' && 'self-start',
       )}>
       <div className="flex items-center gap-2">
         <h2 className="font-semibold">{distribution.title}</h2>
+        {basis ? (
+          <span className="text-xs text-muted-foreground">{basis}</span>
+        ) : null}
         {distribution.description ? (
           <HelpTooltip label={`${distribution.title} 집계 안내`}>
             {distribution.description}
@@ -127,62 +123,35 @@ function DistributionCard({
   );
 }
 
-export const distributionCategories = [
-  ['users', '사용자'],
-  ['engagement', '채팅 참여'],
-  ['content', '콘텐츠'],
-  ['ai-quality', 'AI 품질'],
-] as const;
-
-export function DashboardAnalysisScreen() {
-  const range = useDashboardRange();
-  const charts = useApi<DashboardCharts>(
-    `/api/dashboard/charts?${range.query}`,
+/** 앞선 전체 폭 카드가 차지한 행을 고려해 마지막 카드의 너비를 정한다. */
+export function DistributionGrid({
+  distributions,
+  basis,
+}: {
+  distributions: Distribution[];
+  basis?: string | null;
+}) {
+  const lastFull = distributions.findLastIndex(
+    (item) => item.chartId === 'genre-depth',
   );
 
   return (
-    <>
-      <PageHeading title="분석">
-        <RangePicker range={range} />
-      </PageHeading>
-      <QueryState
-        skeleton={<ChartsSkeleton count={4} />}
-        pending={charts.isPending}
-        error={charts.error}
-        retry={charts.refetch}
-      />
-      {charts.data ? (
-        <>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-semibold tracking-tight">
-                이용 분포
-              </h2>
-              <HelpTooltip label="이용 분포 탐색 안내">
-                차트 항목이나 수치를 누르면 관련 목록으로 이동합니다.
-              </HelpTooltip>
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {charts.data.from} ~ {charts.data.to} (KST)
-            </span>
-          </div>
-          {distributionCategories.map(([category, label]) => (
-            <section key={category} aria-label={label} className="mb-8">
-              <h2 className="mb-4 text-lg font-semibold">{label}</h2>
-              <div className="grid gap-5 xl:grid-cols-2">
-                {charts.data.distributions
-                  .filter((item) => item.category === category)
-                  .map((distribution) => (
-                    <DistributionCard
-                      key={distribution.chartId}
-                      distribution={distribution}
-                    />
-                  ))}
-              </div>
-            </section>
-          ))}
-        </>
-      ) : null}
-    </>
+    <div className="grid gap-5 xl:grid-cols-2">
+      {distributions.map((distribution, index) => {
+        const fullWidth =
+          distribution.chartId === 'genre-depth' ||
+          (index === distributions.length - 1 &&
+            (index - lastFull - 1) % 2 === 0);
+
+        return (
+          <DistributionCard
+            key={distribution.chartId}
+            distribution={distribution}
+            basis={basis}
+            fullWidth={fullWidth}
+          />
+        );
+      })}
+    </div>
   );
 }

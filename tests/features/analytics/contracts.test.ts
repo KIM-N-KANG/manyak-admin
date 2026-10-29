@@ -53,7 +53,7 @@ it('5-1 공통: 기간 상한은 선택을 보존하고 끝 날짜를 유지한 
     from: '2026-10-17',
     to: today,
   });
-  expect(defaultPeriod('sessions', undefined, today).from).toBe('2026-10-10');
+  expect(defaultPeriod('sessions', undefined, today).from).toBe('2026-09-24');
 
   const third = campaignCatalog(today).items[2];
 

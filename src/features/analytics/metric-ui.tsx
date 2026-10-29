@@ -140,17 +140,7 @@ export function SummaryCards({
     </div>
   );
 }
-export function PendingDates({ dates }: { dates: string[] }) {
-  return dates.length ? (
-    <div role="status" className="mb-5 rounded-md border p-4 text-sm">
-      준비 중 날짜 {dates.length}개. 60초 뒤 다시 요청합니다.
-      <details className="mt-2 text-xs">
-        <summary>준비 중 날짜</summary>
-        <p className="mt-2">{dates.join(', ')}</p>
-      </details>
-    </div>
-  ) : null;
-}
+export { PendingDates } from './pending-dates';
 export function NumericTable({
   headers,
   rows,
@@ -515,6 +505,7 @@ export function FunnelChart({
   const rows = steps.map((s, i) => ({
     ...s,
     label: eventLabel(s.event, s.turnNumber),
+    first: i === 0,
     conversion: i ? ratio(s.users, steps[i - 1].users) : null,
   }));
 
@@ -586,7 +577,9 @@ export function FunnelChart({
                 isAnimationActive={false}>
                 <LabelList
                   dataKey={(row: (typeof rows)[number]) =>
-                    `${metricNumber(row.users, '명')}, ${percent(row.conversion)}`
+                    row.first
+                      ? metricNumber(row.users, '명')
+                      : `${metricNumber(row.users, '명')}, ${percent(row.conversion)}`
                   }
                   position="right"
                   fill="var(--foreground)"
@@ -603,7 +596,7 @@ export function FunnelChart({
             rows={rows.map((row) => [
               row.label,
               metricNumber(row.users, '명'),
-              percent(row.conversion),
+              row.first ? '' : percent(row.conversion),
             ])}
           />
         )}

@@ -14,14 +14,14 @@ import {
 import { setTimeout as realDelay } from 'node:timers/promises';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-import { AnalyticsScreen } from '@/features/analytics/analytics-screen';
+import { DomainScreen } from '@/features/analytics/domain-screen';
 import type { PushOpensResponse } from '@/features/analytics/types';
 
 const nav = vi.hoisted(() => ({ search: 'tab=push', push: vi.fn() }));
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(nav.search),
-  usePathname: () => '/analytics/acquisition',
+  usePathname: () => '/analytics/growth',
   useRouter: () => ({ push: nav.push }),
 }));
 
@@ -119,7 +119,7 @@ function draw() {
     createElement(
       QueryClientProvider,
       { client },
-      createElement(AnalyticsScreen, { screen: 'acquisition' }),
+      createElement(DomainScreen, { domain: 'growth' }),
     );
   const view = render(element());
 
@@ -140,7 +140,7 @@ const campaignTable = () =>
 const activityTable = () =>
   screen.getByRole('heading', { name: '활동 알림' }).closest('section')!;
 
-it('캠페인 목록을 기다리지 않고 최근 7일을 요청하며 여섯 탭과 출처를 표시한다', async () => {
+it('캠페인 목록을 기다리지 않고 최근 7일을 요청하며 성장 탭과 유입 하위 구분 및 출처를 표시한다', async () => {
   draw();
   await screen.findByRole('heading', { name: '관리자 캠페인' });
   expect(requests).toEqual([
@@ -148,12 +148,14 @@ it('캠페인 목록을 기다리지 않고 최근 7일을 요청하며 여섯 �
   ]);
   expect(screen.queryByRole('combobox', { name: '광고 캠페인' })).toBeNull();
   expect(screen.getAllByRole('tab').map((x) => x.textContent)).toEqual([
+    '유입',
+    '앱 설치',
+    '활동',
+    '가입',
+    '리텐션',
     '캠페인 추이',
-    '간편 제작 퍼널',
-    '상세 진입 퍼널',
     '유입 소스',
     '푸시 열람',
-    '앱 설치',
   ]);
 
   const source = screen.getByRole('button', {
@@ -286,7 +288,7 @@ it('기간을 URL에 동기화하고 366일 초과는 요청하지 않는다', a
   fireEvent.click(screen.getByRole('button', { name: /기간:/ }));
   fireEvent.click(screen.getByRole('button', { name: '최근 30일' }));
   expect(nav.push.mock.calls.at(-1)![0]).toBe(
-    '/analytics/acquisition?tab=push&range=last30d',
+    '/analytics/growth?tab=push&range=last30d',
   );
   view.go();
   await waitFor(() =>
@@ -299,7 +301,7 @@ it('기간을 URL에 동기화하고 366일 초과는 요청하지 않는다', a
     createElement(
       QueryClientProvider,
       { client },
-      createElement(AnalyticsScreen, { screen: 'acquisition' }),
+      createElement(DomainScreen, { domain: 'growth' }),
     ),
   );
   expect(screen.getByRole('alert').textContent).toContain('최대 366일');

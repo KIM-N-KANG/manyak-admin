@@ -120,7 +120,7 @@ it('누적과 선택 기간 설치 합계를 표시하고 상세 화면으로 �
   expect(screen.getByText(`최근 7일 합계 ${weekTotal}대`)).toBeTruthy();
   expect(
     screen.getByRole('link', { name: '앱 설치(Android)' }).getAttribute('href'),
-  ).toBe('/analytics/acquisition?tab=installs');
+  ).toBe('/analytics/growth?tab=installs');
   expect(view.container.querySelector('svg')).toBeNull();
   expect(screen.queryByText(/보고서는 며칠/)).toBeNull();
 });

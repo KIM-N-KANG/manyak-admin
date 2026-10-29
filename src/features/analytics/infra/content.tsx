@@ -87,7 +87,7 @@ export function InfraServices({ data }: { data: InfraMetrics }) {
             : []),
         ]}
       />
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2">
         {data.ecs
           ? (['cpu', 'memory'] as const).map((metric) => (
               <InfraChart
@@ -171,7 +171,7 @@ export function InfraStorage({ data }: { data: InfraMetrics }) {
       <section aria-label="RDS" className="mb-8">
         <h2 className="mb-4 text-lg font-semibold">RDS</h2>
         {data.rds ? (
-          <div className="grid gap-5 xl:grid-cols-2">
+          <div className="grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2">
             <InfraChart
               title="CPU 사용률"
               data={data}
@@ -215,7 +215,7 @@ export function InfraStorage({ data }: { data: InfraMetrics }) {
       <section aria-label="Redis" className="mb-8">
         <h2 className="mb-4 text-lg font-semibold">Redis</h2>
         {data.redis ? (
-          <div className="grid gap-5 xl:grid-cols-2">
+          <div className="grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2">
             {(['cpu', 'memory', 'connections'] as const).map((metric) => (
               <InfraChart
                 key={metric}
@@ -255,7 +255,7 @@ export function InfraStorage({ data }: { data: InfraMetrics }) {
       <section aria-label="OpenSearch" className="mb-8">
         <h2 className="mb-4 text-lg font-semibold">OpenSearch</h2>
         {data.opensearch ? (
-          <div className="grid gap-5 xl:grid-cols-2">
+          <div className="grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2">
             <InfraChart
               title="여유 스토리지"
               data={data}

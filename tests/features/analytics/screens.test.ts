@@ -36,7 +36,7 @@ const nav = vi.hoisted(() => ({ search: '', push: vi.fn() }));
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(nav.search),
-  usePathname: () => '/analytics/users',
+  usePathname: () => '/analytics/growth',
   useRouter: () => ({ push: nav.push }),
 }));
 vi.mock('recharts', () => {
@@ -181,7 +181,7 @@ it('사용자 기본 탭만 요청하며 MAU null, 0, 준비 중 날짜 행과 �
   view.go();
   await screen.findByRole('heading', { name: '평균 세션 길이' });
   expect(requests.at(-1)).toBe(
-    '/api/users/sessions?from=2026-10-10&to=2026-10-23&segment=all',
+    '/api/users/sessions?from=2026-09-24&to=2026-10-23&segment=all',
   );
   expect(screen.queryByText('MAU')).toBeNull();
 });
@@ -241,7 +241,7 @@ it('Amplitude 503은 현재 탭에 격리하며 DB 가입 탭은 새로 조회�
     screen
       .getAllByRole('link', { name: '회원 목록 →' })[0]
       .getAttribute('href'),
-  ).toBe('/members?from=2026-09-24&to=2026-09-24');
+  ).toBe('/members?from=2026-10-17&to=2026-10-17');
 });
 it('캠페인 기본값과 변경, 기간 초과 차단과 맞추기, 생성 광고 구분은 URL에만 저장한다', async () => {
   const view = draw('acquisition');
@@ -786,7 +786,7 @@ it.each(['installs', 'play-installs'])(
     expect(screen.getByText('전체 수치 표')).toBeTruthy();
     fireEvent.click(screen.getByRole('tab', { name: '캠페인 추이' }));
     expect(nav.push).toHaveBeenCalledWith(
-      '/analytics/users?tab=trend&campaign=FIXTURE_UNAVAILABLE&from=2020-01-01&to=2026-10-23',
+      '/analytics/growth?tab=trend&campaign=FIXTURE_UNAVAILABLE&from=2020-01-01&to=2026-10-23',
       { scroll: false },
     );
   },
@@ -1437,10 +1437,10 @@ it('가입 이벤트 기준 준비 중 날짜는 그 차트만 끊고 서버 DB 
     expect(rows.every((row) => !('pending' in row))).toBe(true);
   }
 
-  // 준비 중 알림은 서버 DB 차트 뒤, 가입 이벤트 기준 차트 바로 앞에 온다.
+  // 준비 중 알림은 탭의 서버 DB 차트와 Amplitude 차트 앞에 하나만 온다.
   const notice = screen.getByText(/준비 중 날짜 1개/);
 
-  expect(precedes(screen.getByLabelText('게스트 이관 회원 추이'), notice)).toBe(
+  expect(precedes(notice, screen.getByLabelText('게스트 이관 회원 추이'))).toBe(
     true,
   );
   expect(
@@ -1806,7 +1806,7 @@ it('세션 대상은 페이지 머리의 라벨 대상과 도움말로 보이고
 
   await screen.findByRole('heading', { name: '평균 세션 길이' });
   expect(requests.at(-1)).toBe(
-    '/api/users/sessions?from=2026-10-10&to=2026-10-23&segment=all',
+    '/api/users/sessions?from=2026-09-24&to=2026-10-23&segment=all',
   );
 
   // 페이지 머리에서 기간 선택기 바로 왼쪽에 플랫폼, 대상 순서로 둔다.
@@ -1850,7 +1850,7 @@ it('세션 대상은 페이지 머리의 라벨 대상과 도움말로 보이고
   view.go();
   await waitFor(() =>
     expect(requests.at(-1)).toBe(
-      '/api/users/sessions?from=2026-10-10&to=2026-10-23&segment=member',
+      '/api/users/sessions?from=2026-09-24&to=2026-10-23&segment=member',
     ),
   );
   await screen.findByText(/대상 회원/);

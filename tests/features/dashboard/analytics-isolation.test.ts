@@ -17,10 +17,11 @@ import { GET as analyticsResponse } from '@/app/api/dashboard/analytics/route';
 import { GET as chartsResponse } from '@/app/api/dashboard/charts/route';
 import { GET as playResponse } from '@/app/api/dashboard/play-installs/route';
 import { GET as summaryResponse } from '@/app/api/dashboard/summary/route';
-import { DashboardAnalysisScreen } from '@/features/dashboard/analysis-screen';
+import { DomainScreen } from '@/features/analytics/domain-screen';
 import { DashboardScreen } from '@/features/dashboard/dashboard-screen';
 import { getDistributionHref } from '@/features/dashboard/links';
 import type { ChartLink } from '@/features/dashboard/types';
+import { metricFixture } from '@/fixtures/metrics';
 
 const navigation = vi.hoisted(() => ({
   pathname: '/dashboard',
@@ -121,7 +122,11 @@ beforeEach(() => {
           ? Response.json({ message: 'Amplitude unavailable' }, { status: 503 })
           : analyticsResponse(request);
 
-      throw new Error(`Unexpected request: ${url}`);
+      const parsed = new URL(url, 'http://localhost');
+
+      return Response.json(
+        metricFixture(parsed.pathname.replace('/api', ''), parsed.searchParams),
+      );
     }),
   );
 });
@@ -262,77 +267,98 @@ describe('Amplitude 실패 격리', () => {
     expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
     expect(tooltip.textContent).toContain('몇 분 늦게');
     expect(tooltip.textContent).toContain(
+      '국가가 한국이거나 국가 정보가 없는 사용자를 집계하고 앱은 그 밖 국가에서 로그인한 사용자도 더합니다.',
+    );
+    expect(tooltip.textContent).toContain(
+      '같은 날 웹과 앱, 또는 국내와 해외에서 앱을 쓴 사람은 두 번 셉니다.',
+    );
+    expect(tooltip.textContent).not.toContain('국가와 무관');
+    expect(tooltip.textContent).toContain(
       '팀 계정 코호트가 설정된 경우 해당 사용자는 제외합니다.',
     );
   });
 });
 
-describe('개요와 분석 화면 분리', () => {
-  it('분석은 분포 9종과 기존 목록 링크만 표시하고 개요·Amplitude 요청은 하지 않는다', async () => {
-    navigation.pathname = '/dashboard/analytics';
+describe('개요와 도메인 분포 영역 분리', () => {
+  it.each([
+    ['chats', '', ['채팅 참여 영역', '채팅 소유자 영역'], 5],
+    ['stories', '', ['콘텐츠 영역'], 2],
+    ['ops', 'tab=ai-quality', ['AI 품질 영역'], 2],
+  ] as const)(
+    '%s는 해당 분포만 그리며 기존 목록 링크와 기간 이동을 유지한다',
+    async (domain, search, areas, count) => {
+      navigation.pathname = `/analytics/${domain}`;
+      navigation.search = `range=last7d${search ? `&${search}` : ''}`;
 
-    const view = render(
-      createElement(
-        QueryClientProvider,
-        { client },
-        createElement(DashboardAnalysisScreen),
-      ),
-    );
+      const element = () =>
+        createElement(
+          QueryClientProvider,
+          { client },
+          createElement(DomainScreen, { domain }),
+        );
+      const view = render(element());
 
-    await screen.findByRole('heading', { name: '이용 분포' });
-    expect(
-      screen.getByRole('heading', { name: '분석', level: 1 }),
-    ).toBeTruthy();
-    expect(screen.queryByRole('region', { name: '일별 지표 추이' })).toBeNull();
-    expect(
-      screen.queryByRole('region', { name: '오늘 활성 사용자' }),
-    ).toBeNull();
-    expect(screen.getAllByText('수치 및 관련 목록')).toHaveLength(9);
-    expect(requested).toEqual([
-      '/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
-    ]);
+      await waitFor(() =>
+        expect(screen.getAllByText('수치 및 관련 목록')).toHaveLength(count),
+      );
+      expect(
+        screen.queryByRole('region', { name: '오늘 활성 사용자' }),
+      ).toBeNull();
 
-    const data = await chartsResponse(
-      new Request(
-        'http://localhost/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
-      ),
-    ).json();
-    const links = Array.from(view.container.querySelectorAll('a')).map((link) =>
-      link.getAttribute('href'),
-    );
+      const data = await chartsResponse(
+        new Request(
+          'http://localhost/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
+        ),
+      ).json();
+      const ids =
+        domain === 'chats'
+          ? [
+              'genre-depth',
+              'turns',
+              'first-message',
+              'started-as',
+              'member-chats',
+            ]
+          : domain === 'stories'
+            ? ['creation-mode', 'characters']
+            : ['ai-latency', 'ai-success'];
+      const links = areas.flatMap((label) =>
+        Array.from(
+          screen.getByRole('region', { name: label }).querySelectorAll('a'),
+        ).map((link) => link.getAttribute('href')),
+      );
 
-    expect([...links].sort()).toEqual(
-      data.distributions
-        .flatMap((distribution: { points: { link: ChartLink }[] }) =>
-          distribution.points.map((point) => getDistributionHref(point.link)),
-        )
-        .sort(),
-    );
-    fireEvent.click(screen.getByRole('button', { name: '기간: 최근 7일' }));
-    fireEvent.click(screen.getByRole('button', { name: '최근 90일' }));
-    expect(navigation.push).toHaveBeenCalledWith(
-      '/dashboard/analytics?range=last90d',
-      { scroll: false },
-    );
-    navigation.search = 'range=last90d';
-    view.rerender(
-      createElement(
-        QueryClientProvider,
-        { client },
-        createElement(DashboardAnalysisScreen),
-      ),
-    );
-    await waitFor(() =>
-      expect(requested).toContain(
-        '/api/dashboard/charts?from=2026-07-24&to=2026-10-21',
-      ),
-    );
-    expect(
-      requested.some(
-        (url) => url.includes('/summary') || url.includes('/analytics'),
-      ),
-    ).toBe(false);
-  });
+      expect(links.sort()).toEqual(
+        data.distributions
+          .filter((distribution: { chartId: string }) =>
+            ids.includes(distribution.chartId),
+          )
+          .flatMap((distribution: { points: { link: ChartLink }[] }) =>
+            distribution.points.map((point) => getDistributionHref(point.link)),
+          )
+          .sort(),
+      );
+      fireEvent.click(screen.getByRole('button', { name: '기간: 최근 7일' }));
+      fireEvent.click(screen.getByRole('button', { name: '최근 90일' }));
+      expect(navigation.push).toHaveBeenCalledWith(
+        `/analytics/${domain}?range=last90d${search ? `&${search}` : ''}`,
+        { scroll: false },
+      );
+      navigation.search = `range=last90d${search ? `&${search}` : ''}`;
+      view.rerender(element());
+      await waitFor(() =>
+        expect(requested).toContain(
+          '/api/dashboard/charts?from=2026-07-24&to=2026-10-21',
+        ),
+      );
+      expect(
+        requested.some(
+          (url) =>
+            url.includes('/summary') || url.includes('/dashboard/analytics'),
+        ),
+      ).toBe(false);
+    },
+  );
 
   it('개요의 지표 전환은 새 경로와 기간을 유지하고 일별 목록 이동을 보존한다', async () => {
     const view = render(dashboard());
