@@ -34,7 +34,7 @@ export function PlayInstallsCard({
       <div className="flex items-center gap-2">
         <h3 className="text-sm text-muted-foreground">
           <Link
-            href="/analytics/acquisition?tab=installs"
+            href="/analytics/growth?tab=installs"
             className="after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring">
             앱 설치(Android)
           </Link>

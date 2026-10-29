@@ -4,12 +4,11 @@ export const navigation = [
     title: '대시보드',
     items: [
       ['/dashboard', '개요'],
-      ['/dashboard/analytics', '분석'],
-      ['/analytics/acquisition', '유입'],
-      ['/analytics/users', '사용자'],
-      ['/analytics/conversion', '전환'],
-      ['/analytics/quality', '기능과 품질'],
-      ['/analytics/infra', '인프라'],
+      ['/analytics/growth', '성장'],
+      ['/analytics/stories', '스토리'],
+      ['/analytics/chats', '채팅'],
+      ['/analytics/payments', '결제'],
+      ['/analytics/ops', '운영'],
     ],
   },
   {
@@ -52,13 +51,13 @@ export function isMenuActive(pathname: string, href: string) {
     ? pathname === href
     : pathname === href || pathname.startsWith(`${href}/`);
 }
-/** 지표 화면 메뉴에 지금 URL의 `platform`과 `segment`만 붙인다. 기간과 그 밖의 조건은 붙이지 않는다. */
+/** 지표 화면 메뉴에 지금 URL의 `platform`, `segment`, `campaign`을 붙인다. 기간과 그 밖의 조건은 붙이지 않는다. */
 export function menuHref(href: string, search: Pick<URLSearchParams, 'get'>) {
   if (!href.startsWith('/analytics/')) return href;
 
   const kept = new URLSearchParams();
 
-  for (const key of ['platform', 'segment']) {
+  for (const key of ['platform', 'segment', 'campaign']) {
     const value = search.get(key);
 
     if (value) kept.set(key, value);

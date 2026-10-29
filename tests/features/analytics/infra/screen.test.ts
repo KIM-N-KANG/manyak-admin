@@ -13,14 +13,14 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-import { InfraScreen } from '@/features/analytics/infra/infra-screen';
+import { DomainScreen } from '@/features/analytics/domain-screen';
 import { infraMetricsFixture, infraTablesFixture } from '@/fixtures/infra';
 
 const nav = vi.hoisted(() => ({ search: '', push: vi.fn() }));
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(nav.search),
-  usePathname: () => '/analytics/infra',
+  usePathname: () => '/analytics/ops',
   useRouter: () => ({ push: nav.push }),
 }));
 vi.mock('recharts', () => {
@@ -148,7 +148,11 @@ afterEach(() => {
 
 function draw() {
   const element = () =>
-    createElement(QueryClientProvider, { client }, createElement(InfraScreen));
+    createElement(
+      QueryClientProvider,
+      { client },
+      createElement(DomainScreen, { domain: 'ops' }),
+    );
   const view = render(element());
 
   return {

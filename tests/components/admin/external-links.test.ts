@@ -145,5 +145,5 @@ it('오늘 활성 사용자 카드는 사용자 활동 탭으로 연결한다', 
   render(createElement(AnalyticsSection));
   expect(
     screen.getByRole('link', { name: '오늘 활성 사용자' }).getAttribute('href'),
-  ).toBe('/analytics/users?tab=activity');
+  ).toBe('/analytics/growth?tab=activity');
 });

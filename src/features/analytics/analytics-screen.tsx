@@ -33,6 +33,7 @@ import { kstTime } from './infra/data';
 import { MetricHelp, MetricScope } from './metric-definition';
 import { FunnelChart, PendingDates, Source } from './metric-ui';
 import { MetricsSkeleton } from './metrics-skeleton';
+import { PendingTab } from './pending-dates';
 import { analyticsRange, analyticsRefetch } from './range';
 import { cohorts } from './retention';
 import { SessionLengths } from './session-lengths';
@@ -133,9 +134,11 @@ function TabHeading({
   screen,
   tab,
   aiCost,
+  title: headingTitle,
 }: {
   screen: AnalyticsScreenName;
   tab: string;
+  title?: string;
   aiCost?: {
     asOf: string | null;
     usdKrwRate?: number;
@@ -173,7 +176,10 @@ function TabHeading({
             )
         : undefined
       : template;
-  const title = screens[screen].tabs.find(([key]) => key === tab)?.[1] ?? '';
+  const title =
+    headingTitle ??
+    screens[screen].tabs.find(([key]) => key === tab)?.[1] ??
+    '';
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -188,13 +194,15 @@ function TabHeading({
   );
 }
 
-function MetricsTab({
+export function MetricsTab({
   screen,
   tab,
   url,
   platform,
   segment,
   adSegment,
+  title,
+  qualityPart,
 }: {
   screen: AnalyticsScreenName;
   tab: string;
@@ -202,6 +210,8 @@ function MetricsTab({
   platform: string;
   segment: string;
   adSegment: string;
+  title?: string;
+  qualityPart?: 'input' | 'errors' | 'signals' | 'completion';
 }) {
   const query = useApi<unknown>(url, true, {
     refetchInterval: (query) =>
@@ -229,19 +239,19 @@ function MetricsTab({
       }
     | undefined;
   // 세 탭의 준비 중 날짜는 Amplitude 값에만 적용돼 그 영역 위에 따로 보인다.
-  const platformPending = ['signups', 'turn-reach', 'chat-options'].includes(
-    tab,
-  );
   const audience = audienceText(data?.segment);
   const db = ['signups', 'turn-reach', 'chat-options', 'ai-cost'].includes(tab);
 
   return (
     <>
-      <TabHeading
-        screen={screen}
-        tab={tab}
-        aiCost={query.isError ? undefined : data}
-      />
+      {title !== '' ? (
+        <TabHeading
+          screen={screen}
+          tab={tab}
+          aiCost={query.isError ? undefined : data}
+          title={title}
+        />
+      ) : null}
       <QueryState
         skeleton={<MetricsSkeleton tab={tab} />}
         pending={query.isPending}
@@ -269,13 +279,16 @@ function MetricsTab({
                 .join(', ')}
             </p>
           ) : null}
-          <PendingDates
-            dates={platformPending ? [] : (data.pendingDates ?? [])}
-          />
+          <PendingDates dates={data.pendingDates ?? []} />
           {screen === 'acquisition' ? (
             <AcquisitionContent tab={tab} data={data} segment={adSegment} />
           ) : screen === 'users' ? (
-            <UserContent tab={tab} data={data} platform={platform} />
+            <UserContent
+              tab={tab}
+              data={data}
+              platform={platform}
+              segment={segment}
+            />
           ) : screen === 'conversion' ? (
             <ConversionContent
               data={data}
@@ -284,6 +297,7 @@ function MetricsTab({
             />
           ) : (
             <QualityContent
+              part={qualityPart}
               tab={tab}
               data={data}
               platform={platform}
@@ -312,12 +326,14 @@ function FunnelCard({
   url,
   children,
   help,
+  basis,
 }: {
   label: string;
   platform: string;
   url: string | null;
   children?: ReactNode;
   help?: string;
+  basis?: string | null;
 }) {
   const query = useApi<ConversionResponse>(url ?? '', url !== null);
   const id = useId();
@@ -328,6 +344,9 @@ function FunnelCard({
         <h3 id={id} className="text-lg font-semibold">
           {label}
         </h3>
+        {basis ? (
+          <span className="text-xs text-muted-foreground">{basis}</span>
+        ) : null}
         <MetricHelp title={label} noEvents={query.data?.steps[0]?.users === 0}>
           {help}
         </MetricHelp>
@@ -365,71 +384,84 @@ function FunnelCard({
   );
 }
 
-/** 전환 퍼널 다섯 개를 정해진 순서로 늘어놓고 퍼널마다 따로 요청한다. */
-function FunnelCards({
+/** 선택한 전환 퍼널 카드를 정해진 순서로 놓고 퍼널마다 따로 요청한다. */
+export function FunnelCards({
   from,
   to,
   platform,
   story,
   onStory,
+  only,
+  detailBasis,
 }: {
   from: string;
   to: string;
   platform: string;
   story: string;
   onStory: (value: string) => void;
+  only?: readonly string[];
+  detailBasis?: string | null;
 }) {
   const invalidStory = story !== '' && !storyPattern.test(story);
 
   return (
     <div className="space-y-6">
-      {funnels.map(([funnel, label]) => {
-        const fixed =
-          funnel === 'web-first-visit'
-            ? 'web'
-            : funnel === 'android-first-visit'
-              ? 'android'
-              : null;
-        const query = new URLSearchParams({ from, to });
-        const detail = funnel === 'story-detail-chat';
+      {funnels
+        .filter(([key]) => !only || only.includes(key))
+        .map(([funnel, label]) => {
+          const fixed =
+            funnel === 'web-first-visit'
+              ? 'web'
+              : funnel === 'android-first-visit'
+                ? 'android'
+                : null;
+          const query = new URLSearchParams({ from, to });
+          const detail = funnel === 'story-detail-chat';
 
-        if (detail && story) query.set('storyId', story);
+          if (detail && story) query.set('storyId', story);
 
-        if (!fixed) query.set('platform', platform);
+          if (!fixed) query.set('platform', platform);
 
-        return (
-          <FunnelCard
-            key={funnel}
-            label={label}
-            platform={fixed ?? platform}
-            url={
-              detail && invalidStory
-                ? null
-                : `/api/conversion/funnels/${funnel}?${query}`
-            }
-            help={funnel === 'guest-limit-login' ? approximation : undefined}>
-            {detail ? (
-              <div className="mb-4">
-                <TextCondition
-                  label="대상 스토리 공개 식별자"
-                  value={story}
-                  onApply={onStory}
-                />
-                {invalidStory ? (
-                  <p role="alert" className="mt-2 text-sm text-destructive">
-                    스토리 공개 식별자 형식을 확인해 주세요.
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-          </FunnelCard>
-        );
-      })}
+          return (
+            <FunnelCard
+              key={funnel}
+              label={label}
+              basis={detail ? detailBasis : null}
+              platform={fixed ?? platform}
+              url={
+                detail && invalidStory
+                  ? null
+                  : `/api/conversion/funnels/${funnel}?${query}`
+              }
+              help={funnel === 'guest-limit-login' ? approximation : undefined}>
+              {detail ? (
+                <div className="mb-4">
+                  <TextCondition
+                    label="대상 스토리 공개 식별자"
+                    value={story}
+                    onApply={onStory}
+                  />
+                  {invalidStory ? (
+                    <p role="alert" className="mt-2 text-sm text-destructive">
+                      스토리 공개 식별자 형식을 확인해 주세요.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </FunnelCard>
+          );
+        })}
     </div>
   );
 }
 
-export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
+export function AnalyticsScreen({
+  screen,
+  embedded = false,
+}: {
+  screen: AnalyticsScreenName;
+  embedded?: boolean;
+}) {
   const params = useSearchParams(),
     router = useRouter(),
     pathname = usePathname();
@@ -446,7 +478,8 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
   );
   const catalog = useApi<{ items: CampaignDefinition[] }>(
     '/api/campaigns',
-    screen === 'acquisition' && !['installs', 'push'].includes(tab),
+    screen === 'acquisition' &&
+      ['trend', 'creation', 'story-detail'].includes(tab),
   );
   const selectedCampaign =
     params.get('campaign') ??
@@ -550,57 +583,61 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
 
   return (
     <MetricScope value={screen}>
-      <PageHeading title={config.title}>
-        <div className="flex flex-wrap items-end gap-4">
-          {hasPlatform ? (
-            <Select
-              label="플랫폼"
-              value={platform}
-              options={platformOptions}
-              help={funnelList ? platformText.funnelHelp : undefined}
-              onChange={(value) => update({ platform: value })}
+      {!embedded ? (
+        <PageHeading title={config.title}>
+          <div className="flex flex-wrap items-end gap-4">
+            {hasPlatform ? (
+              <Select
+                label="플랫폼"
+                value={platform}
+                options={platformOptions}
+                help={funnelList ? platformText.funnelHelp : undefined}
+                onChange={(value) => update({ platform: value })}
+              />
+            ) : null}
+            {hasSegment ? (
+              <Select
+                label={platformText.segmentLabel}
+                help={platformText.segmentHelp}
+                value={segment}
+                options={audiences}
+                onChange={(value) => update({ segment: value })}
+              />
+            ) : null}
+            <RangePicker
+              disabled={tab === 'installs'}
+              range={{
+                ...range,
+                label: tab === 'installs' ? '전체 기간' : range.label,
+                query: new URLSearchParams({
+                  from: range.from,
+                  to: range.to,
+                }).toString(),
+                select: selectRange,
+              }}
+              maxDays={range.maxDays}
+              endDate={range.endDate}
             />
-          ) : null}
-          {hasSegment ? (
-            <Select
-              label={platformText.segmentLabel}
-              help={platformText.segmentHelp}
-              value={segment}
-              options={audiences}
-              onChange={(value) => update({ segment: value })}
-            />
-          ) : null}
-          <RangePicker
-            disabled={tab === 'installs'}
-            range={{
-              ...range,
-              label: tab === 'installs' ? '전체 기간' : range.label,
-              query: new URLSearchParams({
-                from: range.from,
-                to: range.to,
-              }).toString(),
-              select: selectRange,
-            }}
-            maxDays={range.maxDays}
-            endDate={range.endDate}
-          />
-        </div>
-      </PageHeading>
+          </div>
+        </PageHeading>
+      ) : null}
       <Tabs.Root
         value={tab}
         onValueChange={(value) => update({ tab: String(value) })}>
-        <Tabs.List
-          aria-label={`${config.title} 탭`}
-          className="mb-5 flex overflow-x-auto border-b">
-          {config.tabs.map(([key, label]) => (
-            <Tabs.Tab
-              key={key}
-              value={key}
-              className="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm text-muted-foreground data-active:border-primary data-active:text-primary-text">
-              {label}
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
+        {!embedded ? (
+          <Tabs.List
+            aria-label={`${config.title} 탭`}
+            className="mb-5 flex overflow-x-auto border-b">
+            {config.tabs.map(([key, label]) => (
+              <Tabs.Tab
+                key={key}
+                value={key}
+                className="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm text-muted-foreground data-active:border-primary data-active:text-primary-text">
+                {label}
+              </Tabs.Tab>
+            ))}
+          </Tabs.List>
+        ) : null}
         <div className="mb-6 flex flex-wrap items-end gap-4">
           {tab === 'retention' ? (
             <RetentionSelect
@@ -667,82 +704,85 @@ export function AnalyticsScreen({ screen }: { screen: AnalyticsScreenName }) {
           ) : null}
         </div>
         <Tabs.Panel value={tab} keepMounted={false}>
-          {tab === 'installs' ? (
-            <PlayInstallsDetails />
-          ) : (
-            <>
-              {catalogPending ||
-              catalogFailed ||
-              range.error ||
-              missingCampaign ||
-              missingStory ||
-              invalidStory ? (
-                <TabHeading screen={screen} tab={tab} />
-              ) : null}
-              {catalogPending || catalogFailed ? (
-                <QueryState
-                  skeleton={<MetricsSkeleton tab={tab} />}
-                  pending={catalogPending}
-                  error={catalogFailed ? catalog.error : null}
-                  retry={catalog.refetch}
-                />
-              ) : range.error ? (
-                <Card role="alert">
-                  <h2 className="font-semibold">기간 확인 필요</h2>
-                  <p className="my-3 text-sm">
-                    {range.error === 'retention'
-                      ? '리텐션은 어제까지의 시작일만 볼 수 있습니다. 끝 날짜를 어제 이전으로 선택해 주세요.'
-                      : `이 탭은 최대 ${range.maxDays}일까지 볼 수 있습니다. 기간을 ${range.maxDays}일 이내로 선택해 주세요.`}
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => selectRange(range.adjusted)}>
-                    {range.error === 'retention'
-                      ? '어제까지로 맞추기'
-                      : `최근 ${range.maxDays}일로 맞추기`}
-                  </Button>
-                </Card>
-              ) : missingCampaign ? (
-                <p role="status">
-                  진행 중인 광고 캠페인이 없습니다. 광고 캠페인을 선택해 주세요.
-                </p>
-              ) : missingStory ? (
-                <div>
-                  <p role="status">
-                    이 광고 캠페인에는 대상 스토리가 없습니다. 스토리 공개
-                    식별자를 입력해 주세요.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="mt-3"
-                    onClick={() => storyInput.current?.focus()}>
-                    스토리 공개 식별자 입력
-                  </Button>
-                </div>
-              ) : invalidStory ? null : funnelList ? (
-                <>
+          <PendingTab key={tab}>
+            {tab === 'installs' ? (
+              <PlayInstallsDetails />
+            ) : (
+              <>
+                {catalogPending ||
+                catalogFailed ||
+                range.error ||
+                missingCampaign ||
+                missingStory ||
+                invalidStory ? (
                   <TabHeading screen={screen} tab={tab} />
-                  <FunnelCards
-                    from={range.from}
-                    to={range.to}
-                    platform={funnelPlatform}
-                    story={params.get('storyId') ?? ''}
-                    onStory={(value) => update({ storyId: value })}
+                ) : null}
+                {catalogPending || catalogFailed ? (
+                  <QueryState
+                    skeleton={<MetricsSkeleton tab={tab} />}
+                    pending={catalogPending}
+                    error={catalogFailed ? catalog.error : null}
+                    retry={catalog.refetch}
                   />
-                </>
-              ) : (
-                <MetricsTab
-                  key={`${screen}/${tab}`}
-                  screen={screen}
-                  tab={tab}
-                  url={path}
-                  platform={platform}
-                  segment={segment}
-                  adSegment={adSegment}
-                />
-              )}
-            </>
-          )}
+                ) : range.error ? (
+                  <Card role="alert">
+                    <h2 className="font-semibold">기간 확인 필요</h2>
+                    <p className="my-3 text-sm">
+                      {range.error === 'retention'
+                        ? '리텐션은 어제까지의 시작일만 볼 수 있습니다. 끝 날짜를 어제 이전으로 선택해 주세요.'
+                        : `이 지표는 최대 ${range.maxDays}일까지 볼 수 있습니다. 기간을 ${range.maxDays}일 이내로 선택해 주세요.`}
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => selectRange(range.adjusted)}>
+                      {range.error === 'retention'
+                        ? '어제까지로 맞추기'
+                        : `최근 ${range.maxDays}일로 맞추기`}
+                    </Button>
+                  </Card>
+                ) : missingCampaign ? (
+                  <p role="status">
+                    진행 중인 광고 캠페인이 없습니다. 광고 캠페인을 선택해
+                    주세요.
+                  </p>
+                ) : missingStory ? (
+                  <div>
+                    <p role="status">
+                      이 광고 캠페인에는 대상 스토리가 없습니다. 스토리 공개
+                      식별자를 입력해 주세요.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-3"
+                      onClick={() => storyInput.current?.focus()}>
+                      스토리 공개 식별자 입력
+                    </Button>
+                  </div>
+                ) : invalidStory ? null : funnelList ? (
+                  <>
+                    <TabHeading screen={screen} tab={tab} />
+                    <FunnelCards
+                      from={range.from}
+                      to={range.to}
+                      platform={funnelPlatform}
+                      story={params.get('storyId') ?? ''}
+                      onStory={(value) => update({ storyId: value })}
+                    />
+                  </>
+                ) : (
+                  <MetricsTab
+                    key={`${screen}/${tab}`}
+                    screen={screen}
+                    tab={tab}
+                    url={path}
+                    platform={platform}
+                    segment={segment}
+                    adSegment={adSegment}
+                  />
+                )}
+              </>
+            )}
+          </PendingTab>
         </Tabs.Panel>
       </Tabs.Root>
     </MetricScope>
