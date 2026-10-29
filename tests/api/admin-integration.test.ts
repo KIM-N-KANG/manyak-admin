@@ -919,20 +919,22 @@ it.each([
   },
 );
 
-it('실시간 이미지 채팅 필터를 생성 검증하고 인증과 호출일을 그대로 전달한다', async () => {
-  const fetchMock = vi.fn().mockResolvedValue(Response.json({ items: [] }));
-  const query =
-    'aiFeature=chat_image&aiStatus=FINISHED&aiFrom=2026-10-21&aiTo=2026-10-23';
+it.each(['chat_image', 'chat_compact'])(
+  '%s 채팅 필터를 생성 검증하고 인증과 호출일을 그대로 전달한다',
+  async (feature) => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ items: [] }));
+    const query = `aiFeature=${feature}&aiStatus=FINISHED&aiFrom=2026-10-21&aiTo=2026-10-23`;
 
-  vi.stubGlobal('fetch', fetchMock);
-  expect((await invoke('GET', `/chats?${query}`)).status).toBe(200);
-  expect(fetchMock.mock.calls[0][0]).toBe(
-    `https://upstream.example/api/v1/admin/chats?${query}`,
-  );
-  expect(fetchMock.mock.calls[0][1].headers.get('Authorization')).toBe(
-    'Bearer forged-test-token',
-  );
-});
+    vi.stubGlobal('fetch', fetchMock);
+    expect((await invoke('GET', `/chats?${query}`)).status).toBe(200);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://upstream.example/api/v1/admin/chats?${query}`,
+    );
+    expect(fetchMock.mock.calls[0][1].headers.get('Authorization')).toBe(
+      'Bearer forged-test-token',
+    );
+  },
+);
 
 it.each(['x'.repeat(501), null])(
   '검수 보류 해제의 생성 계약을 벗어난 사유를 업스트림 전에 거부한다',
@@ -1244,3 +1246,29 @@ it.each([
   ).toBe(400);
   expect(fetchMock).not.toHaveBeenCalled();
 });
+
+it.each([20, 0, undefined])(
+  '서버 채팅의 요약 끝 턴 %s를 목록과 상세에서 보존한다',
+  async (summaryThroughTurn) => {
+    const chat = {
+      chatId: id,
+      turnCount: 25,
+      ...(summaryThroughTurn === undefined ? {} : { summaryThroughTurn }),
+    };
+    const fetchMock = vi
+      .fn()
+      .mockImplementation((url: string) =>
+        Promise.resolve(
+          Response.json(
+            url.endsWith(`/chats/${id}`) ? chat : { items: [chat] },
+          ),
+        ),
+      );
+
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await (await invoke('GET', `/chats/${id}`)).json()).toEqual(chat);
+    expect(
+      await (await invoke('GET', '/chats?aiFeature=chat_compact')).json(),
+    ).toEqual({ items: [chat] });
+  },
+);

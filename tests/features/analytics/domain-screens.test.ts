@@ -236,6 +236,18 @@ function draw(domain: DomainName) {
   };
 }
 
+async function waitForLoadedRequests(count: number, headings: string[]) {
+  await waitFor(() => {
+    expect(requests).toHaveLength(count);
+    expect(client.isFetching()).toBe(0);
+
+    for (const name of headings)
+      expect(screen.getAllByRole('heading', { name }).length).toBeGreaterThan(
+        0,
+      );
+  });
+}
+
 it.each([
   [
     'growth',
@@ -364,7 +376,7 @@ it('성장 활동의 실패는 세션 두 요청과 상태를 가리지 않는�
   await screen.findByText('Amplitude 지표를 불러올 수 없음');
   await screen.findByRole('heading', { name: '평균 세션 길이' });
   await screen.findByRole('heading', { name: '세션 길이 분포' });
-  expect(requests).toHaveLength(3);
+  await waitFor(() => expect(requests).toHaveLength(3));
 });
 
 it.each([
@@ -434,9 +446,11 @@ it('결제는 같은 대시보드 응답 캐시를 쓰며 그래프 네 개와 �
   expect(
     screen.getByLabelText('일별 지표 추이').querySelectorAll('[data-rows]'),
   ).toHaveLength(4);
-  expect(requests).toEqual([
-    '/api/quality/client?from=2026-09-24&to=2026-10-23&platform=web&segment=guest',
-  ]);
+  await waitFor(() => {
+    expect(requests).toEqual([
+      '/api/quality/client?from=2026-09-24&to=2026-10-23&platform=web&segment=guest',
+    ]);
+  });
   expect(
     screen.queryByRole('heading', { name: '채팅 메시지 전송' }),
   ).toBeNull();
@@ -455,10 +469,17 @@ it('가입은 퍼널 세 개만 요청하며 플랫폼 변경은 게스트 한�
 
   const view = draw('growth');
 
-  await waitFor(() => expect(requests).toHaveLength(4));
-  expect(
-    requests.filter((url) => url.includes('/conversion/funnels/')),
-  ).toHaveLength(3);
+  await waitForLoadedRequests(4, [
+    '웹 첫 접속',
+    '앱 첫 접속',
+    '게스트 한도 로그인',
+    '가입 이벤트 기준 신규 가입자',
+  ]);
+  await waitFor(() =>
+    expect(
+      requests.filter((url) => url.includes('/conversion/funnels/')),
+    ).toHaveLength(3),
+  );
   expect(screen.queryByRole('combobox', { name: '대상' })).toBeNull();
   requests.length = 0;
   fireEvent.change(screen.getByRole('combobox', { name: '플랫폼' }), {
@@ -668,7 +689,7 @@ it('활동 탭의 준비 중 날짜는 세 응답을 합쳐 첫 영역 위 알�
   expect(
     within(notice).getByText('2026-10-21, 2026-10-22, 2026-10-23'),
   ).toBeTruthy();
-  expect(requests).toHaveLength(3);
+  await waitFor(() => expect(requests).toHaveLength(3));
 });
 
 it('활동의 대상 변경은 세션 둘만 재요청하고 사용자 활동에 대상 전체 기준을 표시한다', async () => {
@@ -676,13 +697,13 @@ it('활동의 대상 변경은 세션 둘만 재요청하고 사용자 활동에
 
   const view = draw('growth');
 
-  await screen.findByRole('heading', { name: '세션 길이 분포' });
+  await waitForLoadedRequests(3, ['평균 세션 길이', '세션 길이 분포']);
   requests.length = 0;
   fireEvent.change(screen.getByRole('combobox', { name: '대상' }), {
     target: { value: 'member' },
   });
   view.go();
-  await waitFor(() => expect(requests).toHaveLength(2));
+  await waitForLoadedRequests(2, ['평균 세션 길이', '세션 길이 분포']);
   expect(requests.every((url) => url.includes('segment=member'))).toBe(true);
   expect(requests.some((url) => url.includes('/users/activity'))).toBe(false);
 
@@ -698,13 +719,17 @@ it('활동의 대상 변경은 세션 둘만 재요청하고 사용자 활동에
   await act(async () => {
     await realDelay(20);
   });
-  expect(requests).toHaveLength(0);
+  await waitFor(() => expect(requests).toHaveLength(0));
 });
 
 it('스토리 제작은 숨긴 대상을 all로 요청하고 콘텐츠에만 플랫폼 전체 기준을 붙인다', async () => {
   nav.search = 'platform=web&segment=guest';
   draw('stories');
-  await screen.findByRole('heading', { name: '간편 제작 실패율' });
+  await waitForLoadedRequests(3, [
+    '간편 제작 실패율',
+    '제작 방식별 스토리 수',
+    '간편 제작별 입력 주변 인물 수',
+  ]);
   expect(requests.find((url) => url.includes('/quality/client'))).toContain(
     'platform=web&segment=all',
   );
@@ -756,13 +781,13 @@ it('옵션과 입력의 준비 중 알림은 두 응답의 날짜를 합쳐 하�
   draw('chats');
   await screen.findByRole('heading', { name: '입력 방식별 채팅 메시지 전송' });
   expect(screen.getAllByText(/60초 뒤 다시 요청합니다/)).toHaveLength(1);
-  expect(requests).toHaveLength(2);
+  await waitFor(() => expect(requests).toHaveLength(2));
 });
 
 it('평균 세션 길이와 분포는 항상 전체 폭이고 기간 상한 366일은 요청 전에 막는다', async () => {
   const view = draw('growth');
 
-  await screen.findByRole('heading', { name: '평균 세션 길이' });
+  await waitForLoadedRequests(3, ['평균 세션 길이', '세션 길이 분포']);
 
   const chart = screen.getByLabelText('평균 세션 길이 추이');
 
@@ -778,7 +803,7 @@ it('평균 세션 길이와 분포는 항상 전체 폭이고 기간 상한 366�
   requests.length = 0;
   view.change('from=2025-01-01&to=2026-10-23');
   await screen.findByText('기간 확인 필요');
-  expect(requests).toHaveLength(0);
+  await waitFor(() => expect(requests).toHaveLength(0));
 });
 
 it('운영 서비스 하위 구분은 캐시를 공유하고 DB 테이블은 현재 값만 요청한다', async () => {
@@ -787,11 +812,11 @@ it('운영 서비스 하위 구분은 캐시를 공유하고 DB 테이블은 현
   const view = draw('ops');
 
   await screen.findByRole('heading', { name: '서버 태스크' });
-  expect(requests).toHaveLength(1);
+  await waitFor(() => expect(requests).toHaveLength(1));
   fireEvent.click(screen.getByRole('tab', { name: '저장소' }));
   view.go();
   await screen.findByRole('heading', { name: 'RDS 여유 스토리지' });
-  expect(requests).toHaveLength(1);
+  await waitFor(() => expect(requests).toHaveLength(1));
   fireEvent.click(screen.getByRole('tab', { name: 'DB 테이블' }));
   view.go();
   await screen.findByRole('heading', { name: '테이블별 전체 크기' });
@@ -808,6 +833,15 @@ it('운영 AI 품질은 플랫폼 변경 시 오류 표시만 다시 요청하�
   const view = draw('ops');
 
   await screen.findByRole('heading', { name: '스트림 오류율' });
+  await waitFor(() => {
+    expect(requests).toHaveLength(2);
+    expect(
+      screen.getByRole('heading', { name: '기능별 AI 평균 호출 시간' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { name: '기능별 AI 성공률' }),
+    ).toBeTruthy();
+  });
   requests.length = 0;
   fireEvent.change(screen.getByRole('combobox', { name: '플랫폼' }), {
     target: { value: 'web' },
@@ -856,7 +890,10 @@ it('광고 퍼널 첫 단계는 세 광고 구분의 전환율을 모두 빈칸�
 it('채팅 상세 진입 카드는 대상 전체 기준이고 대상 변경으로 퍼널을 다시 요청하지 않는다', async () => {
   const view = draw('chats');
 
-  await screen.findByRole('heading', { name: '상세 진입 채팅' });
+  await waitForLoadedRequests(3, [
+    '상세 진입 채팅',
+    '채팅 소유자 게스트와 회원',
+  ]);
   requests.length = 0;
   fireEvent.change(screen.getByRole('combobox', { name: '대상' }), {
     target: { value: 'member' },
@@ -918,9 +955,11 @@ it('채팅 분포 다섯 카드는 고른 플랫폼과 대상을 적용하지 �
   );
 
   expect(cards).toHaveLength(5);
-  expect(
-    requests.filter((url) => url.includes('/dashboard/charts')),
-  ).toHaveLength(1);
+  await waitFor(() => {
+    expect(
+      requests.filter((url) => url.includes('/dashboard/charts')),
+    ).toHaveLength(1);
+  });
   expect(
     requests.find((url) => url.includes('/dashboard/charts')),
   ).not.toContain('segment');
@@ -955,27 +994,24 @@ it('활동 탭의 세 요청은 준비 중 응답만 각각 60초 뒤 재요청�
 
   const settle = async () =>
     act(async () => {
-      for (let i = 0; i < 6; i++) {
-        await Promise.resolve();
-        await vi.advanceTimersByTimeAsync(1);
-      }
-
+      await vi.waitFor(() => expect(client.isFetching()).toBe(0));
+      await vi.advanceTimersByTimeAsync(1);
       await realDelay(0);
     });
 
   await settle();
-  expect(requests).toHaveLength(3);
+  await vi.waitFor(() => expect(requests).toHaveLength(3));
   ready = true;
   await act(async () => {
     await vi.advanceTimersByTimeAsync(60001);
   });
   await settle();
-  expect(requests).toHaveLength(6);
+  await vi.waitFor(() => expect(requests).toHaveLength(6));
   expect(screen.queryByText(/60초 뒤 다시 요청합니다/)).toBeNull();
   await act(async () => {
     await vi.advanceTimersByTimeAsync(120000);
   });
-  expect(requests).toHaveLength(6);
+  await vi.waitFor(() => expect(requests).toHaveLength(6));
 });
 
 it.each([
@@ -1151,7 +1187,7 @@ it('DomainScreen 운영 AI 비용 503은 전용 안내와 같은 요청의 다�
   fail = '';
   fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
   await screen.findByText('총 AI 비용');
-  expect(requests).toEqual([url, url]);
+  await waitFor(() => expect(requests).toEqual([url, url]));
   view.change('tab=ai-quality');
   expect(await screen.findByText('오류 표시')).toBeTruthy();
   expect(screen.queryByText('AI 비용을 불러올 수 없음')).toBeNull();
@@ -1184,11 +1220,8 @@ it('DomainScreen 운영 AI 비용 pendingDates는 60초 뒤 같은 범위를 재
 
   const settle = async () =>
     act(async () => {
-      for (let i = 0; i < 6; i++) {
-        await Promise.resolve();
-        await vi.advanceTimersByTimeAsync(1);
-      }
-
+      await vi.waitFor(() => expect(client.isFetching()).toBe(0));
+      await vi.advanceTimersByTimeAsync(1);
       await realDelay(0);
     });
 
@@ -1198,13 +1231,13 @@ it('DomainScreen 운영 AI 비용 pendingDates는 60초 뒤 같은 범위를 재
     await vi.advanceTimersByTimeAsync(60001);
   });
   await settle();
-  expect(requests).toHaveLength(2);
+  await vi.waitFor(() => expect(requests).toHaveLength(2));
   expect(requests[0]).toBe(requests[1]);
   expect(screen.queryByText(/준비 중 날짜 1개/)).toBeNull();
   await act(async () => {
     await vi.advanceTimersByTimeAsync(120000);
   });
-  expect(requests).toHaveLength(2);
+  await vi.waitFor(() => expect(requests).toHaveLength(2));
 });
 
 it('DomainScreen 운영 AI 비용은 보관 만료·준비 중·조합 기록 없음과 이미지 비용을 따로 표시한다', async () => {
@@ -1323,9 +1356,11 @@ it('DomainScreen 성장 리텐션은 어제까지 최근 7일과 visitor로 요�
   const view = draw('growth');
 
   await screen.findByRole('heading', { name: '코호트 표' });
-  expect(requests).toEqual([
-    '/api/users/retention?from=2026-10-16&to=2026-10-22&cohort=visitor',
-  ]);
+  await waitFor(() => {
+    expect(requests).toEqual([
+      '/api/users/retention?from=2026-10-16&to=2026-10-22&cohort=visitor',
+    ]);
+  });
   expect(screen.queryByRole('combobox', { name: '대상' })).toBeNull();
   expect(
     screen.getByRole('combobox', { name: '시작 집단' }).getAttribute('value') ??
@@ -1342,6 +1377,8 @@ it('DomainScreen 성장 리텐션은 어제까지 최근 7일과 visitor로 요�
     ),
   );
 
+  await waitForLoadedRequests(2, ['코호트 표']);
+
   const count = requests.length;
 
   fireEvent.change(screen.getByRole('combobox', { name: '플랫폼' }), {
@@ -1351,7 +1388,7 @@ it('DomainScreen 성장 리텐션은 어제까지 최근 7일과 visitor로 요�
   await act(async () => {
     await realDelay(20);
   });
-  expect(requests).toHaveLength(count);
+  await waitFor(() => expect(requests).toHaveLength(count));
   expect(nav.search).toContain('segment=member');
 });
 
@@ -1361,13 +1398,15 @@ it('DomainScreen 성장 리텐션은 오늘 포함 기간 요청을 막고 맞�
   const view = draw('growth');
 
   expect(screen.getByRole('alert').textContent).toContain('리텐션은 어제까지');
-  expect(requests).toHaveLength(0);
+  await waitFor(() => expect(requests).toHaveLength(0));
   fireEvent.click(screen.getByRole('button', { name: '어제까지로 맞추기' }));
   view.go();
   await screen.findByRole('heading', { name: '코호트 표' });
-  expect(requests).toEqual([
-    '/api/users/retention?from=2026-10-17&to=2026-10-22&cohort=visitor',
-  ]);
+  await waitFor(() => {
+    expect(requests).toEqual([
+      '/api/users/retention?from=2026-10-17&to=2026-10-22&cohort=visitor',
+    ]);
+  });
 });
 
 it('DomainScreen 성장 유입 소스는 10일 상한을 적용하고 끝 날짜를 유지해 맞춘다', async () => {
@@ -1376,14 +1415,16 @@ it('DomainScreen 성장 유입 소스는 10일 상한을 적용하고 끝 날짜
   const view = draw('growth');
 
   expect(screen.getByRole('alert').textContent).toContain('최대 10일');
-  expect(requests).toHaveLength(0);
+  await waitFor(() => expect(requests).toHaveLength(0));
   expect(nav.search).toContain('range=last30d');
   fireEvent.click(screen.getByRole('button', { name: '최근 10일로 맞추기' }));
   view.go();
   await screen.findByRole('heading', { name: '첫 유입 소스별 신규 방문자' });
-  expect(requests).toEqual([
-    '/api/campaigns/sources?from=2026-10-14&to=2026-10-23',
-  ]);
+  await waitFor(() => {
+    expect(requests).toEqual([
+      '/api/campaigns/sources?from=2026-10-14&to=2026-10-23',
+    ]);
+  });
   expect(nav.search).toContain('campaign=THIRD_2026');
 });
 
@@ -1394,7 +1435,7 @@ it('DomainScreen 스토리 상세 진입은 3차 기본 기간 35일을 보존�
 
   await screen.findByRole('alert');
   expect(screen.getByRole('alert').textContent).toContain('최대 31일');
-  expect(requests).toEqual(['/api/campaigns']);
+  await waitFor(() => expect(requests).toEqual(['/api/campaigns']));
   expect(
     screen.getByRole('button', { name: '기간: 2026-08-25 ~ 2026-09-28' }),
   ).toBeTruthy();
@@ -1561,9 +1602,11 @@ it('DomainScreen 운영 AI 비용은 플랫폼과 대상을 숨기고 요청에�
   await screen.findByText('총 AI 비용');
   expect(screen.queryByRole('combobox', { name: '플랫폼' })).toBeNull();
   expect(screen.queryByRole('combobox', { name: '대상' })).toBeNull();
-  expect(requests).toEqual([
-    '/api/quality/ai-cost?from=2026-09-24&to=2026-10-23',
-  ]);
+  await waitFor(() => {
+    expect(requests).toEqual([
+      '/api/quality/ai-cost?from=2026-09-24&to=2026-10-23',
+    ]);
+  });
   expect(nav.search).toContain('platform=android&segment=member');
 });
 
@@ -1647,11 +1690,8 @@ it('DomainScreen 운영 AI 비용은 만료 날짜만 있으면 준비 중 재�
 
   const settle = async () =>
     act(async () => {
-      for (let i = 0; i < 6; i++) {
-        await Promise.resolve();
-        await vi.advanceTimersByTimeAsync(1);
-      }
-
+      await vi.waitFor(() => expect(client.isFetching()).toBe(0));
+      await vi.advanceTimersByTimeAsync(1);
       await realDelay(0);
     });
 
@@ -1664,7 +1704,7 @@ it('DomainScreen 운영 AI 비용은 만료 날짜만 있으면 준비 중 재�
     await vi.advanceTimersByTimeAsync(120000);
   });
   await settle();
-  expect(requests).toHaveLength(1);
+  await vi.waitFor(() => expect(requests).toHaveLength(1));
 });
 
 it.each(['growth', 'stories', 'chats'] as const)(
@@ -1679,6 +1719,13 @@ it.each(['growth', 'stories', 'chats'] as const)(
         true,
       ),
     );
+    await waitForLoadedRequests(domain === 'growth' ? 4 : 3, [
+      domain === 'growth'
+        ? '게스트 한도 로그인'
+        : domain === 'stories'
+          ? '제작 방식별 스토리 수'
+          : '상세 진입 채팅',
+    ]);
     expect(screen.queryByText('기간 확인 필요')).toBeNull();
     requests.length = 0;
     view.change(

@@ -6,6 +6,7 @@ export const aiFeatures = [
   'chat_image',
   'storyline_generation',
   'story_completion',
+  'chat_compact',
 ] as const;
 export const MIN_GENRE_CHATS = 5;
 
@@ -43,6 +44,7 @@ export function aiFeatureLabel(value: string) {
     chat_image: '실시간 이미지 생성',
     storyline_generation: '스토리라인 생성',
     story_completion: '간편 제작',
+    chat_compact: '대화 요약',
   };
 
   return labels[value] ?? value;
@@ -70,9 +72,7 @@ export function orderedAiPoints(points: ChartPoint[]) {
 export function aiFeatureColor(point: ChartPoint) {
   const index = aiFeatureIndex(point);
 
-  return index < aiFeatures.length
-    ? `var(--chart-${index + 1})`
-    : 'var(--muted-foreground)';
+  return index < 5 ? `var(--chart-${index + 1})` : 'var(--muted-foreground)';
 }
 
 const firstMessageLabels = ['평균', 'P50', 'P75', 'P90'];

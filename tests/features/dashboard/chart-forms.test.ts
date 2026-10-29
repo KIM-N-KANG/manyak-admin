@@ -828,7 +828,7 @@ it('요약 카드 10개는 고정 최소 높이 없이 같은 행의 내용 높�
   expect(dbLink.className).toContain('h-full');
 });
 
-it('AI 품질은 기능 다섯 개의 고정 순서와 색을 유지하며 실시간 이미지 막대는 채팅 목록으로 이동한다', () => {
+it('AI 품질은 기능 여섯 개의 고정 순서와 색을 유지하며 실시간 이미지 막대는 채팅 목록으로 이동한다', () => {
   const source = state.charts!.distributions.find(
     (d) => d.chartId === 'ai-success',
   )!;
@@ -841,13 +841,13 @@ it('AI 품질은 기능 다섯 개의 고정 순서와 색을 유지하며 실�
     .closest('[data-slot="card"]')!;
   const charts = Array.from(card.querySelectorAll('[data-slot="chart"]'));
 
-  expect(charts).toHaveLength(5);
+  expect(charts).toHaveLength(6);
   expect(charts.map((c) => c.getAttribute('aria-label'))).toEqual(
     aiFeatures.map((key) => `${aiFeatureLabel(key)} 성공률`),
   );
   charts.forEach((chart, i) =>
     expect(chart.querySelector('style')!.textContent).toContain(
-      `var(--chart-${i + 1})`,
+      i < 5 ? `var(--chart-${i + 1})` : 'var(--muted-foreground)',
     ),
   );
   fireEvent.click(charts[2].querySelector('.recharts-bar-rectangle')!);
@@ -859,7 +859,7 @@ it('AI 품질은 기능 다섯 개의 고정 순서와 색을 유지하며 실�
   expect(state.push).toHaveBeenCalledWith(getDistributionHref(link));
 });
 
-it('AI 지연도 값 순위 대신 다섯 기능 순서·색을 쓰고 이미지 호출일 링크를 보존한다', () => {
+it('AI 지연도 값 순위 대신 여섯 기능 순서·색을 쓰고 이미지 호출일 링크를 보존한다', () => {
   const source = state.charts!.distributions.find(
     (d) => d.chartId === 'ai-latency',
   )!;
@@ -878,12 +878,15 @@ it('AI 지연도 값 순위 대신 다섯 기능 순서·색을 쓰고 이미지
       .map((t) => t.textContent)
       .filter((label) => aiFeatures.map(aiFeatureLabel).includes(label ?? '')),
   ).toEqual(aiFeatures.map(aiFeatureLabel));
-  expect(bars).toHaveLength(5);
+  expect(bars).toHaveLength(6);
   expect(
     Array.from(bars).map((bar) =>
       bar.querySelector('path')?.getAttribute('fill'),
     ),
-  ).toEqual([1, 2, 3, 4, 5].map((i) => `var(--chart-${i})`));
+  ).toEqual([
+    ...Array.from({ length: 5 }, (_, i) => `var(--chart-${i + 1})`),
+    'var(--muted-foreground)',
+  ]);
   fireEvent.click(bars[2]);
 
   const link = source.points.find((p) => p.label === 'chat_image')!.link;
@@ -952,3 +955,33 @@ it('장르 소표본은 표에만 남기며 응답 순서·평균·채팅 수·�
     '높음',
   ]);
 });
+
+it.each(['ai-latency', 'ai-success'])(
+  '대화 요약 %s 막대는 같은 호출 조건의 채팅 목록을 연다',
+  (chartId) => {
+    const source = state.charts!.distributions.find(
+      (d) => d.chartId === chartId,
+    )!;
+
+    render(createElement(DistributionCards));
+
+    const card = screen
+      .getByRole('heading', { name: source.title })
+      .closest('[data-slot="card"]')!;
+    const bars = card.querySelectorAll('.recharts-bar-rectangle');
+
+    fireEvent.click(bars[5]);
+
+    const link = source.points.find((p) => p.label === 'chat_compact')!.link;
+
+    expect(link.list).toBe('chats');
+    expect(link.params).toMatchObject({
+      aiFeature: 'chat_compact',
+      aiStatus: chartId === 'ai-latency' ? 'SUCCEEDED' : 'FINISHED',
+    });
+    expect(link.params.hasLatency).toBe(
+      chartId === 'ai-latency' ? 'true' : undefined,
+    );
+    expect(state.push).toHaveBeenCalledWith(getDistributionHref(link));
+  },
+);

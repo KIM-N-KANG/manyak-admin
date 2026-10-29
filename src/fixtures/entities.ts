@@ -110,6 +110,7 @@ export const chats: ChatRoom[] = Array.from({ length: 8210 }, (_, i) => ({
   member: i % 4 === 0 ? null : memberSummary(members[i % members.length]),
   startedAs: i % 4 === 0 ? 'GUEST' : 'MEMBER',
   turnCount: (i * 7) % 63,
+  summaryThroughTurn: Math.floor(((i * 7) % 63) / 20) * 20,
   startedAt: new Date(Date.UTC(2026, 9, 21 - (i % 28), 2)).toISOString(),
   lastActiveAt: new Date(Date.UTC(2026, 9, 21 - (i % 28), 7)).toISOString(),
   creditsSpent: ((i * 7) % 63) * 30,
@@ -315,7 +316,12 @@ export const aiCalls = [
   ...chats.map((chat, index) => ({
     chatId: chat.chatId,
     storyId: chat.story.storyId,
-    feature: ['chat_response', 'choice_generation', 'chat_image'][index % 3],
+    feature: [
+      'chat_response',
+      'choice_generation',
+      'chat_image',
+      'chat_compact',
+    ][index % 4],
     createdAt: chat.lastActiveAt,
     status:
       index % 17 === 0 ? 'FAILED' : index % 19 === 0 ? 'STARTED' : 'SUCCEEDED',

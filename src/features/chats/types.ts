@@ -6,6 +6,7 @@ export type ChatRoom = {
   member: MemberSummary | null;
   startedAs: 'GUEST' | 'MEMBER';
   turnCount: number;
+  summaryThroughTurn?: number;
   startedAt: string;
   lastActiveAt: string;
   creditsSpent: number;

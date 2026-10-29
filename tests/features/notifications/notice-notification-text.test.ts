@@ -215,7 +215,7 @@ it('알림 도움말은 묶음 제목 옆 포커스 툴팁으로 제공한다', 
   const tooltip = await screen.findByRole('tooltip');
 
   expect(tooltip.textContent).toBe(
-    '푸시와 알림 내역에 보이는 제목과 본문입니다. 공지 제목, 본문과 따로 쓰며 게시할 때 한 번만 보냅니다. 이벤트와 홍보는 알림 제목 앞에 (광고)가 자동으로 붙어 따로 쓰지 않아도 됩니다.',
+    '푸시와 알림 내역에 보이는 제목과 본문입니다. 공지 제목, 본문과 따로 쓰며 게시할 때 한 번만 보냅니다. 이벤트와 홍보는 푸시 제목 앞에 (광고)가 자동으로 붙고 알림 내역에는 원문이 남아 따로 쓰지 않아도 됩니다.',
   );
   expect(trigger.getAttribute('aria-describedby')?.split(' ')).toContain(
     tooltip.id,
