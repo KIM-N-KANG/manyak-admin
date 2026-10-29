@@ -808,6 +808,15 @@ it('운영 AI 품질은 플랫폼 변경 시 오류 표시만 다시 요청하�
   const view = draw('ops');
 
   await screen.findByRole('heading', { name: '스트림 오류율' });
+  await waitFor(() => {
+    expect(requests).toHaveLength(2);
+    expect(
+      screen.getByRole('heading', { name: '기능별 AI 평균 호출 시간' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { name: '기능별 AI 성공률' }),
+    ).toBeTruthy();
+  });
   requests.length = 0;
   fireEvent.change(screen.getByRole('combobox', { name: '플랫폼' }), {
     target: { value: 'web' },
