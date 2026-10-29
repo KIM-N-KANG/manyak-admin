@@ -96,7 +96,7 @@ export function Charts({
 
   return (
     <>
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2">
         {items.map(({ basis, empty, ...item }) =>
           empty ? (
             <PlatformPlaceholder
@@ -151,10 +151,12 @@ export function UserContent({
   tab,
   data,
   platform,
+  segment = 'all',
 }: {
   tab: string;
   data: unknown;
   platform: string;
+  segment?: string;
 }) {
   const key = platform as keyof T.PlatformCounts;
   const series =
@@ -173,7 +175,9 @@ export function UserContent({
           items={[
             {
               label: 'MAU',
-              aside: basisMark(basis),
+              aside: basisMark(
+                basisText(platform !== 'all', segment !== 'all'),
+              ),
               value:
                 d.monthlyActiveUsers === null ? (
                   <span role="status">준비 중</span>
@@ -183,6 +187,7 @@ export function UserContent({
             },
             {
               label: '마지막 날 DAU',
+              aside: basisMark(basisText(false, segment !== 'all')),
               value: allZero(
                 d.daily
                   .filter((day) => !d.pendingDates.includes(day.date))
@@ -196,6 +201,7 @@ export function UserContent({
             },
             {
               label: '누적 신규 방문자',
+              aside: basisMark(basisText(false, segment !== 'all')),
               value: allZero(
                 d.daily
                   .filter((day) => !d.pendingDates.includes(day.date))
@@ -225,6 +231,7 @@ export function UserContent({
               '사용자당 채팅 메시지 전송 수',
             ][i],
             rows: dailyRows(d, (day) => ({ [series.key]: day[metric][key] })),
+            basis: basisText(false, segment !== 'all'),
             series: [series],
             unit: metric === 'messagesPerUser' ? '회' : '명',
             // 서버가 사용자당 전송 수의 전체 값을 주지 않는다.
@@ -782,9 +789,7 @@ export function AcquisitionContent({
               eventLabel(step.event),
               ...(['all', 'ads', 'nonAds'] as const).flatMap((k) => [
                 n(step.users[k], '명'),
-                percent(
-                  i ? ratio(step.users[k], d.steps[i - 1].users[k]) : null,
-                ),
+                i ? percent(ratio(step.users[k], d.steps[i - 1].users[k])) : '',
               ]),
             ])}
           />
@@ -804,7 +809,7 @@ export function AcquisitionContent({
   const d = data as T.CampaignSourceResponse;
 
   return (
-    <div className="grid gap-5 xl:grid-cols-2">
+    <div className="grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2">
       <Ranking
         title="첫 유입 소스별 신규 방문자"
         items={d.sources.map((row) => ({
@@ -871,11 +876,13 @@ export function ConversionContent({
 export function QualityContent({
   tab,
   data,
+  part,
   platform = 'all',
   segment = 'all',
 }: {
   tab: string;
   data: unknown;
+  part?: 'input' | 'errors' | 'signals' | 'completion';
   platform?: string;
   segment?: string;
 }) {
@@ -894,53 +901,63 @@ export function QualityContent({
 
     return (
       <>
-        <SummaryCards
-          items={[
-            {
-              label: '채팅 메시지 전송',
-              value: allZero(
-                d.daily
-                  .filter((day) => !d.pendingDates.includes(day.date))
-                  .map((day) =>
-                    Object.values(day.messagesByInputMode).reduce(
-                      (a, b) => a + b,
-                      0,
-                    ),
-                  ),
-              )
-                ? '이벤트 수신 없음'
-                : n(
-                    d.daily
-                      .filter((day) => !d.pendingDates.includes(day.date))
-                      .reduce(
-                        (s, row) =>
-                          s +
-                          Object.values(row.messagesByInputMode).reduce(
-                            (a, b) => a + b,
-                            0,
-                          ),
+        {!part || part === 'input' || part === 'errors' ? (
+          <SummaryCards
+            items={[
+              {
+                label: '채팅 메시지 전송',
+                value: allZero(
+                  d.daily
+                    .filter((day) => !d.pendingDates.includes(day.date))
+                    .map((day) =>
+                      Object.values(day.messagesByInputMode).reduce(
+                        (a, b) => a + b,
                         0,
                       ),
-                    '회',
-                  ),
-            },
-            {
-              label: '스트림 오류 표시',
-              value: allZero(
-                d.daily
-                  .filter((day) => !d.pendingDates.includes(day.date))
-                  .map((day) => day.streamErrors),
-              )
-                ? '이벤트 수신 없음'
-                : n(
-                    d.daily
-                      .filter((day) => !d.pendingDates.includes(day.date))
-                      .reduce((s, row) => s + row.streamErrors, 0),
-                    '회',
-                  ),
-            },
-          ]}
-        />
+                    ),
+                )
+                  ? '이벤트 수신 없음'
+                  : n(
+                      d.daily
+                        .filter((day) => !d.pendingDates.includes(day.date))
+                        .reduce(
+                          (s, row) =>
+                            s +
+                            Object.values(row.messagesByInputMode).reduce(
+                              (a, b) => a + b,
+                              0,
+                            ),
+                          0,
+                        ),
+                      '회',
+                    ),
+              },
+              {
+                label: '스트림 오류 표시',
+                value: allZero(
+                  d.daily
+                    .filter((day) => !d.pendingDates.includes(day.date))
+                    .map((day) => day.streamErrors),
+                )
+                  ? '이벤트 수신 없음'
+                  : n(
+                      d.daily
+                        .filter((day) => !d.pendingDates.includes(day.date))
+                        .reduce((s, row) => s + row.streamErrors, 0),
+                      '회',
+                    ),
+              },
+            ].filter(
+              (item) =>
+                !part ||
+                (part === 'input'
+                  ? item.label === '채팅 메시지 전송'
+                  : part === 'errors'
+                    ? item.label === '스트림 오류 표시'
+                    : false),
+            )}
+          />
+        ) : null}
         <Charts
           items={[
             {
@@ -986,7 +1003,16 @@ export function QualityContent({
               ),
               empty: d.storyCompletion === undefined ? '준비 중' : undefined,
             },
-          ]}
+          ].filter(
+            (item) =>
+              !part ||
+              {
+                input: ['입력 방식별 채팅 메시지 전송'],
+                errors: ['스트림 오류율', '오류 표시 사용자'],
+                signals: ['이프와 초대 신호 사용자'],
+                completion: ['간편 제작 실패율'],
+              }[part].includes(item.title),
+          )}
         />
       </>
     );

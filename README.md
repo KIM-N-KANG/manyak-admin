@@ -80,8 +80,15 @@ pnpm api:generate
 
 ## 화면과 데이터 경계
 
-- `/dashboard`(개요): KST 기준 DB 숫자 카드와 7·30·90일 추이. 별도 Amplitude 영역에 오늘 활성 사용자와 DAU·신규 사용자 추이를 제공하며 같은 기간을 사용합니다. Amplitude 조회 실패는 해당 영역의 재시도로 처리합니다. 모든 차트는 마냑 초록을 사용합니다. 일별 수치 목록에서도 키보드로 필터가 적용된 목록에 이동할 수 있습니다.
-- `/dashboard/analytics`(분석): 7·30·90일 이용 분포 8종과 관련 목록 이동을 제공합니다. 개요의 숫자 카드·일별 추이·Amplitude 영역은 포함하지 않습니다.
+- `/dashboard`(개요): 오늘 활성 사용자, 서버 DB 카드 8개, 앱 설치 카드와 일별 추이를 제공합니다. 오늘 활성 사용자는 KST 오늘만 요청하고 앱 설치는 보고서 전체 기간을 요청합니다. 네 요청의 상태는 독립적입니다.
+- `/analytics/growth`(성장): 유입(캠페인 추이, 유입 소스, 푸시 열람), 앱 설치, 활동(사용자 활동과 세션), 가입(신규 가입자와 퍼널 3개), 리텐션입니다. 기본은 최근 30일의 활동입니다.
+- `/analytics/stories`(스토리): 제작(간편 제작 전환, 콘텐츠 분포, 간편 제작 실패율), 간편 제작 퍼널, 상세 진입 퍼널입니다. 기본은 최근 7일의 제작입니다.
+- `/analytics/chats`(채팅): 참여(턴 도달률, 채팅 참여와 소유자 분포, 상세 진입 채팅 전환), 옵션과 입력입니다. 기본은 최근 7일의 참여입니다.
+- `/analytics/payments`(결제): 탭 없이 결제 건수, 결제 금액, 이프 적립과 소모의 일별 추이 및 이프와 초대 신호를 최근 30일로 제공합니다. 기존 `/api/dashboard/charts` 응답을 개요와 공유합니다.
+- `/analytics/ops`(운영): 서비스(서비스와 요청, 저장소, DB 테이블), AI 품질, AI 비용입니다. 기본은 오늘의 서비스와 요청입니다.
+- 예전 `/dashboard/analytics`, `/analytics/acquisition`, `/analytics/users`, `/analytics/conversion`, `/analytics/quality`, `/analytics/infra`는 정본 이동 표대로 새 경로와 탭으로 replace 이동합니다. `tab` 외 쿼리를 유지하고 예전 분석의 `days`를 `range`로 바꿉니다. 구현은 `src/features/analytics/legacy-route.tsx`입니다.
+- 성장, 스토리, 채팅, 결제와 해당 관리 목록은 제목 옆 링크로 서로 연결합니다. 상호 링크에는 쿼리를 붙이지 않습니다.
+- 지표 화면은 영역마다 요청, 상태, 기간 상한을 판정합니다. 탭의 기간 선택기는 영역 상한 가운데 가장 큰 값을 사용하고 31일을 넘는 퍼널 영역만 요청을 막습니다. 준비 중 날짜는 탭에 알림 하나로 합치고 해당 응답만 60초마다 재요청합니다.
 - `/`는 기존 기간·지표 등 쿼리를 유지해 `/dashboard`로 이동하고, `/campaigns`는 `/notifications/campaigns`로 이동합니다.
 - `/stories`, `/members`, `/payments`, `/chats`: URL 쿼리 필터와 정렬, `items`·`page`·`size`·`totalElements`·`totalPages` 숫자 페이지(1부터, 기본 20건, 크기 1~100), `/{id}` 상세 연결을 제공합니다.
 - `/login`: Google 관리자 로그인과 공통 실패 안내를 제공합니다.
@@ -91,7 +98,7 @@ pnpm api:generate
 - `/notifications/campaigns`: 캠페인 목록·상세, 대상 수 미리보기, 작성·예약, 상태별 취소·재실행을 제공합니다.
 - `/notifications/stats`: 최대 366일 KST 기간·알림 종류·수신 유형 필터, 날짜별·종류별 표와 초록 막대 차트를 제공합니다.
 - `/notifications/templates`: 출석 리마인드(광고성)와 이프 만료 예정 안내(정보성)를 선택해 현재 문구·예약 변경·기본 복귀·키별 변경 이력을 관리합니다. 정보성 문구에는 금액·수량·충전·이용 권유를 넣지 않도록 안내하며 광고 접두를 붙이지 않습니다.
-- 사이드바는 대시보드(개요·분석), 관리(회원·스토리·오리지널·채팅방·결제·공지·감사 로그), 알림(캠페인·발송 통계·문구 템플릿) 세 구역입니다. 구역 버튼은 아이콘·굵은 글씨·화살표로 접고 펼치며 현재 경로의 구역은 항상 펼칩니다. 나머지 상태는 `manyak-admin:sidebar:v1` localStorage에 기억합니다. 하위 메뉴는 세로 안내선으로 묶고 목록과 상세에서 해당 메뉴를 활성 표시합니다.
+- 사이드바는 대시보드(개요, 성장, 스토리, 채팅, 결제, 운영), 관리(회원, 스토리, 검수 제출, 오리지널, 채팅, 결제, 이프, 공지, 감사 로그), 알림(캠페인·발송 통계·문구 템플릿) 세 구역입니다. 구역 버튼은 아이콘·굵은 글씨·화살표로 접고 펼치며 현재 경로의 구역은 항상 펼칩니다. 나머지 상태는 `manyak-admin:sidebar:v1` localStorage에 기억합니다. 하위 메뉴는 세로 안내선으로 묶고 목록과 상세에서 해당 메뉴를 활성 표시합니다.
 - 응답 타입은 `src/features/<도메인>/types.ts`에 있습니다. 차트와 목록·상세의 화면 BFF 응답을 타입으로 정의했습니다. 대시보드 숫자 카드는 회원·채팅 시작·턴·스토리·이프 지급·소진·결제 이력·금액의 8개이며 각각 누적과 오늘 값을 제공합니다.
 - 현재 `src/features/shared/use-api.ts`가 TanStack Query와 기존 mutator를 연결합니다. 요청 검증에는 생성 Zod를 사용합니다. 서버 계약 확정 후 생성 훅으로 대체할 수 있으며 서버 응답 본문은 BFF에서 변환하지 않습니다.
 - 가상 이메일 `member1@example.com`부터 `member1240@example.com`까지 정확 일치 검색이 가능합니다. 응답에는 이메일을 포함하지 않습니다. 대화 원문과 인증 토큰도 응답에 없습니다.
@@ -99,7 +106,7 @@ pnpm api:generate
 - 목록의 `from`, `to`는 KST 날짜로 생성·가입·결제 완료·채팅 시작일에 적용합니다. `attendanceDate`, `creditDate`, `turnDate`는 관련 활동일 필터입니다. 이프는 `creditDirection=granted|spent`로 방향과 ADMIN 2-4의 사유를 함께 검사하며, 회원 목록과 상세는 회원별 원장을 공유합니다. `chatFrom/chatTo`, `aiFrom/aiTo`, `creationFrom/creationTo`는 각각 채팅 생성일·AI 호출일·제작 세션 생성일 기준입니다. 숫자 카드와 추이·분포는 목록과 같은 고정 원천을 집계합니다. 회원의 `chatCount`는 전체 채팅방 수이며 `periodChatCount`는 선택 기간에 생성한 수입니다.
 - 분포의 정의는 Grafana `service-stats`를 기준으로 합니다. 첫 사용자 입력 시간은 900초 이내, 입력 인물 수는 주변 인물만, AI 지연은 성공 호출만, 성공률은 완료 호출만 집계합니다. 결제 건수와 금액은 환불을 포함한 완료 이력 주문을 집계하고 같은 목록으로 이동합니다. server 모드의 실제 DB 집계와 팀 계정 제외는 manyak-server가 수행합니다.
 
-Amplitude BFF `/api/dashboard/analytics?days=7|30|90`는 `src/fixtures/analytics.ts`의 가상 집계를 반환합니다. 타입은 `DashboardAnalytics`이며 `asOf/from/to/todayActiveUsers/daily`를 제공합니다. server 모드에서는 manyak-server의 분석 API로 전달하며, 브라우저는 외부 Amplitude에 직접 연결하지 않습니다. 화면의 출처 도움말은 집계 지연과 팀 계정 제외 기준을 설명합니다.
+Amplitude BFF `/api/dashboard/analytics?from=YYYY-MM-DD&to=YYYY-MM-DD`는 `src/fixtures/analytics.ts`의 가상 집계를 반환합니다. 타입은 `DashboardAnalytics`이며 `asOf/from/to/todayActiveUsers/daily`를 제공합니다. server 모드에서는 manyak-server의 분석 API로 전달하며, 브라우저는 외부 Amplitude에 직접 연결하지 않습니다. 화면의 출처 도움말은 집계 지연과 팀 계정 제외 기준을 설명합니다.
 
 목록 머리글 정렬은 `sort=<열 키>&order=asc|desc`를 사용합니다. 허용 열은 `src/features/shared/list-config.ts`의 `listSorts`를 따르며, 기본은 생성·가입·완료·시작 시각 내림차순입니다. 전체 필터 결과를 정렬한 뒤 페이지를 나누고, 동률은 공개 식별자 오름차순으로 고정합니다. 환불 시각이 없는 주문은 방향과 무관하게 뒤에 둡니다. 범위 밖 페이지는 빈 `items`와 실제 총 페이지 수를 반환하고, 잘못된 page·size·sort·order는 400입니다. 이전 cursor·limit 요청은 지원하지 않습니다.
 

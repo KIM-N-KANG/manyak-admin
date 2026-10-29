@@ -422,3 +422,26 @@ describe('상세 하위 목록', () => {
     },
   );
 });
+
+it.each([
+  ['members', '성장 지표', '/analytics/growth'],
+  ['stories', '스토리 지표', '/analytics/stories'],
+  ['chats', '채팅 지표', '/analytics/chats'],
+  ['payments', '결제 지표', '/analytics/payments'],
+] as const)(
+  '%s 목록 제목 옆 지표 링크는 필터와 기간을 넘기지 않는다',
+  (domain, label, href) => {
+    navigation.pathname = `/${domain}`;
+    navigation.search = 'range=last7d&platform=web&segment=member&q=test';
+    render(
+      createElement(
+        QueryClientProvider,
+        { client },
+        createElement(ListScreen, { domain }),
+      ),
+    );
+    expect(screen.getByRole('link', { name: label }).getAttribute('href')).toBe(
+      href,
+    );
+  },
+);

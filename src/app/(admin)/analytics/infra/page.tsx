@@ -1,11 +1,11 @@
-import { LoadingBoundary } from '@/components/admin/loading-boundary';
-import { PageSkeleton } from '@/components/admin/loading-ui';
-import { InfraScreen } from '@/features/analytics/infra/infra-screen';
+import { Suspense } from 'react';
 
-export default function InfraPage() {
+import { LegacyRoute } from '@/features/analytics/legacy-route';
+
+export default function Page() {
   return (
-    <LoadingBoundary fallback={<PageSkeleton immediate layout="analytics" />}>
-      <InfraScreen />
-    </LoadingBoundary>
+    <Suspense>
+      <LegacyRoute />
+    </Suspense>
   );
 }

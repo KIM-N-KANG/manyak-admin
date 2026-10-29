@@ -29,10 +29,18 @@ export function defaultPeriod(
   if (campaign && ['trend', 'creation', 'story-detail'].includes(tab))
     return { from: campaign.startDate, to: campaign.endDate ?? today };
 
-  const days = ['retention', 'sources', 'funnels', 'push'].includes(tab)
+  const days = [
+    'retention',
+    'sources',
+    'funnels',
+    'push',
+    'signups',
+    'making',
+    'engagement',
+  ].includes(tab)
     ? 7
     : ['sessions', 'session-lengths'].includes(tab)
-      ? 14
+      ? 30
       : 30;
   const to = tab === 'retention' ? shiftDate(today, -1) : today;
 

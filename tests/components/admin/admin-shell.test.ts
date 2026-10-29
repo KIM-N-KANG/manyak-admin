@@ -38,12 +38,11 @@ beforeEach(() => {
 
 const entries = [
   ['/dashboard', '개요'],
-  ['/dashboard/analytics', '분석'],
-  ['/analytics/acquisition', '유입'],
-  ['/analytics/users', '사용자'],
-  ['/analytics/conversion', '전환'],
-  ['/analytics/quality', '기능과 품질'],
-  ['/analytics/infra', '인프라'],
+  ['/analytics/growth', '성장'],
+  ['/analytics/stories', '스토리'],
+  ['/analytics/chats', '채팅'],
+  ['/analytics/payments', '결제'],
+  ['/analytics/ops', '운영'],
   ['/members', '회원'],
   ['/stories', '스토리'],
   ['/moderation/submissions', '검수 제출'],
@@ -89,7 +88,7 @@ describe('관리자 메뉴 구조', () => {
       within(nav)
         .getByRole('region', { name: '대시보드' })
         .querySelectorAll('a'),
-    ).toHaveLength(7);
+    ).toHaveLength(6);
     expect(
       within(nav).getByRole('region', { name: '관리' }).querySelectorAll('a'),
     ).toHaveLength(9);
@@ -127,30 +126,32 @@ describe('관리자 메뉴 구조', () => {
     expect(active[0].textContent).toBe(label);
   });
 
-  it('지표 화면 메뉴는 지금 URL의 platform과 segment만 붙여 열고 다른 메뉴와 기간은 붙이지 않는다', () => {
+  it('지표 메뉴는 플랫폼, 대상, 캠페인을 유지하고 기간과 다른 조건은 붙이지 않는다', () => {
     navigation.search =
-      'tab=sessions&platform=android&segment=member&range=last7d&storyId=x';
-    shell('/analytics/users');
+      'tab=activity&platform=android&segment=member&campaign=TEST&range=last7d&storyId=x';
+    shell('/analytics/growth');
 
-    const nav = screen.getByRole('navigation', { name: '관리자 메뉴' });
-    const href = (name: string) =>
-      within(nav).getByRole('link', { name }).getAttribute('href');
+    const group = screen.getByRole('region', { name: '대시보드' });
 
-    for (const name of ['유입', '사용자', '전환', '기능과 품질', '인프라'])
-      expect(href(name)).toMatch(
-        /^\/analytics\/[a-z]+\?platform=android&segment=member$/,
-      );
+    for (const [path] of entries.filter(([path]) =>
+      path.startsWith('/analytics/'),
+    )) {
+      expect(
+        group.querySelector(
+          `a[href="${path}?platform=android&segment=member&campaign=TEST"]`,
+        ),
+      ).toBeTruthy();
+    }
 
-    expect(href('전환')).toBe(
-      '/analytics/conversion?platform=android&segment=member',
-    );
-    expect(href('개요')).toBe('/dashboard');
-    expect(href('분석')).toBe('/dashboard/analytics');
     expect(
-      within(nav)
-        .getByRole('link', { name: '사용자' })
-        .getAttribute('aria-current'),
-    ).toBe('page');
+      within(group).getByRole('link', { name: '개요' }).getAttribute('href'),
+    ).toBe('/dashboard');
+    fireEvent.click(screen.getByRole('button', { name: '관리' }));
+    expect(
+      screen
+        .getByRole('region', { name: '관리' })
+        .querySelector('a[href="/members"]'),
+    ).toBeTruthy();
   });
 
   it('비슷한 접두사 경로를 활성 메뉴로 오인하지 않는다', () => {

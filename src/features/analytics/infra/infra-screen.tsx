@@ -27,7 +27,7 @@ const tabs = [
   ['tables', 'DB 테이블'],
 ] as const;
 
-export function InfraScreen() {
+export function InfraScreen({ embedded = false }: { embedded?: boolean }) {
   const params = useSearchParams(),
     router = useRouter(),
     pathname = usePathname();
@@ -78,25 +78,27 @@ export function InfraScreen() {
 
   return (
     <>
-      <PageHeading title="인프라">
-        {tab === 'tables' ? (
-          <Button variant="outline" disabled aria-label="기간: 현재">
-            현재
-          </Button>
-        ) : (
-          <RangePicker
-            range={{
-              ...range,
-              query: new URLSearchParams({
-                from: range.from,
-                to: range.to,
-              }).toString(),
-              select,
-            }}
-            maxDays={31}
-          />
-        )}
-      </PageHeading>
+      {!embedded ? (
+        <PageHeading title="인프라">
+          {tab === 'tables' ? (
+            <Button variant="outline" disabled aria-label="기간: 현재">
+              현재
+            </Button>
+          ) : (
+            <RangePicker
+              range={{
+                ...range,
+                query: new URLSearchParams({
+                  from: range.from,
+                  to: range.to,
+                }).toString(),
+                select,
+              }}
+              maxDays={31}
+            />
+          )}
+        </PageHeading>
+      ) : null}
       <Tabs.Root
         value={tab}
         onValueChange={(value) => {
@@ -105,18 +107,20 @@ export function InfraScreen() {
           next.set('tab', String(value));
           router.push(`${pathname}?${next}`, { scroll: false });
         }}>
-        <Tabs.List
-          aria-label="인프라 탭"
-          className="mb-5 flex overflow-x-auto border-b">
-          {tabs.map(([key, label]) => (
-            <Tabs.Tab
-              key={key}
-              value={key}
-              className="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm text-muted-foreground data-active:border-primary data-active:text-primary-text">
-              {label}
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
+        {!embedded ? (
+          <Tabs.List
+            aria-label="인프라 탭"
+            className="mb-5 flex overflow-x-auto border-b">
+            {tabs.map(([key, label]) => (
+              <Tabs.Tab
+                key={key}
+                value={key}
+                className="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm text-muted-foreground data-active:border-primary data-active:text-primary-text">
+                {label}
+              </Tabs.Tab>
+            ))}
+          </Tabs.List>
+        ) : null}
         <Tabs.Panel value={tab}>
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <h2 className="text-xl font-semibold">
@@ -145,8 +149,8 @@ export function InfraScreen() {
             <Card role="alert">
               <h2 className="font-semibold">기간 확인 필요</h2>
               <p className="my-3 text-sm">
-                이 탭은 최대 31일까지 볼 수 있습니다. 기간을 31일 이내로 선택해
-                주세요.
+                이 지표는 최대 31일까지 볼 수 있습니다. 기간을 31일 이내로
+                선택해 주세요.
               </p>
               <Button
                 variant="outline"

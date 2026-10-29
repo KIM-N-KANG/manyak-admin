@@ -1,11 +1,11 @@
-import { LoadingBoundary } from '@/components/admin/loading-boundary';
-import { PageSkeleton } from '@/components/admin/loading-ui';
-import { AnalyticsScreen } from '@/features/analytics/analytics-screen';
+import { Suspense } from 'react';
+
+import { LegacyRoute } from '@/features/analytics/legacy-route';
 
 export default function Page() {
   return (
-    <LoadingBoundary fallback={<PageSkeleton immediate layout="analytics" />}>
-      <AnalyticsScreen screen="quality" />
-    </LoadingBoundary>
+    <Suspense>
+      <LegacyRoute />
+    </Suspense>
   );
 }
