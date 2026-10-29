@@ -77,6 +77,7 @@ const filterValues: Record<string, string> = {
   false: '없음',
   chat_response: 'AI 응답 생성',
   chat_image: '실시간 이미지 생성',
+  chat_compact: '대화 요약',
   choice_generation: '선택지 생성',
   storyline_generation: '스토리라인 생성',
   story_completion: '간편 제작',

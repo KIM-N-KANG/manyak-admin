@@ -103,12 +103,13 @@ const featureOrder = [
   'chat_image',
   'storyline_generation',
   'story_completion',
+  'chat_compact',
 ];
 
 export function featureColor(code: string) {
   const index = featureOrder.indexOf(code);
 
-  return index < 0 ? muted : colors[index];
+  return colors[index] ?? muted;
 }
 export function featureSeries(entries: [string, string][]): Series[] {
   return listedSeries(entries).map((series) => ({

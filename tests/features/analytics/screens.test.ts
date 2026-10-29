@@ -945,10 +945,14 @@ it.each([48, 72])(
       '실시간 이미지 생성',
       '스토리라인 생성',
       '간편 제작',
+      '대화 요약',
     ]);
     expect(
       Object.values(config).map((s: unknown) => (s as { color: string }).color),
-    ).toEqual([1, 2, 3, 4, 5].map((i) => `var(--chart-${i})`));
+    ).toEqual([
+      ...Array.from({ length: 5 }, (_, i) => `var(--chart-${i + 1})`),
+      'var(--muted-foreground)',
+    ]);
 
     const help = screen.getByRole('button', {
       name: 'Langfuse 출처와 집계 안내',

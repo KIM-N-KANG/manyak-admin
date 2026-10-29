@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
@@ -319,6 +321,23 @@ function ChatContent({ chat: c }: { chat: ChatRoom }) {
               ),
             ],
             ['턴 수', <NumberValue key="t" value={c.turnCount} />],
+            ...(c.summaryThroughTurn === undefined
+              ? []
+              : [
+                  [
+                    '요약 끝 턴',
+                    c.summaryThroughTurn === 0 ? (
+                      '요약 없음'
+                    ) : (
+                      <NumberValue key="summary" value={c.summaryThroughTurn} />
+                    ),
+                    <HelpTooltip key="summary-help" label="요약 끝 턴 안내">
+                      대화 요약에 담긴 마지막 턴입니다. 요약을 아직 만들지
+                      않았거나 재생성으로 요약이 비워지면 요약 없음으로
+                      보입니다.
+                    </HelpTooltip>,
+                  ] satisfies [string, ReactNode, ReactNode?],
+                ]),
             ['시작 시각', dateTime(c.startedAt)],
             ['마지막 활동', dateTime(c.lastActiveAt)],
             ['이프 소모', <NumberValue key="c" value={c.creditsSpent} />],

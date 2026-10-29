@@ -1149,7 +1149,7 @@ export function QualityContent({
     day.byFeature.map((item) => ({ date: day.date, ...item })),
   );
   const missingTokens = items
-    .filter((item) => item.feature !== 'chat_image')
+    .filter((item) => !['chat_image', 'chat_compact'].includes(item.feature))
     .reduce((s, row) => s + row.callsWithoutTokens, 0);
   const costEmptyLabel = (date: string) =>
     d.pendingDates.includes(date)
@@ -1269,16 +1269,22 @@ export function QualityContent({
           n(row.calls, '회'),
           row.feature === 'chat_image'
             ? '해당 없음'
-            : row.inputTokens.toLocaleString('ko-KR'),
+            : row.feature === 'chat_compact'
+              ? '기록하지 않음'
+              : row.inputTokens.toLocaleString('ko-KR'),
           row.feature === 'chat_image'
             ? '해당 없음'
-            : row.outputTokens.toLocaleString('ko-KR'),
+            : row.feature === 'chat_compact'
+              ? '기록하지 않음'
+              : row.outputTokens.toLocaleString('ko-KR'),
           row.costKrw === null
             ? costEmptyLabel(row.date)
             : n(row.costKrw, '원'),
           row.feature === 'chat_image'
             ? '해당 없음'
-            : n(row.callsWithoutTokens, '회'),
+            : row.feature === 'chat_compact'
+              ? '기록하지 않음'
+              : n(row.callsWithoutTokens, '회'),
         ])}
       />
     </>

@@ -428,14 +428,35 @@ export function metricFixture(path: string, query: URLSearchParams) {
       totals: {
         costKrw:
           dates.length * 144 +
-          availableDates.length * 6 +
+          availableDates.length * 20 +
           (availableDates.length ? 2.8 : 0),
-        costPerTurnKrw: availableDates.length ? 3 : null,
+        costPerTurnKrw: availableDates.length ? 10 : null,
         costPerStoryKrw: null,
       },
       daily: dates.map((date) => ({
         date,
         byFeature: [
+          {
+            feature: 'chat_compact',
+            model: null,
+            calls: 2,
+            callsWithoutTokens: 2,
+            inputTokens: 0,
+            outputTokens: 0,
+            costKrw: null,
+          },
+          {
+            feature: 'chat_compact',
+            model: 'claude-x',
+            calls: 0,
+            callsWithoutTokens: 0,
+            inputTokens: 0,
+            outputTokens: 0,
+            costKrw:
+              costPendingDates.includes(date) || expiredDates.includes(date)
+                ? null
+                : 14,
+          },
           {
             feature: 'chat_image',
             model: null,
