@@ -89,13 +89,12 @@ it.each(metrics)(
   },
 );
 
-it('보완된 관리자 스냅샷은 네 PR의 출처를 보존하고 테스트 전용 경로를 제외한다', () => {
+it('관리자 스냅샷은 dev 배포 출처를 기록하고 테스트 전용 경로를 제외한다', () => {
   const snapshot = JSON.parse(readFileSync('docs/openapi/admin.json', 'utf8'));
 
   expect(snapshot['x-source']).toMatchObject({
-    input: '/private/tmp/knk-openapi/openapi-admin-1927.json',
-    revision: '17ecdd4',
-    description: '로컬 병합 #435 + #434 + #436 + #437, foundation-probe 제외',
+    input: 'https://dev-api.manyak.app/v3/api-docs',
+    revision: '2301087',
     receivedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
   });
   expect(

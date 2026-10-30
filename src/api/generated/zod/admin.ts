@@ -77,6 +77,76 @@ export const Delete2Body = zod.object({
 
 export const Delete2Response = zod.unknown();
 
+export const Upsert2Params = zod.object({
+  code: zod.string(),
+});
+
+export const upsert2BodyTurnCostMin = 0;
+export const upsert2BodyTurnCostMax = 10000;
+
+export const upsert2BodyReasonMin = 0;
+export const upsert2BodyReasonMax = 500;
+
+export const Upsert2Body = zod.object({
+  turnCost: zod
+    .number()
+    .min(upsert2BodyTurnCostMin)
+    .max(upsert2BodyTurnCostMax)
+    .optional(),
+  startsAt: zod.iso.datetime({ offset: true }).optional(),
+  endsAt: zod.iso.datetime({ offset: true }).optional(),
+  reason: zod.string().min(upsert2BodyReasonMin).max(upsert2BodyReasonMax),
+});
+
+export const Upsert2Response = zod.object({
+  code: zod.string().optional(),
+  name: zod.string().optional(),
+  turnCost: zod.number().optional(),
+  promotion: zod
+    .union([
+      zod.object({
+        turnCost: zod.number().optional(),
+        startsAt: zod.iso.datetime({ offset: true }).optional(),
+        endsAt: zod.iso.datetime({ offset: true }).optional(),
+        status: zod.enum(['SCHEDULED', 'ACTIVE', 'ENDED']).optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  isDefault: zod.boolean().optional(),
+  isActive: zod.boolean().optional(),
+});
+
+export const Delete3Params = zod.object({
+  code: zod.string(),
+});
+
+export const delete3BodyReasonMin = 0;
+export const delete3BodyReasonMax = 500;
+
+export const Delete3Body = zod.object({
+  reason: zod.string().min(delete3BodyReasonMin).max(delete3BodyReasonMax),
+});
+
+export const Delete3Response = zod.object({
+  code: zod.string().optional(),
+  name: zod.string().optional(),
+  turnCost: zod.number().optional(),
+  promotion: zod
+    .union([
+      zod.object({
+        turnCost: zod.number().optional(),
+        startsAt: zod.iso.datetime({ offset: true }).optional(),
+        endsAt: zod.iso.datetime({ offset: true }).optional(),
+        status: zod.enum(['SCHEDULED', 'ACTIVE', 'ENDED']).optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  isDefault: zod.boolean().optional(),
+  isActive: zod.boolean().optional(),
+});
+
 export const list1QueryQuerySizeMax = 100;
 
 export const list1QueryQueryOrderRegExp = new RegExp('asc|desc');
@@ -429,18 +499,18 @@ export const Detail1Params = zod.object({
 
 export const Detail1Response = zod.unknown();
 
-export const Delete4Params = zod.object({
+export const Delete5Params = zod.object({
   noticeId: zod.uuid(),
 });
 
-export const delete4BodyReasonMin = 0;
-export const delete4BodyReasonMax = 500;
+export const delete5BodyReasonMin = 0;
+export const delete5BodyReasonMax = 500;
 
-export const Delete4Body = zod.object({
-  reason: zod.string().min(delete4BodyReasonMin).max(delete4BodyReasonMax),
+export const Delete5Body = zod.object({
+  reason: zod.string().min(delete5BodyReasonMin).max(delete5BodyReasonMax),
 });
 
-export const Delete4Response = zod.void();
+export const Delete5Response = zod.void();
 
 export const Update2Params = zod.object({
   noticeId: zod.uuid(),
@@ -1602,6 +1672,31 @@ export const ChatParams = zod.object({
 
 export const ChatResponse = zod.unknown();
 
+export const List8Response = zod.object({
+  items: zod
+    .array(
+      zod.object({
+        code: zod.string().optional(),
+        name: zod.string().optional(),
+        turnCost: zod.number().optional(),
+        promotion: zod
+          .union([
+            zod.object({
+              turnCost: zod.number().optional(),
+              startsAt: zod.iso.datetime({ offset: true }).optional(),
+              endsAt: zod.iso.datetime({ offset: true }).optional(),
+              status: zod.enum(['SCHEDULED', 'ACTIVE', 'ENDED']).optional(),
+            }),
+            zod.null(),
+          ])
+          .optional(),
+        isDefault: zod.boolean().optional(),
+        isActive: zod.boolean().optional(),
+      }),
+    )
+    .optional(),
+});
+
 export const CatalogResponse = zod.record(
   zod.string(),
   zod.array(
@@ -2063,6 +2158,8 @@ export const AuditLogsQueryParams = zod.object({
         'MEMBER_UNSUSPENDED',
         'CREDIT_GRANTED',
         'CREDIT_REVOKED',
+        'CHAT_MODEL_PROMOTION_UPSERTED',
+        'CHAT_MODEL_PROMOTION_DELETED',
         'CREDIT_POLICY_UPSERTED',
         'CREDIT_POLICY_DELETED',
         'PUSH_CAMPAIGN_CREATED',
@@ -2087,6 +2184,7 @@ export const AuditLogsQueryParams = zod.object({
         'MEMBER_QUERY',
         'MEMBER',
         'CREDIT_POLICY',
+        'CHAT_MODEL',
         'PUSH_CAMPAIGN',
         'PUSH_TEMPLATE',
         'NOTICE',

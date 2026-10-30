@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { findAdminEndpoint } from '@/api/admin-endpoints';
-import { DELETE,PUT } from '@/app/api/credits/promotions/[code]/route';
+import { DELETE, PUT } from '@/app/api/credits/promotions/[code]/route';
 import { GET } from '@/app/api/credits/promotions/route';
 import {
   kstToUtc,
@@ -36,7 +36,7 @@ function mutate(
   return (method === 'PUT' ? PUT : DELETE)(
     new Request(`${base}/${code}`, {
       method,
-      headers: { Origin: origin },
+      headers: { Origin: origin, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }),
     { params: Promise.resolve({ code }) },
@@ -184,7 +184,6 @@ it.each([
   { endsAt: '2026-10-31T01:00:00Z' },
   { endsAt: '2026-10-01T00:00:00Z' },
   { startsAt: 'invalid' },
-  { extra: true },
 ])('fixture가 잘못된 설정 %j를 400으로 거절한다', async (patch) => {
   const body = Object.keys(patch).length
     ? { ...promotionRequest(form), ...patch }
@@ -193,19 +192,14 @@ it.each([
   expect((await mutate('PUT', body)).status).toBe(400);
 });
 it('해제 본문 사유와 없는 모델을 검증한다', async () => {
-  for (const body of [
-    {},
-    { reason: ' ' },
-    { reason: 'x'.repeat(501) },
-    { reason: '종료', turnCost: 0 },
-  ])
+  for (const body of [{}, { reason: ' ' }, { reason: 'x'.repeat(501) }])
     expect((await mutate('DELETE', body)).status).toBe(400);
 
   expect((await mutate('PUT', promotionRequest(form), 'MISSING')).status).toBe(
     404,
   );
 });
-it('외부 출처와 운영 fixture 및 미연결 server 모드를 차단한다', async () => {
+it('외부 출처와 운영 fixture 및 rewrite 없는 server 직접 접근을 차단한다', async () => {
   expect(
     (await mutate('DELETE', { reason: '종료' }, 'LITE', 'https://evil.example'))
       .status,
@@ -215,17 +209,51 @@ it('외부 출처와 운영 fixture 및 미연결 server 모드를 차단한다'
   vi.stubEnv('ADMIN_DATA_SOURCE', 'server');
   expect((await mutate('PUT', promotionRequest(form))).status).toBe(503);
 });
-it('OpenAPI 연결 전에도 세 BFF의 서버 경로를 등록하고 전달을 차단한다', () => {
+it('세 BFF가 생성 연산과 검증 스키마에 연결된다', () => {
   expect(findAdminEndpoint('/credits/promotions', 'GET')).toMatchObject({
     serverPath: '/api/v1/admin/chat-models',
-    implemented: false,
+    implemented: true,
   });
 
   for (const method of ['PUT', 'DELETE'])
     expect(findAdminEndpoint('/credits/promotions/LITE', method)).toMatchObject(
       {
         serverPath: '/api/v1/admin/chat-models/LITE/promotion',
-        implemented: false,
+        implemented: true,
       },
     );
+});
+
+it('fixture도 JSON 매체와 생성 날짜 스키마 및 쿼리를 검증한다', async () => {
+  for (const [contentType, text] of [
+    ['text/plain', JSON.stringify(promotionRequest(form))],
+    ['application/json', '{'],
+    [
+      'application/json',
+      JSON.stringify({ ...promotionRequest(form), endsAt: 'bad' }),
+    ],
+  ]) {
+    expect(
+      (
+        await PUT(
+          new Request(`${base}/LITE`, {
+            method: 'PUT',
+            headers: { 'Content-Type': contentType },
+            body: text,
+          }),
+          { params: Promise.resolve({ code: 'LITE' }) },
+        )
+      ).status,
+    ).toBe(400);
+  }
+
+  expect((await GET(new Request(`${base}?unexpected=1`))).status).toBe(400);
+});
+it('추가 필드는 생성 스키마의 객체 정책을 따르고 fixture 상태에는 저장하지 않는다', async () => {
+  expect(
+    (await mutate('PUT', { ...promotionRequest(form), extra: true })).status,
+  ).toBe(200);
+  expect(
+    (await GET(new Request(base)).then((r) => r.json())).items[0],
+  ).not.toHaveProperty('extra');
 });

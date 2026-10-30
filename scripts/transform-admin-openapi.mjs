@@ -21,7 +21,7 @@ export default function transformAdminOpenapi(document) {
 
   for (const [path, methods] of Object.entries(result.paths ?? {})) {
     if (
-      !/^\/api\/v1\/admin\/(infra|campaigns|users|quality|conversion)(\/|$)/.test(
+      !/^\/api\/v1\/admin\/(infra|campaigns|users|quality|conversion|chat-models)(\/|$)/.test(
         path,
       )
     )
@@ -35,7 +35,7 @@ export default function transformAdminOpenapi(document) {
           ? result.components?.schemas?.[reference.split('/').at(-1)]
           : wildcard?.schema;
 
-        // 인프라와 지표 JSON 객체 응답의 와일드카드를 Orval이 스키마로 생성할 수 있게 정규화한다.
+        // 인프라와 지표, 채팅 모델 JSON 객체 응답의 와일드카드를 Orval이 스키마로 생성할 수 있게 정규화한다.
         if (
           schema?.type === 'object' &&
           !response.content['application/json']

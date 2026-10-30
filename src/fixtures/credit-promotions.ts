@@ -1,5 +1,10 @@
+import { NextRequest } from 'next/server';
+
+import { findAdminEndpoint } from '@/api/admin-endpoints';
 import { failure, isSameOrigin, isServerMode } from '@/api/admin-upstream';
+import { validateAdminRequest } from '@/api/admin-validation';
 import { productionDataSourceError } from '@/api/data-source-guard';
+import { Delete3Body,Upsert2Body } from '@/api/generated/zod/admin';
 import type {
   ModelPromotion,
   PromotionModel,
@@ -69,7 +74,7 @@ function status(promotion: ModelPromotion): ModelPromotion {
   };
 }
 
-/** 생성 계약을 연결하기 전에는 fixture만 처리하고 업스트림 호출을 차단한다. */
+/** 생성 계약으로 fixture 요청을 검증하고 서버 모드는 공통 rewrite에 맡긴다. */
 export async function creditPromotionsResponse(
   request: Request,
   code?: string,
@@ -83,69 +88,65 @@ export async function creditPromotionsResponse(
   if (request.method !== 'GET' && !isSameOrigin(request))
     return failure(403, '허용되지 않은 요청입니다.');
 
-  if (new URL(request.url).search)
-    return failure(400, '지원하지 않는 쿼리입니다.');
+  const endpoint = findAdminEndpoint(
+    '/credits/promotions' +
+      (code === undefined ? '' : `/${encodeURIComponent(code)}`),
+    request.method,
+  );
 
-  if (request.method === 'GET')
-    return Response.json(
-      {
-        items: promotionModels.map((model) => ({
-          ...model,
-          promotion: model.promotion ? status(model.promotion) : null,
-        })),
-      },
-      { headers: { 'Cache-Control': 'no-store' } },
-    );
-
-  const model = promotionModels.find((item) => item.code === code);
-
-  if (!model) return failure(404, '모델을 찾을 수 없습니다.');
+  if (!endpoint?.operation || !endpoint.serverPath)
+    return failure(404, '지원하지 않는 경로입니다.');
 
   try {
-    // 이 검사는 fixture 동작용이며 서버 전달에는 생성 Zod 검증이 필요하다.
-    const body: unknown = await request.json();
+    const body = await validateAdminRequest(
+      new NextRequest(request.url, {
+        method: request.method,
+        headers: request.headers,
+        ...(request.method === 'GET' ? {} : { body: await request.text() }),
+      }),
+      endpoint.operation,
+      endpoint.serverPath,
+      endpoint.operation.path,
+    );
 
-    if (!body || typeof body !== 'object' || Array.isArray(body))
-      throw new Error();
+    if (request.method === 'GET')
+      return Response.json(
+        {
+          items: promotionModels.map((model) => ({
+            ...model,
+            promotion: model.promotion ? status(model.promotion) : null,
+          })),
+        },
+        { headers: { 'Cache-Control': 'no-store' } },
+      );
 
-    const value = body as Record<string, unknown>;
+    const model = promotionModels.find((item) => item.code === code);
 
-    if (
-      typeof value.reason !== 'string' ||
-      !value.reason.trim() ||
-      value.reason.length > 500
-    )
-      throw new Error();
+    if (!model) return failure(404, '모델을 찾을 수 없습니다.');
 
     if (request.method === 'DELETE') {
-      if (Object.keys(value).some((key) => key !== 'reason')) throw new Error();
+      const value = Delete3Body.parse(JSON.parse(body!));
+
+      // 서버의 비공백 사유 검증은 OpenAPI에 없어 fixture 동작으로 재현한다.
+      if (!value.reason.trim()) return failure(400, '사유를 입력해 주세요.');
 
       if (!model.promotion) return failure(404, '프로모션을 찾을 수 없습니다.');
 
       model.promotion = null;
     } else if (request.method === 'PUT') {
-      if (
-        Object.keys(value).some(
-          (key) => !['turnCost', 'startsAt', 'endsAt', 'reason'].includes(key),
-        )
-      )
-        throw new Error();
+      const { turnCost, startsAt, endsAt, reason } = Upsert2Body.parse(
+        JSON.parse(body!),
+      );
 
-      const { turnCost, startsAt, endsAt } = value;
-
+      // 필수값과 int64 정수, 비공백 사유는 현재 생성 스키마가 표현하지 못하는 서버 제약이다.
       if (
-        typeof turnCost !== 'number' ||
+        turnCost === undefined ||
         !Number.isInteger(turnCost) ||
-        turnCost < 0 ||
-        turnCost > 10000 ||
-        typeof startsAt !== 'string' ||
-        typeof endsAt !== 'string' ||
-        !/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(startsAt) ||
-        !/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(endsAt) ||
-        !Number.isFinite(Date.parse(startsAt)) ||
-        !Number.isFinite(Date.parse(endsAt))
+        !startsAt ||
+        !endsAt ||
+        !reason.trim()
       )
-        throw new Error();
+        return failure(400, '요청 값이 올바르지 않습니다.');
 
       if (Date.parse(endsAt) <= Date.parse(startsAt))
         return failure(400, '종료 시각은 시작 시각 이후여야 합니다.');

@@ -1,20 +1,16 @@
 import { z } from 'zod';
 
-export interface ModelPromotion {
-  turnCost: number;
-  startsAt: string;
-  endsAt: string;
-  status: 'SCHEDULED' | 'ACTIVE' | 'ENDED';
-}
+import type { List8Response } from '@/api/generated/zod/admin';
 
-export interface PromotionModel {
-  code: string;
-  name: string;
-  turnCost: number;
-  isActive: boolean;
-  isDefault: boolean;
+// OpenAPI의 선택 필드를 화면 계약에서 필수로 좁히며 필드 타입은 생성 응답에서 가져온다.
+type GeneratedModel = NonNullable<
+  z.infer<typeof List8Response>['items']
+>[number];
+
+export type ModelPromotion = Required<NonNullable<GeneratedModel['promotion']>>;
+export type PromotionModel = Omit<Required<GeneratedModel>, 'promotion'> & {
   promotion: ModelPromotion | null;
-}
+};
 
 /** 브라우저 시간대와 무관하게 KST 입력값을 UTC로 바꾼다. */
 export function kstToUtc(value: string) {

@@ -83,6 +83,28 @@ export const adminOperations = [
     bodyRequired: true,
   },
   {
+    path: '/api/v1/admin/chat-models/{code}/promotion',
+    method: 'PUT',
+    parameters: [
+      { name: 'code', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    params: schemas.Upsert2Params,
+    query: undefined,
+    body: schemas.Upsert2Body,
+    bodyRequired: true,
+  },
+  {
+    path: '/api/v1/admin/chat-models/{code}/promotion',
+    method: 'DELETE',
+    parameters: [
+      { name: 'code', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    params: schemas.Delete3Params,
+    query: undefined,
+    body: schemas.Delete3Body,
+    bodyRequired: true,
+  },
+  {
     path: '/api/v1/admin/push/campaigns',
     method: 'GET',
     parameters: [
@@ -427,9 +449,9 @@ export const adminOperations = [
         schema: { type: 'string', format: 'uuid' },
       },
     ],
-    params: schemas.Delete4Params,
+    params: schemas.Delete5Params,
     query: undefined,
-    body: schemas.Delete4Body,
+    body: schemas.Delete5Body,
     bodyRequired: true,
   },
   {
@@ -1484,6 +1506,15 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/chat-models',
+    method: 'GET',
+    parameters: [],
+    params: undefined,
+    query: undefined,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/campaigns',
     method: 'GET',
     parameters: [],
@@ -1792,6 +1823,8 @@ export const adminOperations = [
                 'MEMBER_UNSUSPENDED',
                 'CREDIT_GRANTED',
                 'CREDIT_REVOKED',
+                'CHAT_MODEL_PROMOTION_UPSERTED',
+                'CHAT_MODEL_PROMOTION_DELETED',
                 'CREDIT_POLICY_UPSERTED',
                 'CREDIT_POLICY_DELETED',
                 'PUSH_CAMPAIGN_CREATED',
@@ -1817,6 +1850,7 @@ export const adminOperations = [
                 'MEMBER_QUERY',
                 'MEMBER',
                 'CREDIT_POLICY',
+                'CHAT_MODEL',
                 'PUSH_CAMPAIGN',
                 'PUSH_TEMPLATE',
                 'NOTICE',
