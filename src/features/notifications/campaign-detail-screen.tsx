@@ -13,13 +13,21 @@ import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { DetailSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { analyticsRefetch } from '@/features/analytics/range';
+import type { CampaignOpensResponse } from '@/features/analytics/types';
 import { useManagementMutation } from '@/features/management/mutation';
+import { CampaignOpens } from '@/features/notifications/campaign-opens';
 import type { Campaign } from '@/features/notifications/types';
 import { ConfirmDialog } from '@/features/originals/confirm-dialog';
 import { useApi } from '@/features/shared/use-api';
 
 export function CampaignDetailScreen({ id }: { id: string }) {
   const q = useApi<Campaign>(`/api/notifications/campaigns/${id}`);
+  const opens = useApi<CampaignOpensResponse>(
+    `/api/campaigns/push-opens/${id}`,
+    true,
+    { refetchInterval: analyticsRefetch },
+  );
   const item = q.data;
   const m = useManagementMutation();
   const [reason, setReason] = useState('');
@@ -47,7 +55,7 @@ export function CampaignDetailScreen({ id }: { id: string }) {
         error={q.error}
         retry={q.refetch}
       />
-      {item ? (
+      {item && !q.isError ? (
         <>
           <Card>
             <h2 className="mb-5 text-xl font-semibold">{item.title}</h2>
@@ -140,6 +148,7 @@ export function CampaignDetailScreen({ id }: { id: string }) {
             발송 요청 수는 실제 도달 수가 아닙니다. 도달 회원과 기기는 발송 결과
             보고를 집계한 값입니다.
           </p>
+          <CampaignOpens query={opens} />
           {item.status === 'SCHEDULED' || item.status === 'FAILED' ? (
             <Card className="mt-6">
               <form

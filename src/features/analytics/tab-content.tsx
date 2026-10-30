@@ -6,6 +6,10 @@ import { Card } from '@/components/ui/card';
 import { aiFeatureLabel, aiFeatures } from '@/features/dashboard/chart-data';
 
 import { Charts, dailyRows } from './charts';
+import {
+  NotificationOpenCount,
+  notificationOpenRate,
+} from './notification-opens';
 
 export { Charts, dailyRows } from './charts';
 
@@ -447,11 +451,6 @@ export function AcquisitionContent({
 
   if (tab === 'push') {
     const d = data as T.PushOpensResponse;
-    const states: Record<string, string> = {
-      BEFORE_MEASUREMENT: '측정 시작 전',
-      NO_LINK: '링크 없음',
-      PENDING: '발송 기록 없음',
-    };
     const rateHelp = <MetricHelp title="열람률" />;
     const activities = (
       [
@@ -489,6 +488,10 @@ export function AcquisitionContent({
               { label: '도달 회원', help: <MetricHelp title="도달 회원" /> },
               { label: '푸시 열람', help: <MetricHelp title="푸시 열람" /> },
               { label: '열람률', help: rateHelp },
+              {
+                label: '알림함 열람',
+                help: <MetricHelp title="알림함 열람" />,
+              },
             ]}
             empty={!d.campaigns.length}
             emptyContent="선택한 기간에 해당하는 관리자 캠페인이 없습니다.">
@@ -506,16 +509,11 @@ export function AcquisitionContent({
                 <td>{dateTime(row.startedAt)} KST</td>
                 <td>{n(row.deliveredMembers, '명')}</td>
                 <td>
-                  {row.openState === 'MEASURED'
-                    ? row.pushOpens === null
-                      ? '계산할 수 없음'
-                      : n(row.pushOpens, '명')
-                    : states[row.openState]}
+                  <NotificationOpenCount values={row} channel="push" />
                 </td>
+                <td>{notificationOpenRate(row)}</td>
                 <td>
-                  {row.openState === 'MEASURED'
-                    ? percent(row.pushOpenRate)
-                    : states[row.openState]}
+                  <NotificationOpenCount values={row} channel="inbox" />
                 </td>
               </tr>
             ))}
@@ -534,6 +532,10 @@ export function AcquisitionContent({
               { label: '도달 회원', help: <MetricHelp title="도달 회원" /> },
               { label: '푸시 열람', help: <MetricHelp title="푸시 열람" /> },
               { label: '열람률', help: rateHelp },
+              {
+                label: '알림함 열람',
+                help: <MetricHelp title="알림함 열람" />,
+              },
             ]}
             empty={!activities.length}>
             {activities.map((row) => (
@@ -550,16 +552,11 @@ export function AcquisitionContent({
                 </td>
                 <td>{n(row.deliveredMembers, '명')}</td>
                 <td>
-                  {row.openState === 'MEASURED'
-                    ? row.pushOpens === null
-                      ? '계산할 수 없음'
-                      : n(row.pushOpens, '명')
-                    : states[row.openState]}
+                  <NotificationOpenCount values={row} channel="push" />
                 </td>
+                <td>{notificationOpenRate(row)}</td>
                 <td>
-                  {row.openState === 'MEASURED'
-                    ? percent(row.pushOpenRate)
-                    : states[row.openState]}
+                  <NotificationOpenCount values={row} channel="inbox" />
                 </td>
               </tr>
             ))}

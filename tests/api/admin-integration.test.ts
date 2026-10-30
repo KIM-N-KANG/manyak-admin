@@ -22,6 +22,7 @@ const cases: [string, string, string, unknown?][] = [
     `${path}?from=2026-10-21&to=2026-10-23`,
     `${path}?from=2026-10-21&to=2026-10-23`,
   ]),
+  ['GET', `/campaigns/push-opens/${id}`, `/campaigns/push-opens/${id}`],
   [
     'POST',
     `/moderation/stories/${id}/takedown`,

@@ -308,35 +308,57 @@ export type AiCostTotals = {
   costPerStoryKrw: number | null;
 };
 
+export type NotificationOpenState =
+  | 'MEASURED'
+  | 'BEFORE_MEASUREMENT'
+  | 'NO_LINK'
+  | 'PENDING';
+export type NotificationOpenValues = {
+  openState: NotificationOpenState;
+  pushOpens: number | null;
+  webPushOpens: number | null;
+  androidPushOpens: number | null;
+  pushOpenRate: number | null;
+  inboxOpens: number | null;
+  webInboxOpens: number | null;
+  androidInboxOpens: number | null;
+};
 export type PushOpensResponse = {
   asOf: string | null;
   pendingDates: string[];
   from: string;
   to: string;
   measuredFrom: string | null;
-  campaigns: {
+  androidMeasuredFrom: string | null;
+  campaigns: (NotificationOpenValues & {
     campaignId: string;
     kind: 'SERVICE' | 'MARKETING';
     title: string;
     noticeId: string | null;
     startedAt: string;
     deliveredMembers: number;
-    openState: 'MEASURED' | 'BEFORE_MEASUREMENT' | 'NO_LINK' | 'PENDING';
-    pushOpens: number | null;
-    pushOpenRate: number | null;
-  }[];
+  })[];
   activityFrom: string | null;
-  activityTypes: {
+  activityTypes: (Omit<NotificationOpenValues, 'openState'> & {
+    openState: 'MEASURED' | 'BEFORE_MEASUREMENT';
     type:
       | 'STORY_COMPLETED'
       | 'STORY_MODERATION_COMPLETED'
       | 'ATTENDANCE_REMINDER'
       | 'CREDIT_EXPIRY_REMINDER';
     deliveredMembers: number;
-    openState: 'MEASURED' | 'BEFORE_MEASUREMENT';
-    pushOpens: number | null;
-    pushOpenRate: number | null;
-  }[];
+  })[];
+};
+export type CampaignOpensResponse = NotificationOpenValues & {
+  asOf: string | null;
+  pendingDates: string[];
+  campaignId: string;
+  startedAt: string | null;
+  from: string | null;
+  to: string | null;
+  measuredFrom: string | null;
+  androidMeasuredFrom: string | null;
+  deliveredMembers: number;
 };
 
 export type SessionLengthResponse = {

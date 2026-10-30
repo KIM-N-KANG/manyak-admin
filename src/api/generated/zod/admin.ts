@@ -1698,6 +1698,11 @@ export const PushOpensResponse = zod.object({
           .optional(),
         pushOpens: zod.number().nullish(),
         pushOpenRate: zod.number().nullish(),
+        webPushOpens: zod.number().nullish(),
+        androidPushOpens: zod.number().nullish(),
+        inboxOpens: zod.number().nullish(),
+        webInboxOpens: zod.number().nullish(),
+        androidInboxOpens: zod.number().nullish(),
       }),
     )
     .optional(),
@@ -1722,9 +1727,41 @@ export const PushOpensResponse = zod.object({
           .optional(),
         pushOpens: zod.number().nullish(),
         pushOpenRate: zod.number().nullish(),
+        webPushOpens: zod.number().nullish(),
+        androidPushOpens: zod.number().nullish(),
+        inboxOpens: zod.number().nullish(),
+        webInboxOpens: zod.number().nullish(),
+        androidInboxOpens: zod.number().nullish(),
       }),
     )
     .optional(),
+  androidMeasuredFrom: zod.iso.date().nullish(),
+});
+
+export const CampaignPushOpensParams = zod.object({
+  campaignId: zod.uuid(),
+});
+
+export const CampaignPushOpensResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).nullish(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+  campaignId: zod.uuid().optional(),
+  startedAt: zod.iso.datetime({ offset: true }).nullish(),
+  from: zod.iso.date().nullish(),
+  to: zod.iso.date().nullish(),
+  measuredFrom: zod.iso.date().nullish(),
+  androidMeasuredFrom: zod.iso.date().nullish(),
+  deliveredMembers: zod.number().optional(),
+  openState: zod
+    .enum(['MEASURED', 'BEFORE_MEASUREMENT', 'NO_LINK', 'PENDING'])
+    .optional(),
+  pushOpens: zod.number().nullish(),
+  pushOpenRate: zod.number().nullish(),
+  webPushOpens: zod.number().nullish(),
+  androidPushOpens: zod.number().nullish(),
+  inboxOpens: zod.number().nullish(),
+  webInboxOpens: zod.number().nullish(),
+  androidInboxOpens: zod.number().nullish(),
 });
 
 export const Story1QueryParams = zod.object({

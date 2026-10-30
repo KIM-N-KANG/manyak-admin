@@ -1568,6 +1568,22 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/campaigns/push-opens/{campaignId}',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'campaignId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string', format: 'uuid' },
+      },
+    ],
+    params: schemas.CampaignPushOpensParams,
+    query: undefined,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/campaigns/funnels/story-detail',
     method: 'GET',
     parameters: [
