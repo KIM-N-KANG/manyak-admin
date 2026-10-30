@@ -11,6 +11,24 @@ const cookie = `${sessionCookie}=${Buffer.from(JSON.stringify({ accessToken: 'fo
 const reason = { reason: '테스트 사유' };
 const presign = { kind: 'COVER', contentType: 'image/png', contentLength: 32 };
 const cases: [string, string, string, unknown?][] = [
+  ['GET', '/credits/promotions', '/chat-models'],
+  [
+    'PUT',
+    '/credits/promotions/LITE',
+    '/chat-models/LITE/promotion',
+    {
+      turnCost: 0,
+      startsAt: '2026-10-31T01:00:00Z',
+      endsAt: '2026-11-05T15:00:00Z',
+      reason: '할로윈 이벤트',
+    },
+  ],
+  [
+    'DELETE',
+    '/credits/promotions/LITE',
+    '/chat-models/LITE/promotion',
+    { reason: '이벤트 종료' },
+  ],
   ...[
     '/campaigns/funnels/activation',
     '/campaigns/reach',

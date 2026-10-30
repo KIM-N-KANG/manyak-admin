@@ -173,3 +173,41 @@ it('지표 응답 매체만 정규화하고 원본과 응답 DTO의 제약은 �
     expect(content['application/json']).toEqual(source['*/*']);
   }
 });
+
+it('채팅 모델 응답의 생성 입력 매체만 정규화하고 원본 계약은 바꾸지 않는다', () => {
+  const result = JSON.parse(
+    execFileSync(
+      process.execPath,
+      [
+        '--input-type=module',
+        '-e',
+        `
+    import { readFileSync } from 'node:fs';
+    import transform from './scripts/transform-admin-openapi.mjs';
+    const original = JSON.parse(readFileSync('docs/openapi/admin.json', 'utf8'));
+    const before = JSON.stringify(original);
+    const generated = transform(original);
+    const pairs = [['/chat-models', 'get'], ['/chat-models/{code}/promotion', 'put'], ['/chat-models/{code}/promotion', 'delete']];
+    console.log(JSON.stringify({
+      unchanged: before === JSON.stringify(original),
+      responses: pairs.map(([path, method]) => ({
+        source: original.paths['/api/v1/admin' + path][method].responses['200'].content,
+        result: generated.paths['/api/v1/admin' + path][method].responses['200'].content,
+      })),
+      schemasUnchanged: Object.keys(original.components.schemas).filter(name => name.startsWith('AdminChatModel')).every(name => JSON.stringify(original.components.schemas[name]) === JSON.stringify(generated.components.schemas[name])),
+    }));
+  `,
+      ],
+      { encoding: 'utf8' },
+    ),
+  );
+
+  expect(result.unchanged).toBe(true);
+  expect(result.schemasUnchanged).toBe(true);
+
+  for (const { source, result: content } of result.responses) {
+    expect(Object.keys(source)).toEqual(['*/*']);
+    expect(Object.keys(content)).toEqual(['application/json']);
+    expect(content['application/json']).toEqual(source['*/*']);
+  }
+});

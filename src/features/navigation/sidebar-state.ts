@@ -47,6 +47,14 @@ export const closedSidebar: SidebarPreferences = {
 };
 
 export function isMenuActive(pathname: string, href: string) {
+  if (href === '/credits/transactions')
+    return (
+      pathname === href ||
+      pathname.startsWith(`${href}/`) ||
+      pathname === '/credits/promotions' ||
+      pathname.startsWith('/credits/promotions/')
+    );
+
   return href === '/dashboard'
     ? pathname === href
     : pathname === href || pathname.startsWith(`${href}/`);
