@@ -1,5 +1,5 @@
-import { isMarketingNoticeTag, noticeTags } from '@/features/notices/tags';
-import type { Notice, NoticePublish } from '@/features/notices/types';
+import { noticeTags } from '@/features/notices/tags';
+import type { Notice } from '@/features/notices/types';
 import {
   checkFixtureId,
   FixtureError,
@@ -7,7 +7,6 @@ import {
   requireFixture,
   textField,
 } from '@/fixtures/management-bff';
-import { createNoticeCampaign } from '@/fixtures/notifications';
 
 const shared = globalThis as typeof globalThis & {
   manyakNotices?: Map<string, Notice>;
@@ -30,8 +29,6 @@ function records() {
             ][i % 3] + (i > 2 ? ` ${i + 1}` : ''),
           tag: noticeTags[i % noticeTags.length].value,
           body: '마냑 서비스 이용 안내입니다.\n자세한 내용을 확인해 주세요.',
-          notificationTitle: i < 2 ? null : '마냑의 새로운 소식',
-          notificationBody: i < 2 ? null : '새로운 운영 소식을 확인해 주세요.',
           status: i % 3 === 1 ? 'DRAFT' : 'PUBLISHED',
           publishedAt: i % 3 === 1 ? null : '2026-10-21T02:00:00Z',
           notifiedAt: i % 3 === 0 ? '2026-10-21T02:00:00Z' : null,
@@ -50,15 +47,11 @@ function records() {
 }
 
 export function listNotices() {
-  return [...records().values()].map(
-    ({ body, notificationTitle, notificationBody, ...item }) => {
-      void body;
-      void notificationTitle;
-      void notificationBody;
+  return [...records().values()].map(({ body, ...item }) => {
+    void body;
 
-      return structuredClone(item);
-    },
-  );
+    return structuredClone(item);
+  });
 }
 export function getNotice(id: string) {
   checkFixtureId(id);
@@ -83,39 +76,7 @@ export function saveNotice(body: Record<string, unknown>, id?: string) {
   if (!noticeTags.some((option) => option.value === tag))
     throw new Error('태그를 선택해 주세요.');
 
-  const titleChanged = body.notificationTitle != null;
-  const bodyChanged = body.notificationBody != null;
-  const notificationTitle =
-    titleChanged || !previous
-      ? textField(body, 'notificationTitle', 100)
-      : previous.notificationTitle;
-  const notificationBody =
-    bodyChanged || !previous
-      ? textField(body, 'notificationBody', 300)
-      : previous.notificationBody;
-
-  if (previous?.notifiedAt && (titleChanged || bodyChanged))
-    throw new FixtureError(
-      409,
-      '이미 알림을 요청한 공지라 알림 문구를 바꿀 수 없습니다.',
-    );
-
-  if (
-    previous &&
-    !previous.notifiedAt &&
-    (titleChanged || bodyChanged) &&
-    (notificationTitle === null || notificationBody === null)
-  )
-    throw new Error('알림 제목과 본문을 함께 입력해 주세요.');
-
-  if (
-    previous &&
-    body.title == null &&
-    body.body == null &&
-    body.tag == null &&
-    !titleChanged &&
-    !bodyChanged
-  )
+  if (previous && body.title == null && body.body == null && body.tag == null)
     throw new Error('변경할 내용을 입력해 주세요.');
 
   const now = new Date().toISOString();
@@ -124,8 +85,6 @@ export function saveNotice(body: Record<string, unknown>, id?: string) {
     title,
     tag: String(tag),
     body: content,
-    notificationTitle,
-    notificationBody,
     status: previous?.status ?? 'DRAFT',
     publishedAt: previous?.publishedAt ?? null,
     notifiedAt: previous?.notifiedAt ?? null,
@@ -141,10 +100,7 @@ export function saveNotice(body: Record<string, unknown>, id?: string) {
 
   return structuredClone(item);
 }
-export function publishNotice(
-  id: string,
-  body: Record<string, unknown>,
-): NoticePublish {
+export function publishNotice(id: string, body: Record<string, unknown>) {
   readReason(body);
 
   const item = getNotice(id);
@@ -152,31 +108,13 @@ export function publishNotice(
   if (item.status === 'PUBLISHED')
     throw new FixtureError(409, '이미 게시된 공지입니다.');
 
-  const notified = !item.notifiedAt;
-
   item.status = 'PUBLISHED';
   item.publishedAt = new Date().toISOString();
   item.updatedAt = item.publishedAt;
 
-  if (notified) {
-    if (item.notificationTitle === null || item.notificationBody === null)
-      throw new FixtureError(
-        409,
-        '알림 제목과 본문을 입력한 뒤 게시해 주세요.',
-      );
-
-    item.notifiedAt = item.publishedAt;
-    createNoticeCampaign(
-      id,
-      item.notificationTitle,
-      item.notificationBody,
-      isMarketingNoticeTag(item.tag) ? 'MARKETING' : 'SERVICE',
-    );
-  }
-
   records().set(id, item);
 
-  return { ...item, notified };
+  return structuredClone(item);
 }
 export function unpublishNotice(id: string, body: Record<string, unknown>) {
   readReason(body);
@@ -201,4 +139,14 @@ export function deleteNotice(id: string, body: Record<string, unknown>) {
     throw new FixtureError(409, '알림 이력이 없는 초안만 삭제할 수 있습니다.');
 
   records().delete(id);
+}
+
+/** 첫 공지 알림 캠페인이 생성된 시각을 기록한다. */
+export function markNoticeNotified(id: string, at: string) {
+  const item = getNotice(id);
+
+  if (!item.notifiedAt) {
+    item.notifiedAt = at;
+    records().set(id, item);
+  }
 }

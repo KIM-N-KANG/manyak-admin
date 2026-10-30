@@ -80,20 +80,18 @@ export function NoticeDetailScreen({ id }: { id: string }) {
                   item.notifiedAt ? dateTime(item.notifiedAt) : '—',
                 ],
                 ['수정 시각', dateTime(item.updatedAt)],
-                ['알림 제목', item.notificationTitle ?? '—'],
-                [
-                  '알림 본문',
-                  <span key="notification-body" className="whitespace-pre-wrap">
-                    {item.notificationBody ?? '—'}
-                  </span>,
-                ],
               ]}
             />
             <p className="mt-8 text-sm leading-7 whitespace-pre-wrap">
               {item.body}
             </p>
-            <div className="mt-6">
+            <div className="mt-6 flex flex-wrap gap-4">
               <TextLink href={`/notices/${id}/edit`}>내용 수정</TextLink>
+              {item.status === 'PUBLISHED' ? (
+                <TextLink href={`/notifications/campaigns/new?noticeId=${id}`}>
+                  알림 보내기
+                </TextLink>
+              ) : null}
             </div>
           </Card>
           <Card className="mt-6">
@@ -151,7 +149,7 @@ export function NoticeDetailScreen({ id }: { id: string }) {
         }
         description={
           action === 'publish' && item
-            ? noticePublishConfirmation(item.tag, item.notifiedAt)
+            ? noticePublishConfirmation()
             : action === 'delete'
               ? '삭제한 초안은 복구할 수 없습니다.'
               : '게시를 해제하면 사용자에게 보이지 않습니다.'
