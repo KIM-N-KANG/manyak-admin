@@ -103,7 +103,7 @@ const acquisitionTabs = [
   ['creatives', '광고 소재'],
   ['sources', '유입 소스'],
   ['app', '앱 유입'],
-  ['push', '푸시 열람'],
+  ['push', '알림 열람'],
 ] as const;
 const serviceTabs = [
   ['services', '서비스와 요청'],

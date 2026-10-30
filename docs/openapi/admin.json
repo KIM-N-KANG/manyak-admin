@@ -6,10 +6,10 @@
     "version": "v1"
   },
   "x-source": {
-    "input": "/private/tmp/knk-openapi/openapi-admin.json",
-    "receivedAt": "2026-10-30T08:07:47.637Z",
-    "revision": "a19d1ad",
-    "description": "로컬 병합 #435 6811081 + #434 aeea52c + #436 394780c, foundation-probe 제외"
+    "input": "/private/tmp/knk-openapi/openapi-admin-1927.json",
+    "receivedAt": "2026-10-30T08:29:32.111Z",
+    "revision": "17ecdd4",
+    "description": "로컬 병합 #435 + #434 + #436 + #437, foundation-probe 제외"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -2718,6 +2718,40 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PushOpensResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/campaigns/push-opens/{campaignId}": {
+      "get": {
+        "tags": ["campaign-analytics-controller"],
+        "operationId": "campaignPushOpens",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignPushOpensResponse"
                 }
               }
             }
@@ -7684,6 +7718,10 @@
             "items": {
               "$ref": "#/components/schemas/PushOpenActivity"
             }
+          },
+          "androidMeasuredFrom": {
+            "type": ["string", "null"],
+            "format": "date"
           }
         }
       },
@@ -7724,6 +7762,26 @@
           "pushOpenRate": {
             "type": ["number", "null"],
             "format": "double"
+          },
+          "webPushOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "androidPushOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "inboxOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "webInboxOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "androidInboxOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
           }
         }
       },
@@ -7757,6 +7815,102 @@
           "pushOpenRate": {
             "type": ["number", "null"],
             "format": "double"
+          },
+          "webPushOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "androidPushOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "inboxOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "webInboxOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "androidInboxOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          }
+        }
+      },
+      "CampaignPushOpensResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "campaignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "from": {
+            "type": ["string", "null"],
+            "format": "date"
+          },
+          "to": {
+            "type": ["string", "null"],
+            "format": "date"
+          },
+          "measuredFrom": {
+            "type": ["string", "null"],
+            "format": "date"
+          },
+          "androidMeasuredFrom": {
+            "type": ["string", "null"],
+            "format": "date"
+          },
+          "deliveredMembers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "openState": {
+            "type": "string",
+            "enum": ["MEASURED", "BEFORE_MEASUREMENT", "NO_LINK", "PENDING"]
+          },
+          "pushOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "pushOpenRate": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "webPushOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "androidPushOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "inboxOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "webInboxOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "androidInboxOpens": {
+            "type": ["integer", "null"],
+            "format": "int64"
           }
         }
       },

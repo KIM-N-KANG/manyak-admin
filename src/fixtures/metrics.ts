@@ -6,6 +6,7 @@ import { members } from '@/fixtures/entities';
 import { kstDate } from '@/fixtures/query';
 
 import { newMetricFixture } from './metrics-next';
+import { notificationOpenValues } from './notification-opens';
 
 const id = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 
@@ -104,9 +105,14 @@ export function metricFixture(path: string, query: URLSearchParams) {
         noticeId: id,
         startedAt: `${to}T02:00:31Z`,
         deliveredMembers: 412,
-        openState: 'MEASURED',
-        pushOpens: 58,
-        pushOpenRate: 0.1408,
+        ...notificationOpenValues(
+          'MEASURED',
+          412,
+          58,
+          to >= '2026-10-23' ? 21 : null,
+          3,
+          to >= '2026-10-23' ? 5 : null,
+        ),
       },
       {
         campaignId: 'c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f',
@@ -115,9 +121,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
         noticeId: null,
         startedAt: `${shiftDate(to, -1)}T02:00:00Z`,
         deliveredMembers: 230,
-        openState: 'NO_LINK',
-        pushOpens: null,
-        pushOpenRate: null,
+        ...notificationOpenValues('NO_LINK', 0),
       },
       {
         campaignId: '9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b',
@@ -126,9 +130,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
         noticeId: null,
         startedAt: `${shiftDate(to, -2)}T02:00:00Z`,
         deliveredMembers: 0,
-        openState: 'PENDING',
-        pushOpens: null,
-        pushOpenRate: null,
+        ...notificationOpenValues('PENDING', 0),
       },
       {
         campaignId: '4b7f0c2a-9d1e-4f3a-8c5b-6e2d1a0f9b37',
@@ -137,9 +139,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
         noticeId: null,
         startedAt: `${from}T01:00:00Z`,
         deliveredMembers: 198,
-        openState: 'BEFORE_MEASUREMENT',
-        pushOpens: null,
-        pushOpenRate: null,
+        ...notificationOpenValues('BEFORE_MEASUREMENT', 0),
       },
     ];
 
@@ -150,6 +150,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
         ? pendingDates.filter((date) => date >= measuredFrom)
         : [],
       measuredFrom,
+      androidMeasuredFrom: '2026-10-23',
       campaigns: campaigns
         .filter(
           (row) =>
@@ -160,9 +161,10 @@ export function metricFixture(path: string, query: URLSearchParams) {
           row.startedAt.slice(0, 10) < measuredFrom
             ? {
                 ...row,
-                openState: 'BEFORE_MEASUREMENT' as const,
-                pushOpens: null,
-                pushOpenRate: null,
+                ...notificationOpenValues(
+                  'BEFORE_MEASUREMENT',
+                  row.deliveredMembers,
+                ),
               }
             : row,
         ),
@@ -177,11 +179,20 @@ export function metricFixture(path: string, query: URLSearchParams) {
       ).map((type, i) => ({
         type,
         deliveredMembers: [61, 11, 1206, 80][i],
-        openState: activityFrom
-          ? ('MEASURED' as const)
-          : ('BEFORE_MEASUREMENT' as const),
-        pushOpens: activityFrom ? [27, 4, 104, 12][i] : null,
-        pushOpenRate: activityFrom ? [0.4426, 0.3636, 0.0862, 0.15][i] : null,
+        ...notificationOpenValues(
+          activityFrom ? 'MEASURED' : 'BEFORE_MEASUREMENT',
+          [61, 11, 1206, 80][i],
+          [27, 4, 104, 12][i],
+          activityFrom && activityFrom >= '2026-10-23'
+            ? [9, 2, 26, 3][i]
+            : null,
+          i === 3 ? 0 : [6, 1, 12][i],
+          activityFrom && activityFrom >= '2026-10-23'
+            ? i === 3
+              ? 0
+              : [2, 1, 4][i]
+            : null,
+        ),
       })),
     } satisfies T.PushOpensResponse;
   }

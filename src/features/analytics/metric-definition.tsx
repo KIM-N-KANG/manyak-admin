@@ -40,6 +40,7 @@ export const definitionTitles: Record<string, Record<string, number>> = {
     '커뮤니티와 SNS 게시글별 방문자': 10,
     '도달 회원': 11,
     '푸시 열람': 12,
+    '알림함 열람': 75,
     열람률: 13,
     'Android 누적 기기 설치 수': 14,
     '누적 기기 설치 수와 활성 기기 수': 14,

@@ -360,7 +360,7 @@ it('성장 유입의 하위 구분은 기간과 캠페인 조건을 유지하고
     '광고 소재',
     '유입 소스',
     '앱 유입',
-    '푸시 열람',
+    '알림 열람',
   ]);
   expect(screen.queryByRole('combobox', { name: '플랫폼' })).toBeNull();
   expect(screen.queryByRole('combobox', { name: '대상' })).toBeNull();

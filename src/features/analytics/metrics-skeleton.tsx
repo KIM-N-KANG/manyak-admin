@@ -31,7 +31,7 @@ export function MetricsSkeleton({ tab }: { tab: string }) {
   if (tab === 'push')
     return (
       <div className="space-y-5">
-        {[6, 4].map((columns) => (
+        {[7, 5].map((columns) => (
           <Card key={columns}>
             <Skeleton className="mb-4 h-7 w-36" />
             <TableSkeleton columns={columns} rows={10} pagination={false} />

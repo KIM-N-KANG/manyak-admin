@@ -202,7 +202,6 @@ function TabHeading({
         'reach',
         'creatives',
         'sources',
-        'push',
       ].includes(tab) ? (
         <span className="rounded-sm border bg-muted px-2 py-0.5 text-xs">
           {tab === 'app-activation' ? '앱' : '웹'}
