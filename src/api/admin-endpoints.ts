@@ -11,6 +11,12 @@ const aliases: Record<string, string> = {
 
 function browserPath(path: string) {
   const local = path.replace('/api/v1/admin', '');
+
+  if (local === '/chat-models') return '/credits/promotions';
+
+  if (local === '/chat-models/{code}/promotion')
+    return '/credits/promotions/:id';
+
   const alias = Object.entries(aliases).find(
     ([prefix]) => local === prefix || local.startsWith(`${prefix}/`),
   );
@@ -41,6 +47,19 @@ export const adminEndpoints: AdminEndpoint[] = [
       implemented: true,
       operation,
     })),
+  // OpenAPI 배포 뒤 생성 연산이 같은 경로를 먼저 연결한다.
+  {
+    browser: '/credits/promotions',
+    server: '/chat-models',
+    methods: ['GET'],
+    implemented: false,
+  },
+  {
+    browser: '/credits/promotions/:id',
+    server: '/chat-models/:id/promotion',
+    methods: ['PUT', 'DELETE'],
+    implemented: false,
+  },
   ...['/audit-logs/:id', '/originals/catalog', '/originals/images/:id'].map(
     (browser) => ({
       browser,

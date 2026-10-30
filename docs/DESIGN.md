@@ -557,7 +557,7 @@ Google Play 설치 지표는 개요 요약 그리드의 앱 설치(Android) 카�
 
 ### 관리자 웹 용어와 분석 구역
 
-화면 계약은 하네스 `docs/domain/ADMIN/WEB/`를 따른다. 대시보드 메뉴는 개요, 성장, 스토리, 채팅, 결제, 운영 순서다. 경로는 `/dashboard`, `/analytics/growth`, `/analytics/stories`, `/analytics/chats`, `/analytics/payments`, `/analytics/ops`다. 관리 메뉴의 채팅 저장 단위는 ‘채팅’, 원장 메뉴는 ‘이프’, 화면 제목은 ‘이프 내역’이다. 원장 필터는 ‘이프 변동 유형’의 적립과 소모를 사용하며 관리자 직접 작업의 지급과 회수 이름은 유지한다. 사유 이름은 `src/features/credits/reason-label.ts`에서 관리한다.
+화면 계약은 하네스 `docs/domain/ADMIN/WEB/`를 따른다. 대시보드 메뉴는 개요, 성장, 스토리, 채팅, 결제, 운영 순서다. 경로는 `/dashboard`, `/analytics/growth`, `/analytics/stories`, `/analytics/chats`, `/analytics/payments`, `/analytics/ops`다. 관리 메뉴의 채팅 저장 단위는 ‘채팅’, 원장 메뉴는 ‘이프’이며 경로로 구분하는 ‘이프 내역’과 ‘프로모션’ 탭을 둔다. 각 화면 제목도 탭 이름과 같다. 프로모션 표는 모델, 정가, 프로모션 가격, KST 기간, 상태, 동작 순서이고 설정과 해제에 공용 확인 대화상자를 사용한다. 원장 필터는 ‘이프 변동 유형’의 적립과 소모를 사용하며 관리자 직접 작업의 지급과 회수 이름은 유지한다. 사유 이름은 `src/features/credits/reason-label.ts`에서 관리한다.
 
 개요 카드의 이프 지표는 ‘이프 적립’, ‘이프 소모’, 결제 지표는 ‘결제 건수’, ‘결제 금액 (환불 포함)’이다. 기간 범위는 `YYYY-MM-DD ~ YYYY-MM-DD (KST)`로 표시한다. 화면 문구는 em dash와 가운뎃점 나열을 쓰지 않는다.
 
