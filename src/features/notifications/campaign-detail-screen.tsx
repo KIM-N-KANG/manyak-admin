@@ -9,6 +9,7 @@ import {
   QueryState,
   TextLink,
 } from '@/components/admin/data-ui';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { DetailSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -53,7 +54,34 @@ export function CampaignDetailScreen({ id }: { id: string }) {
             <DetailGrid
               items={[
                 ['상태', item.status],
-                ['종류', item.kind === 'SERVICE' ? '정보성' : '광고성'],
+                ...(item.status === 'FAILED' && item.failureReason
+                  ? [
+                      [
+                        '실패 사유',
+                        item.failureReason === 'NOTICE_NOT_PUBLISHED'
+                          ? '발송을 시작할 때 공지가 게시 상태가 아니어서 보내지 않았습니다. 공지를 다시 게시한 뒤 재실행하면 보낼 수 있습니다.'
+                          : item.failureReason,
+                      ] as [string, string],
+                    ]
+                  : []),
+                [
+                  '종류',
+                  <span
+                    key="kind"
+                    className="inline-flex flex-wrap items-center gap-2">
+                    <span>{item.kind === 'SERVICE' ? '정보성' : '광고성'}</span>
+                    {item.status === 'SCHEDULED' && item.noticeId ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        발송 때 다시 확인
+                        <HelpTooltip label="발송 때 다시 확인 도움말">
+                          발송을 시작할 때 공지의 태그로 알림 성격을 다시
+                          정합니다. 지금 보이는 성격과 대상 회원 수는 예약할 때
+                          기준입니다.
+                        </HelpTooltip>
+                      </span>
+                    ) : null}
+                  </span>,
+                ],
                 ['예약 시각', dateTime(item.scheduledAt)],
                 ['시작 시각', item.startedAt ? dateTime(item.startedAt) : '—'],
                 [

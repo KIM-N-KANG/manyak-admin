@@ -117,6 +117,7 @@ export const Create2Body = zod.object({
   scheduledAt: zod.iso.datetime({ offset: true }).nullish(),
   reason: zod.string().min(create2BodyReasonMin).max(create2BodyReasonMax),
   storyId: zod.uuid().nullish(),
+  noticeId: zod.uuid().nullish(),
 });
 
 export const Create2Response = zod.void();
@@ -238,18 +239,6 @@ export const create4BodyTitleMax = 100;
 export const create4BodyBodyMin = 0;
 export const create4BodyBodyMax = 5000;
 
-export const create4BodyNotificationTitleMin = 0;
-export const create4BodyNotificationTitleMax = 100;
-
-export const create4BodyNotificationTitleRegExp = new RegExp(
-  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
-);
-export const create4BodyNotificationBodyMin = 0;
-export const create4BodyNotificationBodyMax = 300;
-
-export const create4BodyNotificationBodyRegExp = new RegExp(
-  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
-);
 export const create4BodyReasonMin = 0;
 export const create4BodyReasonMax = 500;
 
@@ -257,16 +246,6 @@ export const Create4Body = zod.object({
   title: zod.string().min(create4BodyTitleMin).max(create4BodyTitleMax),
   body: zod.string().min(create4BodyBodyMin).max(create4BodyBodyMax),
   tag: zod.enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION']),
-  notificationTitle: zod
-    .string()
-    .min(create4BodyNotificationTitleMin)
-    .max(create4BodyNotificationTitleMax)
-    .regex(create4BodyNotificationTitleRegExp),
-  notificationBody: zod
-    .string()
-    .min(create4BodyNotificationBodyMin)
-    .max(create4BodyNotificationBodyMax)
-    .regex(create4BodyNotificationBodyRegExp),
   reason: zod.string().min(create4BodyReasonMin).max(create4BodyReasonMax),
 });
 
@@ -297,6 +276,71 @@ export const PublishBody = zod.object({
 });
 
 export const PublishResponse = zod.unknown();
+
+export const TakedownParams = zod.object({
+  storyId: zod.uuid(),
+});
+
+export const takedownBodyTwoReasonDetailMax = 100;
+
+export const takedownBodyTwoReasonDetailRegExp = new RegExp(
+  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
+);
+export const takedownBodyThreeReasonDetailMax = 100;
+
+export const takedownBodyThreeReasonDetailRegExp = new RegExp(
+  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
+);
+export const takedownBodyThreeMemoMax = 500;
+
+export const takedownBodyThreeMemoRegExp = new RegExp(
+  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
+);
+
+export const TakedownBody = zod
+  .union([
+    zod.object({
+      reasonCode: zod.enum([
+        'SEXUAL_CONTENT',
+        'COPYRIGHT_INFRINGEMENT',
+        'HATE_SPEECH',
+      ]),
+      reasonDetail: zod.null().optional(),
+    }),
+    zod.object({
+      reasonCode: zod.enum(['ETC']),
+      reasonDetail: zod
+        .string()
+        .min(1)
+        .max(takedownBodyTwoReasonDetailMax)
+        .regex(takedownBodyTwoReasonDetailRegExp),
+    }),
+  ])
+  .and(
+    zod.object({
+      reasonCode: zod.enum([
+        'SEXUAL_CONTENT',
+        'COPYRIGHT_INFRINGEMENT',
+        'HATE_SPEECH',
+        'ETC',
+      ]),
+      reasonDetail: zod
+        .string()
+        .min(1)
+        .max(takedownBodyThreeReasonDetailMax)
+        .regex(takedownBodyThreeReasonDetailRegExp)
+        .nullish()
+        .describe('ETC일 때 필수이며 다른 사유에서는 생략 또는 null'),
+      memo: zod
+        .string()
+        .min(1)
+        .max(takedownBodyThreeMemoMax)
+        .regex(takedownBodyThreeMemoRegExp)
+        .nullish(),
+    }),
+  );
+
+export const TakedownResponse = zod.unknown();
 
 export const ReleaseParams = zod.object({
   submissionId: zod.uuid(),
@@ -402,16 +446,6 @@ export const Update2Params = zod.object({
   noticeId: zod.uuid(),
 });
 
-export const update2BodyNotificationTitleMax = 100;
-
-export const update2BodyNotificationTitleRegExp = new RegExp(
-  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
-);
-export const update2BodyNotificationBodyMax = 300;
-
-export const update2BodyNotificationBodyRegExp = new RegExp(
-  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
-);
 export const update2BodyTitleMax = 100;
 
 export const update2BodyTitleRegExp = new RegExp(
@@ -428,18 +462,6 @@ export const update2BodyReasonMax = 500;
 export const Update2Body = zod.object({
   tag: zod
     .enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION'])
-    .nullish(),
-  notificationTitle: zod
-    .string()
-    .min(1)
-    .max(update2BodyNotificationTitleMax)
-    .regex(update2BodyNotificationTitleRegExp)
-    .nullish(),
-  notificationBody: zod
-    .string()
-    .min(1)
-    .max(update2BodyNotificationBodyMax)
-    .regex(update2BodyNotificationBodyRegExp)
     .nullish(),
   title: zod
     .string()
@@ -467,22 +489,39 @@ export const SignupsQueryParams = zod.object({
 export const SignupsResponse = zod.unknown();
 
 export const SessionsQueryParams = zod.object({
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
-  segment: zod.enum(['all', 'guest', 'member']).optional(),
 });
 
 export const SessionsResponse = zod.unknown();
 
-export const RetentionQueryParams = zod.object({
+export const SessionLengthsQueryParams = zod.object({
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
+});
+
+export const SessionLengthsResponse = zod.unknown();
+
+export const RetentionQueryParams = zod.object({
   cohort: zod.enum(['visitor', 'signup', 'first-chat']).optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
 });
 
 export const RetentionResponse = zod.unknown();
+
+export const AppActivationQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const AppActivationResponse = zod.unknown();
 
 export const ActivityQueryParams = zod.object({
   from: zod.string().optional(),
@@ -526,20 +565,12 @@ export const StoriesQueryParams = zod.object({
       .min(storiesQueryRequestSupportingCharacterCountMin)
       .max(storiesQueryRequestSupportingCharacterCountMax)
       .nullish(),
-    creationMode: zod
-      .enum(['GENERAL', 'SIMPLE'])
-      .optional()
-      .describe(
-        'SIMPLE은 스토리를 완성한 제작 세션이 있는 간편 제작, GENERAL은 그 밖의 일반 제작',
-      ),
+    creationMode: zod.enum(['GENERAL', 'SIMPLE']).nullish(),
     chatFrom: zod.string().nullish(),
     chatTo: zod.string().nullish(),
     creationFrom: zod.string().nullish(),
     creationTo: zod.string().nullish(),
-    deleted: zod
-      .enum(['include', 'only'])
-      .optional()
-      .describe('생략 시 삭제 제외, include는 포함, only는 삭제된 행만'),
+    deleted: zod.enum(['include', 'only']).nullish(),
   }),
 });
 
@@ -552,7 +583,7 @@ export const StoryParams = zod.object({
 export const StoryResponse = zod.unknown();
 
 /**
- * 삭제되지 않은 모든 스토리의 현재 저장값 원문과 이미지 전부를 검수 상태와 함께 돌려줍니다. 승인 전 제출본은 반영하지 않으며 접속 기록은 남기지 않습니다.
+ * 삭제된 스토리를 포함한 모든 스토리의 현재 저장값 원문과 이미지 전부를 검수 상태, 삭제 시각과 함께 돌려줍니다. 승인 전 제출본은 반영하지 않으며 접속 기록은 남기지 않습니다.
  * @summary 스토리 설정
  */
 export const StorySettingsParams = zod.object({
@@ -563,19 +594,19 @@ export const StorySettingsResponse = zod.unknown();
 
 export const QualityQueryParams = zod.object({
   platform: zod.string().optional(),
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
-  segment: zod.enum(['all', 'guest', 'member']).optional(),
 });
 
 export const QualityResponse = zod.unknown();
 
 export const OptionsQueryParams = zod.object({
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
   days: zod.enum(['7', '30', '90']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
-  segment: zod.enum(['all', 'guest', 'member']).optional(),
 });
 
 export const OptionsResponse = zod.unknown();
@@ -595,6 +626,7 @@ export const StatsQueryParams = zod.object({
     .enum([
       'STORY_COMPLETED',
       'STORY_MODERATION_COMPLETED',
+      'STORY_TAKEN_DOWN',
       'ATTENDANCE_REMINDER',
       'CREDIT_EXPIRY_REMINDER',
       'PROMOTION',
@@ -1076,10 +1108,10 @@ export const CreditTransactionsResponse = zod.unknown();
 export const PoliciesResponse = zod.unknown();
 
 export const ReachQueryParams = zod.object({
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
   days: zod.enum(['7', '30', '90']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
-  segment: zod.enum(['all', 'guest', 'member']).optional(),
 });
 
 export const ReachResponse = zod.unknown();
@@ -1132,10 +1164,7 @@ export const ChatsQueryParams = zod.object({
       .nullish(),
     hasFirstMessage: zod.boolean().nullish(),
     turnDate: zod.string().nullish(),
-    deleted: zod
-      .enum(['include', 'only'])
-      .optional()
-      .describe('생략 시 삭제 제외, include는 포함, only는 삭제된 행만'),
+    deleted: zod.enum(['include', 'only']).nullish(),
   }),
 });
 
@@ -1156,6 +1185,15 @@ export const SourcesQueryParams = zod.object({
 });
 
 export const SourcesResponse = zod.unknown();
+
+export const Reach1QueryParams = zod.object({
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const Reach1Response = zod.unknown();
 
 export const PushOpensQueryParams = zod.object({
   from: zod.string().optional(),
@@ -1183,6 +1221,32 @@ export const CreationQueryParams = zod.object({
 });
 
 export const CreationResponse = zod.unknown();
+
+export const ActivationQueryParams = zod.object({
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const ActivationResponse = zod.unknown();
+
+export const CreativesQueryParams = zod.object({
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const CreativesResponse = zod.unknown();
+
+export const AppTransferQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const AppTransferResponse = zod.unknown();
 
 export const Analytics1QueryParams = zod.object({
   campaign: zod.string().optional(),
@@ -1235,6 +1299,7 @@ export const AuditLogsQueryParams = zod.object({
         'ORIGINAL_CREATED',
         'ORIGINAL_UPDATED',
         'ORIGINAL_THUMBNAIL_DELETED',
+        'STORY_TAKEN_DOWN',
         'SUBMISSION_HOLD_RELEASED',
       ])
       .nullish(),
@@ -1270,76 +1335,3 @@ export const DeleteThumbnail1Body = zod.object({
 });
 
 export const DeleteThumbnail1Response = zod.unknown();
-
-export const TakedownStoryParams = zod.object({
-  storyId: zod.uuid(),
-});
-
-export const takedownStoryBodyOneMemoMax = 500;
-
-export const takedownStoryBodyOneMemoRegExp = new RegExp(
-  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
-);
-export const takedownStoryBodyTwoReasonDetailMax = 100;
-
-export const takedownStoryBodyTwoReasonDetailRegExp = new RegExp(
-  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
-);
-export const takedownStoryBodyTwoMemoMax = 500;
-
-export const takedownStoryBodyTwoMemoRegExp = new RegExp(
-  '[\\s\\S]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000][\\s\\S]*',
-);
-
-export const TakedownStoryBody = zod.union([
-  zod.object({
-    reasonCode: zod.enum([
-      'SEXUAL_CONTENT',
-      'COPYRIGHT_INFRINGEMENT',
-      'HATE_SPEECH',
-    ]),
-    reasonDetail: zod.null().optional(),
-    memo: zod
-      .string()
-      .min(1)
-      .max(takedownStoryBodyOneMemoMax)
-      .regex(takedownStoryBodyOneMemoRegExp)
-      .nullish(),
-  }),
-  zod.object({
-    reasonCode: zod.enum(['ETC']),
-    reasonDetail: zod
-      .string()
-      .min(1)
-      .max(takedownStoryBodyTwoReasonDetailMax)
-      .regex(takedownStoryBodyTwoReasonDetailRegExp),
-    memo: zod
-      .string()
-      .min(1)
-      .max(takedownStoryBodyTwoMemoMax)
-      .regex(takedownStoryBodyTwoMemoRegExp)
-      .nullish(),
-  }),
-]);
-
-export const TakedownStoryResponse = zod.object({
-  storyId: zod.uuid(),
-  visibility: zod.enum(['PRIVATE']),
-  takenDownAt: zod.iso.datetime({ offset: true }),
-  takedownReason: zod.enum([
-    'SEXUAL_CONTENT',
-    'COPYRIGHT_INFRINGEMENT',
-    'HATE_SPEECH',
-    'ETC',
-  ]),
-  takedownReasonDetail: zod.string().nullable(),
-});
-
-export const SessionLengthsQueryParams = zod.object({
-  from: zod.string().optional(),
-  to: zod.string().optional(),
-  days: zod.string().optional(),
-  segment: zod.enum(['all', 'guest', 'member']).optional(),
-});
-
-export const SessionLengthsResponse = zod.unknown();

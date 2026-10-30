@@ -140,7 +140,7 @@ function fill(view: HTMLElement) {
 
 describe('알림 화면의 BFF 연결', () => {
   it.each(['SERVICE', 'PROMOTION'])(
-    '공지 %s 태그의 게시 확인에 알림 대상을 표시한다',
+    '공지 %s 태그의 게시 확인에 알림을 따로 보낸다고 표시한다',
     async (tag) => {
       const item = saveNotice({
         notificationTitle: '알림 제목',
@@ -164,9 +164,7 @@ describe('알림 화면의 BFF 연결', () => {
       const dialog = await screen.findByRole('dialog');
 
       expect(dialog.textContent).toContain(
-        tag === 'SERVICE'
-          ? '게시하면 회원에게 알림이 갑니다. 게시할까요?'
-          : '게시하면 광고 수신에 동의한 회원에게 광고 알림이 갑니다. 게시할까요?',
+        '게시하면 회원과 게스트에게 공지가 보입니다. 알림은 가지 않으며 게시한 뒤 알림 보내기로 따로 보냅니다. 게시할까요?',
       );
 
       expect(writes).toHaveLength(0);
@@ -243,7 +241,7 @@ describe('알림 화면의 BFF 연결', () => {
     await waitFor(() => expect(nav.push).toHaveBeenCalled());
     expect(writes[0].body).toMatchObject({ storyId: story.storyId });
   });
-  it('비공개 스토리 미리 채움은 발송을 막고 정보성은 공지 작성으로 안내한다', async () => {
+  it('비공개 스토리 미리 채움은 발송을 막는다', async () => {
     render(
       wrap(
         createElement(CampaignFormScreen, {
@@ -261,12 +259,6 @@ describe('알림 화면의 BFF 연결', () => {
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(true);
-    fireEvent.click(screen.getByRole('radio', { name: '정보성' }));
-    expect(
-      screen
-        .getByRole('link', { name: '공지 작성으로 이동' })
-        .getAttribute('href'),
-    ).toBe('/notices/new');
     expect(writes).toHaveLength(0);
   });
   it('목록의 숫자 페이지·정렬이 필터를 보존한다', async () => {

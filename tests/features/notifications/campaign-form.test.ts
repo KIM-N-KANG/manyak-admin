@@ -109,6 +109,7 @@ describe('이동 대상 스토리 선택기', () => {
   it('검색어 없이 채팅이 많은 공개 스토리를 보여 주고 키보드로 고른다', async () => {
     renderForm();
     expect(screen.getByText('이동 대상 없음', { selector: 'p' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: '스토리' }));
     fireEvent.click(screen.getByRole('button', { name: '스토리 선택' }));
 
     const input = combobox();
@@ -155,6 +156,7 @@ describe('이동 대상 스토리 선택기', () => {
   });
   it('입력이 멈춘 뒤 한 번만 검색하고 일치 부분을 강조한다', async () => {
     renderForm();
+    fireEvent.click(screen.getByRole('radio', { name: '스토리' }));
     fireEvent.click(screen.getByRole('button', { name: '스토리 선택' }));
     await screen.findAllByRole('option');
     fireEvent.change(combobox(), { target: { value: '별' } });
@@ -185,6 +187,7 @@ describe('이동 대상 스토리 선택기', () => {
 
     searchGate = new Promise((resolve) => (release = resolve));
     renderForm();
+    fireEvent.click(screen.getByRole('radio', { name: '스토리' }));
     fireEvent.click(screen.getByRole('button', { name: '스토리 선택' }));
 
     const previous = await screen.findAllByRole('option');
@@ -218,6 +221,7 @@ describe('이동 대상 스토리 선택기', () => {
   });
   it('결과가 없으면 안내하고 지우기 버튼으로 기본 목록에 돌아간다', async () => {
     renderForm();
+    fireEvent.click(screen.getByRole('radio', { name: '스토리' }));
     fireEvent.click(screen.getByRole('button', { name: '스토리 선택' }));
     fireEvent.change(combobox(), { target: { value: '없는제목' } });
     expect(
@@ -231,6 +235,7 @@ describe('이동 대상 스토리 선택기', () => {
   });
   it('Esc는 포커스를 되돌리며 닫고 바깥을 누르면 닫는다', async () => {
     renderForm();
+    fireEvent.click(screen.getByRole('radio', { name: '스토리' }));
     fireEvent.click(screen.getByRole('button', { name: '스토리 선택' }));
     fireEvent.keyDown(combobox(), { key: 'Escape' });
     expect(screen.queryByRole('combobox')).toBeNull();

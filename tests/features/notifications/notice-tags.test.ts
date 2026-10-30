@@ -108,8 +108,6 @@ it('다섯 태그는 기본 선택 없이 제목 위에 놓이고 점검을 골�
 
   for (const [name, value] of Object.entries({
     title: '점검 테스트',
-    notificationTitle: '알림 제목',
-    notificationBody: '알림 본문',
     body: '본문',
     reason: '작성',
   }))
@@ -128,8 +126,6 @@ it('다섯 태그는 기본 선택 없이 제목 위에 놓이고 점검을 골�
     url: '/api/notices',
     body: {
       title: '점검 테스트',
-      notificationTitle: '알림 제목',
-      notificationBody: '알림 본문',
       body: '본문',
       reason: '작성',
       tag: 'MAINTENANCE',
@@ -139,8 +135,6 @@ it('다섯 태그는 기본 선택 없이 제목 위에 놓이고 점검을 골�
 
 it('수정은 현재 이벤트를 선택하고 바꾼 태그를 전달한다', async () => {
   const item = saveNotice({
-    notificationTitle: '알림 제목',
-    notificationBody: '알림 본문',
     title: '수정 테스트',
     body: '본문',
     tag: 'EVENT',
@@ -171,7 +165,7 @@ it('태그 도움말은 포커스로 열리고 aria-describedby로 연결된다'
   const tooltip = await screen.findByRole('tooltip');
 
   expect(tooltip.textContent).toBe(
-    '공지사항, 업데이트, 점검은 활성 회원 전체의 알림 내역에 표시됩니다. 푸시는 서비스 알림 설정과 기기 수신 가능 여부에 따라 발송됩니다. 이벤트와 홍보는 광고성 알림으로 광고 수신에 동의한 활성 회원의 알림 내역에 원문으로 표시되고 푸시 제목 앞에는 (광고)가 자동으로 붙습니다. 푸시는 광고 수신 동의, 야간 수신 동의, 기기 수신 가능 여부에 따라 발송됩니다.',
+    '공지사항, 업데이트, 점검은 정보성이고 이벤트와 홍보는 광고성입니다. 이 공지로 알림을 보내면 태그에 따라 알림 성격이 정해집니다. 정보성은 활성 회원 전체의 알림함에 표시되고 푸시는 서비스 알림 설정과 기기 수신 가능 여부에 따라 발송됩니다. 광고성은 광고 수신에 동의한 활성 회원의 알림함에 원문으로 표시되고 푸시 제목 앞에는 (광고)가 자동으로 붙습니다. 푸시는 광고 수신 동의, 야간 수신 동의, 기기 수신 가능 여부에 따라 발송됩니다.',
   );
   expect(trigger.getAttribute('aria-describedby')?.split(' ')).toContain(
     tooltip.id,
@@ -232,11 +226,9 @@ it.each(['UPDATE', 'NEWS', 'ACTIVE'])(
 );
 
 it.each(noticeTags)(
-  '$label 게시 요청에는 사유만 보내고 태그에 따라 알림 종류를 정한다',
+  '$label 게시 요청에는 사유만 보내고 알림을 요청하지 않는다',
   async ({ value: tag }) => {
     const item = saveNotice({
-      notificationTitle: '알림 제목',
-      notificationBody: '알림 본문',
       title: `게시 ${tag}`,
       body: '본문',
       tag,
@@ -253,12 +245,9 @@ it.each(noticeTags)(
     fireEvent.click(screen.getByRole('button', { name: '게시' }));
 
     const dialog = await screen.findByRole('dialog');
-    const marketing = tag === 'EVENT' || tag === 'PROMOTION';
 
     expect(dialog.textContent).toContain(
-      marketing
-        ? '게시하면 광고 수신에 동의한 회원에게 광고 알림이 갑니다. 게시할까요?'
-        : '게시하면 회원에게 알림이 갑니다. 게시할까요?',
+      '게시하면 회원과 게스트에게 공지가 보입니다. 알림은 가지 않으며 게시한 뒤 알림 보내기로 따로 보냅니다. 게시할까요?',
     );
     fireEvent.click(within(dialog).getByRole('button', { name: '확인' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
@@ -271,7 +260,7 @@ it.each(noticeTags)(
     expect(
       listCampaigns().find((campaign) => campaign.noticeId === item.noticeId)
         ?.kind,
-    ).toBe(marketing ? 'MARKETING' : 'SERVICE');
+    ).toBeUndefined();
   },
 );
 
@@ -284,7 +273,7 @@ it.each([
   ['SERVICE', null, null],
   ['PROMOTION', null, false],
 ] as const)(
-  '%s 공지는 notifiedAt=%s를 기준으로 확인하며 notified=%j와 무관하다',
+  '%s 공지는 notifiedAt=%s와 notified=%j와 무관하다',
   async (tag, notifiedAt, notified) => {
     const item = {
       ...saveNotice({
@@ -308,11 +297,8 @@ it.each([
     fireEvent.click(screen.getByRole('button', { name: '게시' }));
 
     const dialog = await screen.findByRole('dialog');
-    const expected = notifiedAt
-      ? '이미 알림을 요청한 공지입니다. 다시 게시해도 알림을 다시 요청하지 않습니다. 게시할까요?'
-      : tag === 'PROMOTION'
-        ? '게시하면 광고 수신에 동의한 회원에게 광고 알림이 갑니다. 게시할까요?'
-        : '게시하면 회원에게 알림이 갑니다. 게시할까요?';
+    const expected =
+      '게시하면 회원과 게스트에게 공지가 보입니다. 알림은 가지 않으며 게시한 뒤 알림 보내기로 따로 보냅니다. 게시할까요?';
 
     expect(dialog.textContent).toContain(expected);
 

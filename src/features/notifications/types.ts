@@ -12,6 +12,7 @@ export type Campaign = {
   body: string;
   scheduledAt: string;
   status: CampaignStatus;
+  failureReason: string | null;
   noticeId: string | null;
   storyId?: string | null;
   targetCount: number | null;
@@ -71,4 +72,5 @@ export type CampaignCreateRequest = {
   reason: string;
   scheduledAt?: string;
   storyId?: string;
+  noticeId?: string;
 };

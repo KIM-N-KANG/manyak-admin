@@ -2,6 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 const input = process.argv[2];
 const revision = process.argv[3];
+const description = process.argv[4];
 
 if (!input) throw new Error('OpenAPI 입력 URL 또는 파일 경로가 필요하다.');
 
@@ -72,7 +73,12 @@ await writeFile(
         title: 'Manyak admin API',
         description: '관리자 경로와 해당 경로가 참조하는 구성 요소만 추출했다.',
       },
-      'x-source': { input, receivedAt, ...(revision ? { revision } : {}) },
+      'x-source': {
+        input,
+        receivedAt,
+        ...(revision ? { revision } : {}),
+        ...(description ? { description } : {}),
+      },
       paths,
       components,
     },
