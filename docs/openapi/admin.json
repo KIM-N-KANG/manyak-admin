@@ -6,9 +6,10 @@
     "version": "v1"
   },
   "x-source": {
-    "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-10-25T10:33:28.011Z",
-    "revision": "3ea4a0d"
+    "input": "/private/tmp/knk-openapi/openapi-admin.json",
+    "receivedAt": "2026-10-30T08:07:47.637Z",
+    "revision": "a19d1ad",
+    "description": "로컬 병합 #435 6811081 + #434 aeea52c + #436 394780c, foundation-probe 제외"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -584,6 +585,50 @@
         ]
       }
     },
+    "/api/v1/admin/moderation/stories/{storyId}/takedown": {
+      "post": {
+        "tags": ["admin-moderation-controller"],
+        "operationId": "takedown",
+        "parameters": [
+          {
+            "name": "storyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryTakedownRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryTakedownResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/admin/moderation/holds/{submissionId}/release": {
       "post": {
         "tags": ["admin-moderation-controller"],
@@ -977,6 +1022,15 @@
         "operationId": "sessions",
         "parameters": [
           {
+            "name": "segment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["all", "guest", "member"]
+            }
+          },
+          {
             "name": "from",
             "in": "query",
             "required": false,
@@ -999,15 +1053,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "segment",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["all", "guest", "member"]
-            }
           }
         ],
         "responses": {
@@ -1029,10 +1074,126 @@
         ]
       }
     },
+    "/api/v1/admin/users/session-lengths": {
+      "get": {
+        "tags": ["admin-metrics-controller"],
+        "operationId": "sessionLengths",
+        "parameters": [
+          {
+            "name": "segment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["all", "guest", "member"]
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionLengthResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/admin/users/retention": {
       "get": {
         "tags": ["admin-metrics-controller"],
         "operationId": "retention",
+        "parameters": [
+          {
+            "name": "cohort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["visitor", "signup", "first-chat"]
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/app-activation": {
+      "get": {
+        "tags": ["admin-metrics-controller"],
+        "operationId": "appActivation",
         "parameters": [
           {
             "name": "from",
@@ -1057,15 +1218,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "cohort",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["visitor", "signup", "first-chat"]
-            }
           }
         ],
         "responses": {
@@ -1074,7 +1226,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/RetentionResponse"
+                  "$ref": "#/components/schemas/AppActivationResponse"
                 }
               }
             }
@@ -1197,7 +1349,7 @@
       "get": {
         "tags": ["admin-read-controller"],
         "summary": "스토리 설정",
-        "description": "삭제되지 않은 모든 스토리의 현재 저장값 원문과 이미지 전부를 검수 상태와 함께 돌려줍니다. 승인 전 제출본은 반영하지 않으며 접속 기록은 남기지 않습니다.",
+        "description": "삭제된 스토리를 포함한 모든 스토리의 현재 저장값 원문과 이미지 전부를 검수 상태, 삭제 시각과 함께 돌려줍니다. 승인 전 제출본은 반영하지 않으며 접속 기록은 남기지 않습니다.",
         "operationId": "storySettings",
         "parameters": [
           {
@@ -1243,6 +1395,15 @@
             }
           },
           {
+            "name": "segment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["all", "guest", "member"]
+            }
+          },
+          {
             "name": "from",
             "in": "query",
             "required": false,
@@ -1264,15 +1425,6 @@
             "required": false,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "segment",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["all", "guest", "member"]
             }
           }
         ],
@@ -1301,6 +1453,15 @@
         "operationId": "options",
         "parameters": [
           {
+            "name": "segment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["all", "guest", "member"]
+            }
+          },
+          {
             "name": "days",
             "in": "query",
             "required": false,
@@ -1323,15 +1484,6 @@
             "required": false,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "segment",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["all", "guest", "member"]
             }
           }
         ],
@@ -1436,6 +1588,7 @@
               "enum": [
                 "STORY_COMPLETED",
                 "STORY_MODERATION_COMPLETED",
+                "STORY_TAKEN_DOWN",
                 "ATTENDANCE_REMINDER",
                 "CREDIT_EXPIRY_REMINDER",
                 "PROMOTION",
@@ -2209,6 +2362,15 @@
         "operationId": "reach",
         "parameters": [
           {
+            "name": "segment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["all", "guest", "member"]
+            }
+          },
+          {
             "name": "days",
             "in": "query",
             "required": false,
@@ -2231,15 +2393,6 @@
             "required": false,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "segment",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["all", "guest", "member"]
             }
           }
         ],
@@ -2471,6 +2624,63 @@
         ]
       }
     },
+    "/api/v1/admin/campaigns/reach": {
+      "get": {
+        "tags": ["campaign-analytics-controller"],
+        "operationId": "reach_1",
+        "parameters": [
+          {
+            "name": "campaign",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignReachResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/admin/campaigns/push-opens": {
       "get": {
         "tags": ["campaign-analytics-controller"],
@@ -2643,6 +2853,169 @@
         ]
       }
     },
+    "/api/v1/admin/campaigns/funnels/activation": {
+      "get": {
+        "tags": ["campaign-analytics-controller"],
+        "operationId": "activation",
+        "parameters": [
+          {
+            "name": "campaign",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignActivationResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/campaigns/creatives": {
+      "get": {
+        "tags": ["campaign-analytics-controller"],
+        "operationId": "creatives",
+        "parameters": [
+          {
+            "name": "campaign",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignCreativeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/campaigns/app-transfer": {
+      "get": {
+        "tags": ["campaign-analytics-controller"],
+        "operationId": "appTransfer",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppTransferResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/admin/campaigns/analytics": {
       "get": {
         "tags": ["campaign-analytics-controller"],
@@ -2759,108 +3132,6 @@
             "content": {}
           }
         }
-      }
-    },
-    "/api/v1/admin/moderation/stories/{storyId}/takedown": {
-      "post": {
-        "tags": ["admin-moderation-controller"],
-        "operationId": "takedownStory",
-        "parameters": [
-          {
-            "name": "storyId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminStoryTakedownRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdminStoryTakenDown"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/admin/users/session-lengths": {
-      "get": {
-        "tags": ["admin-metrics-controller"],
-        "operationId": "sessionLengths",
-        "parameters": [
-          {
-            "name": "from",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "days",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "segment",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["all", "guest", "member"]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionLengthResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
       }
     }
   },
@@ -3175,6 +3446,9 @@
           "storyId": {
             "type": ["string", "null"],
             "format": "uuid"
+          },
+          "failureReason": {
+            "type": ["string", "null"]
           }
         }
       },
@@ -3201,6 +3475,10 @@
             "minLength": 0
           },
           "storyId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "noticeId": {
             "type": ["string", "null"],
             "format": "uuid"
           }
@@ -3388,32 +3666,13 @@
             "type": "string",
             "enum": ["SERVICE", "UPDATE", "MAINTENANCE", "EVENT", "PROMOTION"]
           },
-          "notificationTitle": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 0,
-            "pattern": "(?sU).*\\S.*"
-          },
-          "notificationBody": {
-            "type": "string",
-            "maxLength": 300,
-            "minLength": 0,
-            "pattern": "(?sU).*\\S.*"
-          },
           "reason": {
             "type": "string",
             "maxLength": 500,
             "minLength": 0
           }
         },
-        "required": [
-          "body",
-          "notificationBody",
-          "notificationTitle",
-          "reason",
-          "tag",
-          "title"
-        ]
+        "required": ["body", "reason", "tag", "title"]
       },
       "AdminNoticeResponse": {
         "type": "object",
@@ -3454,15 +3713,6 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "notificationTitle": {
-            "type": ["string", "null"]
-          },
-          "notificationBody": {
-            "type": ["string", "null"]
-          },
-          "notified": {
-            "type": ["boolean", "null"]
           }
         }
       },
@@ -3487,6 +3737,105 @@
           }
         },
         "required": ["reason"]
+      },
+      "StoryTakedownRequest": {
+        "type": "object",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "reasonCode": {
+                "type": "string",
+                "enum": [
+                  "SEXUAL_CONTENT",
+                  "COPYRIGHT_INFRINGEMENT",
+                  "HATE_SPEECH"
+                ]
+              },
+              "reasonDetail": {
+                "type": "null"
+              }
+            },
+            "required": ["reasonCode"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "reasonCode": {
+                "type": "string",
+                "enum": ["ETC"]
+              },
+              "reasonDetail": {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1,
+                "pattern": "(?sU).*\\S.*"
+              }
+            },
+            "required": ["reasonCode", "reasonDetail"]
+          }
+        ],
+        "properties": {
+          "reasonCode": {
+            "type": "string",
+            "enum": [
+              "SEXUAL_CONTENT",
+              "COPYRIGHT_INFRINGEMENT",
+              "HATE_SPEECH",
+              "ETC"
+            ]
+          },
+          "reasonDetail": {
+            "type": ["string", "null"],
+            "description": "ETC일 때 필수이며 다른 사유에서는 생략 또는 null",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "(?sU).*\\S.*"
+          },
+          "memo": {
+            "type": ["string", "null"],
+            "maxLength": 500,
+            "minLength": 1,
+            "pattern": "(?sU).*\\S.*"
+          }
+        },
+        "required": ["reasonCode"]
+      },
+      "StoryTakedownResponse": {
+        "type": "object",
+        "properties": {
+          "storyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": ["PRIVATE"]
+          },
+          "takedownReason": {
+            "type": "string",
+            "enum": [
+              "SEXUAL_CONTENT",
+              "COPYRIGHT_INFRINGEMENT",
+              "HATE_SPEECH",
+              "ETC"
+            ]
+          },
+          "takedownReasonDetail": {
+            "type": ["string", "null"]
+          },
+          "takenDownAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "storyId",
+          "takedownReason",
+          "takedownReasonDetail",
+          "takenDownAt",
+          "visibility"
+        ]
       },
       "AdminOperationReason": {
         "type": "object",
@@ -3669,18 +4018,6 @@
             "type": ["string", "null"],
             "enum": ["SERVICE", "UPDATE", "MAINTENANCE", "EVENT", "PROMOTION"]
           },
-          "notificationTitle": {
-            "type": ["string", "null"],
-            "maxLength": 100,
-            "minLength": 1,
-            "pattern": "(?sU).*\\S.*"
-          },
-          "notificationBody": {
-            "type": ["string", "null"],
-            "maxLength": 300,
-            "minLength": 1,
-            "pattern": "(?sU).*\\S.*"
-          },
           "title": {
             "type": ["string", "null"],
             "maxLength": 100,
@@ -3716,12 +4053,6 @@
             "type": "string",
             "format": "date"
           },
-          "daily": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SignupDay"
-            }
-          },
           "platformAsOf": {
             "type": ["string", "null"],
             "format": "date-time"
@@ -3731,6 +4062,12 @@
             "items": {
               "type": "string",
               "format": "date"
+            }
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignupDay"
             }
           }
         }
@@ -3756,7 +4093,27 @@
           "signupsByPlatform": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/PlatformCounts"
+                "$ref": "#/components/schemas/MetricPlatformCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "newVisitorsByPlatform": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MetricPlatformCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "signupRate": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MetricPlatformRates"
               },
               {
                 "type": "null"
@@ -3782,6 +4139,40 @@
           }
         }
       },
+      "MetricPlatformCounts": {
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "web": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "android": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MetricPlatformRates": {
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "web": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "android": {
+            "type": ["number", "null"],
+            "format": "double"
+          }
+        }
+      },
       "SessionResponse": {
         "type": "object",
         "properties": {
@@ -3797,6 +4188,9 @@
             "type": "string",
             "format": "date"
           },
+          "segment": {
+            "type": "string"
+          },
           "daily": {
             "type": "array",
             "items": {
@@ -3809,9 +4203,6 @@
               "type": "string",
               "format": "date"
             }
-          },
-          "segment": {
-            "type": "string"
           }
         }
       },
@@ -3823,6 +4214,9 @@
             "format": "date"
           },
           "averageSessionSeconds": {
+            "$ref": "#/components/schemas/PlatformDecimals"
+          },
+          "sessionsPerUser": {
             "$ref": "#/components/schemas/PlatformDecimals"
           }
         }
@@ -3848,6 +4242,99 @@
           }
         }
       },
+      "SessionLengthResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "segment": {
+            "type": "string"
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "bins": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionLengthBin"
+            }
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionLengthPlatform"
+            }
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionLengthDay"
+            }
+          }
+        }
+      },
+      "SessionLengthBin": {
+        "type": "object",
+        "properties": {
+          "fromSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "toSeconds": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SessionLengthPlatform": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "totalSessions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "medianBin": {
+            "type": ["integer", "null"],
+            "format": "int32"
+          }
+        }
+      },
+      "SessionLengthDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "sessions": {
+            "$ref": "#/components/schemas/MetricPlatformCounts"
+          }
+        }
+      },
       "RetentionResponse": {
         "type": "object",
         "properties": {
@@ -3863,6 +4350,10 @@
             "type": "string",
             "format": "date"
           },
+          "cohort": {
+            "type": "string",
+            "enum": ["visitor", "signup", "first-chat"]
+          },
           "platforms": {
             "type": "array",
             "items": {
@@ -3875,10 +4366,6 @@
               "type": "string",
               "format": "date"
             }
-          },
-          "cohort": {
-            "type": "string",
-            "enum": ["visitor", "signup", "first-chat"]
           }
         }
       },
@@ -3976,6 +4463,77 @@
             "format": "double"
           },
           "d30": {
+            "type": ["number", "null"],
+            "format": "double"
+          }
+        }
+      },
+      "AppActivationResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppActivationDay"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/AppActivationTotals"
+          }
+        }
+      },
+      "AppActivationDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "newUsers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeUsers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activationRate": {
+            "type": ["number", "null"],
+            "format": "double"
+          }
+        }
+      },
+      "AppActivationTotals": {
+        "type": "object",
+        "properties": {
+          "newUsers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeUsers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activationRate": {
             "type": ["number", "null"],
             "format": "double"
           }
@@ -4133,9 +4691,8 @@
             "minimum": 0
           },
           "creationMode": {
-            "type": "string",
-            "enum": ["GENERAL", "SIMPLE"],
-            "description": "SIMPLE은 스토리를 완성한 제작 세션이 있는 간편 제작, GENERAL은 그 밖의 일반 제작"
+            "type": ["string", "null"],
+            "enum": ["GENERAL", "SIMPLE"]
           },
           "chatFrom": {
             "type": ["string", "null"]
@@ -4150,9 +4707,8 @@
             "type": ["string", "null"]
           },
           "deleted": {
-            "type": "string",
-            "enum": ["include", "only"],
-            "description": "생략 시 삭제 제외, include는 포함, only는 삭제된 행만"
+            "type": ["string", "null"],
+            "enum": ["include", "only"]
           }
         }
       },
@@ -4313,18 +4869,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "retention": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminRetention"
-            }
-          },
-          "recentChats": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminChatResponse"
-            }
-          },
           "deletedAt": {
             "type": ["string", "null"],
             "format": "date-time"
@@ -4338,6 +4882,18 @@
           },
           "takedownReasonDetail": {
             "type": ["string", "null"]
+          },
+          "retention": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminRetention"
+            }
+          },
+          "recentChats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminChatResponse"
+            }
           }
         }
       },
@@ -4381,6 +4937,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "summaryThroughTurn": {
+            "type": "integer",
+            "format": "int32"
+          },
           "startedAt": {
             "type": "string",
             "format": "date-time"
@@ -4400,10 +4960,6 @@
           "deletedAt": {
             "type": ["string", "null"],
             "format": "date-time"
-          },
-          "summaryThroughTurn": {
-            "type": "integer",
-            "format": "int32"
           }
         }
       },
@@ -4662,6 +5218,9 @@
           "platform": {
             "type": "string"
           },
+          "segment": {
+            "type": "string"
+          },
           "daily": {
             "type": "array",
             "items": {
@@ -4674,9 +5233,6 @@
               "type": "string",
               "format": "date"
             }
-          },
-          "segment": {
-            "type": "string"
           },
           "storyCompletion": {
             "type": "array",
@@ -4714,6 +5270,59 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          "activity": {
+            "$ref": "#/components/schemas/QualityActivity"
+          }
+        }
+      },
+      "QualityActivity": {
+        "type": "object",
+        "properties": {
+          "aiResponses": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "simpleCompletions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "generalSubmissions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "coreActiveUsers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "messagesPerCoreUser": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "simpleCompletionsPerCoreUser": {
+            "type": ["number", "null"],
+            "format": "double"
+          }
+        }
+      },
+      "StoryCompletionDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "requests": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "failureRate": {
+            "type": ["number", "null"],
+            "format": "double"
           }
         }
       },
@@ -4732,12 +5341,6 @@
             "type": "string",
             "format": "date"
           },
-          "daily": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ChatOptionDay"
-            }
-          },
           "segment": {
             "type": "string"
           },
@@ -4750,6 +5353,12 @@
             "items": {
               "type": "string",
               "format": "date"
+            }
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatOptionDay"
             }
           }
         }
@@ -4783,30 +5392,26 @@
               "format": "int64"
             }
           },
-          "chatStarts": {
+          "chatStarters": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/PlatformCounts"
+                "$ref": "#/components/schemas/MetricPlatformCounts"
               },
               {
                 "type": "null"
               }
             ]
           },
-          "personaChatStarts": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PlatformCounts"
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "chatStartersByPersonaType": {
+            "type": ["object", "null"],
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MetricPlatformCounts"
+            }
           },
           "platformTurnsByModel": {
             "type": ["object", "null"],
             "additionalProperties": {
-              "$ref": "#/components/schemas/PlatformCounts"
+              "$ref": "#/components/schemas/MetricPlatformCounts"
             }
           }
         }
@@ -4981,6 +5586,7 @@
             "enum": [
               "STORY_COMPLETED",
               "STORY_MODERATION_COMPLETED",
+              "STORY_TAKEN_DOWN",
               "ATTENDANCE_REMINDER",
               "CREDIT_EXPIRY_REMINDER",
               "PROMOTION",
@@ -6481,12 +7087,11 @@
             "type": ["integer", "null"],
             "format": "int64"
           },
-          "users": {
-            "type": ["integer", "null"],
-            "format": "int64",
-            "description": "started-as에만 있음. 그 소유자 유형 채팅의 사용자 수, 게스트는 AI 호출을 보낸 기기 수"
-          },
           "totalTurns": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "users": {
             "type": ["integer", "null"],
             "format": "int64"
           }
@@ -6650,15 +7255,6 @@
             "type": "string",
             "format": "date"
           },
-          "segments": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReachSegment"
-            }
-          },
-          "guestToMember": {
-            "$ref": "#/components/schemas/GuestConversion"
-          },
           "segment": {
             "type": "string"
           },
@@ -6673,10 +7269,19 @@
               "format": "date"
             }
           },
+          "segments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReachSegment"
+            }
+          },
+          "guestToMember": {
+            "$ref": "#/components/schemas/GuestConversion"
+          },
           "platforms": {
             "type": ["array", "null"],
             "items": {
-              "$ref": "#/components/schemas/ReachPlatform"
+              "$ref": "#/components/schemas/PlatformReach"
             }
           }
         }
@@ -6733,6 +7338,24 @@
           }
         }
       },
+      "PlatformReach": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "chats": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reached": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReachPoint"
+            }
+          }
+        }
+      },
       "ConversionResponse": {
         "type": "object",
         "properties": {
@@ -6752,7 +7375,7 @@
             "type": "string"
           },
           "platform": {
-            "type": "string"
+            "type": ["string", "null"]
           },
           "storyId": {
             "type": ["string", "null"],
@@ -6779,6 +7402,13 @@
           "users": {
             "type": "integer",
             "format": "int64"
+          },
+          "minTurnNumber": {
+            "type": ["integer", "null"],
+            "format": "int32"
+          },
+          "platform": {
+            "type": ["string", "null"]
           }
         }
       },
@@ -6859,9 +7489,8 @@
             "type": ["string", "null"]
           },
           "deleted": {
-            "type": "string",
-            "enum": ["include", "only"],
-            "description": "생략 시 삭제 제외, include는 포함, only는 삭제된 행만"
+            "type": ["string", "null"],
+            "enum": ["include", "only"]
           }
         }
       },
@@ -6971,6 +7600,49 @@
           }
         }
       },
+      "CampaignReachResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "chatUsers": {
+            "$ref": "#/components/schemas/CampaignSegments"
+          },
+          "deepChatUsers": {
+            "$ref": "#/components/schemas/CampaignSegments"
+          }
+        }
+      },
+      "CampaignSegments": {
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ads": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "nonAds": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "PushOpensResponse": {
         "type": "object",
         "properties": {
@@ -7063,6 +7735,7 @@
             "enum": [
               "STORY_COMPLETED",
               "STORY_MODERATION_COMPLETED",
+              "STORY_TAKEN_DOWN",
               "ATTENDANCE_REMINDER",
               "CREDIT_EXPIRY_REMINDER",
               "PROMOTION",
@@ -7170,20 +7843,215 @@
           }
         }
       },
-      "CampaignSegments": {
+      "CampaignActivationResponse": {
         "type": "object",
         "properties": {
-          "all": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignActivationStep"
+            }
+          }
+        }
+      },
+      "CampaignActivationStep": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string"
+          },
+          "minTurnNumber": {
+            "type": ["integer", "null"],
+            "format": "int32"
+          },
+          "users": {
+            "$ref": "#/components/schemas/CampaignSegments"
+          }
+        }
+      },
+      "CampaignCreativeResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreativeDay"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/CreativeTotals"
+          }
+        }
+      },
+      "CreativeDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "signups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreativeUsers"
+            }
+          },
+          "deepChatUsers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreativeUsers"
+            }
+          }
+        }
+      },
+      "CreativeUsers": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": ["string", "null"]
+          },
+          "users": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CreativeTotals": {
+        "type": "object",
+        "properties": {
+          "signups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreativeUsers"
+            }
+          }
+        }
+      },
+      "AppTransferResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "pendingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppTransferDay"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/AppTransferTotals"
+          }
+        }
+      },
+      "AppTransferDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "bannerShown": {
             "type": "integer",
             "format": "int64"
           },
-          "ads": {
+          "bannerClicked": {
             "type": "integer",
             "format": "int64"
           },
-          "nonAds": {
+          "bannerClickRate": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "bannerNewUsers": {
             "type": "integer",
             "format": "int64"
+          },
+          "newUsersBySource": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceUsers"
+            }
+          }
+        }
+      },
+      "SourceUsers": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": ["string", "null"]
+          },
+          "users": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AppTransferTotals": {
+        "type": "object",
+        "properties": {
+          "bannerNewUsers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "newUsersBySource": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceUsers"
+            }
           }
         }
       },
@@ -7246,6 +8114,10 @@
           "cumulativeSignups": {
             "$ref": "#/components/schemas/CampaignSegments"
           },
+          "androidSignups": {
+            "type": "integer",
+            "format": "int64"
+          },
           "storylineRequests": {
             "type": "integer",
             "format": "int64"
@@ -7258,9 +8130,8 @@
             "type": "integer",
             "format": "int64"
           },
-          "androidSignups": {
-            "type": "integer",
-            "format": "int64"
+          "newVisitorsByDevice": {
+            "$ref": "#/components/schemas/CampaignDevices"
           }
         }
       },
@@ -7289,6 +8160,23 @@
           }
         }
       },
+      "CampaignDevices": {
+        "type": "object",
+        "properties": {
+          "ios": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "android": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "other": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "CampaignTotals": {
         "type": "object",
         "properties": {
@@ -7301,6 +8189,10 @@
           },
           "signups": {
             "$ref": "#/components/schemas/CampaignSegments"
+          },
+          "androidSignups": {
+            "type": "integer",
+            "format": "int64"
           },
           "adsShare": {
             "type": ["number", "null"],
@@ -7318,9 +8210,8 @@
             "type": "integer",
             "format": "int64"
           },
-          "androidSignups": {
-            "type": "integer",
-            "format": "int64"
+          "newVisitorsByDevice": {
+            "$ref": "#/components/schemas/CampaignDevices"
           }
         }
       },
@@ -7390,6 +8281,7 @@
               "ORIGINAL_CREATED",
               "ORIGINAL_UPDATED",
               "ORIGINAL_THUMBNAIL_DELETED",
+              "STORY_TAKEN_DOWN",
               "SUBMISSION_HOLD_RELEASED"
             ]
           },
@@ -7501,16 +8393,25 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "string": {
+          "integralNumber": {
             "type": "boolean"
           },
           "floatingPointNumber": {
             "type": "boolean"
           },
-          "missingNode": {
+          "container": {
             "type": "boolean"
           },
-          "integralNumber": {
+          "number": {
+            "type": "boolean"
+          },
+          "pojo": {
+            "type": "boolean"
+          },
+          "int": {
+            "type": "boolean"
+          },
+          "long": {
             "type": "boolean"
           },
           "nodeType": {
@@ -7527,10 +8428,16 @@
               "STRING"
             ]
           },
-          "int": {
+          "string": {
             "type": "boolean"
           },
-          "long": {
+          "missingNode": {
+            "type": "boolean"
+          },
+          "valueNode": {
+            "type": "boolean"
+          },
+          "object": {
             "type": "boolean"
           },
           "short": {
@@ -7545,15 +8452,6 @@
           "bigInteger": {
             "type": "boolean"
           },
-          "valueNode": {
-            "type": "boolean"
-          },
-          "object": {
-            "type": "boolean"
-          },
-          "pojo": {
-            "type": "boolean"
-          },
           "textual": {
             "type": "boolean",
             "deprecated": true
@@ -7562,12 +8460,6 @@
             "type": "boolean"
           },
           "binary": {
-            "type": "boolean"
-          },
-          "number": {
-            "type": "boolean"
-          },
-          "container": {
             "type": "boolean"
           },
           "array": {
@@ -7594,206 +8486,6 @@
             "type": "string"
           }
         }
-      },
-      "AdminStoryTakedownRequest": {
-        "oneOf": [
-          {
-            "type": "object",
-            "properties": {
-              "reasonCode": {
-                "type": "string",
-                "enum": [
-                  "SEXUAL_CONTENT",
-                  "COPYRIGHT_INFRINGEMENT",
-                  "HATE_SPEECH"
-                ]
-              },
-              "reasonDetail": {
-                "type": "null"
-              },
-              "memo": {
-                "type": ["string", "null"],
-                "minLength": 1,
-                "maxLength": 500,
-                "pattern": "(?sU).*\\S.*"
-              }
-            },
-            "required": ["reasonCode"]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "reasonCode": {
-                "type": "string",
-                "enum": ["ETC"]
-              },
-              "reasonDetail": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 100,
-                "pattern": "(?sU).*\\S.*"
-              },
-              "memo": {
-                "type": ["string", "null"],
-                "minLength": 1,
-                "maxLength": 500,
-                "pattern": "(?sU).*\\S.*"
-              }
-            },
-            "required": ["reasonCode", "reasonDetail"]
-          }
-        ]
-      },
-      "AdminStoryTakenDown": {
-        "type": "object",
-        "properties": {
-          "storyId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "visibility": {
-            "type": "string",
-            "enum": ["PRIVATE"]
-          },
-          "takenDownAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "takedownReason": {
-            "type": "string",
-            "enum": [
-              "SEXUAL_CONTENT",
-              "COPYRIGHT_INFRINGEMENT",
-              "HATE_SPEECH",
-              "ETC"
-            ]
-          },
-          "takedownReasonDetail": {
-            "type": ["string", "null"]
-          }
-        },
-        "required": [
-          "storyId",
-          "visibility",
-          "takenDownAt",
-          "takedownReason",
-          "takedownReasonDetail"
-        ]
-      },
-      "ReachPlatform": {
-        "type": "object",
-        "properties": {
-          "platform": {
-            "type": "string"
-          },
-          "chats": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "reached": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReachPoint"
-            }
-          }
-        }
-      },
-      "SessionLengthResponse": {
-        "type": "object",
-        "properties": {
-          "asOf": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "from": {
-            "type": "string",
-            "format": "date"
-          },
-          "to": {
-            "type": "string",
-            "format": "date"
-          },
-          "pendingDates": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "date"
-            }
-          },
-          "segment": {
-            "type": "string"
-          },
-          "bins": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SessionLengthBin"
-            }
-          },
-          "platforms": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SessionLengthPlatform"
-            }
-          }
-        }
-      },
-      "SessionLengthBin": {
-        "type": "object",
-        "properties": {
-          "fromSeconds": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "toSeconds": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "SessionLengthPlatform": {
-        "type": "object",
-        "properties": {
-          "platform": {
-            "type": "string"
-          },
-          "sessions": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          "totalSessions": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "medianBin": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        }
-      },
-      "StoryCompletionDay": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date"
-          },
-          "requests": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "failed": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "failureRate": {
-            "type": "number",
-            "nullable": true
-          }
-        }
       }
     },
     "securitySchemes": {
@@ -7803,100 +8495,6 @@
         "scheme": "bearer",
         "bearerFormat": "JWT"
       }
-    }
-  },
-  "x-contract-overlay": {
-    "issue": "KNK-1856",
-    "serverDependency": "KNK-1855",
-    "specRevision": "6cd5e3c",
-    "description": "미배포 ADMIN/BACKEND 4-2-5~4-2-9 계약: 목록 deleted 필터와 응답 deletedAt. 서버 배포 후 실제 OpenAPI로 다시 추출한다.",
-    "schemas": [
-      "AdminStoriesRequest",
-      "AdminChatsRequest",
-      "AdminStoryListResponse",
-      "AdminStoryDetailResponse",
-      "AdminChatResponse",
-      "AdminStorySettingsResponse"
-    ],
-    "retention": {
-      "issue": "KNK-1857",
-      "serverDependency": "KNK-1858",
-      "specRevision": "be70a95",
-      "receivedAt": "2026-10-26T08:10:44.068497+00:00",
-      "input": "knk-harness@be70a95:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-26",
-      "description": "미배포 리텐션 계약의 d2~d6을 코호트와 요약에 추가한다. 서버 선행 배포 후 실제 OpenAPI로 다시 추출한다.",
-      "schemas": ["RetentionCohort", "RetentionRates"]
-    },
-    "storyTakedown": {
-      "issue": "KNK-1867",
-      "serverDependency": "서버 공개 중단 API와 스토리 응답 필드 선행 배포",
-      "specRevision": "c4df3ad8a429077ee8e4fe62d6b28f5b7eb1d3ad",
-      "receivedAt": "2026-10-27T09:09:55.220782+00:00",
-      "input": "knk-harness:MODERATION/BACKEND 4-2-10, ADMIN/BACKEND 4-2-5",
-      "description": "미배포 공개 중단 계약. 서버 선행 배포 후 실제 OpenAPI로 다시 추출한다.",
-      "schemas": [
-        "AdminStoryTakedownRequest",
-        "AdminStoryTakenDown",
-        "AdminStoryListResponse",
-        "AdminStoryDetailResponse"
-      ]
-    },
-    "platformSplit": {
-      "issue": "KNK-1877",
-      "serverDependency": "KNK-1876",
-      "specRevision": "3e277a1, 319a79c",
-      "input": "knk-harness@3e277a1:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-21,4-2-28,4-2-30,4-2-32, knk-harness@319a79c:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-27,4-2-31",
-      "description": "미배포 계약: 신규 가입자 signups.other 제거와 플랫폼별 가입, 턴 도달률과 채팅 옵션 비중의 segment 쿼리와 플랫폼 값, 캠페인 추이 androidSignups. 서버 배포 후 실제 OpenAPI로 다시 추출한다. 사용자 세션과 기능 사용의 segment 쿼리와 응답 segment도 포함한다.",
-      "schemas": [
-        "SignupResponse",
-        "SignupDay",
-        "SignupCounts",
-        "TurnReachResponse",
-        "ReachPlatform",
-        "ChatOptionResponse",
-        "ChatOptionDay",
-        "CampaignDay",
-        "CampaignTotals",
-        "SessionResponse",
-        "QualityResponse"
-      ],
-      "parameters": [
-        "GET /api/v1/admin/conversion/turn-reach segment",
-        "GET /api/v1/admin/quality/chat-options segment",
-        "GET /api/v1/admin/users/sessions segment",
-        "GET /api/v1/admin/quality/client segment"
-      ]
-    },
-    "analyticsCards": {
-      "issue": "KNK-1891",
-      "serverDependency": "서버 started-as users·creation-mode 차트·스토리 목록 creationMode 선행 배포",
-      "specRevision": "미커밋(knk-harness-KNK-1728 작업 트리)",
-      "input": "knk-harness:ADMIN/BACKEND 4-2-4, 4-2-5",
-      "description": "미배포 계약: started-as 점의 users와 스토리 목록 creationMode 쿼리. 서버 배포 후 실제 OpenAPI로 다시 추출한다.",
-      "schemas": ["AdminChartPoint", "AdminStoriesRequest"]
-    },
-    "metricDefinitions": {
-      "issue": "KNK-1891",
-      "specRevision": "3d6cfe7",
-      "receivedAt": "2026-10-28T07:26:14.546545+00:00",
-      "input": "knk-harness@3d6cfe7:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-26,4-2-27,4-2-31",
-      "description": "리텐션 cohort, 세션 길이 분포, 서버 DB storyCompletion 계약이다. 웹 선행 배포를 위해 새 응답 필드는 선택으로 둔다. 서버 배포 뒤 실제 OpenAPI로 재추출한다.",
-      "schemas": [
-        "RetentionResponse",
-        "SessionLengthResponse",
-        "SessionLengthBin",
-        "SessionLengthPlatform",
-        "QualityResponse",
-        "StoryCompletionDay"
-      ]
-    },
-    "chatCompact": {
-      "issue": "KNK-1913",
-      "specRevision": "1283a82",
-      "input": "knk-harness@1283a82:docs/domain/ADMIN/BACKEND/4-2-CONTRACT.md#4-2-8",
-      "receivedAt": "2026-10-29T06:09:00.739057+00:00",
-      "description": "서버 PR #431 계약: 채팅 목록과 상세의 요약 끝 턴을 추가한다. AI 기능 필드는 기존 string 계약이므로 enum 제한을 새로 두지 않는다. 서버 배포 후 실제 OpenAPI로 대조한다.",
-      "schemas": ["AdminChatResponse"]
     }
   }
 }

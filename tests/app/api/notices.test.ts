@@ -4,6 +4,7 @@ import { POST as publish } from '@/app/api/notices/[id]/publish/route';
 import { DELETE, PATCH } from '@/app/api/notices/[id]/route';
 import { POST as unpublish } from '@/app/api/notices/[id]/unpublish/route';
 import { GET, POST } from '@/app/api/notices/route';
+import { createCampaign } from '@/fixtures/notifications';
 
 const req = (body: unknown) =>
   new Request('http://localhost/api/notices', {
@@ -37,7 +38,13 @@ describe('공지 BFF', () => {
 
     expect(await result.json()).toMatchObject({
       status: 'PUBLISHED',
-      notified: true,
+      notifiedAt: null,
+    });
+    createCampaign({
+      title: '알림',
+      body: '본문',
+      reason: '발송',
+      noticeId: item.noticeId,
     });
     expect((await publish(req({ reason: '중복' }), c)).status).toBe(409);
     await unpublish(req({ reason: '해제' }), c);
@@ -120,7 +127,7 @@ it('태그 누락과 모르는 태그를 거절하고 태그만 수정하거나 
   expect((await PATCH(req({ reason: '빈 수정' }), context)).status).toBe(400);
 });
 
-it('예전 알림 선택 값은 무시하고 태그대로 한 번만 알림을 요청한다', async () => {
+it('예전 알림 선택 값은 무시하고 게시해도 알림을 요청하지 않는다', async () => {
   const item = await (
     await POST(
       createRequest({
@@ -138,7 +145,7 @@ it('예전 알림 선택 값은 무시하고 태그대로 한 번만 알림을 �
   );
 
   expect(await first.json()).toMatchObject({
-    notified: true,
+    notifiedAt: null,
     tag: 'PROMOTION',
   });
   await unpublish(req({ reason: '해제' }), context);
@@ -146,7 +153,7 @@ it('예전 알림 선택 값은 무시하고 태그대로 한 번만 알림을 �
   const again = await publish(req({ reason: '재게시' }), context);
 
   expect(await again.json()).toMatchObject({
-    notified: false,
+    notifiedAt: null,
     tag: 'PROMOTION',
   });
 });

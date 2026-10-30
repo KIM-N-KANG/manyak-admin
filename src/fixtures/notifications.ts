@@ -1,8 +1,8 @@
+import { isMarketingNoticeTag } from '@/features/notices/tags';
 import type {
   Campaign,
   CampaignStatus,
   DeliveryRow,
-  NotificationKind,
   TargetCount,
   Template,
   TemplateKey,
@@ -16,6 +16,7 @@ import {
   requireFixture,
   textField,
 } from '@/fixtures/management-bff';
+import { getNotice, markNoticeNotified } from '@/fixtures/notices';
 import { validId } from '@/fixtures/query';
 import { kstDate, validateOptions, validatePeriod } from '@/fixtures/query';
 
@@ -47,7 +48,14 @@ function store() {
               Date.UTC(2026, 9, 24) - i * 86400000,
             ).toISOString(),
             status,
-            noticeId: null,
+            failureReason:
+              status === 'FAILED' && i % 2 === 0
+                ? 'NOTICE_NOT_PUBLISHED'
+                : null,
+            noticeId:
+              i % 3 === 0 || (status === 'FAILED' && i % 2 === 0)
+                ? 'b1000000-0000-4000-8000-000000000001'
+                : null,
             storyId: null,
             targetCount: status === 'SCHEDULED' ? null : 412,
             sentCount: status === 'SCHEDULED' ? null : 400,
@@ -93,13 +101,34 @@ export function futureTime(value: unknown, label: string) {
   return new Date(value).toISOString();
 }
 export function createCampaign(body: Record<string, unknown>) {
+  if (body.noticeId != null && body.storyId != null)
+    throw new Error('스토리와 공지를 함께 선택할 수 없습니다.');
+
+  let notice;
+
+  if (body.noticeId != null) {
+    if (typeof body.noticeId !== 'string' || !validId(body.noticeId))
+      throw new Error('공지 식별자가 올바르지 않습니다.');
+
+    try {
+      notice = getNotice(body.noticeId);
+    } catch {
+      throw new Error('게시된 공지만 이동 대상으로 지정할 수 있습니다.');
+    }
+
+    if (notice.status !== 'PUBLISHED')
+      throw new Error('게시된 공지만 이동 대상으로 지정할 수 있습니다.');
+  }
+
   if (
     body.storyId != null &&
     (typeof body.storyId !== 'string' ||
       !validId(body.storyId) ||
       !stories.some(
         (story) =>
-          story.storyId === body.storyId && story.visibility === 'PUBLIC',
+          story.storyId === body.storyId &&
+          story.visibility === 'PUBLIC' &&
+          !story.deletedAt,
       ))
   )
     throw new Error(
@@ -111,7 +140,7 @@ export function createCampaign(body: Record<string, unknown>) {
   const now = new Date().toISOString();
   const item: Campaign = {
     campaignId: crypto.randomUUID(),
-    kind: 'MARKETING',
+    kind: notice && !isMarketingNoticeTag(notice.tag) ? 'SERVICE' : 'MARKETING',
     title: textField(body, 'title', 100),
     body: textField(body, 'body', 300),
     scheduledAt:
@@ -119,7 +148,8 @@ export function createCampaign(body: Record<string, unknown>) {
         ? now
         : futureTime(body.scheduledAt, '예약 시각'),
     status: 'SCHEDULED',
-    noticeId: null,
+    failureReason: null,
+    noticeId: notice?.noticeId ?? null,
     storyId: null,
     targetCount: null,
     sentCount: null,
@@ -132,40 +162,12 @@ export function createCampaign(body: Record<string, unknown>) {
   };
 
   item.storyId = typeof body.storyId === 'string' ? body.storyId : null;
+
+  if (notice) markNoticeNotified(notice.noticeId, now);
+
   store().campaigns.set(item.campaignId, item);
 
   return structuredClone(item);
-}
-export function createNoticeCampaign(
-  noticeId: string,
-  title: string,
-  body: string,
-  kind: NotificationKind,
-) {
-  if ([...store().campaigns.values()].some((i) => i.noticeId === noticeId))
-    return;
-
-  const now = new Date().toISOString();
-  const item: Campaign = {
-    campaignId: crypto.randomUUID(),
-    kind,
-    title,
-    body: body.slice(0, 300),
-    noticeId,
-    storyId: null,
-    scheduledAt: now,
-    status: 'SCHEDULED',
-    targetCount: null,
-    sentCount: null,
-    deliveredMembers: 0,
-    deliveredDevices: 0,
-    failedDevices: 0,
-    startedAt: null,
-    finishedAt: null,
-    createdAt: now,
-  };
-
-  store().campaigns.set(item.campaignId, item);
 }
 export function changeCampaign(
   id: string,
@@ -182,6 +184,7 @@ export function changeCampaign(
   item.status = action === 'cancel' ? 'CANCELED' : 'SCHEDULED';
 
   if (action === 'retry') {
+    item.failureReason = null;
     item.scheduledAt = new Date().toISOString();
     item.startedAt = null;
     item.finishedAt = null;

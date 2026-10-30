@@ -4,17 +4,19 @@ import { type ReactNode, useId, useState, useSyncExternalStore } from 'react';
 
 import { Tick02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { FetchError } from '@/api/mutator/custom-instance';
 import { dateTime, PageHeading, TextLink } from '@/components/admin/data-ui';
 import { reasonSchema } from '@/components/admin/reason-dialog';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useManagementMutation } from '@/features/management/mutation';
+import { isMarketingNoticeTag } from '@/features/notices/tags';
+import type { Notice, NoticeListItem } from '@/features/notices/types';
+import { NoticePicker } from '@/features/notifications/notice-picker';
 import {
   formatDuration,
   formatKst,
@@ -289,10 +291,16 @@ function SummaryRow({
 
 export function CampaignFormScreen({
   storyId: initialStoryId = '',
+  noticeId: initialNoticeId = '',
 }: {
   storyId?: string;
+  noticeId?: string;
 }) {
-  const [kind, setKind] = useState<NotificationKind>('MARKETING');
+  const [destination, setDestination] = useState<'none' | 'story' | 'notice'>(
+    initialNoticeId ? 'notice' : initialStoryId ? 'story' : 'none',
+  );
+  const [noticeId, setNoticeId] = useState(initialNoticeId);
+  const [pickedNotice, setPickedNotice] = useState<NoticeListItem | null>(null);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [reason, setReason] = useState('');
@@ -308,16 +316,46 @@ export function CampaignFormScreen({
   const now = useNow();
   const mutation = useManagementMutation();
   const router = useRouter();
+  const noticeDetail = useApi<Notice>(
+    `/api/notices/${encodeURIComponent(noticeId)}`,
+    destination === 'notice' && !!noticeId,
+  );
+  const candidate =
+    noticeDetail.data ??
+    (pickedNotice?.noticeId === noticeId ? pickedNotice : undefined);
+  const noticeProblem =
+    destination !== 'notice' || !noticeId
+      ? ''
+      : noticeDetail.error
+        ? notFound(noticeDetail.error)
+          ? '공지를 찾을 수 없습니다. 다른 공지를 선택하거나 선택을 해제해 주세요.'
+          : '공지 정보를 불러오지 못했습니다. 다시 시도해 주세요.'
+        : candidate && candidate.status !== 'PUBLISHED'
+          ? '게시되지 않은 공지입니다. 게시된 공지만 이동 대상으로 지정할 수 있습니다.'
+          : '';
+  const notice =
+    destination === 'notice' &&
+    !noticeProblem &&
+    candidate?.status === 'PUBLISHED'
+      ? candidate
+      : undefined;
+  const kind: NotificationKind =
+    notice && !isMarketingNoticeTag(notice.tag) ? 'SERVICE' : 'MARKETING';
   const target = useApi<TargetCount>(
     `/api/notifications/campaigns/target-count?kind=${kind}`,
+    true,
+    { staleTime: 0 },
   );
   const detail = useApi<Story>(
     `/api/stories/${encodeURIComponent(storyId)}`,
-    !!storyId,
+    destination === 'story' && !!storyId,
   );
   const story =
-    detail.data ?? (picked?.storyId === storyId ? picked : undefined);
-  const problem = storyId ? storyProblem(story, detail.error) : '';
+    destination === 'story'
+      ? (detail.data ?? (picked?.storyId === storyId ? picked : undefined))
+      : undefined;
+  const problem =
+    destination === 'story' && storyId ? storyProblem(story, detail.error) : '';
   const marketing = kind === 'MARKETING';
   const scheduledAt =
     mode === 'later' && draft.date && draft.hour && draft.minute
@@ -332,27 +370,28 @@ export function CampaignFormScreen({
     : target.data?.targetCount;
   const reasonValid = reasonSchema.safeParse(reason).success;
   const titleHasMark = title.trim().startsWith(adMark);
-  const blocker = !marketing
-    ? '정보성 알림은 공지 작성에서 보냅니다.'
-    : !title.trim()
-      ? '제목을 입력해 주세요.'
-      : !body.trim()
-        ? '본문을 입력해 주세요.'
-        : problem
-          ? '이동 대상 스토리를 변경하거나 선택 해제해 주세요.'
-          : storyId && !story
-            ? '이동 대상 스토리를 확인하고 있습니다.'
-            : mode === 'later' && (!now || timeError)
-              ? scheduledAt
-                ? '예약 시각을 현재 이후로 바꿔 주세요.'
-                : '예약 날짜와 시각을 선택해 주세요.'
-              : !reasonValid
-                ? '발송 사유를 입력해 주세요.'
-                : target.isError
-                  ? '대상 회원 수를 불러오지 못했습니다. 다시 집계해 주세요.'
-                  : !target.data
-                    ? '대상 회원 수를 집계하고 있습니다.'
-                    : '';
+  const blocker =
+    destination === 'notice' && !notice
+      ? '이동 대상 공지를 선택해 주세요.'
+      : !title.trim()
+        ? '제목을 입력해 주세요.'
+        : !body.trim()
+          ? '본문을 입력해 주세요.'
+          : problem
+            ? '이동 대상 스토리를 변경하거나 선택 해제해 주세요.'
+            : destination === 'story' && storyId && !story
+              ? '이동 대상 스토리를 확인하고 있습니다.'
+              : mode === 'later' && (!now || timeError)
+                ? scheduledAt
+                  ? '예약 시각을 현재 이후로 바꿔 주세요.'
+                  : '예약 날짜와 시각을 선택해 주세요.'
+                : !reasonValid
+                  ? '발송 사유를 입력해 주세요.'
+                  : target.isError
+                    ? '대상 회원 수를 불러오지 못했습니다. 다시 집계해 주세요.'
+                    : !target.data
+                      ? '대상 회원 수를 집계하고 있습니다.'
+                      : '';
   const sendLabel = mode === 'now' ? '발송' : '예약';
   const sendTime =
     mode === 'now'
@@ -371,6 +410,12 @@ export function CampaignFormScreen({
   }
 
   async function confirm() {
+    if (blocker) {
+      mutation.setError(blocker);
+
+      return;
+    }
+
     if (
       mode === 'later' &&
       (!scheduledAt || scheduledAt.getTime() <= Date.now())
@@ -386,7 +431,8 @@ export function CampaignFormScreen({
       title: title.trim(),
       body: body.trim(),
       reason: reason.trim(),
-      ...(storyId ? { storyId } : {}),
+      ...(destination === 'story' && storyId ? { storyId } : {}),
+      ...(notice ? { noticeId: notice.noticeId } : {}),
       ...(mode === 'later' && scheduledAt
         ? { scheduledAt: scheduledAt.toISOString() }
         : {}),
@@ -420,122 +466,121 @@ export function CampaignFormScreen({
           <Step
             index={1}
             title="알림 내용"
-            done={marketing && !!title.trim() && !!body.trim()}>
+            done={!!title.trim() && !!body.trim()}>
+            <p className="text-sm text-muted-foreground">
+              {!marketing
+                ? '정보성 알림입니다. 활성 회원 전체의 알림함에 남고 푸시는 서비스 알림을 켜고 알림 기기를 등록한 회원에게 야간 제한 없이 갑니다.'
+                : notice
+                  ? '이벤트와 홍보 공지는 광고성 알림입니다. 광고 수신에 동의한 활성 회원의 알림함에 남고 푸시는 그중 알림 기기를 등록한 회원에게 갑니다.'
+                  : '광고성 알림입니다. 광고 수신에 동의한 활성 회원의 알림함에 남고 푸시는 그중 알림 기기를 등록한 회원에게 갑니다.'}
+            </p>
+            <TextField
+              label="제목"
+              name="title"
+              value={title}
+              limit={titleLimit}
+              placeholder="예: 주말 한정 이프 2배 이벤트"
+              warn={marketing && titleHasMark}
+              help={
+                !marketing
+                  ? undefined
+                  : titleHasMark
+                    ? '(광고) 표기는 자동으로 붙으니 빼고 입력해 주세요.'
+                    : '(광고) 표기는 서버가 붙이니 빼고 입력합니다.'
+              }
+              onChange={setTitle}
+            />
+            <TextField
+              label="본문"
+              name="body"
+              value={body}
+              limit={bodyLimit}
+              placeholder="예: 이번 주말 충전하면 이프를 두 배로 드려요."
+              help={
+                !marketing
+                  ? undefined
+                  : `본문 끝의 ‘${optOutNotice}’ 안내는 서버가 붙이니 빼고 입력합니다.`
+              }
+              multiline
+              onChange={setBody}
+            />
+          </Step>
+          <Step
+            index={2}
+            title="이동 대상"
+            optional
+            done={destination === 'none' || !!notice || (!!story && !problem)}>
             <SegmentedControl
-              legend="종류"
-              value={kind}
-              onChange={setKind}
+              legend="이동 대상"
+              value={destination}
+              onChange={setDestination}
               options={[
-                { value: 'MARKETING', label: '광고성' },
-                { value: 'SERVICE', label: '정보성' },
+                { value: 'none', label: '없음' },
+                { value: 'story', label: '스토리' },
+                { value: 'notice', label: '공지' },
               ]}
             />
-            {marketing ? (
-              <>
-                <p className="-mt-2 text-sm text-muted-foreground">
-                  광고 수신에 동의하고 알림 기기를 등록한 회원에게 갑니다.
-                </p>
-                <TextField
-                  label="제목"
-                  name="title"
-                  value={title}
-                  limit={titleLimit}
-                  placeholder="예: 주말 한정 이프 2배 이벤트"
-                  warn={titleHasMark}
-                  help={
-                    titleHasMark
-                      ? '(광고) 표기는 자동으로 붙으니 빼고 입력해 주세요.'
-                      : '(광고) 표기는 서버가 붙이니 빼고 입력합니다.'
-                  }
-                  onChange={setTitle}
-                />
-                <TextField
-                  label="본문"
-                  name="body"
-                  value={body}
-                  limit={bodyLimit}
-                  placeholder="예: 이번 주말 충전하면 이프를 두 배로 드려요."
-                  help={`본문 끝의 ‘${optOutNotice}’ 안내는 서버가 붙이니 빼고 입력합니다.`}
-                  multiline
-                  onChange={setBody}
-                />
-              </>
+            {destination === 'notice' ? (
+              <NoticePicker
+                notice={notice}
+                problem={noticeProblem}
+                pending={!!noticeId && noticeDetail.isPending && !candidate}
+                onRetry={() => void noticeDetail.refetch()}
+                onChange={(next) => {
+                  setPickedNotice(next);
+                  setNoticeId(next?.noticeId ?? '');
+                }}
+              />
+            ) : destination === 'story' ? (
+              <StoryPicker
+                storyId={storyId}
+                story={story}
+                pending={detail.isPending}
+                problem={problem}
+                onRetry={
+                  detail.isError && !notFound(detail.error)
+                    ? () => void detail.refetch()
+                    : undefined
+                }
+                onChange={selectStory}
+              />
             ) : (
-              <div className="rounded-md border bg-muted/40 p-4 text-sm">
-                <p className="font-medium">
-                  정보성 알림은 공지와 함께 보냅니다.
-                </p>
-                <p className="mt-1 leading-6 text-muted-foreground">
-                  공지사항·업데이트·점검 공지는 처음 게시할 때 서비스 알림을 켠
-                  회원에게 야간 제한 없이 알림을 보냅니다. 이 화면에서는 광고성
-                  알림만 만들 수 있습니다.
-                </p>
-                <Link
-                  href="/notices/new"
-                  className={cn(
-                    buttonVariants({ variant: 'outline' }),
-                    'mt-3',
-                  )}>
-                  공지 작성으로 이동
-                </Link>
-              </div>
+              <p className="text-sm text-muted-foreground">이동 대상 없음</p>
             )}
           </Step>
-          {marketing ? (
-            <>
-              <Step
-                index={2}
-                title="이동 대상"
-                optional
-                done={!!story && !problem}>
-                <StoryPicker
-                  storyId={storyId}
-                  story={story}
-                  pending={detail.isPending}
-                  problem={problem}
-                  onRetry={
-                    detail.isError && !notFound(detail.error)
-                      ? () => void detail.refetch()
-                      : undefined
-                  }
-                  onChange={selectStory}
-                />
-              </Step>
-              <Step index={3} title="발송 시각" done={!!sendAt}>
-                <ScheduleField
-                  mode={mode}
-                  draft={draft}
-                  scheduledAt={scheduledAt}
-                  error={timeError}
-                  now={now}
-                  onModeChange={setMode}
-                  onDraftChange={setDraft}
-                />
-                {night && sendAt ? (
-                  <NightWarning
-                    sendAt={sendAt}
-                    nightEligible={target.data?.nightEligibleCount}
-                    target={target.data?.targetCount}
-                    onMove={(at) => {
-                      setMode('later');
-                      setDraft(toDraft(at));
-                    }}
-                  />
-                ) : null}
-              </Step>
-              <Step index={4} title="발송 사유" done={reasonValid}>
-                <TextField
-                  label="사유"
-                  name="reason"
-                  value={reason}
-                  limit={reasonLimit}
-                  placeholder="예: 10월 마지막 주 주말 프로모션"
-                  help="감사 로그에 캠페인 내용과 함께 남습니다."
-                  onChange={setReason}
-                />
-              </Step>
-            </>
-          ) : null}
+          <Step index={3} title="발송 시각" done={!!sendAt}>
+            <ScheduleField
+              mode={mode}
+              draft={draft}
+              scheduledAt={scheduledAt}
+              error={timeError}
+              now={now}
+              onModeChange={setMode}
+              onDraftChange={setDraft}
+            />
+            {night && sendAt ? (
+              <NightWarning
+                sendAt={sendAt}
+                nightEligible={target.data?.nightEligibleCount}
+                target={target.data?.targetCount}
+                onMove={(at) => {
+                  setMode('later');
+                  setDraft(toDraft(at));
+                }}
+              />
+            ) : null}
+          </Step>
+          <Step index={4} title="발송 사유" done={reasonValid}>
+            <TextField
+              label="사유"
+              name="reason"
+              value={reason}
+              limit={reasonLimit}
+              placeholder="예: 10월 마지막 주 주말 프로모션"
+              help="감사 로그에 캠페인 내용과 함께 남습니다."
+              onChange={setReason}
+            />
+          </Step>
         </div>
         <aside
           aria-label="미리보기와 요약"
@@ -584,36 +629,32 @@ export function CampaignFormScreen({
                   </span>
                 )}
               </SummaryRow>
-              {marketing ? (
-                <>
-                  <SummaryRow label="발송 시각">
-                    {sendTime}
-                    {untilSend ? (
-                      <span className="block text-xs text-muted-foreground">
-                        {untilSend}
-                      </span>
-                    ) : null}
-                    {night ? (
-                      <span className="mt-1 inline-flex h-5 items-center rounded-sm bg-warning-soft px-1.5 text-xs font-medium text-warning-foreground">
-                        야간 규칙 적용
-                      </span>
-                    ) : null}
-                  </SummaryRow>
-                  <SummaryRow label="이동 대상">
-                    {story && !problem ? (
-                      <span className="font-medium">{story.title}</span>
-                    ) : problem ? (
-                      <span className="text-destructive-deep">
-                        이동 대상 확인 필요
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        이동 대상 없음
-                      </span>
-                    )}
-                  </SummaryRow>
-                </>
-              ) : null}
+              <SummaryRow label="발송 시각">
+                {sendTime}
+                {untilSend ? (
+                  <span className="block text-xs text-muted-foreground">
+                    {untilSend}
+                  </span>
+                ) : null}
+                {night ? (
+                  <span className="mt-1 inline-flex h-5 items-center rounded-sm bg-warning-soft px-1.5 text-xs font-medium text-warning-foreground">
+                    야간 규칙 적용
+                  </span>
+                ) : null}
+              </SummaryRow>
+              <SummaryRow label="이동 대상">
+                {notice ? (
+                  <span className="font-medium">{notice.title}</span>
+                ) : story && !problem ? (
+                  <span className="font-medium">{story.title}</span>
+                ) : problem || noticeProblem ? (
+                  <span className="text-destructive-deep">
+                    이동 대상 확인 필요
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">이동 대상 없음</span>
+                )}
+              </SummaryRow>
             </dl>
             <div className="grid gap-2 border-t p-5">
               <Button
@@ -645,12 +686,14 @@ export function CampaignFormScreen({
         error={mutation.error}
         onConfirm={() => void confirm()}>
         <dl className="mt-5 divide-y rounded-md border px-4 text-sm">
-          <SummaryRow label="종류">광고성</SummaryRow>
+          <SummaryRow label="종류">
+            {marketing ? '광고성' : '정보성'}
+          </SummaryRow>
           <SummaryRow label="제목">
             {displayTitle(kind, title.trim())}
           </SummaryRow>
           <SummaryRow label="이동 대상">
-            {story && !problem ? story.title : '없음'}
+            {notice ? notice.title : story && !problem ? story.title : '없음'}
           </SummaryRow>
           <SummaryRow label="발송 시각">
             {sendTime}
@@ -663,10 +706,18 @@ export function CampaignFormScreen({
           <SummaryRow label="대상 회원">
             {recipients != null ? `약 ${count(recipients)}명` : '확인 중'}
           </SummaryRow>
-          <SummaryRow label="야간 규칙">
-            {night ? '적용, 야간 광고 동의자에게만 발송' : '적용 안 함'}
-          </SummaryRow>
+          {marketing ? (
+            <SummaryRow label="야간 규칙">
+              {night ? '적용, 야간 광고 동의자에게만 발송' : '적용 안 함'}
+            </SummaryRow>
+          ) : null}
         </dl>
+        {destination === 'notice' ? (
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">
+            발송을 시작할 때 공지를 다시 확인합니다. 공지가 게시 상태가 아니면
+            보내지 않고, 태그가 바뀌었으면 바뀐 태그로 알림 성격을 정합니다.
+          </p>
+        ) : null}
       </ConfirmDialog>
     </>
   );
