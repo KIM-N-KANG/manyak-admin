@@ -65,12 +65,14 @@ fixture(빈 값 포함)이며 `VERCEL_ENV !== production`이면 `src/features/au
 
 데이터 모드는 이 조건에 따라 인증 정책과 함께 적용합니다. `fixture`는 기존 fixture route handler를 사용합니다. `server`는 보호된 `/api/admin-upstream/[...path]` route handler로 rewrite하고 경로를 `src/api/admin-endpoints.ts`에서 찾습니다. `src/api/admin-upstream.ts`는 서버 전용 URL, 쿠키의 Bearer 토큰, `X-Manyak-Request-Id`, no-store, 오류·응답 전달을 담당합니다. 추출한 관리자 OpenAPI의 연산은 생성 Zod로 경로·쿼리·본문을 검증한 뒤 전달합니다. Spring이 평탄하게 받는 쿼리는 검증할 때만 OpenAPI의 request/query 객체로 묶고 원래 쿼리를 전달합니다. OpenAPI에 대응 경로가 없는 감사 로그 단건, 오리지널 카탈로그와 fixture 이미지 조회·PUT은 503 “서버 미구현”을 유지하며 fixture로 자동 전환하지 않습니다. 오리지널 등록·수정은 서버 ObjectNode 본문의 필드 스키마가 없어 생성된 공통 사유를 검증하고 나머지 필드 검증은 서버가 수행합니다. 브라우저의 Authorization·다른 쿠키나 임의 URL은 업스트림에 전달하지 않습니다.
 
-관리자 경로와 참조 DTO는 공개 dev OpenAPI에서 추출합니다. 스냅샷의 `x-source`에 입력 URL/파일, 받은 UTC 시각과 선택한 서버 커밋을 기록합니다. 관리자 외 경로와 미참조 DTO는 포함하지 않습니다.
+관리자 경로와 참조 DTO는 공개 dev OpenAPI에서 추출합니다. 스냅샷의 `x-source`에 입력 URL/파일, 받은 UTC 시각과 선택한 서버 커밋을 기록합니다. 세 번째 명령 인자로 입력 출처 설명을 전달하면 `x-source.description`에 함께 기록합니다. 관리자 외 경로와 미참조 DTO는 포함하지 않습니다.
 
 ```bash
 pnpm api:extract https://dev-api.manyak.app/v3/api-docs
 # 파일 입력과 서버 커밋 기록도 가능합니다.
 pnpm api:extract /path/to/server-openapi.json server-commit-sha
+# 로컬 병합처럼 추가 출처가 있으면 설명을 함께 기록합니다.
+pnpm api:extract /path/to/server-openapi.json server-commit-sha "로컬 병합 PR과 커밋 정보"
 pnpm api:generate:admin
 # 관리자 Zod·연산 레지스트리와 기존 로그인 전용 Zod를 함께 생성합니다.
 pnpm api:generate

@@ -23,8 +23,12 @@ export function NoticePicker({
 }) {
   const [search, setSearch] = useState('');
   const [searching, setSearching] = useState(false);
+  const params = new URLSearchParams({ status: 'PUBLISHED' });
+
+  if (search) params.set('q', search);
+
   const query = useApi<{ items: NoticeListItem[] }>(
-    `/api/notices?status=PUBLISHED&q=${encodeURIComponent(search)}`,
+    `/api/notices?${params}`,
     !notice || searching,
   );
   const selecting = !notice || searching;
