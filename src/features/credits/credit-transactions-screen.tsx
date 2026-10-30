@@ -12,6 +12,7 @@ import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { ListFilterForm } from '@/components/admin/list-search';
 import { TableSkeleton } from '@/components/admin/loading-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
+import { CreditTabs } from '@/features/credits/credit-tabs';
 import { creditReasonLabel } from '@/features/credits/reason-label';
 import type { CreditTransactionItem } from '@/features/credits/types';
 import { useManagementList } from '@/features/management/use-management-list';
@@ -37,75 +38,77 @@ export function CreditTransactionsScreen() {
           </HelpTooltip>
         }
       />
-      <ListFilterForm label="이프 내역" searchEnabled={false}>
-        <label className="flex flex-col gap-2 text-xs text-muted-foreground">
-          이프 변동 유형
-          <select
-            name="direction"
-            className="control"
-            defaultValue={params.get('direction') ?? ''}>
-            <option value="">전체</option>
-            <option value="granted">적립</option>
-            <option value="spent">소모</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-2 text-xs text-muted-foreground">
-          기록일 (KST)
-          <input
-            name="date"
-            type="date"
-            className="control"
-            defaultValue={params.get('date') ?? ''}
-          />
-        </label>
-      </ListFilterForm>
-      <QueryState
-        skeleton={<TableSkeleton columns={4} />}
-        pending={query.isPending}
-        error={query.error}
-        retry={query.refetch}
-      />
-      {query.data ? (
-        <>
-          <DataTable
-            headers={[
-              { label: '기록 시각 (KST)', key: 'createdAt' },
-              '회원',
-              '사유',
-              '변동량 (이프)',
-            ]}
-            sorting={{ key: sort, order, onSort: changeSort }}
-            empty={!query.data.items.length}>
-            {query.data.items.map((row, index) => (
-              <tr key={`${row.member.memberId}-${row.createdAt}-${index}`}>
-                <td>{dateTime(row.createdAt)}</td>
-                <td>
-                  <TextLink href={`/members/${row.member.memberId}`}>
-                    {row.member.nickname}
-                  </TextLink>
-                </td>
-                <td>{creditReasonLabel(row.reason)}</td>
-                <td
-                  className={cn(
-                    row.amount > 0
-                      ? 'text-primary-text'
-                      : row.amount < 0
-                        ? 'text-destructive'
-                        : undefined,
-                  )}>
-                  {row.amount > 0 ? '+' : ''}
-                  <NumberValue value={row.amount} />
-                </td>
-              </tr>
-            ))}
-          </DataTable>
-          <PageNavigation
-            data={query.data}
-            href={href}
-            label="이프 내역 페이지"
-          />
-        </>
-      ) : null}
+      <CreditTabs value="transactions">
+        <ListFilterForm label="이프 내역" searchEnabled={false}>
+          <label className="flex flex-col gap-2 text-xs text-muted-foreground">
+            이프 변동 유형
+            <select
+              name="direction"
+              className="control"
+              defaultValue={params.get('direction') ?? ''}>
+              <option value="">전체</option>
+              <option value="granted">적립</option>
+              <option value="spent">소모</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-2 text-xs text-muted-foreground">
+            기록일 (KST)
+            <input
+              name="date"
+              type="date"
+              className="control"
+              defaultValue={params.get('date') ?? ''}
+            />
+          </label>
+        </ListFilterForm>
+        <QueryState
+          skeleton={<TableSkeleton columns={4} />}
+          pending={query.isPending}
+          error={query.error}
+          retry={query.refetch}
+        />
+        {query.data ? (
+          <>
+            <DataTable
+              headers={[
+                { label: '기록 시각 (KST)', key: 'createdAt' },
+                '회원',
+                '사유',
+                '변동량 (이프)',
+              ]}
+              sorting={{ key: sort, order, onSort: changeSort }}
+              empty={!query.data.items.length}>
+              {query.data.items.map((row, index) => (
+                <tr key={`${row.member.memberId}-${row.createdAt}-${index}`}>
+                  <td>{dateTime(row.createdAt)}</td>
+                  <td>
+                    <TextLink href={`/members/${row.member.memberId}`}>
+                      {row.member.nickname}
+                    </TextLink>
+                  </td>
+                  <td>{creditReasonLabel(row.reason)}</td>
+                  <td
+                    className={cn(
+                      row.amount > 0
+                        ? 'text-primary-text'
+                        : row.amount < 0
+                          ? 'text-destructive'
+                          : undefined,
+                    )}>
+                    {row.amount > 0 ? '+' : ''}
+                    <NumberValue value={row.amount} />
+                  </td>
+                </tr>
+              ))}
+            </DataTable>
+            <PageNavigation
+              data={query.data}
+              href={href}
+              label="이프 내역 페이지"
+            />
+          </>
+        ) : null}
+      </CreditTabs>
     </>
   );
 }

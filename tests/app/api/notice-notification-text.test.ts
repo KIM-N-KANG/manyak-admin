@@ -2,8 +2,8 @@ import { expect, it } from 'vitest';
 
 import { POST as publish } from '@/app/api/notices/[id]/publish/route';
 import { PATCH } from '@/app/api/notices/[id]/route';
-import { POST as unpublish } from '@/app/api/notices/[id]/unpublish/route';
-import { GET, POST } from '@/app/api/notices/route';
+import { POST } from '@/app/api/notices/route';
+import { POST as campaign } from '@/app/api/notifications/campaigns/route';
 import { getNotice } from '@/fixtures/notices';
 import { listCampaigns } from '@/fixtures/notifications';
 
@@ -12,8 +12,6 @@ const valid = {
   body: '공지 본문',
   tag: 'SERVICE',
   reason: '작성',
-  notificationTitle: '알림 제목',
-  notificationBody: '알림 본문',
 };
 const req = (body: unknown) =>
   new Request('http://localhost/api/notices', {
@@ -22,201 +20,97 @@ const req = (body: unknown) =>
   });
 const context = (id: string) => ({ params: Promise.resolve({ id }) });
 
-it.each(['notificationTitle', 'notificationBody'])(
-  '%s는 생성 필수이며 공백과 상한 초과를 거부한다',
-  async (key) => {
-    for (const value of [
-      undefined,
-      '',
-      '  ',
-      '가'.repeat(key === 'notificationTitle' ? 101 : 301),
-    ]) {
-      expect((await POST(req({ ...valid, [key]: value }))).status).toBe(400);
-    }
-  },
-);
+it('5-1-11 알림 문구 없이 작성하고 예전 문구는 값과 무관하게 무시한다', async () => {
+  for (const extra of [
+    {},
+    { notificationTitle: 42, notificationBody: '가'.repeat(301) },
+  ]) {
+    const response = await POST(req({ ...valid, ...extra }));
 
-it('공지와 별도의 알림 문구를 저장·부분 수정하고 목록에서는 생략한다', async () => {
-  const created = await POST(req(valid));
+    expect(response.status).toBe(201);
 
-  expect(created.status).toBe(201);
+    const item = await response.json();
 
-  const item = await created.json();
-
-  expect(item).toMatchObject({
-    notificationTitle: '알림 제목',
-    notificationBody: '알림 본문',
-  });
-
-  const result = await PATCH(
-    req({ notificationTitle: '바꾼 알림', reason: '수정' }),
-    context(item.noticeId),
-  );
-
-  expect(result.status).toBe(200);
-  expect(await result.json()).toMatchObject({
-    title: '공지 제목',
-    notificationTitle: '바꾼 알림',
-    notificationBody: '알림 본문',
-  });
-
-  const page = await (
-    await GET(new Request('http://localhost/api/notices'))
-  ).json();
-
-  for (const row of page.items) {
-    expect(row).not.toHaveProperty('notificationTitle');
-    expect(row).not.toHaveProperty('notificationBody');
+    expect(item).not.toHaveProperty('notificationTitle');
+    expect(item).not.toHaveProperty('notificationBody');
+    expect(
+      (await publish(req({ reason: '게시' }), context(item.noticeId))).status,
+    ).toBe(200);
+    expect(getNotice(item.noticeId).notifiedAt).toBeNull();
+    expect(
+      listCampaigns().filter((i) => i.noticeId === item.noticeId),
+    ).toHaveLength(0);
   }
 });
+it.each([true, false])(
+  '5-1-11 notifiedAt 유무 %s와 무관하게 제목만 수정한다',
+  async (notified) => {
+    const item = await (await POST(req(valid))).json();
 
-it('알림 문구가 없는 초안은 게시 409이고 두 필드를 채운 후 별도 문구로 캠페인을 만든다', async () => {
-  const id = 'b1000000-0000-4000-8000-000000000002';
-  const original = getNotice(id);
+    await publish(req({ reason: '게시' }), context(item.noticeId));
 
-  expect(original).toMatchObject({
-    notificationTitle: null,
-    notificationBody: null,
-    notifiedAt: null,
-  });
-  expect((await publish(req({ reason: '게시' }), context(id))).status).toBe(
-    409,
-  );
-  expect(
-    (
-      await PATCH(
-        req({ notificationTitle: '하나만', reason: '수정' }),
-        context(id),
-      )
-    ).status,
-  ).toBe(400);
-  expect(
-    (
-      await PATCH(
+    if (notified)
+      await campaign(
         req({
-          notificationTitle: '새 알림',
-          notificationBody: '새 알림 본문',
-          reason: '수정',
+          title: '알림',
+          body: '알림 본문',
+          reason: '발송',
+          noticeId: item.noticeId,
         }),
-        context(id),
-      )
-    ).status,
-  ).toBe(200);
-  expect((await publish(req({ reason: '게시' }), context(id))).status).toBe(
-    200,
-  );
-  expect(
-    listCampaigns().find((campaign) => campaign.noticeId === id),
-  ).toMatchObject({ title: '새 알림', body: '새 알림 본문' });
-});
+      );
 
-it('알림 요청 후 문구 수정은 같은 값도 409이고 다른 공지 내용은 수정할 수 있다', async () => {
-  const item = await (await POST(req(valid))).json();
+    const response = await PATCH(
+      req({ title: '수정 제목', reason: '수정', notificationTitle: false }),
+      context(item.noticeId),
+    );
 
-  await publish(req({ reason: '게시' }), context(item.noticeId));
-
-  for (const key of ['notificationTitle', 'notificationBody'] as const) {
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ title: '수정 제목' });
     expect(
       (
         await PATCH(
-          req({ [key]: valid[key], reason: '수정' }),
+          req({ reason: '수정', notificationTitle: '무시' }),
           context(item.noticeId),
         )
       ).status,
-    ).toBe(409);
-  }
-
-  expect(
-    (
-      await PATCH(
-        req({ title: '공지 정정', reason: '정정' }),
-        context(item.noticeId),
-      )
-    ).status,
-  ).toBe(200);
-});
-
-it('이미 알림을 요청한 기존 null 문구 공지는 재게시해도 추가 알림을 만들지 않는다', async () => {
-  const id = 'b1000000-0000-4000-8000-000000000001';
-
-  await unpublish(req({ reason: '해제' }), context(id));
-
-  const result = await publish(req({ reason: '재게시' }), context(id));
-
-  expect(result.status).toBe(200);
-  expect(await result.json()).toMatchObject({
-    notificationTitle: null,
-    notificationBody: null,
-    notified: false,
-  });
-});
-
-it('PATCH는 null을 생략하고 형식 400을 잠금 409보다 먼저 검사한다', async () => {
-  const id = 'b1000000-0000-4000-8000-000000000001';
-
-  expect(
-    (
-      await PATCH(
-        req({
-          title: '제목 변경',
-          notificationTitle: null,
-          notificationBody: null,
-          reason: '수정',
-        }),
-        context(id),
-      )
-    ).status,
-  ).toBe(200);
-  expect(
-    (
-      await PATCH(
-        req({
-          notificationTitle: '유효 문구 하나',
-          notificationBody: null,
-          reason: '수정',
-        }),
-        context(id),
-      )
-    ).status,
-  ).toBe(409);
-
-  for (const invalid of ['  ', '가'.repeat(101)]) {
-    expect(
-      (
-        await PATCH(
-          req({ notificationTitle: invalid, reason: '수정' }),
-          context(id),
-        )
-      ).status,
     ).toBe(400);
-  }
+  },
+);
+it.each(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION'])(
+  '5-1-16 게시 공지 %s는 여러 캠페인을 만들고 최초 요청 시각을 유지한다',
+  async (tag) => {
+    const item = await (await POST(req({ ...valid, tag }))).json();
+    const payload = {
+      title: '알림',
+      body: '별도 본문',
+      reason: '발송',
+      noticeId: item.noticeId,
+      kind: '무시',
+    };
 
-  expect(
-    (
-      await PATCH(
-        req({
-          notificationTitle: null,
-          notificationBody: null,
-          reason: '수정',
-        }),
-        context(id),
-      )
-    ).status,
-  ).toBe(400);
-});
+    expect((await campaign(req(payload))).status).toBe(400);
+    await publish(req({ reason: '게시' }), context(item.noticeId));
 
-it('이벤트 공지 원문과 별도 알림 제목에 광고 표기를 직접 붙이지 않는다', async () => {
-  const item = await (await POST(req({ ...valid, tag: 'EVENT' }))).json();
+    const first = await campaign(req(payload));
 
-  expect(
-    (await publish(req({ reason: '게시' }), context(item.noticeId))).status,
-  ).toBe(200);
-  expect(getNotice(item.noticeId).title).toBe(valid.title);
-  expect(
-    listCampaigns().find((campaign) => campaign.noticeId === item.noticeId),
-  ).toMatchObject({
-    kind: 'MARKETING',
-    title: valid.notificationTitle,
-    body: valid.notificationBody,
-  });
-});
+    expect(first.status).toBe(201);
+    expect(await first.json()).toMatchObject({
+      kind: ['EVENT', 'PROMOTION'].includes(tag) ? 'MARKETING' : 'SERVICE',
+      noticeId: item.noticeId,
+      storyId: null,
+      failureReason: null,
+    });
+
+    const notifiedAt = getNotice(item.noticeId).notifiedAt;
+
+    expect(notifiedAt).not.toBeNull();
+    expect((await campaign(req(payload))).status).toBe(201);
+    expect(getNotice(item.noticeId).notifiedAt).toBe(notifiedAt);
+    expect(
+      listCampaigns().filter((i) => i.noticeId === item.noticeId),
+    ).toHaveLength(2);
+    expect((await campaign(req({ ...payload, storyId: 'bad' }))).status).toBe(
+      400,
+    );
+  },
+);

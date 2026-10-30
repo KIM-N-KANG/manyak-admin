@@ -1,11 +1,17 @@
 'use client';
 
-import { type ReactNode, useContext } from 'react';
-
 import { DataTable, dateTime } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 import { aiFeatureLabel, aiFeatures } from '@/features/dashboard/chart-data';
+
+import { Charts, dailyRows } from './charts';
+import {
+  NotificationOpenCount,
+  notificationOpenRate,
+} from './notification-opens';
+
+export { Charts, dailyRows } from './charts';
 
 import {
   basisText,
@@ -16,7 +22,8 @@ import {
   platformText,
   ratio,
 } from './config';
-import { allZero, MetricHelp, MetricScope } from './metric-definition';
+import { ActivityVolume, GrowthContent } from './growth-content';
+import { allZero, MetricHelp } from './metric-definition';
 import {
   basisMark,
   FunnelChart,
@@ -24,9 +31,6 @@ import {
   PendingDates,
   PlatformPlaceholder,
   PlatformSource,
-  type PlotEmptyLabel,
-  type PlotRow,
-  plotValues,
   Ranking,
   SeriesChart,
   SummaryCards,
@@ -38,112 +42,18 @@ import {
   listedSeries,
   modelSeries,
   pairSeries,
-  type Series,
   seriesGroups,
 } from './series';
 import { PlatformReachChart, TurnReachChart } from './turn-reach-chart';
 import type * as T from './types';
 
+const platformComposition = [
+  { key: 'web', label: '웹', color: 'var(--chart-2)' },
+  { key: 'android', label: '앱', color: 'var(--chart-3)' },
+  { key: 'unknown', label: '플랫폼 없음', color: 'var(--muted-foreground)' },
+];
+
 const single = (key: string, label: string) => pairSeries([[key, label]]);
-
-export function dailyRows<D extends { date: string }>(
-  data: { from: string; to: string; daily: D[]; pendingDates?: string[] },
-  map: (day: D) => Record<string, number | null>,
-  { preservePendingValues = false } = {},
-): PlotRow[] {
-  const byDate = new Map(data.daily.map((day) => [day.date, day]));
-
-  return chartDates(data.from, data.to).map((date) => {
-    const day = byDate.get(date);
-    const pending = !day || data.pendingDates?.includes(date);
-
-    return {
-      date,
-      ...(day && (!pending || preservePendingValues) ? map(day) : {}),
-      ...(pending ? { pending: 1 } : {}),
-    };
-  });
-}
-
-export function Charts({
-  items,
-}: {
-  items: {
-    title: string;
-    rows: PlotRow[];
-    series: Series[];
-    unit: string;
-    emptyLabel?: PlotEmptyLabel;
-    href?: (date: string) => string;
-    aside?: ReactNode;
-    /** 고른 구분을 적용하지 못한 값이면 제목 옆과 전체 수치 표에 보이는 표시 문구다. */
-    basis?: string | null;
-    /** 값이 없어 차트 대신 보이는 안내 문구다. 전체 수치 표에서도 뺀다. */
-    empty?: string;
-  }[];
-}) {
-  // 모든 차트가 같은 전체 기준이면 전체 수치 표의 값 열 머리글 옆에 한 번만 보인다.
-  const shared = items.every((item) => item.basis === items[0]?.basis)
-    ? items[0]?.basis
-    : undefined;
-
-  const definitions = items.map((item) => item.title);
-  const scope = useContext(MetricScope);
-  const prepared = items.map((item) => ({
-    ...item,
-    values: plotValues(scope, item),
-  }));
-
-  return (
-    <>
-      <div className="grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2">
-        {items.map(({ basis, empty, ...item }) =>
-          empty ? (
-            <PlatformPlaceholder
-              key={item.title}
-              title={item.title}
-              aside={item.aside}
-              message={empty}
-            />
-          ) : (
-            <SeriesChart
-              key={item.title}
-              {...item}
-              aside={item.aside ?? basisMark(basis)}
-            />
-          ),
-        )}
-      </div>
-      <NumericTable
-        title="전체 수치 표"
-        definitionTitle={definitions}
-        headers={[
-          { label: '지표', definitionTitle: definitions },
-          { label: '날짜', definitionTitle: null },
-          { label: '계열', definitionTitle: definitions },
-          {
-            label: shared ? `값 · ${shared}` : '값',
-            definitionTitle: definitions,
-          },
-        ]}
-        rows={prepared.flatMap((item) =>
-          (item.empty ? [] : item.rows).flatMap((row) =>
-            item.series.map((series) => [
-              <span key="metric" className="inline-flex items-center gap-2">
-                {item.title}
-                {item.basis && !shared ? basisMark(item.basis) : null}
-                <MetricHelp title={item.title} />
-              </span>,
-              row.date,
-              series.label,
-              item.values.format(row, series.key),
-            ]),
-          ),
-        )}
-      />
-    </>
-  );
-}
 
 const memberHref = (date: string) => `/members?from=${date}&to=${date}`;
 
@@ -158,7 +68,7 @@ export function UserContent({
   platform: string;
   segment?: string;
 }) {
-  const key = platform as keyof T.PlatformCounts;
+  const key = platform as keyof T.MetricPlatformCounts;
   const series =
     seriesGroups.platform.find((series) => series.key === key) ??
     seriesGroups.platform[0];
@@ -240,6 +150,23 @@ export function UserContent({
                 ? platformText.messagesPerUserEmpty
                 : undefined,
           }))}
+        />
+        <Charts
+          items={[
+            {
+              title: '활성 사용자 플랫폼 구성',
+              rows: dailyRows(d, (day) => ({
+                web: day.activeUsers.web,
+                android: day.activeUsers.android,
+                unknown: day.activeUsers.unknown,
+              })),
+              series: platformComposition,
+              unit: '명',
+              stacked: true,
+              composition: true,
+              basis: basisText(platform !== 'all', segment !== 'all'),
+            },
+          ]}
         />
       </>
     );
@@ -363,6 +290,17 @@ export function UserContent({
             series: [series],
             unit: '초',
           },
+          {
+            title: '사용자당 세션 수',
+            rows: dailyRows(d, (day) => ({
+              [series.key]: day.sessionsPerUser?.[key] ?? null,
+            })),
+            series: [series],
+            unit: '개',
+            empty: d.daily.some((day) => day.sessionsPerUser !== undefined)
+              ? undefined
+              : '준비 중',
+          },
         ]}
       />
     );
@@ -468,6 +406,23 @@ export function UserContent({
           },
         ]}
       />
+      <Charts
+        items={[
+          {
+            title: '가입 전환율',
+            aside: <PlatformSource title="가입 전환율" asOf={d.platformAsOf} />,
+            rows: dailyRows(d, (day) => ({
+              [series.key]: day.signupRate?.[key] ?? null,
+            })),
+            series: [series],
+            unit: '%',
+            emptyLabel: '신규 방문자 없음',
+            empty: d.daily.some((day) => day.signupRate !== undefined)
+              ? undefined
+              : '준비 중',
+          },
+        ]}
+      />
       <div className="mt-5">
         <PendingDates dates={d.pendingDates ?? []} />
         {hasPlatform ? (
@@ -491,13 +446,11 @@ export function AcquisitionContent({
   data: unknown;
   segment: string;
 }) {
+  if (['activation', 'reach', 'creatives', 'app'].includes(tab))
+    return <GrowthContent tab={tab} data={data} segment={segment} />;
+
   if (tab === 'push') {
     const d = data as T.PushOpensResponse;
-    const states: Record<string, string> = {
-      BEFORE_MEASUREMENT: '측정 시작 전',
-      NO_LINK: '링크 없음',
-      PENDING: '발송 기록 없음',
-    };
     const rateHelp = <MetricHelp title="열람률" />;
     const activities = (
       [
@@ -535,6 +488,10 @@ export function AcquisitionContent({
               { label: '도달 회원', help: <MetricHelp title="도달 회원" /> },
               { label: '푸시 열람', help: <MetricHelp title="푸시 열람" /> },
               { label: '열람률', help: rateHelp },
+              {
+                label: '알림함 열람',
+                help: <MetricHelp title="알림함 열람" />,
+              },
             ]}
             empty={!d.campaigns.length}
             emptyContent="선택한 기간에 해당하는 관리자 캠페인이 없습니다.">
@@ -552,16 +509,11 @@ export function AcquisitionContent({
                 <td>{dateTime(row.startedAt)} KST</td>
                 <td>{n(row.deliveredMembers, '명')}</td>
                 <td>
-                  {row.openState === 'MEASURED'
-                    ? row.pushOpens === null
-                      ? '계산할 수 없음'
-                      : n(row.pushOpens, '명')
-                    : states[row.openState]}
+                  <NotificationOpenCount values={row} channel="push" />
                 </td>
+                <td>{notificationOpenRate(row)}</td>
                 <td>
-                  {row.openState === 'MEASURED'
-                    ? percent(row.pushOpenRate)
-                    : states[row.openState]}
+                  <NotificationOpenCount values={row} channel="inbox" />
                 </td>
               </tr>
             ))}
@@ -580,6 +532,10 @@ export function AcquisitionContent({
               { label: '도달 회원', help: <MetricHelp title="도달 회원" /> },
               { label: '푸시 열람', help: <MetricHelp title="푸시 열람" /> },
               { label: '열람률', help: rateHelp },
+              {
+                label: '알림함 열람',
+                help: <MetricHelp title="알림함 열람" />,
+              },
             ]}
             empty={!activities.length}>
             {activities.map((row) => (
@@ -596,16 +552,11 @@ export function AcquisitionContent({
                 </td>
                 <td>{n(row.deliveredMembers, '명')}</td>
                 <td>
-                  {row.openState === 'MEASURED'
-                    ? row.pushOpens === null
-                      ? '계산할 수 없음'
-                      : n(row.pushOpens, '명')
-                    : states[row.openState]}
+                  <NotificationOpenCount values={row} channel="push" />
                 </td>
+                <td>{notificationOpenRate(row)}</td>
                 <td>
-                  {row.openState === 'MEASURED'
-                    ? percent(row.pushOpenRate)
-                    : states[row.openState]}
+                  <NotificationOpenCount values={row} channel="inbox" />
                 </td>
               </tr>
             ))}
@@ -720,6 +671,21 @@ export function AcquisitionContent({
               rows: dailyRows(d, (day) => day.newVisitors),
               series: seriesGroups.ads,
               unit: '명',
+            },
+            {
+              title: '기기 유형별 웹 신규 방문자',
+              rows: dailyRows(d, (day) => day.newVisitorsByDevice ?? {}),
+              series: pairSeries([
+                ['ios', 'iPhone과 iPad'],
+                ['android', 'Android 기기'],
+                ['other', '그 밖'],
+              ]),
+              unit: '명',
+              empty: d.daily.some(
+                (day) => day.newVisitorsByDevice !== undefined,
+              )
+                ? undefined
+                : '준비 중',
             },
             {
               title: '유입 소스별 신규 방문자',
@@ -857,6 +823,7 @@ export function ConversionContent({
           ]}
         />
       ) : null}
+
       <div className="mt-5">
         <PendingDates dates={d.pendingDates ?? []} />
         <PlatformReachChart
@@ -882,12 +849,15 @@ export function QualityContent({
 }: {
   tab: string;
   data: unknown;
-  part?: 'input' | 'errors' | 'signals' | 'completion';
+  part?: 'input' | 'errors' | 'signals' | 'completion' | 'activity';
   platform?: string;
   segment?: string;
 }) {
   if (tab === 'client') {
     const d = data as T.QualityResponse;
+
+    if (part === 'activity') return <ActivityVolume data={d} />;
+
     const errors = listedSeries([
       ['chatLoadError', '채팅 불러오기 오류'],
       ['storyListLoadError', '스토리 목록 불러오기 오류'],
@@ -1011,6 +981,7 @@ export function QualityContent({
                 errors: ['스트림 오류율', '오류 표시 사용자'],
                 signals: ['이프와 초대 신호 사용자'],
                 completion: ['간편 제작 실패율'],
+                activity: [],
               }[part].includes(item.title),
           )}
         />
@@ -1299,13 +1270,8 @@ function ChatOptionPlatforms({
   data: T.ChatOptionResponse;
   platform: string;
 }) {
-  const key = platform as keyof T.PlatformCounts;
-  const ready = d.daily.filter(
-    (day) =>
-      day.chatStarts && day.personaChatStarts && day.platformTurnsByModel,
-  );
-  const total = (pick: (day: T.ChatOptionDay) => T.PlatformCounts) =>
-    ready.reduce((s, day) => s + pick(day)[key], 0);
+  const key = platform as keyof T.MetricPlatformCounts;
+  const ready = d.daily.filter((day) => day.platformTurnsByModel);
   const models = modelSeries(
     ready.flatMap((day) => Object.keys(day.platformTurnsByModel!)),
   );
@@ -1314,25 +1280,61 @@ function ChatOptionPlatforms({
   return (
     <div className="mt-5">
       <PendingDates dates={d.pendingDates ?? []} />
-      <SummaryCards
+      <Charts
         items={[
           {
-            label: platformText.personaTitle,
+            title: platformText.personaTitle,
             aside: (
               <PlatformSource
                 title={platformText.personaTitle}
                 asOf={d.platformAsOf}
               />
             ),
-            value: ready.length
-              ? percent(
-                  ratio(
-                    total((day) => day.personaChatStarts!),
-                    total((day) => day.chatStarts!),
-                  ),
-                  platformText.personaEmpty,
-                )
-              : pending,
+            rows: dailyRows(d, (day) => ({
+              value:
+                day.chatStarters && day.chatStartersByPersonaType
+                  ? ratio(
+                      day.chatStartersByPersonaType.persona[key],
+                      day.chatStarters[key],
+                    )
+                  : null,
+            })),
+            series: single('value', platformText.personaTitle),
+            unit: '%',
+            emptyLabel: platformText.personaEmpty,
+            empty: d.daily.some((day) => day.chatStarters !== undefined)
+              ? undefined
+              : '준비 중',
+          },
+          {
+            title: '주인공 종류별 채팅 시작 사용자',
+            aside: (
+              <PlatformSource
+                title="주인공 종류별 채팅 시작 사용자"
+                asOf={d.platformAsOf}
+              />
+            ),
+            rows: dailyRows(d, (day) =>
+              day.chatStartersByPersonaType
+                ? Object.fromEntries(
+                    Object.entries(day.chatStartersByPersonaType).map(
+                      ([type, values]) => [type, values[key]],
+                    ),
+                  )
+                : { pending: 1 },
+            ),
+            series: pairSeries([
+              ['default', '기본 주인공'],
+              ['persona', '페르소나'],
+              ['none', '종류 정보 없음'],
+            ]),
+            unit: '명',
+            stacked: true,
+            empty: d.daily.some(
+              (day) => day.chatStartersByPersonaType !== undefined,
+            )
+              ? undefined
+              : '준비 중',
           },
         ]}
       />

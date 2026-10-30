@@ -20,6 +20,7 @@ export type CampaignDay = {
   activeUsers: number;
   newVisitors: CampaignSegments;
   newVisitorsBySource: CampaignSources;
+  newVisitorsByDevice?: { ios: number; android: number; other: number };
   signups: CampaignSegments;
   cumulativeSignups: CampaignSegments;
   /** 서버 배포 전 응답에는 없다. */
@@ -29,6 +30,7 @@ export type CampaignDay = {
   chatMessages: number;
 };
 export type CampaignTotals = {
+  newVisitorsByDevice?: { ios: number; android: number; other: number };
   activeUsersAverage: number;
   newVisitors: CampaignSegments;
   signups: CampaignSegments;
@@ -89,6 +91,15 @@ export type PlatformDecimals = {
   android: number | null;
   unknown: number | null;
 };
+/** 플랫폼 없음이 없는 가입과 채팅 시작 등의 플랫폼 값이다. */
+export type MetricPlatformCounts = Pick<
+  PlatformCounts,
+  'all' | 'web' | 'android'
+>;
+export type MetricPlatformRates = Pick<
+  PlatformDecimals,
+  'all' | 'web' | 'android'
+>;
 export type ActivityDay = {
   date: string;
   activeUsers: PlatformCounts;
@@ -142,6 +153,7 @@ export type RetentionResponse = {
 export type SessionDay = {
   date: string;
   averageSessionSeconds: PlatformDecimals;
+  sessionsPerUser?: PlatformDecimals;
 };
 export type SessionResponse = {
   asOf: string;
@@ -153,6 +165,14 @@ export type SessionResponse = {
 };
 export type QualityDay = {
   date: string;
+  activity?: {
+    aiResponses: number;
+    simpleCompletions: number;
+    generalSubmissions: number;
+    coreActiveUsers: number;
+    messagesPerCoreUser: number | null;
+    simpleCompletionsPerCoreUser: number | null;
+  };
   messagesByInputMode: Record<string, number>;
   streamErrors: number;
   streamErrorRate: number | null;
@@ -174,6 +194,8 @@ export type QualityResponse = {
   pendingDates: string[];
 };
 export type ConversionStep = {
+  minTurnNumber?: number | null;
+  platform?: string | null;
   event: string;
   turnNumber: number | null;
   users: number;
@@ -183,7 +205,7 @@ export type ConversionResponse = {
   from: string;
   to: string;
   funnel: string;
-  platform: string;
+  platform: string | null;
   storyId: string | null;
   steps: ConversionStep[];
 };
@@ -222,7 +244,9 @@ export type SignupDay = {
   signups: SignupCounts;
   cumulativeSignups: number;
   migratedFromGuest: number;
-  signupsByPlatform?: PlatformCounts | null;
+  signupsByPlatform?: MetricPlatformCounts | null;
+  newVisitorsByPlatform?: MetricPlatformCounts | null;
+  signupRate?: MetricPlatformRates | null;
 };
 export type SignupResponse = PlatformMeta & {
   asOf: string;
@@ -236,9 +260,14 @@ export type ChatOptionDay = {
   withPersona: number;
   byModel: Record<string, number>;
   turnsByModel: Record<string, number>;
+  chatStarters?: MetricPlatformCounts | null;
+  chatStartersByPersonaType?: Record<
+    'default' | 'persona' | 'none',
+    MetricPlatformCounts
+  > | null;
   chatStarts?: PlatformCounts | null;
   personaChatStarts?: PlatformCounts | null;
-  platformTurnsByModel?: Record<string, PlatformCounts> | null;
+  platformTurnsByModel?: Record<string, MetricPlatformCounts> | null;
 };
 export type ChatOptionResponse = PlatformMeta & {
   asOf: string;
@@ -279,38 +308,64 @@ export type AiCostTotals = {
   costPerStoryKrw: number | null;
 };
 
+export type NotificationOpenState =
+  | 'MEASURED'
+  | 'BEFORE_MEASUREMENT'
+  | 'NO_LINK'
+  | 'PENDING';
+export type NotificationOpenValues = {
+  openState: NotificationOpenState;
+  pushOpens: number | null;
+  webPushOpens: number | null;
+  androidPushOpens: number | null;
+  pushOpenRate: number | null;
+  inboxOpens: number | null;
+  webInboxOpens: number | null;
+  androidInboxOpens: number | null;
+};
 export type PushOpensResponse = {
   asOf: string | null;
   pendingDates: string[];
   from: string;
   to: string;
   measuredFrom: string | null;
-  campaigns: {
+  androidMeasuredFrom: string | null;
+  campaigns: (NotificationOpenValues & {
     campaignId: string;
     kind: 'SERVICE' | 'MARKETING';
     title: string;
     noticeId: string | null;
     startedAt: string;
     deliveredMembers: number;
-    openState: 'MEASURED' | 'BEFORE_MEASUREMENT' | 'NO_LINK' | 'PENDING';
-    pushOpens: number | null;
-    pushOpenRate: number | null;
-  }[];
+  })[];
   activityFrom: string | null;
-  activityTypes: {
+  activityTypes: (Omit<NotificationOpenValues, 'openState'> & {
+    openState: 'MEASURED' | 'BEFORE_MEASUREMENT';
     type:
       | 'STORY_COMPLETED'
       | 'STORY_MODERATION_COMPLETED'
       | 'ATTENDANCE_REMINDER'
       | 'CREDIT_EXPIRY_REMINDER';
     deliveredMembers: number;
-    openState: 'MEASURED' | 'BEFORE_MEASUREMENT';
-    pushOpens: number | null;
-    pushOpenRate: number | null;
-  }[];
+  })[];
+};
+export type CampaignOpensResponse = NotificationOpenValues & {
+  asOf: string | null;
+  pendingDates: string[];
+  campaignId: string;
+  startedAt: string | null;
+  from: string | null;
+  to: string | null;
+  measuredFrom: string | null;
+  androidMeasuredFrom: string | null;
+  deliveredMembers: number;
 };
 
 export type SessionLengthResponse = {
+  daily?: {
+    date: string;
+    sessions: Pick<PlatformCounts, 'all' | 'web' | 'android'>;
+  }[];
   asOf: string;
   from: string;
   to: string;
@@ -323,4 +378,59 @@ export type SessionLengthResponse = {
     totalSessions: number;
     medianBin: number | null;
   }[];
+};
+
+export type MetricPeriod = {
+  asOf: string;
+  from: string;
+  to: string;
+  pendingDates: string[];
+};
+export type CampaignActivationResponse = Omit<MetricPeriod, 'pendingDates'> & {
+  campaign: string;
+  steps: {
+    event: string;
+    minTurnNumber: number | null;
+    users: CampaignSegments;
+  }[];
+};
+export type CampaignReachResponse = Omit<MetricPeriod, 'pendingDates'> & {
+  campaign: string;
+  chatUsers: CampaignSegments;
+  deepChatUsers: CampaignSegments;
+};
+export type CreativeUsers = { content: string | null; users: number };
+export type CampaignCreativesResponse = MetricPeriod & {
+  campaign: string;
+  daily: {
+    date: string;
+    signups: CreativeUsers[];
+    deepChatUsers: CreativeUsers[];
+  }[];
+  totals: { signups: CreativeUsers[] };
+};
+export type InstallSourceUsers = { source: string | null; users: number };
+export type AppTransferResponse = MetricPeriod & {
+  daily: {
+    date: string;
+    bannerShown: number;
+    bannerClicked: number;
+    bannerClickRate: number | null;
+    bannerNewUsers: number;
+    newUsersBySource: InstallSourceUsers[];
+  }[];
+  totals: { bannerNewUsers: number; newUsersBySource: InstallSourceUsers[] };
+};
+export type AppActivationResponse = MetricPeriod & {
+  daily: {
+    date: string;
+    newUsers: number;
+    activeUsers: number;
+    activationRate: number | null;
+  }[];
+  totals: {
+    newUsers: number;
+    activeUsers: number;
+    activationRate: number | null;
+  };
 };

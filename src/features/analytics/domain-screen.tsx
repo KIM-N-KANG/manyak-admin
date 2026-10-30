@@ -99,8 +99,11 @@ export type DomainName = keyof typeof domains;
 
 const acquisitionTabs = [
   ['trend', '캠페인 추이'],
+  ['activation', '첫 방문 활성화'],
+  ['creatives', '광고 소재'],
   ['sources', '유입 소스'],
-  ['push', '푸시 열람'],
+  ['app', '앱 유입'],
+  ['push', '알림 열람'],
 ] as const;
 const serviceTabs = [
   ['services', '서비스와 요청'],
@@ -241,11 +244,15 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
   ];
   const tab = pick(params.get('tab'), options, config.defaultTab);
   const acquisition =
-    domain === 'growth' && ['trend', 'sources', 'push'].includes(tab);
+    domain === 'growth' &&
+    ['trend', 'activation', 'creatives', 'sources', 'app', 'push'].includes(
+      tab,
+    );
   const services =
     domain === 'ops' && ['services', 'storage', 'tables'].includes(tab);
   const campaign =
-    (domain === 'growth' && tab === 'trend') ||
+    (domain === 'growth' &&
+      ['trend', 'activation', 'creatives'].includes(tab)) ||
     (domain === 'stories' && tab !== 'making');
   const hasPlatform =
     !acquisition &&
@@ -316,7 +323,7 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
     key: string,
     title: string,
     url: string,
-    qualityPart?: 'input' | 'errors' | 'signals' | 'completion',
+    qualityPart?: 'input' | 'errors' | 'signals' | 'completion' | 'activity',
   ) {
     const body = (
       <MetricScope value={screen}>
@@ -421,6 +428,13 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
                 `/api/users/activity?${query}`,
               )}
               {metrics(
+                'quality',
+                'client',
+                '활동량',
+                `/api/quality/client?${qualityQuery}`,
+                'activity',
+              )}
+              {metrics(
                 'users',
                 'sessions',
                 '세션',
@@ -436,9 +450,18 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
                 '신규 가입자',
                 `/api/users/signups?${query}`,
               )}
+              {metrics(
+                'users',
+                'app-activation',
+                '앱 신규 활성 사용자',
+                `/api/users/app-activation?${query}`,
+              )}
               {funnel([
                 'web-first-visit',
                 'android-first-visit',
+                'first-visit-activation',
+                'login-signup',
+                'android-activation',
                 'guest-limit-login',
               ])}
             </>
@@ -454,7 +477,7 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
           ) : null}
           {tab === 'making' ? (
             <>
-              {funnel(['story-creation'])}
+              {funnel(['story-creation', 'creation-entry-chat'])}
               <DistributionArea
                 title="콘텐츠"
                 ids={['creation-mode', 'characters']}

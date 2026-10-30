@@ -14,6 +14,9 @@ vi.mock('recharts', () => {
     createElement('div', null, children);
 
   return {
+    CartesianGrid: Box,
+    Line: Box,
+    LineChart: Box,
     Bar: Box,
     BarChart: Box,
     XAxis: () => null,
@@ -22,6 +25,8 @@ vi.mock('recharts', () => {
   };
 });
 vi.mock('@/components/ui/chart', () => ({
+  ChartTooltip: () => null,
+  ChartTooltipContent: () => null,
   ChartContainer: ({ children }: PropsWithChildren) =>
     createElement('div', null, children),
 }));
@@ -37,7 +42,10 @@ it('세션 구간 9개는 서버의 순서·합계·중앙값을 쓰고 973개�
   expect(screen.getByText('973개 (42.0%)')).toBeTruthy();
   expect(screen.getByText('211개 (9.1%) 중앙값')).toBeTruthy();
 
-  const rows = screen.getAllByRole('row').slice(1);
+  const rows = screen
+    .getByText('973개 (42.0%)')
+    .closest('table')!
+    .querySelectorAll('tbody tr');
 
   expect(rows).toHaveLength(9);
   expect(rows[0].textContent).toContain('3초 미만');

@@ -267,10 +267,10 @@ describe('Amplitude 실패 격리', () => {
     expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
     expect(tooltip.textContent).toContain('몇 분 늦게');
     expect(tooltip.textContent).toContain(
-      '국가가 한국이거나 국가 정보가 없는 사용자를 집계하고 앱은 그 밖 국가에서 로그인한 사용자도 더합니다.',
+      '국가가 한국이거나 국가 정보가 없는 웹과 앱 사용자를 집계합니다.',
     );
     expect(tooltip.textContent).toContain(
-      '같은 날 웹과 앱, 또는 국내와 해외에서 앱을 쓴 사람은 두 번 셉니다.',
+      '같은 날 웹과 앱을 함께 쓴 사람을 한 번 셉니다.',
     );
     expect(tooltip.textContent).not.toContain('국가와 무관');
     expect(tooltip.textContent).toContain(

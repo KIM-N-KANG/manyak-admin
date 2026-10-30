@@ -11,11 +11,7 @@ import {
   PUT,
 } from '@/app/api/notifications/templates/[key]/route';
 import { stories } from '@/fixtures/entities';
-import {
-  createNoticeCampaign,
-  getTemplate,
-  listCampaigns,
-} from '@/fixtures/notifications';
+import { getTemplate } from '@/fixtures/notifications';
 import { saveOriginal } from '@/fixtures/originals';
 
 const req = (body: unknown) =>
@@ -236,12 +232,5 @@ describe('알림 BFF', () => {
     expect(reset.effective.isDefault).toBe(true);
     expect(reset.overrides[0].effectiveUntil).toBe(future);
     expect(getTemplate('attendance_reminder').overrides).toHaveLength(1);
-  });
-  it('공지 알림 요청은 공지별 캠페인 하나를 만든다', () => {
-    const id = crypto.randomUUID();
-
-    createNoticeCampaign(id, '공지', '본문', 'SERVICE');
-    createNoticeCampaign(id, '공지', '본문', 'SERVICE');
-    expect(listCampaigns().filter((i) => i.noticeId === id)).toHaveLength(1);
   });
 });

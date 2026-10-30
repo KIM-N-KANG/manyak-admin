@@ -17,7 +17,6 @@ import { useApi } from '@/features/shared/use-api';
 import {
   adSegments,
   type AnalyticsScreenName,
-  approximation,
   audiences,
   audienceText,
   funnels,
@@ -29,6 +28,7 @@ import {
   segmentTabs,
   sourceHelp,
 } from './config';
+import { AppActivationContent } from './growth-content';
 import { kstTime } from './infra/data';
 import { MetricHelp, MetricScope } from './metric-definition';
 import { FunnelChart, PendingDates, Source } from './metric-ui';
@@ -43,7 +43,11 @@ import {
   QualityContent,
   UserContent,
 } from './tab-content';
-import type { CampaignDefinition, ConversionResponse } from './types';
+import type {
+  AppActivationResponse,
+  CampaignDefinition,
+  ConversionResponse,
+} from './types';
 
 export function Select({
   label,
@@ -178,6 +182,13 @@ function TabHeading({
       : template;
   const title =
     headingTitle ??
+    (
+      {
+        activation: '첫 방문 활성화 퍼널',
+        app: '앱 배너와 설치 경로',
+        'app-activation': '앱 신규 활성 사용자',
+      } as Record<string, string>
+    )[tab] ??
     screens[screen].tabs.find(([key]) => key === tab)?.[1] ??
     '';
 
@@ -185,6 +196,17 @@ function TabHeading({
     <div className="mb-4 flex flex-wrap items-center gap-3">
       <h2 className="text-xl font-semibold">{title}</h2>
       <MetricHelp title={title} />
+      {[
+        'app-activation',
+        'activation',
+        'reach',
+        'creatives',
+        'sources',
+      ].includes(tab) ? (
+        <span className="rounded-sm border bg-muted px-2 py-0.5 text-xs">
+          {tab === 'app-activation' ? '앱' : '웹'}
+        </span>
+      ) : null}
       {help ? (
         <Source source={source} help={help} />
       ) : (
@@ -211,7 +233,7 @@ export function MetricsTab({
   segment: string;
   adSegment: string;
   title?: string;
-  qualityPart?: 'input' | 'errors' | 'signals' | 'completion';
+  qualityPart?: 'input' | 'errors' | 'signals' | 'completion' | 'activity';
 }) {
   const query = useApi<unknown>(url, true, {
     refetchInterval: (query) =>
@@ -253,7 +275,11 @@ export function MetricsTab({
         />
       ) : null}
       <QueryState
-        skeleton={<MetricsSkeleton tab={tab} />}
+        skeleton={
+          <MetricsSkeleton
+            tab={qualityPart === 'activity' ? 'activity-volume' : tab}
+          />
+        }
         pending={query.isPending}
         error={query.error}
         retry={query.refetch}
@@ -280,7 +306,11 @@ export function MetricsTab({
             </p>
           ) : null}
           <PendingDates dates={data.pendingDates ?? []} />
-          {screen === 'acquisition' ? (
+          {tab === 'app-activation' ? (
+            <AppActivationContent
+              data={data as unknown as AppActivationResponse}
+            />
+          ) : screen === 'acquisition' ? (
             <AcquisitionContent tab={tab} data={data} segment={adSegment} />
           ) : screen === 'users' ? (
             <UserContent
@@ -306,6 +336,20 @@ export function MetricsTab({
           )}
         </>
       ) : null}
+      {tab === 'activation' ? (
+        <section className="mt-8" aria-label="누적 도달 영역">
+          <MetricsTab
+            screen="acquisition"
+            tab="reach"
+            title="누적 도달"
+            url={url.replace('/funnels/activation?', '/reach?')}
+            platform="all"
+            segment="all"
+            adSegment={adSegment}
+          />
+        </section>
+      ) : null}
+      {tab === 'app' ? <AppFunnel url={url} /> : null}
       {tab === 'sessions' ? (
         <SessionLengths
           url={url.replace('/users/sessions?', '/users/session-lengths?')}
@@ -350,9 +394,11 @@ function FunnelCard({
         <MetricHelp title={label} noEvents={query.data?.steps[0]?.users === 0}>
           {help}
         </MetricHelp>
-        <span className="rounded-sm border bg-muted px-2 py-0.5 text-xs">
-          {platformOptions.find(([key]) => key === platform)?.[1]}
-        </span>
+        {platform ? (
+          <span className="rounded-sm border bg-muted px-2 py-0.5 text-xs">
+            {platformOptions.find(([key]) => key === platform)?.[1]}
+          </span>
+        ) : null}
       </div>
       {children}
       {url === null ? null : (
@@ -412,7 +458,7 @@ export function FunnelCards({
           const fixed =
             funnel === 'web-first-visit'
               ? 'web'
-              : funnel === 'android-first-visit'
+              : ['android-first-visit', 'android-activation'].includes(funnel)
                 ? 'android'
                 : null;
           const query = new URLSearchParams({ from, to });
@@ -420,20 +466,20 @@ export function FunnelCards({
 
           if (detail && story) query.set('storyId', story);
 
-          if (!fixed) query.set('platform', platform);
+          if (!fixed && funnel !== 'web-to-android')
+            query.set('platform', platform);
 
           return (
             <FunnelCard
               key={funnel}
               label={label}
               basis={detail ? detailBasis : null}
-              platform={fixed ?? platform}
+              platform={funnel === 'web-to-android' ? '' : (fixed ?? platform)}
               url={
                 detail && invalidStory
                   ? null
                   : `/api/conversion/funnels/${funnel}?${query}`
-              }
-              help={funnel === 'guest-limit-login' ? approximation : undefined}>
+              }>
               {detail ? (
                 <div className="mb-4">
                   <TextCondition
@@ -479,7 +525,9 @@ export function AnalyticsScreen({
   const catalog = useApi<{ items: CampaignDefinition[] }>(
     '/api/campaigns',
     screen === 'acquisition' &&
-      ['trend', 'creation', 'story-detail'].includes(tab),
+      ['trend', 'activation', 'creatives', 'creation', 'story-detail'].includes(
+        tab,
+      ),
   );
   const selectedCampaign =
     params.get('campaign') ??
@@ -503,7 +551,8 @@ export function AnalyticsScreen({
   const adSegment = pick(params.get('adSegment'), adSegments, 'all');
   const funnelList = screen === 'conversion' && tab === 'funnels';
   const needsCampaign =
-    screen === 'acquisition' && !['sources', 'installs', 'push'].includes(tab);
+    screen === 'acquisition' &&
+    !['sources', 'installs', 'push', 'app'].includes(tab);
   const story =
     params.get('storyId') ??
     (needsCampaign && tab === 'story-detail' ? (campaign?.storyId ?? '') : '');
@@ -563,11 +612,15 @@ export function AnalyticsScreen({
     screen === 'acquisition'
       ? tab === 'trend'
         ? '/campaigns/analytics'
-        : tab === 'push'
-          ? '/campaigns/push-opens'
-          : tab === 'sources'
-            ? '/campaigns/sources'
-            : `/campaigns/funnels/${tab}`
+        : tab === 'creatives'
+          ? '/campaigns/creatives'
+          : tab === 'app'
+            ? '/campaigns/app-transfer'
+            : tab === 'push'
+              ? '/campaigns/push-opens'
+              : tab === 'sources'
+                ? '/campaigns/sources'
+                : `/campaigns/funnels/${tab}`
       : screen === 'conversion'
         ? '/conversion/turn-reach'
         : `/${screen}/${tab}`;
@@ -679,7 +732,7 @@ export function AnalyticsScreen({
               ) : null}
             </>
           ) : null}
-          {tab === 'creation' ? (
+          {['creation', 'activation'].includes(tab) ? (
             <Select
               label="광고 구분"
               value={adSegment}
@@ -725,21 +778,44 @@ export function AnalyticsScreen({
                     retry={catalog.refetch}
                   />
                 ) : range.error ? (
-                  <Card role="alert">
-                    <h2 className="font-semibold">기간 확인 필요</h2>
-                    <p className="my-3 text-sm">
-                      {range.error === 'retention'
-                        ? '리텐션은 어제까지의 시작일만 볼 수 있습니다. 끝 날짜를 어제 이전으로 선택해 주세요.'
-                        : `이 지표는 최대 ${range.maxDays}일까지 볼 수 있습니다. 기간을 ${range.maxDays}일 이내로 선택해 주세요.`}
-                    </p>
-                    <Button
-                      variant="outline"
-                      onClick={() => selectRange(range.adjusted)}>
-                      {range.error === 'retention'
-                        ? '어제까지로 맞추기'
-                        : `최근 ${range.maxDays}일로 맞추기`}
-                    </Button>
-                  </Card>
+                  <>
+                    <Card role="alert">
+                      <h2 className="font-semibold">기간 확인 필요</h2>
+                      <p className="my-3 text-sm">
+                        {range.error === 'retention'
+                          ? '리텐션은 어제까지의 시작일만 볼 수 있습니다. 끝 날짜를 어제 이전으로 선택해 주세요.'
+                          : `이 지표는 최대 ${range.maxDays}일까지 볼 수 있습니다. 기간을 ${range.maxDays}일 이내로 선택해 주세요.`}
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={() => selectRange(range.adjusted)}>
+                        {range.error === 'retention'
+                          ? '어제까지로 맞추기'
+                          : `최근 ${range.maxDays}일로 맞추기`}
+                      </Button>
+                    </Card>
+                    {tab === 'activation' ? (
+                      <section className="mt-8" aria-label="누적 도달 영역">
+                        <TabHeading
+                          screen="acquisition"
+                          tab="reach"
+                          title="누적 도달"
+                        />
+                        <Card role="alert">
+                          <h2 className="font-semibold">기간 확인 필요</h2>
+                          <p className="my-3 text-sm">
+                            이 지표는 최대 31일까지 볼 수 있습니다. 기간을 31일
+                            이내로 선택해 주세요.
+                          </p>
+                          <Button
+                            variant="outline"
+                            onClick={() => selectRange(range.adjusted)}>
+                            최근 31일로 맞추기
+                          </Button>
+                        </Card>
+                      </section>
+                    ) : null}
+                  </>
                 ) : missingCampaign ? (
                   <p role="status">
                     진행 중인 광고 캠페인이 없습니다. 광고 캠페인을 선택해
@@ -762,6 +838,13 @@ export function AnalyticsScreen({
                   <>
                     <TabHeading screen={screen} tab={tab} />
                     <FunnelCards
+                      only={[
+                        'web-first-visit',
+                        'android-first-visit',
+                        'story-creation',
+                        'story-detail-chat',
+                        'guest-limit-login',
+                      ]}
                       from={range.from}
                       to={range.to}
                       platform={funnelPlatform}
@@ -809,5 +892,51 @@ function RetentionSelect({
       options={cohorts}
       onChange={onChange}
     />
+  );
+}
+
+function AppFunnel({ url }: { url: string }) {
+  const router = useRouter(),
+    pathname = usePathname(),
+    current = useSearchParams();
+  const params = new URLSearchParams(url.split('?')[1]);
+  const from = params.get('from')!,
+    to = params.get('to')!;
+  const range = analyticsRange(params, 'funnels');
+
+  function adjust() {
+    const next = new URLSearchParams(current);
+
+    next.delete('range');
+    next.delete('days');
+    next.set('from', range.adjusted.from);
+    next.set('to', range.adjusted.to);
+    router.push(`${pathname}?${next}`, { scroll: false });
+  }
+
+  return (
+    <section className="mt-8" aria-label="웹 이용 후 앱 이용 영역">
+      {range.error ? (
+        <Card role="alert">
+          <h2 className="font-semibold">기간 확인 필요</h2>
+          <p className="my-3 text-sm">
+            이 지표는 최대 31일까지 볼 수 있습니다. 기간을 31일 이내로 선택해
+            주세요.
+          </p>
+          <Button variant="outline" onClick={adjust}>
+            최근 31일로 맞추기
+          </Button>
+        </Card>
+      ) : (
+        <FunnelCards
+          only={['web-to-android']}
+          from={from}
+          to={to}
+          platform="web"
+          story=""
+          onStory={() => {}}
+        />
+      )}
+    </section>
   );
 }

@@ -34,8 +34,13 @@ const campaign: PushOpensResponse['campaigns'][number] = {
   startedAt: '2026-10-23T02:00:31Z',
   deliveredMembers: 412,
   openState: 'MEASURED',
-  pushOpens: 58,
-  pushOpenRate: 0.1408,
+  pushOpens: 79,
+  webPushOpens: 58,
+  androidPushOpens: 21,
+  pushOpenRate: 0.1917,
+  inboxOpens: 8,
+  webInboxOpens: 3,
+  androidInboxOpens: 5,
 };
 const makeData = (): PushOpensResponse => ({
   asOf: '2026-10-24T05:10:00Z',
@@ -43,6 +48,7 @@ const makeData = (): PushOpensResponse => ({
   from: '2026-10-18',
   to: '2026-10-24',
   measuredFrom: '2026-10-21',
+  androidMeasuredFrom: '2026-10-23',
   campaigns: [campaign],
   activityFrom: '2026-10-21',
   activityTypes: [
@@ -50,6 +56,11 @@ const makeData = (): PushOpensResponse => ({
       type: 'STORY_COMPLETED',
       deliveredMembers: 61,
       openState: 'MEASURED',
+      webPushOpens: 27,
+      androidPushOpens: null,
+      inboxOpens: 6,
+      webInboxOpens: 6,
+      androidInboxOpens: null,
       pushOpens: 27,
       pushOpenRate: 0.4426,
     },
@@ -57,6 +68,11 @@ const makeData = (): PushOpensResponse => ({
       type: 'STORY_MODERATION_COMPLETED',
       deliveredMembers: 11,
       openState: 'MEASURED',
+      webPushOpens: 4,
+      androidPushOpens: null,
+      inboxOpens: 1,
+      webInboxOpens: 1,
+      androidInboxOpens: null,
       pushOpens: 4,
       pushOpenRate: 0.3636,
     },
@@ -64,6 +80,11 @@ const makeData = (): PushOpensResponse => ({
       type: 'ATTENDANCE_REMINDER',
       deliveredMembers: 1206,
       openState: 'MEASURED',
+      webPushOpens: 104,
+      androidPushOpens: null,
+      inboxOpens: 12,
+      webInboxOpens: 12,
+      androidInboxOpens: null,
       pushOpens: 104,
       pushOpenRate: 0.0862,
     },
@@ -71,6 +92,11 @@ const makeData = (): PushOpensResponse => ({
       type: 'CREDIT_EXPIRY_REMINDER',
       deliveredMembers: 80,
       openState: 'MEASURED',
+      webPushOpens: 12,
+      androidPushOpens: null,
+      inboxOpens: 0,
+      webInboxOpens: 0,
+      androidInboxOpens: null,
       pushOpens: 12,
       pushOpenRate: 0.15,
     },
@@ -154,8 +180,11 @@ it('캠페인 목록을 기다리지 않고 최근 7일을 요청하며 성장 �
     '가입',
     '리텐션',
     '캠페인 추이',
+    '첫 방문 활성화',
+    '광고 소재',
     '유입 소스',
-    '푸시 열람',
+    '앱 유입',
+    '알림 열람',
   ]);
 
   const source = screen.getByRole('button', {
@@ -164,7 +193,7 @@ it('캠페인 목록을 기다리지 않고 최근 7일을 요청하며 성장 �
 
   await act(async () => source.focus());
   expect((await screen.findByRole('tooltip')).textContent).toBe(
-    'Amplitude 출처 지표입니다. 웹 기준으로 푸시를 눌러 연 페이지 조회를 날짜별 고유 사용자로 세어 더합니다. 도달 회원은 서버 발송 결과이며 팀 계정을 제외하지 않습니다.',
+    'Amplitude 출처 지표입니다. 웹은 알림 링크로 연 페이지 조회를, 앱은 알림을 누른 기록을 날짜별 고유 사용자로 세어 더합니다. 도달 회원은 서버 발송 결과이며 팀 계정을 제외하지 않습니다.',
   );
 });
 
@@ -179,8 +208,11 @@ it('공지 배지와 성격·천 구분·단위·소수 퍼센트 및 활동 알
   expect(rows[1].textContent).toContain('공지점검 알림');
   expect(rows[1].textContent).toContain('정보성');
   expect(rows[1].textContent).toContain('412명');
-  expect(rows[1].textContent).toContain('58명');
-  expect(rows[1].textContent).toContain('14.1%');
+  expect(rows[1].textContent).toContain('79명');
+  expect(rows[1].textContent).toContain('웹 58명, 앱 21명');
+  expect(rows[1].textContent).toContain('8명');
+  expect(rows[1].textContent).toContain('웹 3명, 앱 5명');
+  expect(rows[1].textContent).toContain('19.2%');
   expect(rows[1].textContent).toContain('11:00');
 
   const activity = within(activityTable()).getAllByRole('row').slice(1);
@@ -199,9 +231,9 @@ it('공지 배지와 성격·천 구분·단위·소수 퍼센트 및 활동 알
 
 it.each([
   ['BEFORE_MEASUREMENT', '측정 시작 전'],
-  ['NO_LINK', '링크 없음'],
+  ['NO_LINK', '측정 불가'],
   ['PENDING', '발송 기록 없음'],
-] as const)('%s는 두 열에 %s로 표시한다', async (openState, label) => {
+] as const)('%s는 세 열에 %s로 표시한다', async (openState, label) => {
   data.campaigns = [
     {
       ...campaign,
@@ -212,7 +244,7 @@ it.each([
   ];
   draw();
   await screen.findByRole('heading', { name: '관리자 캠페인' });
-  expect(within(campaignTable()).getAllByText(label)).toHaveLength(2);
+  expect(within(campaignTable()).getAllByText(label)).toHaveLength(3);
 });
 
 it.each([
@@ -261,7 +293,7 @@ it('두 표 위 부분 집계와 활동 표의 집계 시작 및 두 머리 도�
   await act(async () => rate.focus());
   await waitFor(() =>
     expect(screen.getByRole('tooltip').textContent).toContain(
-      '계산 푸시 열람 수를 도달 회원 수로 나눈 값',
+      '계산 푸시 열람 합계를 도달 회원 수로 나눈 값',
     ),
   );
 });
@@ -318,7 +350,7 @@ it('503은 기존 Amplitude 오류와 재시도 UI로 처리한다', async () =>
   await screen.findByRole('heading', { name: '관리자 캠페인' });
 });
 
-it('로딩 중에도 두 표의 6열·4열 골격을 예약한다', async () => {
+it('로딩 중에도 두 표의 7열·5열 골격을 예약한다', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn(() => new Promise<Response>(() => {})),
@@ -331,10 +363,10 @@ it('로딩 중에도 두 표의 6열·4열 골격을 예약한다', async () => 
 
   expect(tables).toHaveLength(2);
   expect(tables[0].querySelector('[style]')?.getAttribute('style')).toContain(
-    'repeat(6,',
+    'repeat(7,',
   );
   expect(tables[1].querySelector('[style]')?.getAttribute('style')).toContain(
-    'repeat(4,',
+    'repeat(5,',
   );
 });
 
@@ -369,3 +401,27 @@ it.each([false, true])(
     expect(requests).toHaveLength(pending ? 2 : 1);
   },
 );
+
+it('5-1-4 플랫폼 null과 알림함 0은 측정 전과 실제 0으로 구분한다', async () => {
+  draw();
+  await screen.findByRole('heading', { name: '활동 알림' });
+
+  const table = screen
+    .getByRole('heading', { name: '활동 알림' })
+    .closest('[data-slot=card]')!;
+
+  expect(
+    within(table as HTMLElement).getByText('웹 27명, 앱 측정 시작 전'),
+  ).toBeTruthy();
+
+  const credit = within(table as HTMLElement)
+    .getAllByRole('row')
+    .at(-1)!;
+
+  expect(credit.querySelectorAll('td')[4].textContent).toBe(
+    '0명웹 0명, 앱 측정 시작 전',
+  );
+  expect(
+    screen.queryByRole('columnheader', { name: /알림함 열람률/ }),
+  ).toBeNull();
+});

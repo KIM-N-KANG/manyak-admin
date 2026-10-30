@@ -65,12 +65,14 @@ fixture(빈 값 포함)이며 `VERCEL_ENV !== production`이면 `src/features/au
 
 데이터 모드는 이 조건에 따라 인증 정책과 함께 적용합니다. `fixture`는 기존 fixture route handler를 사용합니다. `server`는 보호된 `/api/admin-upstream/[...path]` route handler로 rewrite하고 경로를 `src/api/admin-endpoints.ts`에서 찾습니다. `src/api/admin-upstream.ts`는 서버 전용 URL, 쿠키의 Bearer 토큰, `X-Manyak-Request-Id`, no-store, 오류·응답 전달을 담당합니다. 추출한 관리자 OpenAPI의 연산은 생성 Zod로 경로·쿼리·본문을 검증한 뒤 전달합니다. Spring이 평탄하게 받는 쿼리는 검증할 때만 OpenAPI의 request/query 객체로 묶고 원래 쿼리를 전달합니다. OpenAPI에 대응 경로가 없는 감사 로그 단건, 오리지널 카탈로그와 fixture 이미지 조회·PUT은 503 “서버 미구현”을 유지하며 fixture로 자동 전환하지 않습니다. 오리지널 등록·수정은 서버 ObjectNode 본문의 필드 스키마가 없어 생성된 공통 사유를 검증하고 나머지 필드 검증은 서버가 수행합니다. 브라우저의 Authorization·다른 쿠키나 임의 URL은 업스트림에 전달하지 않습니다.
 
-관리자 경로와 참조 DTO는 공개 dev OpenAPI에서 추출합니다. 스냅샷의 `x-source`에 입력 URL/파일, 받은 UTC 시각과 선택한 서버 커밋을 기록합니다. 관리자 외 경로와 미참조 DTO는 포함하지 않습니다.
+관리자 경로와 참조 DTO는 공개 dev OpenAPI에서 추출합니다. 스냅샷의 `x-source`에 입력 URL/파일, 받은 UTC 시각과 선택한 서버 커밋을 기록합니다. 세 번째 명령 인자로 입력 출처 설명을 전달하면 `x-source.description`에 함께 기록합니다. 관리자 외 경로와 미참조 DTO는 포함하지 않습니다.
 
 ```bash
 pnpm api:extract https://dev-api.manyak.app/v3/api-docs
 # 파일 입력과 서버 커밋 기록도 가능합니다.
 pnpm api:extract /path/to/server-openapi.json server-commit-sha
+# 로컬 병합처럼 추가 출처가 있으면 설명을 함께 기록합니다.
+pnpm api:extract /path/to/server-openapi.json server-commit-sha "로컬 병합 PR과 커밋 정보"
 pnpm api:generate:admin
 # 관리자 Zod·연산 레지스트리와 기존 로그인 전용 Zod를 함께 생성합니다.
 pnpm api:generate
@@ -102,6 +104,7 @@ pnpm api:generate
 - 응답 타입은 `src/features/<도메인>/types.ts`에 있습니다. 차트와 목록·상세의 화면 BFF 응답을 타입으로 정의했습니다. 대시보드 숫자 카드는 회원·채팅 시작·턴·스토리·이프 지급·소진·결제 이력·금액의 8개이며 각각 누적과 오늘 값을 제공합니다.
 - 현재 `src/features/shared/use-api.ts`가 TanStack Query와 기존 mutator를 연결합니다. 요청 검증에는 생성 Zod를 사용합니다. 서버 계약 확정 후 생성 훅으로 대체할 수 있으며 서버 응답 본문은 BFF에서 변환하지 않습니다.
 - 가상 이메일 `member1@example.com`부터 `member1240@example.com`까지 정확 일치 검색이 가능합니다. 응답에는 이메일을 포함하지 않습니다. 대화 원문과 인증 토큰도 응답에 없습니다.
+- 이프 메뉴는 `/credits/transactions`의 이프 내역과 `/credits/promotions`의 프로모션 탭을 경로로 구분합니다. 프로모션은 모델별 가격, KST 기간과 서버 상태를 표시하며 설정·해제 뒤 목록을 다시 요청합니다. 프로모션의 GET/PUT/DELETE BFF는 생성 OpenAPI 연산과 Zod로 요청을 검증하며 server 모드에서는 공통 업스트림을 통해 채팅 모델 관리자 API를 호출합니다. fixture도 같은 생성 검증을 사용하고 OpenAPI에 없는 서버 업무 제약을 재현합니다. 대응 서버 경로는 `src/api/admin-endpoints.ts`에 등록하며, 요청 검증과 서버 전달은 기존 공통 업스트림 계층을 사용합니다. fixture 변경은 프로세스 메모리에만 유지됩니다.
 - `/credits/transactions`는 전체 회원 원장을 기록 시각 내림차순(동률은 내부 순번 내림차순)으로 보여 줍니다. `direction=granted|spent`와 KST `date` 필터를 사용하며 회원별 조회 필터는 없습니다. 응답 회원은 공통 `MemberSummary` 구조이며 내부 원장 ID와 `balanceAfter`는 노출하지 않습니다. 팀 계정을 포함하므로 대시보드 집계와 차이가 날 수 있습니다. server 모드는 생성된 OpenAPI 쿼리 스키마로 검증한 뒤 `/api/v1/admin/credits/transactions`로 전달하고 fixture 모드는 고정 원장을 사용합니다. 화면 요청은 OpenAPI 필수 페이지 쿼리인 `page=1`, `size=20`, `order=desc`를 기본으로 지정합니다.
 - 목록의 `from`, `to`는 KST 날짜로 생성·가입·결제 완료·채팅 시작일에 적용합니다. `attendanceDate`, `creditDate`, `turnDate`는 관련 활동일 필터입니다. 이프는 `creditDirection=granted|spent`로 방향과 ADMIN 2-4의 사유를 함께 검사하며, 회원 목록과 상세는 회원별 원장을 공유합니다. `chatFrom/chatTo`, `aiFrom/aiTo`, `creationFrom/creationTo`는 각각 채팅 생성일·AI 호출일·제작 세션 생성일 기준입니다. 숫자 카드와 추이·분포는 목록과 같은 고정 원천을 집계합니다. 회원의 `chatCount`는 전체 채팅방 수이며 `periodChatCount`는 선택 기간에 생성한 수입니다.
 - 분포의 정의는 Grafana `service-stats`를 기준으로 합니다. 첫 사용자 입력 시간은 900초 이내, 입력 인물 수는 주변 인물만, AI 지연은 성공 호출만, 성공률은 완료 호출만 집계합니다. 결제 건수와 금액은 환불을 포함한 완료 이력 주문을 집계하고 같은 목록으로 이동합니다. server 모드의 실제 DB 집계와 팀 계정 제외는 manyak-server가 수행합니다.

@@ -11,6 +11,12 @@ const aliases: Record<string, string> = {
 
 function browserPath(path: string) {
   const local = path.replace('/api/v1/admin', '');
+
+  if (local === '/chat-models') return '/credits/promotions';
+
+  if (local === '/chat-models/{code}/promotion')
+    return '/credits/promotions/:id';
+
   const alias = Object.entries(aliases).find(
     ([prefix]) => local === prefix || local.startsWith(`${prefix}/`),
   );

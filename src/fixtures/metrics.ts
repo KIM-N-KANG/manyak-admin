@@ -5,6 +5,9 @@ import { kstToday } from '@/features/dashboard/date-range';
 import { members } from '@/fixtures/entities';
 import { kstDate } from '@/fixtures/query';
 
+import { newMetricFixture } from './metrics-next';
+import { notificationOpenValues } from './notification-opens';
+
 const id = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 
 export function campaignCatalog(today = kstToday()): {
@@ -54,14 +57,19 @@ const platform = (i: number): T.PlatformCounts => ({
   android: Math.round(i * 0.25),
   unknown: Math.round(i * 0.08),
 });
+const metricPlatform = (i: number): T.MetricPlatformCounts => {
+  const { all, web, android } = platform(i);
+
+  return { all, web, android };
+};
 const segment = (all: number): T.CampaignSegments => ({
   all,
   ads: Math.round(all * 0.7),
   nonAds: all - Math.round(all * 0.7),
 });
 const events = [
-  'client_storyList_viewed',
   'client_storyCreate_viewed',
+  'client_storyCreate_tagCategory_selected',
   'client_storyCreate_storyGeneration_requested',
   'client_storyCreate_storylineOption_selected',
   'client_storyCreate_storyCompletion_requested',
@@ -81,6 +89,10 @@ export function metricFixture(path: string, query: URLSearchParams) {
   const audience = query.get('segment') ?? 'all';
   const sessionOffset = { guest: -90, member: 60 }[audience] ?? 0;
 
+  const next = newMetricFixture(path, base, ready, pendingDates, campaign);
+
+  if (next) return next;
+
   if (path === '/campaigns/push-opens') {
     const measuredFrom = '2026-10-21';
     const activityFrom =
@@ -93,9 +105,14 @@ export function metricFixture(path: string, query: URLSearchParams) {
         noticeId: id,
         startedAt: `${to}T02:00:31Z`,
         deliveredMembers: 412,
-        openState: 'MEASURED',
-        pushOpens: 58,
-        pushOpenRate: 0.1408,
+        ...notificationOpenValues(
+          'MEASURED',
+          412,
+          58,
+          to >= '2026-10-23' ? 21 : null,
+          3,
+          to >= '2026-10-23' ? 5 : null,
+        ),
       },
       {
         campaignId: 'c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f',
@@ -104,9 +121,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
         noticeId: null,
         startedAt: `${shiftDate(to, -1)}T02:00:00Z`,
         deliveredMembers: 230,
-        openState: 'NO_LINK',
-        pushOpens: null,
-        pushOpenRate: null,
+        ...notificationOpenValues('NO_LINK', 0),
       },
       {
         campaignId: '9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b',
@@ -115,9 +130,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
         noticeId: null,
         startedAt: `${shiftDate(to, -2)}T02:00:00Z`,
         deliveredMembers: 0,
-        openState: 'PENDING',
-        pushOpens: null,
-        pushOpenRate: null,
+        ...notificationOpenValues('PENDING', 0),
       },
       {
         campaignId: '4b7f0c2a-9d1e-4f3a-8c5b-6e2d1a0f9b37',
@@ -126,9 +139,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
         noticeId: null,
         startedAt: `${from}T01:00:00Z`,
         deliveredMembers: 198,
-        openState: 'BEFORE_MEASUREMENT',
-        pushOpens: null,
-        pushOpenRate: null,
+        ...notificationOpenValues('BEFORE_MEASUREMENT', 0),
       },
     ];
 
@@ -139,6 +150,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
         ? pendingDates.filter((date) => date >= measuredFrom)
         : [],
       measuredFrom,
+      androidMeasuredFrom: '2026-10-23',
       campaigns: campaigns
         .filter(
           (row) =>
@@ -149,9 +161,10 @@ export function metricFixture(path: string, query: URLSearchParams) {
           row.startedAt.slice(0, 10) < measuredFrom
             ? {
                 ...row,
-                openState: 'BEFORE_MEASUREMENT' as const,
-                pushOpens: null,
-                pushOpenRate: null,
+                ...notificationOpenValues(
+                  'BEFORE_MEASUREMENT',
+                  row.deliveredMembers,
+                ),
               }
             : row,
         ),
@@ -166,11 +179,20 @@ export function metricFixture(path: string, query: URLSearchParams) {
       ).map((type, i) => ({
         type,
         deliveredMembers: [61, 11, 1206, 80][i],
-        openState: activityFrom
-          ? ('MEASURED' as const)
-          : ('BEFORE_MEASUREMENT' as const),
-        pushOpens: activityFrom ? [27, 4, 104, 12][i] : null,
-        pushOpenRate: activityFrom ? [0.4426, 0.3636, 0.0862, 0.15][i] : null,
+        ...notificationOpenValues(
+          activityFrom ? 'MEASURED' : 'BEFORE_MEASUREMENT',
+          [61, 11, 1206, 80][i],
+          [27, 4, 104, 12][i],
+          activityFrom && activityFrom >= '2026-10-23'
+            ? [9, 2, 26, 3][i]
+            : null,
+          i === 3 ? 0 : [6, 1, 12][i],
+          activityFrom && activityFrom >= '2026-10-23'
+            ? i === 3
+              ? 0
+              : [2, 1, 4][i]
+            : null,
+        ),
       })),
     } satisfies T.PushOpensResponse;
   }
@@ -258,6 +280,10 @@ export function metricFixture(path: string, query: URLSearchParams) {
       ...base,
       segment: query.get('segment') ?? 'all',
       pendingDates,
+      daily: ready.map((date, i) => ({
+        date,
+        sessions: { all: 342 + i, web: 301 + i, android: 45 + i },
+      })),
       bins: edges
         .slice(0, -1)
         .map((fromSeconds, i) => ({ fromSeconds, toSeconds: edges[i + 1] })),
@@ -284,6 +310,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
       daily: ready.map((date, i) => ({
         date,
         // 대상마다 값이 달라 대상 선택이 차트 전체에 적용되는 것을 미리보기에서 볼 수 있다.
+        sessionsPerUser: { all: 1.6, web: 1.8, android: 1.3, unknown: null },
         averageSessionSeconds: {
           all: 180 + i * 3 + sessionOffset,
           web: 200 + i * 3 + sessionOffset,
@@ -319,13 +346,18 @@ export function metricFixture(path: string, query: URLSearchParams) {
             (member) => kstDate(member.createdAt) <= date,
           ).length,
           migratedFromGuest: Math.min(joined.length, i % 3),
+          newVisitorsByPlatform: pendingDates.includes(date)
+            ? null
+            : metricPlatform(100 + i),
+          signupRate: pendingDates.includes(date)
+            ? null
+            : { all: 0.03, web: 0.02, android: 0.08 },
           signupsByPlatform: pendingDates.includes(date)
             ? null
             : {
                 all: 3 + (i % 4),
                 web: 1 + (i % 2),
                 android: 2,
-                unknown: (i % 4) - (i % 2),
               },
         };
       }),
@@ -345,6 +377,14 @@ export function metricFixture(path: string, query: URLSearchParams) {
       segment: audience,
       daily: ready.map((date, i) => ({
         date,
+        activity: {
+          aiResponses: 110 + i,
+          simpleCompletions: 6,
+          generalSubmissions: 2,
+          coreActiveUsers: 40,
+          messagesPerCoreUser: i === 0 ? null : (100 + i * 3) / 40,
+          simpleCompletionsPerCoreUser: i === 0 ? null : 0.15,
+        },
         messagesByInputMode:
           i === 0
             ? { block: 0, plain: 0, choice: 0, unknown: 0 }
@@ -379,6 +419,14 @@ export function metricFixture(path: string, query: URLSearchParams) {
           withPersona: 2,
           byModel: { AURORA: 1, LITE: 3, NOVA: 0 },
           turnsByModel: { AURORA: 2, LITE: 4 },
+          chatStarters: pending ? null : metricPlatform(10),
+          chatStartersByPersonaType: pending
+            ? null
+            : {
+                default: metricPlatform(8),
+                persona: metricPlatform(guest ? 0 : 2),
+                none: metricPlatform(0),
+              },
           chatStarts: pending
             ? null
             : { all: 5, web: 3, android: 2, unknown: 0 },
@@ -391,9 +439,9 @@ export function metricFixture(path: string, query: URLSearchParams) {
             ? null
             : {
                 AURORA: guest
-                  ? { all: 0, web: 0, android: 0, unknown: 0 }
-                  : { all: 2, web: 1, android: 1, unknown: 0 },
-                LITE: { all: 5, web: 3, android: 1, unknown: 1 },
+                  ? { all: 0, web: 0, android: 0 }
+                  : { all: 2, web: 1, android: 1 },
+                LITE: { all: 5, web: 3, android: 1 },
               },
         };
       }),
@@ -547,8 +595,20 @@ export function metricFixture(path: string, query: URLSearchParams) {
 
   if (path.startsWith('/conversion/funnels/')) {
     const funnel = path.split('/').at(-1)!;
+    const additional: Record<string, string[]> = {
+      'first-visit-activation': [
+        '_active',
+        'client_chat_messageInput_submitted',
+        'client_chat_messageInput_submitted',
+      ],
+      'login-signup': ['client_login_viewed', 'signup_succeeded'],
+      'android-activation': ['_active', 'signup_succeeded', 'core_activity'],
+      'web-to-android': ['_active', '_active'],
+      'creation-entry-chat': events,
+    };
     const names =
-      funnel === 'android-first-visit'
+      additional[funnel] ??
+      (funnel === 'android-first-visit'
         ? ['client_login_viewed', 'client_chat_messageInput_submitted']
         : funnel === 'guest-limit-login'
           ? [
@@ -566,7 +626,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
                     'client_chat_messageInput_submitted',
                   ) as string[]),
                 ]
-              : events;
+              : events);
 
     return {
       ...base,
@@ -574,12 +634,18 @@ export function metricFixture(path: string, query: URLSearchParams) {
       platform:
         funnel === 'web-first-visit'
           ? 'web'
-          : funnel === 'android-first-visit'
-            ? 'android'
-            : (query.get('platform') ?? 'web'),
+          : funnel === 'web-to-android'
+            ? null
+            : ['android-first-visit', 'android-activation'].includes(funnel)
+              ? 'android'
+              : (query.get('platform') ?? 'web'),
       storyId: query.get('storyId'),
       steps: names.map((event, i) => ({
         event,
+        platform:
+          funnel === 'web-to-android' ? (i === 0 ? 'web' : 'android') : null,
+        minTurnNumber:
+          funnel === 'first-visit-activation' && i === 2 ? 5 : null,
         turnNumber: funnel === 'story-detail-chat' && i >= 2 ? i - 1 : null,
         users: funnel === 'guest-limit-login' ? [10, 6, 7][i] : 100 - i * 12,
       })),
@@ -591,6 +657,7 @@ export function metricFixture(path: string, query: URLSearchParams) {
       date,
       activeUsers: 200 + i * 5,
       newVisitors: segment(50 + i),
+      newVisitorsByDevice: { ios: 20, android: 25, other: 5 + i },
       newVisitorsBySource: {
         ads: 35,
         instagram: 5,
@@ -612,6 +679,11 @@ export function metricFixture(path: string, query: URLSearchParams) {
       pendingDates,
       daily,
       totals: {
+        newVisitorsByDevice: {
+          ios: daily.length * 20,
+          android: daily.length * 25,
+          other: daily.reduce((s, d) => s + d.newVisitorsByDevice.other, 0),
+        },
         activeUsersAverage: 210,
         newVisitors: segment(daily.reduce((s, d) => s + d.newVisitors.all, 0)),
         signups: segment(daily.length * 10),

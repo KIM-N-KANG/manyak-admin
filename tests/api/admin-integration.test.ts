@@ -11,6 +11,36 @@ const cookie = `${sessionCookie}=${Buffer.from(JSON.stringify({ accessToken: 'fo
 const reason = { reason: '테스트 사유' };
 const presign = { kind: 'COVER', contentType: 'image/png', contentLength: 32 };
 const cases: [string, string, string, unknown?][] = [
+  ['GET', '/credits/promotions', '/chat-models'],
+  [
+    'PUT',
+    '/credits/promotions/LITE',
+    '/chat-models/LITE/promotion',
+    {
+      turnCost: 0,
+      startsAt: '2026-10-31T01:00:00Z',
+      endsAt: '2026-11-05T15:00:00Z',
+      reason: '할로윈 이벤트',
+    },
+  ],
+  [
+    'DELETE',
+    '/credits/promotions/LITE',
+    '/chat-models/LITE/promotion',
+    { reason: '이벤트 종료' },
+  ],
+  ...[
+    '/campaigns/funnels/activation',
+    '/campaigns/reach',
+    '/campaigns/creatives',
+    '/campaigns/app-transfer',
+    '/users/app-activation',
+  ].map((path): [string, string, string] => [
+    'GET',
+    `${path}?from=2026-10-21&to=2026-10-23`,
+    `${path}?from=2026-10-21&to=2026-10-23`,
+  ]),
+  ['GET', `/campaigns/push-opens/${id}`, `/campaigns/push-opens/${id}`],
   [
     'POST',
     `/moderation/stories/${id}/takedown`,
@@ -55,8 +85,6 @@ const cases: [string, string, string, unknown?][] = [
       title: '공지',
       body: '공지 본문',
       tag: 'MAINTENANCE',
-      notificationTitle: '별도 제목',
-      notificationBody: '별도 본문',
     },
   ],
   ['GET', `/notices/${id}`, `/notices/${id}`],
@@ -68,8 +96,6 @@ const cases: [string, string, string, unknown?][] = [
       ...reason,
       title: '수정 공지',
       tag: 'EVENT',
-      notificationTitle: '수정 알림',
-      notificationBody: '수정 알림 본문',
     },
   ],
   ['DELETE', `/notices/${id}`, `/notices/${id}`, reason],
@@ -138,6 +164,23 @@ const cases: [string, string, string, unknown?][] = [
     '/quality/ai-cost?from=2026-10-01&to=2026-10-21',
     '/quality/ai-cost?from=2026-10-01&to=2026-10-21',
   ],
+  ['GET', '/users/app-activation?days=7', '/users/app-activation?days=7'],
+  [
+    'GET',
+    '/campaigns/reach?campaign=test&days=7',
+    '/campaigns/reach?campaign=test&days=7',
+  ],
+  [
+    'GET',
+    '/campaigns/funnels/activation?campaign=test&days=7',
+    '/campaigns/funnels/activation?campaign=test&days=7',
+  ],
+  [
+    'GET',
+    '/campaigns/creatives?campaign=test&days=7',
+    '/campaigns/creatives?campaign=test&days=7',
+  ],
+  ['GET', '/campaigns/app-transfer?days=7', '/campaigns/app-transfer?days=7'],
   ['GET', '/campaigns', '/campaigns'],
   ['GET', '/campaigns/sources?days=7', '/campaigns/sources?days=7'],
   [
@@ -469,6 +512,8 @@ it.each([
   ['GET', '/stories?memberId=invalid'],
   ['GET', '/stories?supportingCharacterCount=6'],
   ['GET', '/stories?creationMode=simple'],
+  ['GET', '/users/retention?cohort=unknown'],
+  ['GET', '/users/session-lengths?segment=unknown'],
   ['GET', '/chats?turnBucket=13'],
   ['GET', '/dashboard/analytics?days=abc'],
   ['GET', '/notifications/campaigns?status=UNKNOWN'],
@@ -1033,58 +1078,16 @@ it('공지 태그만 수정하는 PATCH도 생성 계약을 통과해 그대로 
 });
 
 it.each([
-  [
-    'POST',
-    {
-      title: '공지',
-      body: '본문',
-      tag: 'SERVICE',
-      notificationBody: '알림 본문',
-    },
-  ],
-  [
-    'POST',
-    {
-      title: '공지',
-      body: '본문',
-      tag: 'SERVICE',
-      notificationTitle: '알림 제목',
-    },
-  ],
-  [
-    'POST',
-    {
-      title: '공지',
-      body: '본문',
-      tag: 'SERVICE',
-      notificationTitle: '  ',
-      notificationBody: '알림 본문',
-    },
-  ],
-  [
-    'POST',
-    {
-      title: '공지',
-      body: '본문',
-      tag: 'SERVICE',
-      notificationTitle: '가'.repeat(101),
-      notificationBody: '알림 본문',
-    },
-  ],
-  [
-    'POST',
-    {
-      title: '공지',
-      body: '본문',
-      tag: 'SERVICE',
-      notificationTitle: '제목',
-      notificationBody: '가'.repeat(301),
-    },
-  ],
-  ['PATCH', { notificationTitle: '  ' }],
-  ['PATCH', { notificationBody: '가'.repeat(301) }],
+  ['POST', { body: '본문', tag: 'SERVICE' }],
+  ['POST', { title: '공지', tag: 'SERVICE' }],
+  ['POST', { title: '공지', body: '본문' }],
+  ['POST', { title: '가'.repeat(101), body: '본문', tag: 'SERVICE' }],
+  ['POST', { title: '공지', body: '가'.repeat(5001), tag: 'SERVICE' }],
+  ['POST', { title: '공지', body: '본문', tag: 'NEWS' }],
+  ['PATCH', { title: ' ' }],
+  ['PATCH', { body: '가'.repeat(5001) }],
 ] as const)(
-  '공지 알림 문구의 생성 필수·길이·공백 계약을 %s 업스트림 전에 검사한다',
+  '공지의 새 필수·길이·태그 계약을 %s 업스트림 전에 검사한다',
   async (method, fields) => {
     const fetchMock = vi.fn();
 
@@ -1101,39 +1104,88 @@ it.each([
     expect(fetchMock).not.toHaveBeenCalled();
   },
 );
-it('알림 문구 null PATCH를 그대로 전달하고 서버의 잠금 409 응답을 유지한다', async () => {
-  const fetchMock = vi
-    .fn()
-    .mockResolvedValue(Response.json({ tag: 'SERVICE' }));
+
+it('알림 문구 없는 공지 작성과 제목만 수정을 생성 계약으로 검증하고 전달한다', async () => {
+  const fetchMock = vi.fn().mockResolvedValue(Response.json({ noticeId: id }));
 
   vi.stubGlobal('fetch', fetchMock);
 
-  const body = {
-    ...reason,
-    title: '제목 정정',
-    notificationTitle: null,
-    notificationBody: null,
-  };
+  for (const [method, path, body] of [
+    [
+      'POST',
+      '/notices',
+      { ...reason, title: '공지', body: '본문', tag: 'MAINTENANCE' },
+    ],
+    ['PATCH', `/notices/${id}`, { ...reason, title: '정정' }],
+  ] as const) {
+    expect((await invoke(method, path, body)).status).toBe(200);
+    expect(fetchMock.mock.calls.at(-1)![1].body).toBe(JSON.stringify(body));
+  }
+});
 
-  expect((await invoke('PATCH', `/notices/${id}`, body)).status).toBe(200);
+it('공지를 연결한 캠페인 생성과 실패 사유 및 재실행 응답을 그대로 전달한다', async () => {
+  const body = { ...reason, title: '점검 안내', body: '본문', noticeId: id };
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(
+      Response.json(
+        { campaignId: id, noticeId: id, kind: 'SERVICE', failureReason: null },
+        { status: 201 },
+      ),
+    );
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  const created = await invoke('POST', '/notifications/campaigns', body);
+
+  expect(created.status).toBe(201);
+  expect(await created.json()).toMatchObject({
+    noticeId: id,
+    kind: 'SERVICE',
+    failureReason: null,
+  });
   expect(fetchMock.mock.calls[0][1].body).toBe(JSON.stringify(body));
   fetchMock.mockResolvedValueOnce(
-    Response.json(
-      { code: 'CONFLICT', message: '알림 문구 잠김' },
-      { status: 409 },
-    ),
+    Response.json({
+      status: 'FAILED',
+      failureReason: 'NOTICE_NOT_PUBLISHED',
+      noticeId: id,
+      kind: 'SERVICE',
+    }),
   );
+  expect(
+    await (await invoke('GET', `/notifications/campaigns/${id}`)).json(),
+  ).toMatchObject({ status: 'FAILED', failureReason: 'NOTICE_NOT_PUBLISHED' });
+  fetchMock.mockResolvedValueOnce(
+    Response.json({
+      status: 'SCHEDULED',
+      failureReason: null,
+      noticeId: id,
+      kind: 'SERVICE',
+    }),
+  );
+  expect(
+    await (
+      await invoke('POST', `/notifications/campaigns/${id}/retry`, reason)
+    ).json(),
+  ).toMatchObject({ status: 'SCHEDULED', failureReason: null });
+});
 
-  const response = await invoke('PATCH', `/notices/${id}`, {
-    ...reason,
-    notificationTitle: '별도 알림',
-  });
+it('캠페인의 잘못된 noticeId는 업스트림 전에 거부한다', async () => {
+  const fetchMock = vi.fn();
 
-  expect(response.status).toBe(409);
-  expect(await response.json()).toEqual({
-    code: 'CONFLICT',
-    message: '알림 문구 잠김',
-  });
+  vi.stubGlobal('fetch', fetchMock);
+  expect(
+    (
+      await invoke('POST', '/notifications/campaigns', {
+        ...reason,
+        title: '알림',
+        body: '본문',
+        noticeId: 'bad',
+      })
+    ).status,
+  ).toBe(400);
+  expect(fetchMock).not.toHaveBeenCalled();
 });
 
 it.each(['days=14', 'days=no'])(
@@ -1245,6 +1297,31 @@ it.each([
     (await invoke('POST', `/moderation/stories/${id}/takedown`, body)).status,
   ).toBe(400);
   expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it('공지와 스토리 동시 지정의 서버 400을 원문대로 전달한다', async () => {
+  const body = {
+    ...reason,
+    title: '알림',
+    body: '본문',
+    storyId: id,
+    noticeId: id,
+  };
+  const error = {
+    code: 'BAD_REQUEST',
+    message: '공지와 스토리를 함께 지정할 수 없습니다.',
+  };
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(Response.json(error, { status: 400 }));
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  const response = await invoke('POST', '/notifications/campaigns', body);
+
+  expect(response.status).toBe(400);
+  expect(await response.json()).toEqual(error);
+  expect(fetchMock.mock.calls[0][1].body).toBe(JSON.stringify(body));
 });
 
 it.each([20, 0, undefined])(

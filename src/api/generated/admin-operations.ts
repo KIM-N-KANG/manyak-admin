@@ -83,6 +83,28 @@ export const adminOperations = [
     bodyRequired: true,
   },
   {
+    path: '/api/v1/admin/chat-models/{code}/promotion',
+    method: 'PUT',
+    parameters: [
+      { name: 'code', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    params: schemas.Upsert2Params,
+    query: undefined,
+    body: schemas.Upsert2Body,
+    bodyRequired: true,
+  },
+  {
+    path: '/api/v1/admin/chat-models/{code}/promotion',
+    method: 'DELETE',
+    parameters: [
+      { name: 'code', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    params: schemas.Delete3Params,
+    query: undefined,
+    body: schemas.Delete3Body,
+    bodyRequired: true,
+  },
+  {
     path: '/api/v1/admin/push/campaigns',
     method: 'GET',
     parameters: [
@@ -287,6 +309,22 @@ export const adminOperations = [
     bodyRequired: true,
   },
   {
+    path: '/api/v1/admin/moderation/stories/{storyId}/takedown',
+    method: 'POST',
+    parameters: [
+      {
+        name: 'storyId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string', format: 'uuid' },
+      },
+    ],
+    params: schemas.TakedownParams,
+    query: undefined,
+    body: schemas.TakedownBody,
+    bodyRequired: true,
+  },
+  {
     path: '/api/v1/admin/moderation/holds/{submissionId}/release',
     method: 'POST',
     parameters: [
@@ -411,9 +449,9 @@ export const adminOperations = [
         schema: { type: 'string', format: 'uuid' },
       },
     ],
-    params: schemas.Delete4Params,
+    params: schemas.Delete5Params,
     query: undefined,
-    body: schemas.Delete4Body,
+    body: schemas.Delete5Body,
     bodyRequired: true,
   },
   {
@@ -460,6 +498,12 @@ export const adminOperations = [
     method: 'GET',
     parameters: [
       {
+        name: 'segment',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
+      },
+      {
         name: 'from',
         in: 'query',
         required: false,
@@ -472,12 +516,6 @@ export const adminOperations = [
         required: false,
         schema: { type: 'string' },
       },
-      {
-        name: 'segment',
-        in: 'query',
-        required: false,
-        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
-      },
     ],
     params: undefined,
     query: schemas.SessionsQueryParams,
@@ -485,7 +523,65 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/users/session-lengths',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'segment',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
+      },
+      {
+        name: 'from',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
+      {
+        name: 'days',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+    ],
+    params: undefined,
+    query: schemas.SessionLengthsQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/users/retention',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'cohort',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', enum: ['visitor', 'signup', 'first-chat'] },
+      },
+      {
+        name: 'from',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
+      {
+        name: 'days',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+    ],
+    params: undefined,
+    query: schemas.RetentionQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
+    path: '/api/v1/admin/users/app-activation',
     method: 'GET',
     parameters: [
       {
@@ -501,15 +597,9 @@ export const adminOperations = [
         required: false,
         schema: { type: 'string' },
       },
-      {
-        name: 'cohort',
-        in: 'query',
-        required: false,
-        schema: { type: 'string', enum: ['visitor', 'signup', 'first-chat'] },
-      },
     ],
     params: undefined,
-    query: schemas.RetentionQueryParams,
+    query: schemas.AppActivationQueryParams,
     body: undefined,
     bodyRequired: false,
   },
@@ -578,21 +668,14 @@ export const adminOperations = [
               minimum: 0,
             },
             creationMode: {
-              type: 'string',
+              type: ['string', 'null'],
               enum: ['GENERAL', 'SIMPLE'],
-              description:
-                'SIMPLE은 스토리를 완성한 제작 세션이 있는 간편 제작, GENERAL은 그 밖의 일반 제작',
             },
             chatFrom: { type: ['string', 'null'] },
             chatTo: { type: ['string', 'null'] },
             creationFrom: { type: ['string', 'null'] },
             creationTo: { type: ['string', 'null'] },
-            deleted: {
-              type: 'string',
-              enum: ['include', 'only'],
-              description:
-                '생략 시 삭제 제외, include는 포함, only는 삭제된 행만',
-            },
+            deleted: { type: ['string', 'null'], enum: ['include', 'only'] },
           },
         },
       },
@@ -645,6 +728,12 @@ export const adminOperations = [
         schema: { type: 'string' },
       },
       {
+        name: 'segment',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
+      },
+      {
         name: 'from',
         in: 'query',
         required: false,
@@ -657,12 +746,6 @@ export const adminOperations = [
         required: false,
         schema: { type: 'string' },
       },
-      {
-        name: 'segment',
-        in: 'query',
-        required: false,
-        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
-      },
     ],
     params: undefined,
     query: schemas.QualityQueryParams,
@@ -673,6 +756,12 @@ export const adminOperations = [
     path: '/api/v1/admin/quality/chat-options',
     method: 'GET',
     parameters: [
+      {
+        name: 'segment',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
+      },
       {
         name: 'days',
         in: 'query',
@@ -686,12 +775,6 @@ export const adminOperations = [
         schema: { type: 'string' },
       },
       { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
-      {
-        name: 'segment',
-        in: 'query',
-        required: false,
-        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
-      },
     ],
     params: undefined,
     query: schemas.OptionsQueryParams,
@@ -746,6 +829,7 @@ export const adminOperations = [
           enum: [
             'STORY_COMPLETED',
             'STORY_MODERATION_COMPLETED',
+            'STORY_TAKEN_DOWN',
             'ATTENDANCE_REMINDER',
             'CREDIT_EXPIRY_REMINDER',
             'PROMOTION',
@@ -1289,6 +1373,12 @@ export const adminOperations = [
     method: 'GET',
     parameters: [
       {
+        name: 'segment',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
+      },
+      {
         name: 'days',
         in: 'query',
         required: false,
@@ -1301,12 +1391,6 @@ export const adminOperations = [
         schema: { type: 'string' },
       },
       { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
-      {
-        name: 'segment',
-        in: 'query',
-        required: false,
-        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
-      },
     ],
     params: undefined,
     query: schemas.ReachQueryParams,
@@ -1395,12 +1479,7 @@ export const adminOperations = [
             },
             hasFirstMessage: { type: ['boolean', 'null'] },
             turnDate: { type: ['string', 'null'] },
-            deleted: {
-              type: 'string',
-              enum: ['include', 'only'],
-              description:
-                '생략 시 삭제 제외, include는 포함, only는 삭제된 행만',
-            },
+            deleted: { type: ['string', 'null'], enum: ['include', 'only'] },
           },
         },
       },
@@ -1422,6 +1501,15 @@ export const adminOperations = [
       },
     ],
     params: schemas.ChatParams,
+    query: undefined,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
+    path: '/api/v1/admin/chat-models',
+    method: 'GET',
+    parameters: [],
+    params: undefined,
     query: undefined,
     body: undefined,
     bodyRequired: false,
@@ -1459,6 +1547,35 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/campaigns/reach',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'campaign',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      {
+        name: 'from',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
+      {
+        name: 'days',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+    ],
+    params: undefined,
+    query: schemas.Reach1QueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/campaigns/push-opens',
     method: 'GET',
     parameters: [
@@ -1478,6 +1595,22 @@ export const adminOperations = [
     ],
     params: undefined,
     query: schemas.PushOpensQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
+    path: '/api/v1/admin/campaigns/push-opens/{campaignId}',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'campaignId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string', format: 'uuid' },
+      },
+    ],
+    params: schemas.CampaignPushOpensParams,
+    query: undefined,
     body: undefined,
     bodyRequired: false,
   },
@@ -1546,6 +1679,87 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/campaigns/funnels/activation',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'campaign',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      {
+        name: 'from',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
+      {
+        name: 'days',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+    ],
+    params: undefined,
+    query: schemas.ActivationQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
+    path: '/api/v1/admin/campaigns/creatives',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'campaign',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      {
+        name: 'from',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
+      {
+        name: 'days',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+    ],
+    params: undefined,
+    query: schemas.CreativesQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
+    path: '/api/v1/admin/campaigns/app-transfer',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'from',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
+      {
+        name: 'days',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+      },
+    ],
+    params: undefined,
+    query: schemas.AppTransferQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/campaigns/analytics',
     method: 'GET',
     parameters: [
@@ -1609,6 +1823,8 @@ export const adminOperations = [
                 'MEMBER_UNSUSPENDED',
                 'CREDIT_GRANTED',
                 'CREDIT_REVOKED',
+                'CHAT_MODEL_PROMOTION_UPSERTED',
+                'CHAT_MODEL_PROMOTION_DELETED',
                 'CREDIT_POLICY_UPSERTED',
                 'CREDIT_POLICY_DELETED',
                 'PUSH_CAMPAIGN_CREATED',
@@ -1624,6 +1840,7 @@ export const adminOperations = [
                 'ORIGINAL_CREATED',
                 'ORIGINAL_UPDATED',
                 'ORIGINAL_THUMBNAIL_DELETED',
+                'STORY_TAKEN_DOWN',
                 'SUBMISSION_HOLD_RELEASED',
               ],
             },
@@ -1633,6 +1850,7 @@ export const adminOperations = [
                 'MEMBER_QUERY',
                 'MEMBER',
                 'CREDIT_POLICY',
+                'CHAT_MODEL',
                 'PUSH_CAMPAIGN',
                 'PUSH_TEMPLATE',
                 'NOTICE',
@@ -1670,50 +1888,5 @@ export const adminOperations = [
     query: undefined,
     body: schemas.DeleteThumbnail1Body,
     bodyRequired: true,
-  },
-  {
-    path: '/api/v1/admin/moderation/stories/{storyId}/takedown',
-    method: 'POST',
-    parameters: [
-      {
-        name: 'storyId',
-        in: 'path',
-        required: true,
-        schema: { type: 'string', format: 'uuid' },
-      },
-    ],
-    params: schemas.TakedownStoryParams,
-    query: undefined,
-    body: schemas.TakedownStoryBody,
-    bodyRequired: true,
-  },
-  {
-    path: '/api/v1/admin/users/session-lengths',
-    method: 'GET',
-    parameters: [
-      {
-        name: 'from',
-        in: 'query',
-        required: false,
-        schema: { type: 'string' },
-      },
-      { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
-      {
-        name: 'days',
-        in: 'query',
-        required: false,
-        schema: { type: 'string' },
-      },
-      {
-        name: 'segment',
-        in: 'query',
-        required: false,
-        schema: { type: 'string', enum: ['all', 'guest', 'member'] },
-      },
-    ],
-    params: undefined,
-    query: schemas.SessionLengthsQueryParams,
-    body: undefined,
-    bodyRequired: false,
   },
 ];
