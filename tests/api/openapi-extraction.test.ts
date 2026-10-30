@@ -126,3 +126,50 @@ it('실제 인프라 와일드카드 응답의 생성 입력만 JSON으로 정�
   );
   expect(result.schemasUnchanged).toBe(true);
 });
+
+it('지표 응답 매체만 정규화하고 원본과 응답 DTO의 제약은 보존한다', () => {
+  const script = `
+    import { readFileSync } from 'node:fs';
+    import transform from './scripts/transform-admin-openapi.mjs';
+    const original = JSON.parse(readFileSync('docs/openapi/admin.json', 'utf8'));
+    const before = JSON.stringify(original);
+    const generated = transform(original);
+    const paths = ['/campaigns/funnels/activation', '/campaigns/reach', '/campaigns/creatives', '/campaigns/app-transfer', '/users/app-activation', '/users/signups', '/users/sessions', '/users/session-lengths', '/quality/client', '/quality/chat-options', '/conversion/funnels/{funnel}'];
+    const names = new Set();
+    function collect(value) {
+      if (!value || typeof value !== 'object') return;
+      if (value.$ref?.startsWith('#/components/schemas/')) {
+        const name = value.$ref.split('/').at(-1);
+        if (!names.has(name)) {
+          names.add(name);
+          collect(original.components.schemas[name]);
+        }
+      }
+      for (const child of Object.values(value)) collect(child);
+    }
+    for (const path of paths) collect(original.paths['/api/v1/admin' + path].get.responses['200']);
+    console.log(JSON.stringify({
+      unchanged: before === JSON.stringify(original),
+      responses: paths.map(path => {
+        const source = original.paths['/api/v1/admin' + path].get.responses['200'].content;
+        const result = generated.paths['/api/v1/admin' + path].get.responses['200'].content;
+        return { source, result };
+      }),
+      schemas: [...names].every(name => JSON.stringify(original.components.schemas[name]) === JSON.stringify(generated.components.schemas[name])),
+    }));
+  `;
+  const result = JSON.parse(
+    execFileSync(process.execPath, ['--input-type=module', '-e', script], {
+      encoding: 'utf8',
+    }),
+  );
+
+  expect(result.unchanged).toBe(true);
+  expect(result.schemas).toBe(true);
+
+  for (const { source, result: content } of result.responses) {
+    expect(Object.keys(source)).toEqual(['*/*']);
+    expect(Object.keys(content)).toEqual(['application/json']);
+    expect(content['application/json']).toEqual(source['*/*']);
+  }
+});

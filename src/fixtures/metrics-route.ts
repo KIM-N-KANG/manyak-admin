@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import { findAdminEndpoint, pendingMetricPaths } from '@/api/admin-endpoints';
+import { findAdminEndpoint } from '@/api/admin-endpoints';
 import { validateAdminRequest } from '@/api/admin-validation';
 import { bffError } from '@/api/bff-error';
 import { productionDataSourceError } from '@/api/data-source-guard';
@@ -24,30 +24,15 @@ export async function metricsRoute(request: Request) {
       path = url.pathname.replace(/^\/api/, '');
     const endpoint = findAdminEndpoint(path, 'GET');
 
-    const pendingMetric = pendingMetricPaths.some((item) => item === path);
-
-    if ((!endpoint?.operation && !pendingMetric) || !endpoint?.serverPath)
+    if (!endpoint?.operation || !endpoint.serverPath)
       return bffError(request, 404, '지원하지 않는 경로입니다.');
 
-    const reference = endpoint.operation
-      ? endpoint
-      : pendingMetric
-        ? findAdminEndpoint(
-            path.startsWith('/users/')
-              ? '/users/activity'
-              : '/campaigns/analytics',
-            'GET',
-          )
-        : endpoint;
-
-    if (reference?.operation) {
-      await validateAdminRequest(
-        new NextRequest(request.url, { headers: request.headers }),
-        reference.operation,
-        reference.serverPath!,
-        reference.operation.path,
-      );
-    }
+    await validateAdminRequest(
+      new NextRequest(request.url, { headers: request.headers }),
+      endpoint.operation,
+      endpoint.serverPath,
+      endpoint.operation.path,
+    );
 
     const query = url.searchParams;
 

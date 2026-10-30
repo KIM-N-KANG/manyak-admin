@@ -56,6 +56,11 @@ const platform = (i: number): T.PlatformCounts => ({
   android: Math.round(i * 0.25),
   unknown: Math.round(i * 0.08),
 });
+const metricPlatform = (i: number): T.MetricPlatformCounts => {
+  const { all, web, android } = platform(i);
+
+  return { all, web, android };
+};
 const segment = (all: number): T.CampaignSegments => ({
   all,
   ads: Math.round(all * 0.7),
@@ -332,17 +337,16 @@ export function metricFixture(path: string, query: URLSearchParams) {
           migratedFromGuest: Math.min(joined.length, i % 3),
           newVisitorsByPlatform: pendingDates.includes(date)
             ? null
-            : platform(100 + i),
+            : metricPlatform(100 + i),
           signupRate: pendingDates.includes(date)
             ? null
-            : { all: 0.03, web: 0.02, android: 0.08, unknown: null },
+            : { all: 0.03, web: 0.02, android: 0.08 },
           signupsByPlatform: pendingDates.includes(date)
             ? null
             : {
                 all: 3 + (i % 4),
                 web: 1 + (i % 2),
                 android: 2,
-                unknown: (i % 4) - (i % 2),
               },
         };
       }),
@@ -404,13 +408,13 @@ export function metricFixture(path: string, query: URLSearchParams) {
           withPersona: 2,
           byModel: { AURORA: 1, LITE: 3, NOVA: 0 },
           turnsByModel: { AURORA: 2, LITE: 4 },
-          chatStarters: pending ? null : platform(10),
+          chatStarters: pending ? null : metricPlatform(10),
           chatStartersByPersonaType: pending
             ? null
             : {
-                default: platform(8),
-                persona: platform(guest ? 0 : 2),
-                none: platform(0),
+                default: metricPlatform(8),
+                persona: metricPlatform(guest ? 0 : 2),
+                none: metricPlatform(0),
               },
           chatStarts: pending
             ? null
@@ -424,9 +428,9 @@ export function metricFixture(path: string, query: URLSearchParams) {
             ? null
             : {
                 AURORA: guest
-                  ? { all: 0, web: 0, android: 0, unknown: 0 }
-                  : { all: 2, web: 1, android: 1, unknown: 0 },
-                LITE: { all: 5, web: 3, android: 1, unknown: 1 },
+                  ? { all: 0, web: 0, android: 0 }
+                  : { all: 2, web: 1, android: 1 },
+                LITE: { all: 5, web: 3, android: 1 },
               },
         };
       }),

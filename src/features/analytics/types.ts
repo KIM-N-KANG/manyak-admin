@@ -91,6 +91,15 @@ export type PlatformDecimals = {
   android: number | null;
   unknown: number | null;
 };
+/** 플랫폼 없음이 없는 가입과 채팅 시작 등의 플랫폼 값이다. */
+export type MetricPlatformCounts = Pick<
+  PlatformCounts,
+  'all' | 'web' | 'android'
+>;
+export type MetricPlatformRates = Pick<
+  PlatformDecimals,
+  'all' | 'web' | 'android'
+>;
 export type ActivityDay = {
   date: string;
   activeUsers: PlatformCounts;
@@ -235,9 +244,9 @@ export type SignupDay = {
   signups: SignupCounts;
   cumulativeSignups: number;
   migratedFromGuest: number;
-  signupsByPlatform?: PlatformCounts | null;
-  newVisitorsByPlatform?: PlatformCounts | null;
-  signupRate?: PlatformDecimals | null;
+  signupsByPlatform?: MetricPlatformCounts | null;
+  newVisitorsByPlatform?: MetricPlatformCounts | null;
+  signupRate?: MetricPlatformRates | null;
 };
 export type SignupResponse = PlatformMeta & {
   asOf: string;
@@ -251,14 +260,14 @@ export type ChatOptionDay = {
   withPersona: number;
   byModel: Record<string, number>;
   turnsByModel: Record<string, number>;
-  chatStarters?: PlatformCounts | null;
+  chatStarters?: MetricPlatformCounts | null;
   chatStartersByPersonaType?: Record<
     'default' | 'persona' | 'none',
-    PlatformCounts
+    MetricPlatformCounts
   > | null;
   chatStarts?: PlatformCounts | null;
   personaChatStarts?: PlatformCounts | null;
-  platformTurnsByModel?: Record<string, PlatformCounts> | null;
+  platformTurnsByModel?: Record<string, MetricPlatformCounts> | null;
 };
 export type ChatOptionResponse = PlatformMeta & {
   asOf: string;

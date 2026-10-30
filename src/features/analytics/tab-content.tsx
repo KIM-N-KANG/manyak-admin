@@ -64,7 +64,7 @@ export function UserContent({
   platform: string;
   segment?: string;
 }) {
-  const key = platform as keyof T.PlatformCounts;
+  const key = platform as keyof T.MetricPlatformCounts;
   const series =
     seriesGroups.platform.find((series) => series.key === key) ??
     seriesGroups.platform[0];
@@ -1273,7 +1273,7 @@ function ChatOptionPlatforms({
   data: T.ChatOptionResponse;
   platform: string;
 }) {
-  const key = platform as keyof T.PlatformCounts;
+  const key = platform as keyof T.MetricPlatformCounts;
   const ready = d.daily.filter((day) => day.platformTurnsByModel);
   const models = modelSeries(
     ready.flatMap((day) => Object.keys(day.platformTurnsByModel!)),

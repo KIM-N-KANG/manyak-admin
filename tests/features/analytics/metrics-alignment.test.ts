@@ -90,27 +90,24 @@ it.each([
   '/campaigns/creatives',
   '/campaigns/app-transfer',
   '/users/app-activation',
-])(
-  '새 경로 %s는 fixture에서 열고 OpenAPI 생성 전 서버 전달은 막는다',
-  async (path) => {
-    expect(findAdminEndpoint(path, 'GET')?.implemented).toBe(false);
+])('새 경로 %s는 생성 연산으로 fixture와 서버 모드에서 연다', async (path) => {
+  expect(findAdminEndpoint(path, 'GET')?.implemented).toBe(true);
 
-    const response = await metricsRoute(
-      new Request(`http://localhost/api${path}?${query}`),
-    );
+  const response = await metricsRoute(
+    new Request(`http://localhost/api${path}?${query}`),
+  );
 
-    expect(response.status).toBe(200);
-    expect((await response.json()).from).toBe('2026-10-21');
+  expect(response.status).toBe(200);
+  expect((await response.json()).from).toBe('2026-10-21');
 
-    const invalid = await metricsRoute(
-      new Request(`http://localhost/api${path}?from=invalid&to=2026-10-23`),
-    );
+  const invalid = await metricsRoute(
+    new Request(`http://localhost/api${path}?from=invalid&to=2026-10-23`),
+  );
 
-    expect(invalid.status).toBe(400);
-  },
-);
+  expect(invalid.status).toBe(400);
+});
 
-it('새 퍼널은 생성된 문자열 경로가 허용하더라도 서버 배포 전에는 미구현이다', () => {
+it('새 퍼널은 생성 연산과 서버 지원에 따라 전달 가능하다', () => {
   for (const funnel of [
     'first-visit-activation',
     'login-signup',
@@ -120,7 +117,7 @@ it('새 퍼널은 생성된 문자열 경로가 허용하더라도 서버 배포
   ]) {
     expect(
       findAdminEndpoint(`/conversion/funnels/${funnel}`, 'GET')?.implemented,
-    ).toBe(false);
+    ).toBe(true);
   }
 
   expect(

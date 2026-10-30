@@ -25,7 +25,7 @@ import type {
   AiCostResponse,
   CampaignAnalyticsResponse,
   ChatOptionResponse,
-  PlatformCounts,
+  MetricPlatformCounts,
   QualityResponse,
   SignupResponse,
 } from '@/features/analytics/types';
@@ -1328,13 +1328,11 @@ it('가입 이벤트 기준 신규 가입자는 고른 플랫폼의 준비된 �
       all: 12,
       web: 4,
       android: 7,
-      unknown: 1,
     };
     data.daily[1].signupsByPlatform = {
       all: 5,
       web: 2,
       android: 3,
-      unknown: 0,
     };
 
     return data;
@@ -1713,21 +1711,21 @@ it('페르소나 시작 사용자 비율과 응답 저장 기준 모델별 턴 �
   nav.search = 'tab=chat-options&from=2026-10-22&to=2026-10-23';
   modifyResponse('/api/quality/chat-options', (value) => {
     const data = value as ChatOptionResponse;
-    const zero = { all: 0, web: 0, android: 0, unknown: 0 };
+    const zero = { all: 0, web: 0, android: 0 };
 
     data.daily = data.daily.map((day, i) => ({
       ...day,
-      chatStarters: i ? zero : { all: 15, web: 10, android: 5, unknown: 0 },
+      chatStarters: i ? zero : { all: 15, web: 10, android: 5 },
       chatStartersByPersonaType: {
         default: zero,
-        persona: i ? zero : { all: 2, web: 2, android: 0, unknown: 0 },
+        persona: i ? zero : { all: 2, web: 2, android: 0 },
         none: zero,
       },
       platformTurnsByModel: i
-        ? ({} as Record<string, PlatformCounts>)
+        ? ({} as Record<string, MetricPlatformCounts>)
         : {
-            LITE: { all: 7, web: 4, android: 3, unknown: 0 },
-            AURORA: { all: 1, web: 1, android: 0, unknown: 0 },
+            LITE: { all: 7, web: 4, android: 3 },
+            AURORA: { all: 1, web: 1, android: 0 },
           },
     }));
 
@@ -1792,11 +1790,11 @@ it('고른 플랫폼의 채팅 시작 사용자가 0이면 채팅 시작 사용�
 
     data.daily = data.daily.map((day) => ({
       ...day,
-      chatStarters: { all: 4, web: 4, android: 0, unknown: 0 },
+      chatStarters: { all: 4, web: 4, android: 0 },
       chatStartersByPersonaType: {
-        default: { all: 3, web: 3, android: 0, unknown: 0 },
-        persona: { all: 1, web: 1, android: 0, unknown: 0 },
-        none: { all: 0, web: 0, android: 0, unknown: 0 },
+        default: { all: 3, web: 3, android: 0 },
+        persona: { all: 1, web: 1, android: 0 },
+        none: { all: 0, web: 0, android: 0 },
       },
     }));
 

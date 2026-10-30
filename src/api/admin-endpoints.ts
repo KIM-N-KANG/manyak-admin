@@ -29,23 +29,6 @@ interface AdminEndpoint {
   operation?: (typeof adminOperations)[number];
 }
 
-/** 서버의 새 퍼널 배포와 OpenAPI 확인 뒤 해제할 값이다. */
-export const pendingMetricFunnels = [
-  'first-visit-activation',
-  'login-signup',
-  'android-activation',
-  'web-to-android',
-  'creation-entry-chat',
-] as const;
-
-export const pendingMetricPaths = [
-  '/campaigns/funnels/activation',
-  '/campaigns/reach',
-  '/campaigns/creatives',
-  '/campaigns/app-transfer',
-  '/users/app-activation',
-] as const;
-
 export const adminEndpoints: AdminEndpoint[] = [
   ...adminOperations
     .filter((operation) => operation.path !== adminLoginPath)
@@ -57,19 +40,6 @@ export const adminEndpoints: AdminEndpoint[] = [
       methods: [operation.method],
       implemented: true,
       operation,
-    })),
-  ...pendingMetricPaths
-    .filter(
-      (path) =>
-        !adminOperations.some(
-          (operation) => browserPath(operation.path) === path,
-        ),
-    )
-    .map((browser) => ({
-      browser,
-      server: browser,
-      methods: ['GET'],
-      implemented: false,
     })),
   ...['/audit-logs/:id', '/originals/catalog', '/originals/images/:id'].map(
     (browser) => ({
@@ -101,11 +71,7 @@ export function findAdminEndpoint(path: string, method: string) {
 
   return {
     serverPath: server ? `/api/v1/admin${server}` : null,
-    implemented:
-      endpoint.implemented &&
-      !pendingMetricFunnels.some(
-        (funnel) => path === `/conversion/funnels/${funnel}`,
-      ),
+    implemented: endpoint.implemented,
     operation: endpoint.operation,
   };
 }
