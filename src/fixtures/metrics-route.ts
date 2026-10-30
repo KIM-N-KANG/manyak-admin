@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import { findAdminEndpoint } from '@/api/admin-endpoints';
+import { findAdminEndpoint, pendingMetricPaths } from '@/api/admin-endpoints';
 import { validateAdminRequest } from '@/api/admin-validation';
 import { bffError } from '@/api/bff-error';
 import { productionDataSourceError } from '@/api/data-source-guard';
@@ -24,28 +24,47 @@ export async function metricsRoute(request: Request) {
       path = url.pathname.replace(/^\/api/, '');
     const endpoint = findAdminEndpoint(path, 'GET');
 
-    if (!endpoint?.operation || !endpoint.serverPath)
+    const pendingMetric = pendingMetricPaths.some((item) => item === path);
+
+    if ((!endpoint?.operation && !pendingMetric) || !endpoint?.serverPath)
       return bffError(request, 404, '지원하지 않는 경로입니다.');
 
-    await validateAdminRequest(
-      new NextRequest(request.url, { headers: request.headers }),
-      endpoint.operation,
-      endpoint.serverPath,
-      endpoint.operation.path,
-    );
+    const reference = endpoint.operation
+      ? endpoint
+      : pendingMetric
+        ? findAdminEndpoint(
+            path.startsWith('/users/')
+              ? '/users/activity'
+              : '/campaigns/analytics',
+            'GET',
+          )
+        : endpoint;
+
+    if (reference?.operation) {
+      await validateAdminRequest(
+        new NextRequest(request.url, { headers: request.headers }),
+        reference.operation,
+        reference.serverPath!,
+        reference.operation.path,
+      );
+    }
 
     const query = url.searchParams;
 
     if (path === '/campaigns') return Response.json(campaignCatalog());
 
     const tab =
-      path === '/campaigns/push-opens'
-        ? 'push'
-        : path.split('/').at(-1) === 'analytics'
-          ? 'trend'
-          : path.includes('/conversion/funnels/')
-            ? 'funnels'
-            : path.split('/').at(-1)!;
+      path === '/campaigns/reach'
+        ? 'activation'
+        : path === '/campaigns/app-transfer'
+          ? 'app'
+          : path === '/campaigns/push-opens'
+            ? 'push'
+            : path.split('/').at(-1) === 'analytics'
+              ? 'trend'
+              : path.includes('/conversion/funnels/')
+                ? 'funnels'
+                : path.split('/').at(-1)!;
     const campaign = campaignCatalog().items.find(
       (item) => item.campaign === query.get('campaign'),
     );

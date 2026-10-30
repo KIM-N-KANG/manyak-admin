@@ -20,6 +20,7 @@ export type CampaignDay = {
   activeUsers: number;
   newVisitors: CampaignSegments;
   newVisitorsBySource: CampaignSources;
+  newVisitorsByDevice?: { ios: number; android: number; other: number };
   signups: CampaignSegments;
   cumulativeSignups: CampaignSegments;
   /** 서버 배포 전 응답에는 없다. */
@@ -29,6 +30,7 @@ export type CampaignDay = {
   chatMessages: number;
 };
 export type CampaignTotals = {
+  newVisitorsByDevice?: { ios: number; android: number; other: number };
   activeUsersAverage: number;
   newVisitors: CampaignSegments;
   signups: CampaignSegments;
@@ -142,6 +144,7 @@ export type RetentionResponse = {
 export type SessionDay = {
   date: string;
   averageSessionSeconds: PlatformDecimals;
+  sessionsPerUser?: PlatformDecimals;
 };
 export type SessionResponse = {
   asOf: string;
@@ -153,6 +156,14 @@ export type SessionResponse = {
 };
 export type QualityDay = {
   date: string;
+  activity?: {
+    aiResponses: number;
+    simpleCompletions: number;
+    generalSubmissions: number;
+    coreActiveUsers: number;
+    messagesPerCoreUser: number | null;
+    simpleCompletionsPerCoreUser: number | null;
+  };
   messagesByInputMode: Record<string, number>;
   streamErrors: number;
   streamErrorRate: number | null;
@@ -174,6 +185,8 @@ export type QualityResponse = {
   pendingDates: string[];
 };
 export type ConversionStep = {
+  minTurnNumber?: number | null;
+  platform?: string | null;
   event: string;
   turnNumber: number | null;
   users: number;
@@ -183,7 +196,7 @@ export type ConversionResponse = {
   from: string;
   to: string;
   funnel: string;
-  platform: string;
+  platform: string | null;
   storyId: string | null;
   steps: ConversionStep[];
 };
@@ -223,6 +236,8 @@ export type SignupDay = {
   cumulativeSignups: number;
   migratedFromGuest: number;
   signupsByPlatform?: PlatformCounts | null;
+  newVisitorsByPlatform?: PlatformCounts | null;
+  signupRate?: PlatformDecimals | null;
 };
 export type SignupResponse = PlatformMeta & {
   asOf: string;
@@ -236,6 +251,11 @@ export type ChatOptionDay = {
   withPersona: number;
   byModel: Record<string, number>;
   turnsByModel: Record<string, number>;
+  chatStarters?: PlatformCounts | null;
+  chatStartersByPersonaType?: Record<
+    'default' | 'persona' | 'none',
+    PlatformCounts
+  > | null;
   chatStarts?: PlatformCounts | null;
   personaChatStarts?: PlatformCounts | null;
   platformTurnsByModel?: Record<string, PlatformCounts> | null;
@@ -311,6 +331,10 @@ export type PushOpensResponse = {
 };
 
 export type SessionLengthResponse = {
+  daily?: {
+    date: string;
+    sessions: Pick<PlatformCounts, 'all' | 'web' | 'android'>;
+  }[];
   asOf: string;
   from: string;
   to: string;
@@ -323,4 +347,59 @@ export type SessionLengthResponse = {
     totalSessions: number;
     medianBin: number | null;
   }[];
+};
+
+export type MetricPeriod = {
+  asOf: string;
+  from: string;
+  to: string;
+  pendingDates: string[];
+};
+export type CampaignActivationResponse = Omit<MetricPeriod, 'pendingDates'> & {
+  campaign: string;
+  steps: {
+    event: string;
+    minTurnNumber: number | null;
+    users: CampaignSegments;
+  }[];
+};
+export type CampaignReachResponse = Omit<MetricPeriod, 'pendingDates'> & {
+  campaign: string;
+  chatUsers: CampaignSegments;
+  deepChatUsers: CampaignSegments;
+};
+export type CreativeUsers = { content: string | null; users: number };
+export type CampaignCreativesResponse = MetricPeriod & {
+  campaign: string;
+  daily: {
+    date: string;
+    signups: CreativeUsers[];
+    deepChatUsers: CreativeUsers[];
+  }[];
+  totals: { signups: CreativeUsers[] };
+};
+export type InstallSourceUsers = { source: string | null; users: number };
+export type AppTransferResponse = MetricPeriod & {
+  daily: {
+    date: string;
+    bannerShown: number;
+    bannerClicked: number;
+    bannerClickRate: number | null;
+    bannerNewUsers: number;
+    newUsersBySource: InstallSourceUsers[];
+  }[];
+  totals: { bannerNewUsers: number; newUsersBySource: InstallSourceUsers[] };
+};
+export type AppActivationResponse = MetricPeriod & {
+  daily: {
+    date: string;
+    newUsers: number;
+    activeUsers: number;
+    activationRate: number | null;
+  }[];
+  totals: {
+    newUsers: number;
+    activeUsers: number;
+    activationRate: number | null;
+  };
 };

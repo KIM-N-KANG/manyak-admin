@@ -3,6 +3,9 @@ export const screens = {
     title: '유입 분석',
     tabs: [
       ['trend', '캠페인 추이'],
+      ['activation', '첫 방문 활성화'],
+      ['creatives', '광고 소재'],
+      ['app', '앱 유입'],
       ['creation', '간편 제작 퍼널'],
       ['story-detail', '상세 진입 퍼널'],
       ['sources', '유입 소스'],
@@ -39,7 +42,12 @@ export type AnalyticsScreenName = keyof typeof screens;
 export const funnels = [
   ['web-first-visit', '웹 첫 접속'],
   ['android-first-visit', '앱 첫 접속'],
+  ['first-visit-activation', '신규 사용자 활성화'],
+  ['login-signup', '로그인 화면 가입'],
+  ['android-activation', '앱 신규 활성화'],
+  ['web-to-android', '웹 이용 후 앱 이용'],
   ['story-creation', '간편 제작'],
+  ['creation-entry-chat', '간편 제작 진입 채팅'],
   ['story-detail-chat', '상세 진입 채팅'],
   ['guest-limit-login', '게스트 한도 로그인'],
 ] as const;
@@ -48,7 +56,7 @@ export const platformOptions = [
   ['web', '웹'],
   ['android', '앱'],
 ] as const;
-/** 스토리 간편 제작 퍼널의 광고 구분(URL `adSegment`)이다. 서버로 보내지 않는다. */
+/** 성장 첫 방문 활성화와 스토리 간편 제작 퍼널의 광고 구분(URL `adSegment`)이다. 서버로 보내지 않는다. */
 export const adSegments = [
   ['all', '전체'],
   ['ads', '광고 유입'],
@@ -94,13 +102,13 @@ export const platformText = {
   segmentHelp:
     'Amplitude에서는 이벤트 발생 당시 회원 식별자가 있으면 회원, 없으면 게스트로 구분합니다. 서버 DB에서는 채팅의 현재 소유자가 회원인지 게스트인지로 구분합니다.',
   funnelHelp:
-    '웹과 앱을 합산한 전환 퍼널은 제공하지 않습니다. 플랫폼에서 전체를 선택하면 간편 제작, 상세 진입 채팅, 게스트 한도 로그인은 웹 기준으로 표시합니다. 웹 첫 접속과 앱 첫 접속은 플랫폼 선택과 관계없이 각각 웹과 앱 기준으로 표시합니다.',
+    '웹과 앱을 합산한 전환 퍼널은 제공하지 않습니다. 플랫폼에서 전체를 선택하면 신규 사용자 활성화, 로그인 화면 가입, 간편 제작, 간편 제작 진입 채팅, 상세 진입 채팅, 게스트 한도 로그인은 웹 기준으로 표시합니다. 웹 첫 접속은 웹, 앱 첫 접속과 앱 신규 활성화는 앱 기준으로 표시합니다.',
   messagesPerUserEmpty:
     '전체 값이 없습니다. 플랫폼을 웹이나 앱으로 골라 주세요.',
   signupCard: '가입 이벤트 기준 신규 가입자',
   reachTitle: '1턴 대비 도달률',
-  personaTitle: '페르소나 시작 클릭 비중',
-  personaEmpty: '집계 대상 클릭 없음',
+  personaTitle: '페르소나 시작 사용자 비율',
+  personaEmpty: '채팅 시작 사용자 없음',
   modelTurnsTitle: '응답 저장 기준 모델별 턴 수',
 };
 /** 서버가 적용한 `segment`를 조건 표시 문구로 바꾼다. */
@@ -108,14 +116,13 @@ export const audienceText = (segment?: string) =>
   segment
     ? `${platformText.segmentLabel} ${audiences.find(([key]) => key === segment)?.[1] ?? segment}`
     : null;
-export const approximation =
-  '로그인 성공은 구글과 카카오 경로를 더한 근사치라 두 경로를 모두 거친 사용자는 두 번 셉니다. 앞 단계보다 클 수 있습니다.';
 export const sourceHelp = {
+  app: 'Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 팀 계정은 제외하지 않습니다. 국가가 한국이거나 국가 정보가 없는 사용자를 집계합니다. 앱 배너는 Android 기기로 웹을 연 사용자만 셉니다. 설치 경로는 앱이 첫 실행 때 기록한 설치 정보라 Play 밖에서 설치했거나 아직 기록하지 않은 사용자는 설치 경로 정보 없음으로 셉니다.',
   push: 'Amplitude 출처 지표입니다. 웹 기준으로 푸시를 눌러 연 페이지 조회를 날짜별 고유 사용자로 세어 더합니다. 도달 회원은 서버 발송 결과이며 팀 계정을 제외하지 않습니다.',
   acquisition:
     'Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 팀 계정은 제외하지 않습니다. 국가가 한국이거나 국가 정보가 없는 사용자를 집계합니다. 앱 신규 가입자는 광고 구분 없이 따로 세고, 나머지 지표는 웹 사용자만 셉니다.',
   users:
-    'Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 국가가 한국이거나 국가 정보가 없는 사용자를 집계하고 앱 활성 사용자는 그 밖 국가에서 로그인한 사용자도 더하며 팀 계정은 제외하지 않습니다. 신규 방문자, 리텐션, 사용자당 전송 수, 평균 세션 길이는 국가가 한국이거나 국가 정보가 없는 사용자만 셉니다. 플랫폼 정보가 없는 사용자는 전체에만 들어갑니다. 활성 사용자와 신규 방문자의 전체는 조건별 사용자 수를 더한 값이라 같은 날 여러 조건으로 활동한 사람은 두 번 셉니다. 리텐션과 평균 세션 길이의 전체는 국내 조건으로 별도 조회한 값입니다.',
+    'Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 국가가 한국이거나 국가 정보가 없는 웹과 앱 사용자를 집계하며 팀 계정은 제외하지 않습니다. 전체는 같은 기간에 웹과 앱을 함께 쓴 사람을 한 번 세어 웹과 앱 값의 합보다 작을 수 있습니다. 플랫폼 정보가 없는 사용자는 전체에 들지 않고 활성 사용자 플랫폼 구성에만 보입니다.',
   signups:
     '서버 DB 출처 지표입니다. 팀 계정은 제외합니다. 가입 경로는 처음 연결한 소셜 계정 기준입니다. 누적 가입자는 서비스 시작부터 센 값이며 탈퇴한 회원을 포함합니다. 탈퇴 뒤 같은 소셜 계정으로 다시 가입한 회원은 새 계정만 셉니다.',
   conversion:
@@ -123,7 +130,7 @@ export const sourceHelp = {
   'turn-reach':
     '서버 DB 출처 지표입니다. 팀 계정은 제외합니다. 게스트와 회원은 채팅의 현재 소유자 기준입니다.',
   quality:
-    'Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 국가가 한국이거나 국가 정보가 없는 사용자를 집계하고 앱은 그 밖 국가에서 로그인한 사용자도 더하며 팀 계정은 제외하지 않습니다. 전체와 앱 값은 조건별 건수와 사용자 수를 더한 값이라 여러 조건으로 활동한 사람은 사용자 수에 두 번 들 수 있습니다. 스트림 오류율은 두 이벤트의 건수 비율이라 100%를 넘을 수 있습니다.',
+    'Amplitude 출처 지표입니다. 집계가 몇 분 늦게 반영될 수 있습니다. 국가가 한국이거나 국가 정보가 없는 웹과 앱 사용자를 집계하며 팀 계정은 제외하지 않습니다. 전체의 사용자 수는 웹과 앱을 함께 쓴 사람을 한 번 셉니다. 스트림 오류율은 두 이벤트의 건수 비율이라 100%를 넘을 수 있습니다.',
   'chat-options':
     '서버 DB 출처 지표입니다. 팀 계정은 제외합니다. 채팅 수는 삭제되지 않은 채팅을 생성일 기준으로 집계하며 채팅에 지금 선택된 모델로 셉니다. 턴 수는 AI 응답이 생성된 날 기준이고 그 턴을 만든 모델로 세며 삭제된 채팅의 턴도 셉니다. 모델 기록 전의 턴은 "기록 전"으로 셉니다.',
   'ai-cost':
@@ -136,8 +143,17 @@ export function pick<T extends string>(
 ): T {
   return values.find(([key]) => key === value)?.[0] ?? fallback;
 }
-export function eventLabel(event: string, turnNumber?: number | null) {
+export function eventLabel(
+  event: string,
+  turnNumber?: number | null,
+  minTurnNumber?: number | null,
+  platform?: string | null,
+) {
   const labels: Record<string, string> = {
+    _active: '첫 활동',
+    signup_succeeded: '신규 가입',
+    core_activity: '핵심 활동',
+    client_storyCreate_tagCategory_selected: '장르 선택 완료',
     client_storyList_viewed: '홈 진입',
     client_storyCreate_viewed: '간편 제작 진입',
     client_onboarding_viewed: '환영 다이얼로그 조회',
@@ -152,8 +168,14 @@ export function eventLabel(event: string, turnNumber?: number | null) {
     client_storyDetail_chatStartButton_clicked: '채팅 시작 클릭',
     client_guestLimitDialog_shown: '게스트 한도 안내 표시',
     client_guestLimitDialog_loginButton_clicked: '로그인 버튼 클릭',
-    login_succeeded: '로그인 성공 (구글과 카카오 합)',
+    login_succeeded: '로그인 성공',
   };
+
+  if (event === '_active' && platform)
+    return platform === 'web' ? '웹 활동' : '앱 활동';
+
+  if (event === 'client_chat_messageInput_submitted' && minTurnNumber != null)
+    return `${minTurnNumber}턴 이상 채팅 메시지 전송`;
 
   return event === 'client_chat_messageInput_submitted' && turnNumber != null
     ? `턴 ${turnNumber} 채팅 메시지 전송`
