@@ -25,7 +25,7 @@ import type {
   AiCostResponse,
   CampaignAnalyticsResponse,
   ChatOptionResponse,
-  PlatformCounts,
+  MetricPlatformCounts,
   QualityResponse,
   SignupResponse,
 } from '@/features/analytics/types';
@@ -390,7 +390,7 @@ it('플랫폼 앱은 세 퍼널만 다시 요청하고 첫 접속 두 카드는 
       funnelUrl('guest-limit-login', '&platform=android'),
     ].toSorted(),
   );
-  await screen.findByText('로그인 성공 (구글과 카카오 합)');
+  await screen.findByText('로그인 성공');
   expect(screen.getByText('116.7%')).toBeTruthy();
   expect(screen.queryByText(/로그인 성공은 구글과 카카오/)).toBeNull();
 
@@ -403,7 +403,8 @@ it('플랫폼 앱은 세 퍼널만 다시 요청하고 첫 접속 두 카드는 
   const tooltip = await screen.findByRole('tooltip');
 
   expect(help.getAttribute('aria-describedby')).toBe(tooltip.id);
-  expect(tooltip.textContent).toContain('로그인 성공은 구글과 카카오');
+  expect(tooltip.textContent).toContain('두 경로로 로그인해도 한 번 셈');
+  expect(tooltip.textContent).not.toContain('근사치');
 });
 it('간편 제작 요청만 503이면 그 카드에만 사용 불가를 보이고 다시 시도는 그 요청만 보낸다', async () => {
   fail = '/conversion/funnels/story-creation';
@@ -1231,18 +1232,14 @@ it.each([
   [
     'users',
     '',
-    '리텐션과 평균 세션 길이의 전체는 국내 조건으로 별도 조회한 값입니다.',
+    '전체는 같은 기간에 웹과 앱을 함께 쓴 사람을 한 번 세어 웹과 앱 값의 합보다 작을 수 있습니다.',
   ],
   [
     'conversion',
     '',
     '웹과 앱 모두 국가가 한국이거나 국가 정보가 없는 사용자만 집계합니다. 팀 계정은 제외하지 않습니다.',
   ],
-  [
-    'quality',
-    '',
-    '여러 조건으로 활동한 사람은 사용자 수에 두 번 들 수 있습니다.',
-  ],
+  ['quality', '', '전체의 사용자 수는 웹과 앱을 함께 쓴 사람을 한 번 셉니다.'],
 ] as const)(
   '%s 출처 도움말은 플랫폼 집계 조건을 표시한다',
   async (name, search, phrase) => {
@@ -1331,13 +1328,11 @@ it('가입 이벤트 기준 신규 가입자는 고른 플랫폼의 준비된 �
       all: 12,
       web: 4,
       android: 7,
-      unknown: 1,
     };
     data.daily[1].signupsByPlatform = {
       all: 5,
       web: 2,
       android: 3,
-      unknown: 0,
     };
 
     return data;
@@ -1378,7 +1373,7 @@ it('가입 이벤트 기준 신규 가입자는 고른 플랫폼의 준비된 �
   expect(sources).toHaveLength(2);
   expect(sources[0].textContent).toContain('Amplitude');
   act(() => sources[0].focus());
-  expect((await screen.findByRole('tooltip')).textContent).toBe(
+  expect((await screen.findByRole('tooltip')).textContent).toContain(
     '2026. 10. 23. 오전 11:55 KST 집계 기준',
   );
 });
@@ -1693,7 +1688,7 @@ it('채팅 옵션은 플랫폼만 바꾸면 다시 요청하지 않고 서버 DB
   expect(marks('턴 수')).toEqual(['플랫폼 전체 기준']);
   expect(marks('모델별 채팅 수')).toEqual(['플랫폼 전체 기준']);
   expect(marks('모델별 턴 수')).toEqual(['플랫폼 전체 기준']);
-  expect(marks('페르소나 시작 클릭 비중')[0]).not.toContain('전체 기준');
+  expect(marks('페르소나 시작 사용자 비율')[0]).not.toContain('전체 기준');
   expect(marks('응답 저장 기준 모델별 턴 수')[0]).not.toContain('전체 기준');
 
   const count = requests.length;
@@ -1712,21 +1707,25 @@ it('채팅 옵션은 플랫폼만 바꾸면 다시 요청하지 않고 서버 DB
   await screen.findByText('모델별 비중 · 플랫폼과 대상 전체 기준');
   expect(marks('모델별 턴 수')).toEqual(['플랫폼과 대상 전체 기준']);
 });
-it('페르소나 시작 클릭 비중과 응답 저장 기준 모델별 턴 수는 고른 플랫폼의 준비된 날짜 합으로 계산한다', async () => {
+it('페르소나 시작 사용자 비율과 응답 저장 기준 모델별 턴 수는 고른 플랫폼의 날짜별 비율과 준비된 날짜의 모델 턴 합으로 계산한다', async () => {
   nav.search = 'tab=chat-options&from=2026-10-22&to=2026-10-23';
   modifyResponse('/api/quality/chat-options', (value) => {
     const data = value as ChatOptionResponse;
-    const zero = { all: 0, web: 0, android: 0, unknown: 0 };
+    const zero = { all: 0, web: 0, android: 0 };
 
     data.daily = data.daily.map((day, i) => ({
       ...day,
-      chatStarts: i ? zero : { all: 15, web: 10, android: 5, unknown: 0 },
-      personaChatStarts: i ? zero : { all: 2, web: 2, android: 0, unknown: 0 },
+      chatStarters: i ? zero : { all: 15, web: 10, android: 5 },
+      chatStartersByPersonaType: {
+        default: zero,
+        persona: i ? zero : { all: 2, web: 2, android: 0 },
+        none: zero,
+      },
       platformTurnsByModel: i
-        ? ({} as Record<string, PlatformCounts>)
+        ? ({} as Record<string, MetricPlatformCounts>)
         : {
-            LITE: { all: 7, web: 4, android: 3, unknown: 0 },
-            AURORA: { all: 1, web: 1, android: 0, unknown: 0 },
+            LITE: { all: 7, web: 4, android: 3 },
+            AURORA: { all: 1, web: 1, android: 0 },
           },
     }));
 
@@ -1735,7 +1734,7 @@ it('페르소나 시작 클릭 비중과 응답 저장 기준 모델별 턴 수�
 
   const view = draw('quality');
   const persona = () =>
-    screen.getByRole('heading', { name: '페르소나 시작 클릭 비중' })
+    screen.getByRole('heading', { name: '페르소나 시작 사용자 비율' })
       .parentElement!.parentElement!;
   const table = () =>
     within(
@@ -1774,7 +1773,7 @@ it('페르소나 시작 클릭 비중과 응답 저장 기준 모델별 턴 수�
   ]);
   expect(
     within(persona()).getByRole('button', {
-      name: '페르소나 시작 클릭 비중 출처와 집계 안내',
+      name: '페르소나 시작 사용자 비율 출처와 집계 안내',
     }).textContent,
   ).toContain('Amplitude');
   expect(
@@ -1783,7 +1782,7 @@ it('페르소나 시작 클릭 비중과 응답 저장 기준 모델별 턴 수�
     }).textContent,
   ).toContain('Amplitude');
 });
-it('고른 플랫폼의 채팅 시작 클릭 합이 0이면 집계 대상 클릭 없음이다', async () => {
+it('고른 플랫폼의 채팅 시작 사용자가 0이면 채팅 시작 사용자 없음이다', async () => {
   nav.search =
     'tab=chat-options&from=2026-10-23&to=2026-10-23&platform=android';
   modifyResponse('/api/quality/chat-options', (value) => {
@@ -1791,17 +1790,21 @@ it('고른 플랫폼의 채팅 시작 클릭 합이 0이면 집계 대상 클릭
 
     data.daily = data.daily.map((day) => ({
       ...day,
-      chatStarts: { all: 4, web: 4, android: 0, unknown: 0 },
-      personaChatStarts: { all: 1, web: 1, android: 0, unknown: 0 },
+      chatStarters: { all: 4, web: 4, android: 0 },
+      chatStartersByPersonaType: {
+        default: { all: 3, web: 3, android: 0 },
+        persona: { all: 1, web: 1, android: 0 },
+        none: { all: 0, web: 0, android: 0 },
+      },
     }));
 
     return data;
   });
   draw('quality');
   expect(
-    (await screen.findByRole('heading', { name: '페르소나 시작 클릭 비중' }))
+    (await screen.findByRole('heading', { name: '페르소나 시작 사용자 비율' }))
       .parentElement!.parentElement!.textContent,
-  ).toContain('집계 대상 클릭 없음');
+  ).toContain('채팅 시작 사용자 없음');
 });
 it('세션 대상은 페이지 머리의 라벨 대상과 도움말로 보이고 회원 선택은 차트 전체를 회원 값으로 다시 요청한다', async () => {
   nav.search = 'tab=sessions';
@@ -2015,7 +2018,7 @@ it('전환 퍼널은 플랫폼 전체를 웹으로 요청하고 도움말로 알
 
   act(() => help.focus());
   expect((await screen.findByRole('tooltip')).textContent).toBe(
-    '웹과 앱을 합산한 전환 퍼널은 제공하지 않습니다. 플랫폼에서 전체를 선택하면 간편 제작, 상세 진입 채팅, 게스트 한도 로그인은 웹 기준으로 표시합니다. 웹 첫 접속과 앱 첫 접속은 플랫폼 선택과 관계없이 각각 웹과 앱 기준으로 표시합니다.',
+    '웹과 앱을 합산한 전환 퍼널은 제공하지 않습니다. 플랫폼에서 전체를 선택하면 신규 사용자 활성화, 로그인 화면 가입, 간편 제작, 간편 제작 진입 채팅, 상세 진입 채팅, 게스트 한도 로그인은 웹 기준으로 표시합니다. 웹 첫 접속은 웹, 앱 첫 접속과 앱 신규 활성화는 앱 기준으로 표시합니다.',
   );
 
   const count = requests.length;
@@ -2419,9 +2422,7 @@ it.each(funnelDefinitionCases)(
       expect(text).toContain('날짜 선택 기간 전체');
 
       if (funnel === 'guest-limit-login') {
-        expect(text.indexOf('로그인 성공은 구글과 카카오')).toBeGreaterThan(
-          text.indexOf('날짜 선택 기간 전체'),
-        );
+        expect(text).not.toContain('근사치');
       }
     }
   },
@@ -2486,10 +2487,7 @@ it.each(funnelDefinitionCases)(
     expect(text).toContain('기준 이벤트를 한 건도 받지 못했습니다.');
     expect(within(section).queryByText('첫 단계 사용자 수')).toBeNull();
 
-    if (funnel === 'guest-limit-login')
-      expect(text.indexOf('로그인 성공은 구글과 카카오')).toBeGreaterThan(
-        text.indexOf('날짜 선택 기간 전체'),
-      );
+    if (funnel === 'guest-limit-login') expect(text).not.toContain('근사치');
   },
 );
 
@@ -2560,7 +2558,7 @@ it.each([true, false])(
       );
 
       expect(text).toContain('계산 그날 만들어진 회원 계정 수');
-      expect(text).toContain('계산 구글과 카카오 로그인 성공 이벤트');
+      expect(text).toContain('계산 구글이나 카카오로 새 계정을 만든 사용자 수');
     }
 
     const rows = within(details).getAllByRole('row').slice(1);
@@ -2578,7 +2576,7 @@ it.each([true, false])(
       ).toContain(
         i === 0
           ? '계산 그날 만들어진 회원 계정 수'
-          : '계산 구글과 카카오 로그인 성공 이벤트',
+          : '계산 구글이나 카카오로 새 계정을 만든 사용자 수',
       );
       expect(cell.textContent!.includes(basis)).toBe(mixed && i === 0);
     }

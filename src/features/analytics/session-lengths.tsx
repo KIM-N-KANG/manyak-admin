@@ -7,11 +7,13 @@ import { Card } from '@/components/ui/card';
 import { ChartContainer } from '@/components/ui/chart';
 import { useApi } from '@/features/shared/use-api';
 
+import { Charts, dailyRows } from './charts';
 import { metricNumber, percent, ratio } from './config';
 import { MetricHelp } from './metric-definition';
 import { NumericTable, PendingDates, SummaryCards } from './metric-ui';
 import { MetricsSkeleton } from './metrics-skeleton';
 import { analyticsRefetch } from './range';
+import { pairSeries } from './series';
 import type { SessionLengthResponse } from './types';
 
 export const sessionBinNames = [
@@ -90,6 +92,19 @@ export function SessionLengthContent({
               selected.medianBin === null
                 ? '세션 없음'
                 : sessionBinNames[selected.medianBin],
+          },
+        ]}
+      />
+      <Charts
+        items={[
+          {
+            title: '일별 세션 수',
+            rows: dailyRows({ ...data, daily: data.daily ?? [] }, (day) => ({
+              value: day.sessions[platform as 'all' | 'web' | 'android'],
+            })),
+            series: pairSeries([['value', '세션 수']]),
+            unit: '개',
+            empty: data.daily === undefined ? '준비 중' : undefined,
           },
         ]}
       />

@@ -27,7 +27,7 @@ import {
 import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
 import { ChartEndLabels } from '@/features/dashboard/chart-end-labels';
 
-import { eventLabel, metricNumber, percent, ratio } from './config';
+import { eventLabel, metricNumber, percent, ratio, sourceHelp } from './config';
 import {
   allZero,
   eventMetric,
@@ -60,7 +60,8 @@ export function PlatformSource({
 }) {
   return (
     <HelpTooltip label={`${title} 출처와 집계 안내`} source="Amplitude">
-      {asOf ? `${dateTime(asOf)} KST 집계 기준` : 'Amplitude 출처 지표입니다.'}
+      {sourceHelp.users}
+      {asOf ? ` ${dateTime(asOf)} KST 집계 기준` : ''}
     </HelpTooltip>
   );
 }
@@ -264,6 +265,8 @@ export function SeriesChart({
   unit,
   emptyLabel = '값 없음',
   href,
+  stacked = false,
+  composition = false,
   grouped = false,
   aside,
 }: {
@@ -275,6 +278,8 @@ export function SeriesChart({
   unit: string;
   emptyLabel?: PlotEmptyLabel;
   href?: (date: string) => string;
+  stacked?: boolean;
+  composition?: boolean;
   grouped?: boolean;
 }) {
   const scope = useContext(MetricScope);
@@ -327,6 +332,17 @@ export function SeriesChart({
               <span>
                 {config[String(name)]?.label}{' '}
                 {values(item.payload, String(name))}
+                {composition
+                  ? ` (${percent(
+                      ratio(
+                        Number(item.payload[String(name)]),
+                        originalSeries.reduce(
+                          (sum, s) => sum + Number(item.payload[s.key] ?? 0),
+                          0,
+                        ),
+                      ),
+                    )})`
+                  : ''}
               </span>
             )}
           />
@@ -378,7 +394,7 @@ export function SeriesChart({
           config={config}
           className="mt-5 h-72 w-full"
           aria-label={`${title} 추이`}>
-          {grouped ? (
+          {grouped || stacked ? (
             <BarChart accessibilityLayer data={rows} onClick={click}>
               {axes}
               {series.map((s) => (
@@ -386,6 +402,7 @@ export function SeriesChart({
                   key={s.key}
                   dataKey={s.key}
                   fill={s.color}
+                  stackId={stacked ? 'total' : undefined}
                   isAnimationActive={false}
                 />
               ))}
@@ -455,7 +472,19 @@ export function SeriesChart({
         ]}
         rows={rows.map((row) => [
           row.date,
-          ...originalSeries.map((s) => values(row, s.key)),
+          ...originalSeries.map((s) =>
+            composition && !row.pending
+              ? `${values(row, s.key)} (${percent(
+                  ratio(
+                    Number(row[s.key] ?? 0),
+                    originalSeries.reduce(
+                      (sum, item) => sum + Number(row[item.key] ?? 0),
+                      0,
+                    ),
+                  ),
+                )})`
+              : values(row, s.key),
+          ),
           ...(href
             ? [
                 <TextLink key="link" href={href(row.date)}>
@@ -469,6 +498,8 @@ export function SeriesChart({
   );
 }
 export type FunnelStep = {
+  minTurnNumber?: number | null;
+  platform?: string | null;
   event: string;
   users: number;
   turnNumber?: number | null;
@@ -504,7 +535,7 @@ export function FunnelChart({
 
   const rows = steps.map((s, i) => ({
     ...s,
-    label: eventLabel(s.event, s.turnNumber),
+    label: eventLabel(s.event, s.turnNumber, s.minTurnNumber, s.platform),
     first: i === 0,
     conversion: i ? ratio(s.users, steps[i - 1].users) : null,
   }));

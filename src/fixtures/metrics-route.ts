@@ -39,13 +39,17 @@ export async function metricsRoute(request: Request) {
     if (path === '/campaigns') return Response.json(campaignCatalog());
 
     const tab =
-      path === '/campaigns/push-opens'
-        ? 'push'
-        : path.split('/').at(-1) === 'analytics'
-          ? 'trend'
-          : path.includes('/conversion/funnels/')
-            ? 'funnels'
-            : path.split('/').at(-1)!;
+      path === '/campaigns/reach'
+        ? 'activation'
+        : path === '/campaigns/app-transfer'
+          ? 'app'
+          : path === '/campaigns/push-opens'
+            ? 'push'
+            : path.split('/').at(-1) === 'analytics'
+              ? 'trend'
+              : path.includes('/conversion/funnels/')
+                ? 'funnels'
+                : path.split('/').at(-1)!;
     const campaign = campaignCatalog().items.find(
       (item) => item.campaign === query.get('campaign'),
     );

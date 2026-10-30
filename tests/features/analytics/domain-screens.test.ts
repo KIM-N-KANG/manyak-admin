@@ -255,6 +255,7 @@ it.each([
     '활동',
     [
       '/api/users/activity',
+      '/api/quality/client',
       '/api/users/sessions',
       '/api/users/session-lengths',
     ],
@@ -265,6 +266,7 @@ it.each([
     '제작',
     [
       '/api/conversion/funnels/story-creation',
+      '/api/conversion/funnels/creation-entry-chat',
       '/api/dashboard/charts',
       '/api/quality/client',
     ],
@@ -354,7 +356,10 @@ it('성장 유입의 하위 구분은 기간과 캠페인 조건을 유지하고
     '가입',
     '리텐션',
     '캠페인 추이',
+    '첫 방문 활성화',
+    '광고 소재',
     '유입 소스',
+    '앱 유입',
     '푸시 열람',
   ]);
   expect(screen.queryByRole('combobox', { name: '플랫폼' })).toBeNull();
@@ -376,7 +381,7 @@ it('성장 활동의 실패는 세션 두 요청과 상태를 가리지 않는�
   await screen.findByText('Amplitude 지표를 불러올 수 없음');
   await screen.findByRole('heading', { name: '평균 세션 길이' });
   await screen.findByRole('heading', { name: '세션 길이 분포' });
-  await waitFor(() => expect(requests).toHaveLength(3));
+  await waitFor(() => expect(requests).toHaveLength(4));
 });
 
 it.each([
@@ -464,12 +469,12 @@ it('결제는 같은 대시보드 응답 캐시를 쓰며 그래프 네 개와 �
   );
 });
 
-it('가입은 퍼널 세 개만 요청하며 플랫폼 변경은 게스트 한도 로그인만 다시 요청한다', async () => {
+it('가입은 퍼널 여섯 개를 요청하며 플랫폼 변경은 선택 플랫폼 퍼널 셋만 다시 요청한다', async () => {
   nav.search = 'tab=signups';
 
   const view = draw('growth');
 
-  await waitForLoadedRequests(4, [
+  await waitForLoadedRequests(8, [
     '웹 첫 접속',
     '앱 첫 접속',
     '게스트 한도 로그인',
@@ -478,7 +483,7 @@ it('가입은 퍼널 세 개만 요청하며 플랫폼 변경은 게스트 한�
   await waitFor(() =>
     expect(
       requests.filter((url) => url.includes('/conversion/funnels/')),
-    ).toHaveLength(3),
+    ).toHaveLength(6),
   );
   expect(screen.queryByRole('combobox', { name: '대상' })).toBeNull();
   requests.length = 0;
@@ -486,8 +491,14 @@ it('가입은 퍼널 세 개만 요청하며 플랫폼 변경은 게스트 한�
     target: { value: 'android' },
   });
   view.go();
-  await waitFor(() => expect(requests).toHaveLength(1));
-  expect(requests[0]).toContain('/guest-limit-login?');
+  await waitFor(() => expect(requests).toHaveLength(3));
+  expect(
+    requests.map((url) => new URL(url, 'http://localhost').pathname).sort(),
+  ).toEqual([
+    '/api/conversion/funnels/first-visit-activation',
+    '/api/conversion/funnels/guest-limit-login',
+    '/api/conversion/funnels/login-signup',
+  ]);
   expect(requests[0]).toContain('platform=android');
 });
 
@@ -656,7 +667,7 @@ it('예전 분석의 days는 range로 바꾸고 LegacyRoute는 replace만 사용
   expect(nav.push).not.toHaveBeenCalled();
 });
 
-it('활동 탭의 준비 중 날짜는 세 응답을 합쳐 첫 영역 위 알림 하나로 보인다', async () => {
+it('활동 탭의 준비 중 날짜는 네 응답을 합쳐 첫 영역 위 알림 하나로 보인다', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
@@ -689,28 +700,30 @@ it('활동 탭의 준비 중 날짜는 세 응답을 합쳐 첫 영역 위 알�
   expect(
     within(notice).getByText('2026-10-21, 2026-10-22, 2026-10-23'),
   ).toBeTruthy();
-  await waitFor(() => expect(requests).toHaveLength(3));
+  await waitFor(() => expect(requests).toHaveLength(4));
 });
 
-it('활동의 대상 변경은 세션 둘만 재요청하고 사용자 활동에 대상 전체 기준을 표시한다', async () => {
+it('활동의 대상 변경은 세션 둘과 활동량을 재요청하고 사용자 활동에 대상 전체 기준을 표시한다', async () => {
   nav.search = 'platform=web';
 
   const view = draw('growth');
 
-  await waitForLoadedRequests(3, ['평균 세션 길이', '세션 길이 분포']);
+  await waitForLoadedRequests(4, ['평균 세션 길이', '세션 길이 분포']);
   requests.length = 0;
   fireEvent.change(screen.getByRole('combobox', { name: '대상' }), {
     target: { value: 'member' },
   });
   view.go();
-  await waitForLoadedRequests(2, ['평균 세션 길이', '세션 길이 분포']);
+  await waitForLoadedRequests(3, ['평균 세션 길이', '세션 길이 분포']);
   expect(requests.every((url) => url.includes('segment=member'))).toBe(true);
   expect(requests.some((url) => url.includes('/users/activity'))).toBe(false);
 
   const area = screen.getByRole('region', { name: '사용자 활동 영역' });
 
   expect(within(area).getAllByText('대상 전체 기준').length).toBeGreaterThan(0);
-  expect(within(area).getByText('플랫폼과 대상 전체 기준')).toBeTruthy();
+  expect(
+    within(area).getAllByText('플랫폼과 대상 전체 기준').length,
+  ).toBeGreaterThan(0);
   requests.length = 0;
   fireEvent.change(screen.getByRole('combobox', { name: '플랫폼' }), {
     target: { value: 'android' },
@@ -719,13 +732,13 @@ it('활동의 대상 변경은 세션 둘만 재요청하고 사용자 활동에
   await act(async () => {
     await realDelay(20);
   });
-  await waitFor(() => expect(requests).toHaveLength(0));
+  await waitFor(() => expect(requests).toHaveLength(1));
 });
 
 it('스토리 제작은 숨긴 대상을 all로 요청하고 콘텐츠에만 플랫폼 전체 기준을 붙인다', async () => {
   nav.search = 'platform=web&segment=guest';
   draw('stories');
-  await waitForLoadedRequests(3, [
+  await waitForLoadedRequests(4, [
     '간편 제작 실패율',
     '제작 방식별 스토리 수',
     '간편 제작별 입력 주변 인물 수',
@@ -784,10 +797,10 @@ it('옵션과 입력의 준비 중 알림은 두 응답의 날짜를 합쳐 하�
   await waitFor(() => expect(requests).toHaveLength(2));
 });
 
-it('평균 세션 길이와 분포는 항상 전체 폭이고 기간 상한 366일은 요청 전에 막는다', async () => {
+it('평균 세션 길이와 분포는 세션 영역에 있고 기간 상한 366일은 요청 전에 막는다', async () => {
   const view = draw('growth');
 
-  await waitForLoadedRequests(3, ['평균 세션 길이', '세션 길이 분포']);
+  await waitForLoadedRequests(4, ['평균 세션 길이', '세션 길이 분포']);
 
   const chart = screen.getByLabelText('평균 세션 길이 추이');
 
@@ -965,7 +978,7 @@ it('채팅 분포 다섯 카드는 고른 플랫폼과 대상을 적용하지 �
   ).not.toContain('segment');
 });
 
-it('활동 탭의 세 요청은 준비 중 응답만 각각 60초 뒤 재요청하고 모두 준비되면 멈춘다', async () => {
+it('활동 탭의 네 요청은 준비 중 응답만 각각 60초 뒤 재요청하고 모두 준비되면 멈춘다', async () => {
   vi.useRealTimers();
   vi.useFakeTimers();
   vi.setSystemTime(new Date('2026-10-23T03:00:00Z'));
@@ -1000,18 +1013,18 @@ it('활동 탭의 세 요청은 준비 중 응답만 각각 60초 뒤 재요청�
     });
 
   await settle();
-  await vi.waitFor(() => expect(requests).toHaveLength(3));
+  await vi.waitFor(() => expect(requests).toHaveLength(4));
   ready = true;
   await act(async () => {
     await vi.advanceTimersByTimeAsync(60001);
   });
   await settle();
-  await vi.waitFor(() => expect(requests).toHaveLength(6));
+  await vi.waitFor(() => expect(requests).toHaveLength(8));
   expect(screen.queryByText(/60초 뒤 다시 요청합니다/)).toBeNull();
   await act(async () => {
     await vi.advanceTimersByTimeAsync(120000);
   });
-  await vi.waitFor(() => expect(requests).toHaveLength(6));
+  await vi.waitFor(() => expect(requests).toHaveLength(8));
 });
 
 it.each([
@@ -1019,7 +1032,7 @@ it.each([
     'growth',
     '',
     '사용자 활동 영역',
-    '리텐션과 평균 세션 길이의 전체는 국내 조건으로 별도 조회한 값입니다.',
+    '전체는 같은 기간에 웹과 앱을 함께 쓴 사람을 한 번 세어 웹과 앱 값의 합보다 작을 수 있습니다.',
   ],
   [
     'growth',
@@ -1037,7 +1050,7 @@ it.each([
     'ops',
     'tab=ai-quality',
     '오류 표시 영역',
-    '여러 조건으로 활동한 사람은 사용자 수에 두 번 들 수 있습니다.',
+    '전체의 사용자 수는 웹과 앱을 함께 쓴 사람을 한 번 셉니다.',
   ],
 ] as const)(
   '%s %s 출처 도움말은 확정 문구와 집계 조건을 유지한다',
@@ -1719,13 +1732,16 @@ it.each(['growth', 'stories', 'chats'] as const)(
         true,
       ),
     );
-    await waitForLoadedRequests(domain === 'growth' ? 4 : 3, [
-      domain === 'growth'
-        ? '게스트 한도 로그인'
-        : domain === 'stories'
-          ? '제작 방식별 스토리 수'
-          : '상세 진입 채팅',
-    ]);
+    await waitForLoadedRequests(
+      domain === 'growth' ? 8 : domain === 'stories' ? 4 : 3,
+      [
+        domain === 'growth'
+          ? '게스트 한도 로그인'
+          : domain === 'stories'
+            ? '제작 방식별 스토리 수'
+            : '상세 진입 채팅',
+      ],
+    );
     expect(screen.queryByText('기간 확인 필요')).toBeNull();
     requests.length = 0;
     view.change(
@@ -1746,3 +1762,179 @@ it.each(['growth', 'stories', 'chats'] as const)(
     );
   },
 );
+
+it('5-1 성장 활동은 플랫폼 구성과 활동량, 사용자당 세션 수, 일별 세션 수를 표시한다', async () => {
+  draw('growth');
+
+  for (const title of [
+    '활성 사용자 플랫폼 구성',
+    '활동량',
+    '핵심 활동 사용자',
+    '핵심 활동 사용자 1인당 활동',
+    '사용자당 세션 수',
+    '일별 세션 수',
+  ]) {
+    expect(
+      (await screen.findAllByRole('heading', { name: title })).length,
+    ).toBeGreaterThan(0);
+  }
+});
+
+it('5-1 성장 가입은 앱 신규 활성 사용자와 신규 퍼널 여섯 개를 표시한다', async () => {
+  nav.search = 'tab=signups';
+  draw('growth');
+  expect(
+    await screen.findByRole('heading', { name: '가입 전환율' }),
+  ).toBeTruthy();
+  expect(
+    await screen.findByRole('region', { name: '앱 신규 활성 사용자 영역' }),
+  ).toBeTruthy();
+
+  for (const title of [
+    '신규 사용자 활성화',
+    '로그인 화면 가입',
+    '앱 신규 활성화',
+  ]) {
+    expect(await screen.findByRole('heading', { name: title })).toBeTruthy();
+  }
+});
+
+it.each([
+  [
+    'activation',
+    '첫 방문 활성화 퍼널',
+    '/campaigns/funnels/activation',
+    '누적 도달',
+  ],
+  [
+    'creatives',
+    '소재별 웹 신규 가입자',
+    '/campaigns/creatives',
+    '소재별 5턴 이상 채팅 사용자',
+  ],
+  ['app', '앱 배너 사용자', '/campaigns/app-transfer', '웹 이용 후 앱 이용'],
+])(
+  '5-1 성장 유입 %s는 하위 구분과 영역 요청을 표시한다',
+  async (tab, title, path, other) => {
+    nav.search = `tab=${tab}&from=2026-10-21&to=2026-10-23&adSegment=ads`;
+    draw('growth');
+    expect(await screen.findByRole('heading', { name: title })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: other })).toBeTruthy();
+    expect(requests.some((url) => url.includes(path))).toBe(true);
+    expect(requests.some((url) => url.includes('adSegment='))).toBe(false);
+  },
+);
+
+it('5-1 첫 방문 활성화는 광고 구분만 바꾸면 받은 응답을 다시 그리고 요청하지 않는다', async () => {
+  nav.search = 'tab=activation&from=2026-10-21&to=2026-10-23';
+
+  const view = draw('growth');
+
+  await waitForLoadedRequests(3, ['누적 도달', '첫 방문 활성화 퍼널']);
+  expect(screen.getByText('610명')).toBeTruthy();
+  fireEvent.change(screen.getByRole('combobox', { name: '광고 구분' }), {
+    target: { value: 'ads' },
+  });
+  view.go();
+  expect(screen.getByText('488명')).toBeTruthy();
+  expect(nav.search).toContain('adSegment=ads');
+  expect(requests).toHaveLength(3);
+});
+
+it('5-1 첫 방문 활성화는 31일 초과면 두 데이터 요청을 모두 막는다', async () => {
+  nav.search = 'tab=activation&from=2026-09-01&to=2026-10-23';
+  draw('growth');
+  expect(await screen.findAllByRole('alert')).toHaveLength(2);
+  await waitFor(() => expect(client.isFetching()).toBe(0));
+  expect(requests).toEqual(['/api/campaigns']);
+  expect(screen.getAllByText('기간 확인 필요')).toHaveLength(2);
+});
+
+it('5-1 앱 유입은 32일 범위에서 배너만 요청하고 웹 이용 후 앱 이용을 막는다', async () => {
+  nav.search =
+    'tab=app&from=2026-09-22&to=2026-10-23&campaign=IGNORED&platform=android&segment=member';
+  draw('growth');
+  await screen.findByRole('heading', { name: '앱 배너 사용자' });
+  await waitFor(() => expect(client.isFetching()).toBe(0));
+  expect(requests).toEqual([
+    '/api/campaigns/app-transfer?from=2026-09-22&to=2026-10-23',
+  ]);
+  expect(screen.getByText('기간 확인 필요')).toBeTruthy();
+  expect(
+    screen.getByRole('button', { name: '최근 31일로 맞추기' }),
+  ).toBeTruthy();
+});
+
+it('5-1 신규 필드가 없는 이전 응답은 활동량과 세션 지표만 준비 중으로 표시한다', async () => {
+  nav.search = 'from=2026-10-21&to=2026-10-23';
+
+  const original = vi.mocked(fetch).getMockImplementation()!;
+
+  vi.mocked(fetch).mockImplementation(async (input, init) => {
+    const response = await original(input, init);
+    const data = await response.json();
+
+    if (String(input).includes('/quality/client?'))
+      for (const day of data.daily) delete day.activity;
+
+    if (String(input).includes('/users/sessions?'))
+      for (const day of data.daily) delete day.sessionsPerUser;
+
+    if (String(input).includes('/users/session-lengths?')) delete data.daily;
+
+    return Response.json(data);
+  });
+  draw('growth');
+  await waitForLoadedRequests(4, [
+    '평균 세션 길이',
+    '사용자당 세션 수',
+    '일별 세션 수',
+  ]);
+  expect(
+    within(screen.getByRole('region', { name: '활동량 영역' })).getByText(
+      '준비 중',
+    ),
+  ).toBeTruthy();
+
+  for (const title of ['사용자당 세션 수', '일별 세션 수']) {
+    expect(
+      within(
+        screen
+          .getByRole('heading', { name: title })
+          .closest('[data-slot=card]') as HTMLElement,
+      ).getByText('준비 중'),
+    ).toBeTruthy();
+  }
+});
+
+it('5-1 플랫폼 구성은 전체 DAU와 별개로 세 값과 구성비를 보인다', async () => {
+  nav.search = 'from=2026-10-21&to=2026-10-21&platform=android';
+
+  const original = vi.mocked(fetch).getMockImplementation()!;
+
+  vi.mocked(fetch).mockImplementation(async (input, init) => {
+    const response = await original(input, init);
+
+    if (!String(input).includes('/users/activity?')) return response;
+
+    const data = await response.json();
+
+    data.monthlyActiveUsers = 30;
+    data.daily[0].activeUsers = { all: 10, web: 8, android: 4, unknown: 8 };
+
+    return Response.json(data);
+  });
+  draw('growth');
+
+  const heading = await screen.findByRole('heading', {
+    name: '활성 사용자 플랫폼 구성',
+  });
+  const card = heading.closest('[data-slot=card]') as HTMLElement;
+  const points = JSON.parse(
+    card.querySelector('[data-rows]')!.getAttribute('data-rows')!,
+  );
+
+  expect(points[0]).toMatchObject({ web: 8, android: 4, unknown: 8 });
+  expect(within(card).getAllByText('8명 (40.0%)')).toHaveLength(2);
+  expect(within(card).getByText('4명 (20.0%)')).toBeTruthy();
+});

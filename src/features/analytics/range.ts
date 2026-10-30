@@ -13,7 +13,7 @@ export function tabLimits(tab: string) {
     maxDays:
       tab === 'creation'
         ? 20
-        : ['story-detail', 'funnels'].includes(tab)
+        : ['story-detail', 'funnels', 'activation'].includes(tab)
           ? 31
           : tab === 'sources'
             ? 10
@@ -26,7 +26,12 @@ export function defaultPeriod(
   campaign?: { startDate: string; endDate: string | null },
   today = kstToday(),
 ): DateRange {
-  if (campaign && ['trend', 'creation', 'story-detail'].includes(tab))
+  if (
+    campaign &&
+    ['trend', 'activation', 'creatives', 'creation', 'story-detail'].includes(
+      tab,
+    )
+  )
     return { from: campaign.startDate, to: campaign.endDate ?? today };
 
   const days = [

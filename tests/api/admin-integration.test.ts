@@ -11,6 +11,17 @@ const cookie = `${sessionCookie}=${Buffer.from(JSON.stringify({ accessToken: 'fo
 const reason = { reason: '테스트 사유' };
 const presign = { kind: 'COVER', contentType: 'image/png', contentLength: 32 };
 const cases: [string, string, string, unknown?][] = [
+  ...[
+    '/campaigns/funnels/activation',
+    '/campaigns/reach',
+    '/campaigns/creatives',
+    '/campaigns/app-transfer',
+    '/users/app-activation',
+  ].map((path): [string, string, string] => [
+    'GET',
+    `${path}?from=2026-10-21&to=2026-10-23`,
+    `${path}?from=2026-10-21&to=2026-10-23`,
+  ]),
   [
     'POST',
     `/moderation/stories/${id}/takedown`,

@@ -486,7 +486,59 @@ export const SignupsQueryParams = zod.object({
   to: zod.string().optional(),
 });
 
-export const SignupsResponse = zod.unknown();
+export const SignupsResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  platformAsOf: zod.iso.datetime({ offset: true }).nullish(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+  daily: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        signups: zod
+          .object({
+            total: zod.number().optional(),
+            google: zod.number().optional(),
+            kakao: zod.number().optional(),
+          })
+          .optional(),
+        cumulativeSignups: zod.number().optional(),
+        migratedFromGuest: zod.number().optional(),
+        signupsByPlatform: zod
+          .union([
+            zod.object({
+              all: zod.number().optional(),
+              web: zod.number().optional(),
+              android: zod.number().optional(),
+            }),
+            zod.null(),
+          ])
+          .optional(),
+        newVisitorsByPlatform: zod
+          .union([
+            zod.object({
+              all: zod.number().optional(),
+              web: zod.number().optional(),
+              android: zod.number().optional(),
+            }),
+            zod.null(),
+          ])
+          .optional(),
+        signupRate: zod
+          .union([
+            zod.object({
+              all: zod.number().nullish(),
+              web: zod.number().nullish(),
+              android: zod.number().nullish(),
+            }),
+            zod.null(),
+          ])
+          .optional(),
+      }),
+    )
+    .optional(),
+});
 
 export const SessionsQueryParams = zod.object({
   segment: zod.enum(['all', 'guest', 'member']).optional(),
@@ -495,7 +547,36 @@ export const SessionsQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const SessionsResponse = zod.unknown();
+export const SessionsResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  segment: zod.string().optional(),
+  daily: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        averageSessionSeconds: zod
+          .object({
+            all: zod.number().nullish(),
+            web: zod.number().nullish(),
+            android: zod.number().nullish(),
+            unknown: zod.number().nullish(),
+          })
+          .optional(),
+        sessionsPerUser: zod
+          .object({
+            all: zod.number().nullish(),
+            web: zod.number().nullish(),
+            android: zod.number().nullish(),
+            unknown: zod.number().nullish(),
+          })
+          .optional(),
+      }),
+    )
+    .optional(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+});
 
 export const SessionLengthsQueryParams = zod.object({
   segment: zod.enum(['all', 'guest', 'member']).optional(),
@@ -504,7 +585,45 @@ export const SessionLengthsQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const SessionLengthsResponse = zod.unknown();
+export const SessionLengthsResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  segment: zod.string().optional(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+  bins: zod
+    .array(
+      zod.object({
+        fromSeconds: zod.number().optional(),
+        toSeconds: zod.number().optional(),
+      }),
+    )
+    .optional(),
+  platforms: zod
+    .array(
+      zod.object({
+        platform: zod.string().optional(),
+        sessions: zod.array(zod.number()).optional(),
+        totalSessions: zod.number().optional(),
+        medianBin: zod.number().nullish(),
+      }),
+    )
+    .optional(),
+  daily: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        sessions: zod
+          .object({
+            all: zod.number().optional(),
+            web: zod.number().optional(),
+            android: zod.number().optional(),
+          })
+          .optional(),
+      }),
+    )
+    .optional(),
+});
 
 export const RetentionQueryParams = zod.object({
   cohort: zod.enum(['visitor', 'signup', 'first-chat']).optional(),
@@ -513,7 +632,48 @@ export const RetentionQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const RetentionResponse = zod.unknown();
+export const RetentionResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  cohort: zod.enum(['visitor', 'signup', 'first-chat']).optional(),
+  platforms: zod
+    .array(
+      zod.object({
+        platform: zod.string().optional(),
+        cohorts: zod
+          .array(
+            zod.object({
+              date: zod.iso.date().optional(),
+              users: zod.number().optional(),
+              d1: zod.number().nullish(),
+              d2: zod.number().nullish(),
+              d3: zod.number().nullish(),
+              d4: zod.number().nullish(),
+              d5: zod.number().nullish(),
+              d6: zod.number().nullish(),
+              d7: zod.number().nullish(),
+              d30: zod.number().nullish(),
+            }),
+          )
+          .optional(),
+        summary: zod
+          .object({
+            d1: zod.number().nullish(),
+            d2: zod.number().nullish(),
+            d3: zod.number().nullish(),
+            d4: zod.number().nullish(),
+            d5: zod.number().nullish(),
+            d6: zod.number().nullish(),
+            d7: zod.number().nullish(),
+            d30: zod.number().nullish(),
+          })
+          .optional(),
+      }),
+    )
+    .optional(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+});
 
 export const AppActivationQueryParams = zod.object({
   from: zod.string().optional(),
@@ -521,7 +681,29 @@ export const AppActivationQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const AppActivationResponse = zod.unknown();
+export const AppActivationResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+  daily: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        newUsers: zod.number().optional(),
+        activeUsers: zod.number().optional(),
+        activationRate: zod.number().nullish(),
+      }),
+    )
+    .optional(),
+  totals: zod
+    .object({
+      newUsers: zod.number().optional(),
+      activeUsers: zod.number().optional(),
+      activationRate: zod.number().nullish(),
+    })
+    .optional(),
+});
 
 export const ActivityQueryParams = zod.object({
   from: zod.string().optional(),
@@ -529,7 +711,52 @@ export const ActivityQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const ActivityResponse = zod.unknown();
+export const ActivityResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  monthlyActiveUsers: zod.number().nullish(),
+  daily: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        activeUsers: zod
+          .object({
+            all: zod.number().optional(),
+            web: zod.number().optional(),
+            android: zod.number().optional(),
+            unknown: zod.number().optional(),
+          })
+          .optional(),
+        newVisitors: zod
+          .object({
+            all: zod.number().optional(),
+            web: zod.number().optional(),
+            android: zod.number().optional(),
+            unknown: zod.number().optional(),
+          })
+          .optional(),
+        cumulativeNewVisitors: zod
+          .object({
+            all: zod.number().optional(),
+            web: zod.number().optional(),
+            android: zod.number().optional(),
+            unknown: zod.number().optional(),
+          })
+          .optional(),
+        messagesPerUser: zod
+          .object({
+            all: zod.number().nullish(),
+            web: zod.number().nullish(),
+            android: zod.number().nullish(),
+            unknown: zod.number().nullish(),
+          })
+          .optional(),
+      }),
+    )
+    .optional(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+});
 
 export const storiesQueryRequestSizeMax = 100;
 
@@ -600,7 +827,45 @@ export const QualityQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const QualityResponse = zod.unknown();
+export const QualityResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  platform: zod.string().optional(),
+  segment: zod.string().optional(),
+  daily: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        messagesByInputMode: zod.record(zod.string(), zod.number()).optional(),
+        streamErrors: zod.number().optional(),
+        streamErrorRate: zod.number().nullish(),
+        users: zod.record(zod.string(), zod.number()).optional(),
+        activity: zod
+          .object({
+            aiResponses: zod.number().optional(),
+            simpleCompletions: zod.number().optional(),
+            generalSubmissions: zod.number().optional(),
+            coreActiveUsers: zod.number().optional(),
+            messagesPerCoreUser: zod.number().nullish(),
+            simpleCompletionsPerCoreUser: zod.number().nullish(),
+          })
+          .optional(),
+      }),
+    )
+    .optional(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+  storyCompletion: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        requests: zod.number().optional(),
+        failed: zod.number().optional(),
+        failureRate: zod.number().nullish(),
+      }),
+    )
+    .optional(),
+});
 
 export const OptionsQueryParams = zod.object({
   segment: zod.enum(['all', 'guest', 'member']).optional(),
@@ -609,7 +874,55 @@ export const OptionsQueryParams = zod.object({
   to: zod.string().optional(),
 });
 
-export const OptionsResponse = zod.unknown();
+export const OptionsResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  segment: zod.string().optional(),
+  platformAsOf: zod.iso.datetime({ offset: true }).nullish(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+  daily: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        chats: zod.number().optional(),
+        withPersona: zod.number().optional(),
+        byModel: zod.record(zod.string(), zod.number()).optional(),
+        turnsByModel: zod.record(zod.string(), zod.number()).optional(),
+        chatStarters: zod
+          .union([
+            zod.object({
+              all: zod.number().optional(),
+              web: zod.number().optional(),
+              android: zod.number().optional(),
+            }),
+            zod.null(),
+          ])
+          .optional(),
+        chatStartersByPersonaType: zod
+          .record(
+            zod.string(),
+            zod.object({
+              all: zod.number().optional(),
+              web: zod.number().optional(),
+              android: zod.number().optional(),
+            }),
+          )
+          .nullish(),
+        platformTurnsByModel: zod
+          .record(
+            zod.string(),
+            zod.object({
+              all: zod.number().optional(),
+              web: zod.number().optional(),
+              android: zod.number().optional(),
+            }),
+          )
+          .nullish(),
+      }),
+    )
+    .optional(),
+});
 
 export const AiCostQueryParams = zod.object({
   days: zod.enum(['7', '30', '90']).optional(),
@@ -617,7 +930,54 @@ export const AiCostQueryParams = zod.object({
   to: zod.string().optional(),
 });
 
-export const AiCostResponse = zod.unknown();
+export const AiCostResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).nullish(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  currency: zod.string().optional(),
+  chatImageUnitCostKrw: zod.number().optional(),
+  daily: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        byFeature: zod
+          .array(
+            zod.object({
+              feature: zod.string().optional(),
+              model: zod.string().nullish(),
+              calls: zod.number().optional(),
+              callsWithoutTokens: zod.number().optional(),
+              inputTokens: zod.number().optional(),
+              outputTokens: zod.number().optional(),
+              costKrw: zod.number().nullish(),
+            }),
+          )
+          .optional(),
+      }),
+    )
+    .optional(),
+  totals: zod
+    .object({
+      costKrw: zod.number().optional(),
+      costPerTurnKrw: zod.number().nullish(),
+      costPerStoryKrw: zod.number().nullish(),
+    })
+    .optional(),
+  unpricedModels: zod.array(zod.string()).optional(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+  usdKrwRate: zod.number().optional(),
+  unmapped: zod
+    .array(
+      zod.object({
+        traceName: zod.string().optional(),
+        costKrw: zod.number().optional(),
+      }),
+    )
+    .optional(),
+  expiredDates: zod.array(zod.iso.date()).optional(),
+  retentionDays: zod.number().optional(),
+  retentionStartDate: zod.iso.date().optional(),
+});
 
 export const StatsQueryParams = zod.object({
   from: zod.iso.date().optional(),
@@ -1114,7 +1474,55 @@ export const ReachQueryParams = zod.object({
   to: zod.string().optional(),
 });
 
-export const ReachResponse = zod.unknown();
+export const ReachResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  segment: zod.string().optional(),
+  platformAsOf: zod.iso.datetime({ offset: true }).nullish(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+  segments: zod
+    .array(
+      zod.object({
+        segment: zod.string().optional(),
+        chats: zod.number().optional(),
+        reached: zod
+          .array(
+            zod.object({
+              turn: zod.number().optional(),
+              chats: zod.number().optional(),
+              rate: zod.number().optional(),
+            }),
+          )
+          .optional(),
+      }),
+    )
+    .optional(),
+  guestToMember: zod
+    .object({
+      chatsReached5: zod.number().optional(),
+      chatsReached6: zod.number().optional(),
+      rate: zod.number().optional(),
+    })
+    .optional(),
+  platforms: zod
+    .array(
+      zod.object({
+        platform: zod.string().optional(),
+        chats: zod.number().optional(),
+        reached: zod
+          .array(
+            zod.object({
+              turn: zod.number().optional(),
+              chats: zod.number().optional(),
+              rate: zod.number().optional(),
+            }),
+          )
+          .optional(),
+      }),
+    )
+    .nullish(),
+});
 
 export const FunnelParams = zod.object({
   funnel: zod.string(),
@@ -1128,7 +1536,25 @@ export const FunnelQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const FunnelResponse = zod.unknown();
+export const FunnelResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  funnel: zod.string().optional(),
+  platform: zod.string().nullish(),
+  storyId: zod.uuid().nullish(),
+  steps: zod
+    .array(
+      zod.object({
+        event: zod.string().optional(),
+        turnNumber: zod.number().nullish(),
+        users: zod.number().optional(),
+        minTurnNumber: zod.number().nullish(),
+        platform: zod.string().nullish(),
+      }),
+    )
+    .optional(),
+});
 
 export const chatsQueryRequestSizeMax = 100;
 
@@ -1176,7 +1602,19 @@ export const ChatParams = zod.object({
 
 export const ChatResponse = zod.unknown();
 
-export const CatalogResponse = zod.unknown();
+export const CatalogResponse = zod.record(
+  zod.string(),
+  zod.array(
+    zod.object({
+      key: zod.string().optional(),
+      name: zod.string().optional(),
+      campaign: zod.string().optional(),
+      startDate: zod.iso.date().optional(),
+      endDate: zod.iso.date().nullish(),
+      storyId: zod.uuid().nullish(),
+    }),
+  ),
+);
 
 export const SourcesQueryParams = zod.object({
   from: zod.string().optional(),
@@ -1184,7 +1622,27 @@ export const SourcesQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const SourcesResponse = zod.unknown();
+export const SourcesResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  sources: zod
+    .array(
+      zod.object({
+        source: zod.string().nullish(),
+        newVisitors: zod.number().optional(),
+      }),
+    )
+    .optional(),
+  posts: zod
+    .array(
+      zod.object({
+        content: zod.string().nullish(),
+        visitors: zod.number().optional(),
+      }),
+    )
+    .optional(),
+});
 
 export const Reach1QueryParams = zod.object({
   campaign: zod.string().optional(),
@@ -1193,7 +1651,26 @@ export const Reach1QueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const Reach1Response = zod.unknown();
+export const Reach1Response = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  campaign: zod.string().optional(),
+  chatUsers: zod
+    .object({
+      all: zod.number().optional(),
+      ads: zod.number().optional(),
+      nonAds: zod.number().optional(),
+    })
+    .optional(),
+  deepChatUsers: zod
+    .object({
+      all: zod.number().optional(),
+      ads: zod.number().optional(),
+      nonAds: zod.number().optional(),
+    })
+    .optional(),
+});
 
 export const PushOpensQueryParams = zod.object({
   from: zod.string().optional(),
@@ -1201,7 +1678,54 @@ export const PushOpensQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const PushOpensResponse = zod.unknown();
+export const PushOpensResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).nullish(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  measuredFrom: zod.iso.date().nullish(),
+  campaigns: zod
+    .array(
+      zod.object({
+        campaignId: zod.uuid().optional(),
+        kind: zod.enum(['SERVICE', 'MARKETING']).optional(),
+        title: zod.string().optional(),
+        noticeId: zod.uuid().nullish(),
+        startedAt: zod.iso.datetime({ offset: true }).optional(),
+        deliveredMembers: zod.number().optional(),
+        openState: zod
+          .enum(['MEASURED', 'BEFORE_MEASUREMENT', 'NO_LINK', 'PENDING'])
+          .optional(),
+        pushOpens: zod.number().nullish(),
+        pushOpenRate: zod.number().nullish(),
+      }),
+    )
+    .optional(),
+  activityFrom: zod.iso.date().nullish(),
+  activityTypes: zod
+    .array(
+      zod.object({
+        type: zod
+          .enum([
+            'STORY_COMPLETED',
+            'STORY_MODERATION_COMPLETED',
+            'STORY_TAKEN_DOWN',
+            'ATTENDANCE_REMINDER',
+            'CREDIT_EXPIRY_REMINDER',
+            'PROMOTION',
+            'NOTICE',
+          ])
+          .optional(),
+        deliveredMembers: zod.number().optional(),
+        openState: zod
+          .enum(['MEASURED', 'BEFORE_MEASUREMENT', 'NO_LINK', 'PENDING'])
+          .optional(),
+        pushOpens: zod.number().nullish(),
+        pushOpenRate: zod.number().nullish(),
+      }),
+    )
+    .optional(),
+});
 
 export const Story1QueryParams = zod.object({
   storyId: zod.uuid().optional(),
@@ -1211,7 +1735,22 @@ export const Story1QueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const Story1Response = zod.unknown();
+export const Story1Response = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  campaign: zod.string().optional(),
+  storyId: zod.uuid().optional(),
+  steps: zod
+    .array(
+      zod.object({
+        event: zod.string().optional(),
+        turnNumber: zod.number().nullish(),
+        users: zod.number().optional(),
+      }),
+    )
+    .optional(),
+});
 
 export const CreationQueryParams = zod.object({
   campaign: zod.string().optional(),
@@ -1220,7 +1759,26 @@ export const CreationQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const CreationResponse = zod.unknown();
+export const CreationResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  campaign: zod.string().optional(),
+  steps: zod
+    .array(
+      zod.object({
+        event: zod.string().optional(),
+        users: zod
+          .object({
+            all: zod.number().optional(),
+            ads: zod.number().optional(),
+            nonAds: zod.number().optional(),
+          })
+          .optional(),
+      }),
+    )
+    .optional(),
+});
 
 export const ActivationQueryParams = zod.object({
   campaign: zod.string().optional(),
@@ -1229,7 +1787,27 @@ export const ActivationQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const ActivationResponse = zod.unknown();
+export const ActivationResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  campaign: zod.string().optional(),
+  steps: zod
+    .array(
+      zod.object({
+        event: zod.string().optional(),
+        minTurnNumber: zod.number().nullish(),
+        users: zod
+          .object({
+            all: zod.number().optional(),
+            ads: zod.number().optional(),
+            nonAds: zod.number().optional(),
+          })
+          .optional(),
+      }),
+    )
+    .optional(),
+});
 
 export const CreativesQueryParams = zod.object({
   campaign: zod.string().optional(),
@@ -1238,7 +1816,48 @@ export const CreativesQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const CreativesResponse = zod.unknown();
+export const CreativesResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  campaign: zod.string().optional(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+  daily: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        signups: zod
+          .array(
+            zod.object({
+              content: zod.string().nullish(),
+              users: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        deepChatUsers: zod
+          .array(
+            zod.object({
+              content: zod.string().nullish(),
+              users: zod.number().optional(),
+            }),
+          )
+          .optional(),
+      }),
+    )
+    .optional(),
+  totals: zod
+    .object({
+      signups: zod
+        .array(
+          zod.object({
+            content: zod.string().nullish(),
+            users: zod.number().optional(),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
+});
 
 export const AppTransferQueryParams = zod.object({
   from: zod.string().optional(),
@@ -1246,7 +1865,44 @@ export const AppTransferQueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const AppTransferResponse = zod.unknown();
+export const AppTransferResponse = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+  daily: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        bannerShown: zod.number().optional(),
+        bannerClicked: zod.number().optional(),
+        bannerClickRate: zod.number().nullish(),
+        bannerNewUsers: zod.number().optional(),
+        newUsersBySource: zod
+          .array(
+            zod.object({
+              source: zod.string().nullish(),
+              users: zod.number().optional(),
+            }),
+          )
+          .optional(),
+      }),
+    )
+    .optional(),
+  totals: zod
+    .object({
+      bannerNewUsers: zod.number().optional(),
+      newUsersBySource: zod
+        .array(
+          zod.object({
+            source: zod.string().nullish(),
+            users: zod.number().optional(),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
+});
 
 export const Analytics1QueryParams = zod.object({
   campaign: zod.string().optional(),
@@ -1255,7 +1911,93 @@ export const Analytics1QueryParams = zod.object({
   days: zod.string().optional(),
 });
 
-export const Analytics1Response = zod.unknown();
+export const Analytics1Response = zod.object({
+  asOf: zod.iso.datetime({ offset: true }).optional(),
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  campaign: zod.string().optional(),
+  daily: zod
+    .array(
+      zod.object({
+        date: zod.iso.date().optional(),
+        activeUsers: zod.number().optional(),
+        newVisitors: zod
+          .object({
+            all: zod.number().optional(),
+            ads: zod.number().optional(),
+            nonAds: zod.number().optional(),
+          })
+          .optional(),
+        newVisitorsBySource: zod
+          .object({
+            ads: zod.number().optional(),
+            instagram: zod.number().optional(),
+            threads: zod.number().optional(),
+            dcinside: zod.number().optional(),
+            other: zod.number().optional(),
+          })
+          .optional(),
+        signups: zod
+          .object({
+            all: zod.number().optional(),
+            ads: zod.number().optional(),
+            nonAds: zod.number().optional(),
+          })
+          .optional(),
+        cumulativeSignups: zod
+          .object({
+            all: zod.number().optional(),
+            ads: zod.number().optional(),
+            nonAds: zod.number().optional(),
+          })
+          .optional(),
+        androidSignups: zod.number().optional(),
+        storylineRequests: zod.number().optional(),
+        completionRequests: zod.number().optional(),
+        chatMessages: zod.number().optional(),
+        newVisitorsByDevice: zod
+          .object({
+            ios: zod.number().optional(),
+            android: zod.number().optional(),
+            other: zod.number().optional(),
+          })
+          .optional(),
+      }),
+    )
+    .optional(),
+  totals: zod
+    .object({
+      activeUsersAverage: zod.number().optional(),
+      newVisitors: zod
+        .object({
+          all: zod.number().optional(),
+          ads: zod.number().optional(),
+          nonAds: zod.number().optional(),
+        })
+        .optional(),
+      signups: zod
+        .object({
+          all: zod.number().optional(),
+          ads: zod.number().optional(),
+          nonAds: zod.number().optional(),
+        })
+        .optional(),
+      androidSignups: zod.number().optional(),
+      adsShare: zod.number().nullish(),
+      storylineRequests: zod.number().optional(),
+      completionRequests: zod.number().optional(),
+      chatMessages: zod.number().optional(),
+      newVisitorsByDevice: zod
+        .object({
+          ios: zod.number().optional(),
+          android: zod.number().optional(),
+          other: zod.number().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+  pendingDates: zod.array(zod.iso.date()).optional(),
+});
 
 export const auditLogsQueryRequestSizeMax = 100;
 

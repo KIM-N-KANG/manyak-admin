@@ -114,11 +114,9 @@ it('서버 합계를 크게 표시하고 Web·Android를 더해 합계를 재계
   const tooltip = (await screen.findByRole('tooltip')).textContent!;
 
   expect(tooltip).toContain(
-    '국가가 한국이거나 국가 정보가 없는 사용자를 집계하고 앱은 그 밖 국가에서 로그인한 사용자도 더합니다.',
+    '국가가 한국이거나 국가 정보가 없는 웹과 앱 사용자를 집계합니다.',
   );
-  expect(tooltip).toContain(
-    '같은 날 웹과 앱, 또는 국내와 해외에서 앱을 쓴 사람은 두 번 셉니다.',
-  );
+  expect(tooltip).toContain('같은 날 웹과 앱을 함께 쓴 사람을 한 번 셉니다.');
   expect(tooltip).not.toContain('국가와 무관');
   expect(screen.queryByText('[object Object]')).toBeNull();
 });
