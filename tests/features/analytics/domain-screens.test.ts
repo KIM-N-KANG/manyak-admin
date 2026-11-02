@@ -32,7 +32,7 @@ import { playInstalls } from '@/fixtures/play-installs';
 
 const nav = vi.hoisted(() => ({
   search: '',
-  path: '/analytics/growth',
+  path: '/analytics/inflow',
   push: vi.fn(),
   replace: vi.fn(),
 }));
@@ -250,8 +250,24 @@ async function waitForLoadedRequests(count: number, headings: string[]) {
 
 it.each([
   [
-    'growth',
-    ['유입', '앱 설치', '활동', '가입', '리텐션'],
+    'inflow',
+    [
+      '광고 캠페인',
+      '유입 소스',
+      '앱',
+      '알림',
+      '캠페인 추이',
+      '첫 방문 활성화',
+      '광고 소재',
+      '간편 제작 퍼널',
+      '상세 진입 퍼널',
+    ],
+    '광고 캠페인',
+    ['/api/campaigns', '/api/campaigns/analytics'],
+  ],
+  [
+    'audience',
+    ['활동', '가입', '리텐션'],
     '활동',
     [
       '/api/users/activity',
@@ -261,8 +277,8 @@ it.each([
     ],
   ],
   [
-    'stories',
-    ['제작', '간편 제작 퍼널', '상세 진입 퍼널'],
+    'content',
+    ['제작', '소비', '검수'],
     '제작',
     [
       '/api/conversion/funnels/story-creation',
@@ -273,7 +289,7 @@ it.each([
   ],
   [
     'chats',
-    ['참여', '옵션과 입력'],
+    ['참여', '옵션과 입력', '몰입'],
     '참여',
     [
       '/api/conversion/turn-reach',
@@ -281,7 +297,12 @@ it.each([
       '/api/conversion/funnels/story-detail-chat',
     ],
   ],
-  ['payments', [], '', ['/api/dashboard/charts', '/api/quality/client']],
+  [
+    'revenue',
+    ['매출', '이프'],
+    '매출',
+    ['/api/dashboard/charts', '/api/payments/metrics', '/api/quality/ai-cost'],
+  ],
   [
     'ops',
     ['서비스', 'AI 품질', 'AI 비용', '서비스와 요청', '저장소', 'DB 테이블'],
@@ -307,15 +328,17 @@ it.each([
           .getAttribute('aria-selected'),
       ).toBe('true');
 
-    expect(requests.some((url) => url === '/api/campaigns')).toBe(false);
+    expect(requests.some((url) => url === '/api/campaigns')).toBe(
+      domain === 'inflow',
+    );
   },
 );
 
-it.each(['growth', 'stories', 'chats'] as const)(
+it.each(['audience', 'content', 'chats'] as const)(
   '%s의 퍼널은 90일 기간에서 해당 영역만 막고 366일 영역은 요청한다',
   async (domain) => {
     nav.search =
-      domain === 'growth' ? 'tab=signups&range=last90d' : 'range=last90d';
+      domain === 'audience' ? 'tab=signups&range=last90d' : 'range=last90d';
 
     const view = draw(domain);
 
@@ -326,7 +349,7 @@ it.each(['growth', 'stories', 'chats'] as const)(
     expect(
       requests.some((url) =>
         url.includes(
-          domain === 'growth' ? '/users/signups' : '/dashboard/charts',
+          domain === 'audience' ? '/users/signups' : '/dashboard/charts',
         ),
       ),
     ).toBe(true);
@@ -346,21 +369,19 @@ it.each(['growth', 'stories', 'chats'] as const)(
 it('성장 유입의 하위 구분은 기간과 캠페인 조건을 유지하고 지원하지 않는 선택기를 숨긴다', async () => {
   nav.search = 'tab=trend&campaign=TEST&platform=android&segment=member';
 
-  const view = draw('growth');
+  const view = draw('inflow');
 
   await screen.findByRole('heading', { name: '웹 DAU' });
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
-    '유입',
-    '앱 설치',
-    '활동',
-    '가입',
-    '리텐션',
+    '광고 캠페인',
+    '유입 소스',
+    '앱',
+    '알림',
     '캠페인 추이',
     '첫 방문 활성화',
     '광고 소재',
-    '유입 소스',
-    '앱 유입',
-    '알림 열람',
+    '간편 제작 퍼널',
+    '상세 진입 퍼널',
   ]);
   expect(screen.queryByRole('combobox', { name: '플랫폼' })).toBeNull();
   expect(screen.queryByRole('combobox', { name: '대상' })).toBeNull();
@@ -377,7 +398,7 @@ it('성장 유입의 하위 구분은 기간과 캠페인 조건을 유지하고
 
 it('성장 활동의 실패는 세션 두 요청과 상태를 가리지 않는다', async () => {
   fail = '/users/activity';
-  draw('growth');
+  draw('audience');
   await screen.findByText('Amplitude 지표를 불러올 수 없음');
   await screen.findByRole('heading', { name: '평균 세션 길이' });
   await screen.findByRole('heading', { name: '세션 길이 분포' });
@@ -385,7 +406,7 @@ it('성장 활동의 실패는 세션 두 요청과 상태를 가리지 않는�
 });
 
 it.each([
-  ['stories', '', ['전환 퍼널 영역', '콘텐츠 영역']],
+  ['content', '', ['전환 퍼널 영역', '콘텐츠 영역']],
   [
     'chats',
     '',
@@ -412,7 +433,7 @@ it.each([
 
     expect(regions).toEqual(labels);
 
-    if (domain === 'stories') {
+    if (domain === 'content') {
       await screen.findByRole('heading', { name: '제작 방식별 스토리 수' });
       expect(
         screen.getByRole('heading', { name: '간편 제작별 입력 주변 인물 수' }),
@@ -434,45 +455,41 @@ it.each([
   },
 );
 
-it('결제는 같은 대시보드 응답 캐시를 쓰며 그래프 네 개와 신호 차트만 보인다', async () => {
+it('수익 매출은 개요 차트 캐시를 공유하고 이프 탭에서만 신호를 요청한다', async () => {
   nav.search = 'range=last30d&platform=web&segment=guest';
-
-  const range = { from: '2026-09-24', to: '2026-10-23' };
-
   client.setQueryData(
     ['/api/dashboard/charts?from=2026-09-24&to=2026-10-23'],
-    getDashboardCharts(range),
+    getDashboardCharts({ from: '2026-09-24', to: '2026-10-23' }),
   );
 
-  const view = draw('payments');
+  const view = draw('revenue');
 
-  await screen.findByRole('heading', { name: '이프와 초대 신호 사용자' });
-  expect(screen.queryAllByRole('tab')).toHaveLength(0);
+  expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
+    '매출',
+    '이프',
+  ]);
   expect(
     screen.getByLabelText('일별 지표 추이').querySelectorAll('[data-rows]'),
   ).toHaveLength(4);
-  await waitFor(() => {
-    expect(requests).toEqual([
-      '/api/quality/client?from=2026-09-24&to=2026-10-23&platform=web&segment=guest',
-    ]);
-  });
-  expect(
-    screen.queryByRole('heading', { name: '채팅 메시지 전송' }),
-  ).toBeNull();
+  expect(screen.queryByRole('combobox', { name: '플랫폼' })).toBeNull();
+  await waitFor(() => expect(requests).toHaveLength(2));
+  expect(requests.some((url) => url.includes('/dashboard/charts'))).toBe(false);
+  requests.length = 0;
+  fireEvent.click(screen.getByRole('tab', { name: '이프' }));
+  view.go();
+  await screen.findByRole('heading', { name: '이프와 초대 신호 사용자' });
+  expect(requests).toEqual([
+    '/api/credits/metrics?from=2026-09-24&to=2026-10-23',
+    '/api/quality/client?from=2026-09-24&to=2026-10-23&platform=web&segment=guest',
+  ]);
+  expect(screen.queryByLabelText('일별 지표 추이')).toBeNull();
   expect(screen.queryByRole('heading', { name: '스트림 오류율' })).toBeNull();
-  expect(view.container.textContent).toContain('플랫폼과 대상 전체 기준');
-
-  const signal = screen.getByLabelText('이프와 초대 신호 사용자 추이');
-
-  expect(signal.parentElement?.parentElement?.className).toContain(
-    'last-child:nth-child(odd)',
-  );
 });
 
 it('가입은 퍼널 여섯 개를 요청하며 플랫폼 변경은 선택 플랫폼 퍼널 셋만 다시 요청한다', async () => {
   nav.search = 'tab=signups';
 
-  const view = draw('growth');
+  const view = draw('audience');
 
   await waitForLoadedRequests(8, [
     '웹 첫 접속',
@@ -503,10 +520,10 @@ it('가입은 퍼널 여섯 개를 요청하며 플랫폼 변경은 선택 플�
 });
 
 it.each([
-  ['growth', '/members', '회원 목록'],
-  ['stories', '/stories', '스토리 목록'],
+  ['audience', '/members', '회원 목록'],
+  ['content', '/stories', '스토리 목록'],
   ['chats', '/chats', '채팅 목록'],
-  ['payments', '/payments', '결제 목록'],
+  ['revenue', '/payments', '결제 목록'],
 ] as const)(
   '%s 제목 옆 상호 링크는 쿼리를 넘기지 않는다',
   (domain, href, label) => {
@@ -521,26 +538,26 @@ it.each([
 // ADMIN/WEB 7d2b745 2-1-1 이동 표의 18행을 구현 매핑과 독립적으로 고정한 기대값이다.
 const legacyCases = [
   ['/dashboard/analytics', [''], '/analytics/chats', 'engagement'],
-  ['/analytics/acquisition', ['', 'trend'], '/analytics/growth', 'trend'],
-  ['/analytics/acquisition', ['creation'], '/analytics/stories', 'creation'],
+  ['/analytics/acquisition', ['', 'trend'], '/analytics/inflow', 'trend'],
+  ['/analytics/acquisition', ['creation'], '/analytics/inflow', 'creation'],
   [
     '/analytics/acquisition',
     ['story-detail'],
-    '/analytics/stories',
+    '/analytics/inflow',
     'story-detail',
   ],
-  ['/analytics/acquisition', ['sources'], '/analytics/growth', 'sources'],
-  ['/analytics/acquisition', ['push'], '/analytics/growth', 'push'],
-  ['/analytics/acquisition', ['installs'], '/analytics/growth', 'installs'],
+  ['/analytics/acquisition', ['sources'], '/analytics/inflow', 'sources'],
+  ['/analytics/acquisition', ['push'], '/analytics/inflow', 'push'],
+  ['/analytics/acquisition', ['installs'], '/analytics/inflow', 'installs'],
   [
     '/analytics/users',
     ['', 'activity', 'sessions'],
-    '/analytics/growth',
+    '/analytics/audience',
     'activity',
   ],
-  ['/analytics/users', ['retention'], '/analytics/growth', 'retention'],
-  ['/analytics/users', ['signups'], '/analytics/growth', 'signups'],
-  ['/analytics/conversion', ['', 'funnels'], '/analytics/growth', 'signups'],
+  ['/analytics/users', ['retention'], '/analytics/audience', 'retention'],
+  ['/analytics/users', ['signups'], '/analytics/audience', 'signups'],
+  ['/analytics/conversion', ['', 'funnels'], '/analytics/audience', 'signups'],
   ['/analytics/conversion', ['turn-reach'], '/analytics/chats', 'engagement'],
   ['/analytics/quality', ['', 'client'], '/analytics/ops', 'ai-quality'],
   ['/analytics/quality', ['chat-options'], '/analytics/chats', 'chat-options'],
@@ -551,9 +568,9 @@ const legacyCases = [
 ] as const;
 const legacyFallbacks = [
   ['/dashboard/analytics', '/analytics/chats', 'engagement', '참여'],
-  ['/analytics/acquisition', '/analytics/growth', 'trend', '유입'],
-  ['/analytics/users', '/analytics/growth', 'activity', '활동'],
-  ['/analytics/conversion', '/analytics/growth', 'signups', '가입'],
+  ['/analytics/acquisition', '/analytics/inflow', 'trend', '광고 캠페인'],
+  ['/analytics/users', '/analytics/audience', 'activity', '활동'],
+  ['/analytics/conversion', '/analytics/audience', 'signups', '가입'],
   ['/analytics/quality', '/analytics/ops', 'ai-quality', 'AI 품질'],
   ['/analytics/infra', '/analytics/ops', 'services', '서비스'],
 ] as const;
@@ -686,7 +703,7 @@ it('활동 탭의 준비 중 날짜는 네 응답을 합쳐 첫 영역 위 알�
       return Response.json(data);
     }),
   );
-  draw('growth');
+  draw('audience');
   await screen.findByText('준비 중 날짜 3개. 60초 뒤 다시 요청합니다.');
   expect(screen.getAllByText(/60초 뒤 다시 요청합니다/)).toHaveLength(1);
 
@@ -706,7 +723,7 @@ it('활동 탭의 준비 중 날짜는 네 응답을 합쳐 첫 영역 위 알�
 it('활동의 대상 변경은 세션 둘과 활동량을 재요청하고 사용자 활동에 대상 전체 기준을 표시한다', async () => {
   nav.search = 'platform=web';
 
-  const view = draw('growth');
+  const view = draw('audience');
 
   await waitForLoadedRequests(4, ['평균 세션 길이', '세션 길이 분포']);
   requests.length = 0;
@@ -737,7 +754,7 @@ it('활동의 대상 변경은 세션 둘과 활동량을 재요청하고 사용
 
 it('스토리 제작은 숨긴 대상을 all로 요청하고 콘텐츠에만 플랫폼 전체 기준을 붙인다', async () => {
   nav.search = 'platform=web&segment=guest';
-  draw('stories');
+  draw('content');
   await waitForLoadedRequests(4, [
     '간편 제작 실패율',
     '제작 방식별 스토리 수',
@@ -763,14 +780,16 @@ it('스토리 제작은 숨긴 대상을 all로 요청하고 콘텐츠에만 플
   ).toBeNull();
 });
 
-it.each(['growth', 'stories', 'chats', 'payments', 'ops'] as const)(
+it.each(['inflow', 'audience', 'content', 'chats', 'revenue', 'ops'] as const)(
   '%s는 모르는 탭에서 기본 탭으로 복원한다',
   (domain) => {
     nav.search = 'tab=unknown';
     draw(domain);
 
-    if (domain === 'payments')
-      expect(screen.queryAllByRole('tab')).toHaveLength(0);
+    if (domain === 'revenue')
+      expect(
+        screen.getByRole('tab', { name: '매출', selected: true }),
+      ).toBeTruthy();
     else
       expect(
         screen
@@ -778,13 +797,15 @@ it.each(['growth', 'stories', 'chats', 'payments', 'ops'] as const)(
           .filter((tab) => tab.getAttribute('aria-selected') === 'true')
           .map((tab) => tab.textContent),
       ).toEqual(
-        domain === 'ops'
-          ? ['서비스', '서비스와 요청']
-          : domain === 'growth'
-            ? ['활동']
-            : domain === 'stories'
-              ? ['제작']
-              : ['참여'],
+        domain === 'inflow'
+          ? ['광고 캠페인', '캠페인 추이']
+          : domain === 'ops'
+            ? ['서비스', '서비스와 요청']
+            : domain === 'audience'
+              ? ['활동']
+              : domain === 'content'
+                ? ['제작']
+                : ['참여'],
       );
   },
 );
@@ -798,7 +819,7 @@ it('옵션과 입력의 준비 중 알림은 두 응답의 날짜를 합쳐 하�
 });
 
 it('평균 세션 길이와 분포는 세션 영역에 있고 기간 상한 366일은 요청 전에 막는다', async () => {
-  const view = draw('growth');
+  const view = draw('audience');
 
   await waitForLoadedRequests(4, ['평균 세션 길이', '세션 길이 분포']);
 
@@ -872,7 +893,7 @@ it('운영 AI 품질은 플랫폼 변경 시 오류 표시만 다시 요청하�
 
 it('퍼널 첫 단계의 수치 표는 전환율 빈칸을 유지하고 두 번째 단계부터 계산한다', async () => {
   nav.search = 'tab=signups';
-  draw('growth');
+  draw('audience');
   await screen.findByRole('heading', { name: '웹 첫 접속' });
 
   const card = screen
@@ -891,7 +912,7 @@ it('퍼널 첫 단계의 수치 표는 전환율 빈칸을 유지하고 두 번�
 
 it('광고 퍼널 첫 단계는 세 광고 구분의 전환율을 모두 빈칸으로 둔다', async () => {
   nav.search = 'tab=creation&campaign=TEST&range=last7d';
-  draw('stories');
+  draw('inflow');
   await screen.findByRole('heading', { name: '단계별 전환' });
 
   const row = screen.getByRole('table').querySelector('tbody tr')!;
@@ -928,7 +949,7 @@ it.each(['sources', 'push', 'installs'])(
   async (tab) => {
     nav.search = `tab=${tab}`;
     noCampaigns = true;
-    draw('growth');
+    draw('inflow');
     await waitFor(() => expect(requests).toHaveLength(1));
     expect(requests).not.toContain('/api/campaigns');
     expect(screen.queryByRole('combobox', { name: '광고 캠페인' })).toBeNull();
@@ -952,7 +973,7 @@ it('성장 유입의 광고 유입 비중은 서버의 0.7을 70.0%로 표시한
       return Response.json(data);
     }),
   );
-  draw('growth');
+  draw('inflow');
   await screen.findByText('70.0%');
 });
 
@@ -1003,7 +1024,7 @@ it('활동 탭의 네 요청은 준비 중 응답만 각각 60초 뒤 재요청�
       return Response.json(data);
     }),
   );
-  draw('growth');
+  draw('audience');
 
   const settle = async () =>
     act(async () => {
@@ -1029,19 +1050,19 @@ it('활동 탭의 네 요청은 준비 중 응답만 각각 60초 뒤 재요청�
 
 it.each([
   [
-    'growth',
+    'audience',
     '',
     '사용자 활동 영역',
     '전체는 같은 기간에 웹과 앱을 함께 쓴 사람을 한 번 세어 웹과 앱 값의 합보다 작을 수 있습니다.',
   ],
   [
-    'growth',
+    'audience',
     'tab=signups',
     '전환 퍼널 영역',
     '웹과 앱 모두 국가가 한국이거나 국가 정보가 없는 사용자만 집계합니다. 팀 계정은 제외하지 않습니다.',
   ],
   [
-    'stories',
+    'inflow',
     'tab=creation&range=last7d&campaign=TEST',
     '',
     '팀 계정은 제외하지 않습니다.',
@@ -1058,7 +1079,7 @@ it.each([
     nav.search = search;
     draw(domain);
 
-    if (domain === 'stories')
+    if (domain === 'inflow')
       await screen.findByRole('heading', { name: '단계별 전환' });
 
     const scope = area
@@ -1366,7 +1387,7 @@ it('DomainScreen 운영 보관 시작일 전이라도 expiredDates에 없으면 
 it('DomainScreen 성장 리텐션은 어제까지 최근 7일과 visitor로 요청하고 시작 집단과 플랫폼을 분리한다', async () => {
   nav.search = 'tab=retention&platform=web&segment=member';
 
-  const view = draw('growth');
+  const view = draw('audience');
 
   await screen.findByRole('heading', { name: '코호트 표' });
   await waitFor(() => {
@@ -1408,7 +1429,7 @@ it('DomainScreen 성장 리텐션은 어제까지 최근 7일과 visitor로 요�
 it('DomainScreen 성장 리텐션은 오늘 포함 기간 요청을 막고 맞추기 후 어제까지 요청한다', async () => {
   nav.search = 'tab=retention&range=last7d';
 
-  const view = draw('growth');
+  const view = draw('audience');
 
   expect(screen.getByRole('alert').textContent).toContain('리텐션은 어제까지');
   await waitFor(() => expect(requests).toHaveLength(0));
@@ -1425,7 +1446,7 @@ it('DomainScreen 성장 리텐션은 오늘 포함 기간 요청을 막고 맞�
 it('DomainScreen 성장 유입 소스는 10일 상한을 적용하고 끝 날짜를 유지해 맞춘다', async () => {
   nav.search = 'tab=sources&range=last30d&campaign=THIRD_2026';
 
-  const view = draw('growth');
+  const view = draw('inflow');
 
   expect(screen.getByRole('alert').textContent).toContain('최대 10일');
   await waitFor(() => expect(requests).toHaveLength(0));
@@ -1444,7 +1465,7 @@ it('DomainScreen 성장 유입 소스는 10일 상한을 적용하고 끝 날짜
 it('DomainScreen 스토리 상세 진입은 3차 기본 기간 35일을 보존하고 31일 상한에서 요청을 막는다', async () => {
   nav.search = 'tab=story-detail&campaign=THIRD_2026';
 
-  const view = draw('stories');
+  const view = draw('inflow');
 
   await screen.findByRole('alert');
   expect(screen.getByRole('alert').textContent).toContain('최대 31일');
@@ -1464,7 +1485,7 @@ it('DomainScreen 스토리 상세 진입은 3차 기본 기간 35일을 보존�
 
 it('DomainScreen 결제 일별 추이의 이프 소모 점과 수치 표는 그날의 소모 내역으로 이동한다', async () => {
   nav.search = 'from=2026-10-21&to=2026-10-23';
-  draw('payments');
+  draw('revenue');
 
   const plot = await screen.findByLabelText('이프 소모 일별 추이');
 
@@ -1505,7 +1526,7 @@ it('DomainScreen 성장 가입의 LabelList formatter는 첫 단계에 사용자
 
     return original(input, init);
   });
-  draw('growth');
+  draw('audience');
   await waitFor(() =>
     expect(
       within(
@@ -1533,7 +1554,7 @@ it.each([
   'DomainScreen 성장 앱 설치의 %s 정의는 provider를 거쳐 네 줄을 표시한다',
   async (title, calculation) => {
     nav.search = 'tab=installs';
-    draw('growth');
+    draw('inflow');
 
     const buttons = await screen.findAllByRole('button', {
       name: `${title} 지표 정의`,
@@ -1720,10 +1741,10 @@ it('DomainScreen 운영 AI 비용은 만료 날짜만 있으면 준비 중 재�
   await vi.waitFor(() => expect(requests).toHaveLength(1));
 });
 
-it.each(['growth', 'stories', 'chats'] as const)(
+it.each(['audience', 'content', 'chats'] as const)(
   'DomainScreen %s 퍼널은 31일을 허용하고 32일에서 그 영역만 막는다',
   async (domain) => {
-    nav.search = `${domain === 'growth' ? 'tab=signups&' : ''}from=2026-09-23&to=2026-10-23`;
+    nav.search = `${domain === 'audience' ? 'tab=signups&' : ''}from=2026-09-23&to=2026-10-23`;
 
     const view = draw(domain);
 
@@ -1733,11 +1754,11 @@ it.each(['growth', 'stories', 'chats'] as const)(
       ),
     );
     await waitForLoadedRequests(
-      domain === 'growth' ? 8 : domain === 'stories' ? 4 : 3,
+      domain === 'audience' ? 8 : domain === 'content' ? 4 : 3,
       [
-        domain === 'growth'
+        domain === 'audience'
           ? '게스트 한도 로그인'
-          : domain === 'stories'
+          : domain === 'content'
             ? '제작 방식별 스토리 수'
             : '상세 진입 채팅',
       ],
@@ -1745,14 +1766,14 @@ it.each(['growth', 'stories', 'chats'] as const)(
     expect(screen.queryByText('기간 확인 필요')).toBeNull();
     requests.length = 0;
     view.change(
-      `${domain === 'growth' ? 'tab=signups&' : ''}from=2026-09-22&to=2026-10-23`,
+      `${domain === 'audience' ? 'tab=signups&' : ''}from=2026-09-22&to=2026-10-23`,
     );
     expect(screen.getByText('기간 확인 필요')).toBeTruthy();
     await waitFor(() =>
       expect(
         requests.some((url) =>
           url.includes(
-            domain === 'growth' ? '/users/signups' : '/dashboard/charts',
+            domain === 'audience' ? '/users/signups' : '/dashboard/charts',
           ),
         ),
       ).toBe(true),
@@ -1764,7 +1785,7 @@ it.each(['growth', 'stories', 'chats'] as const)(
 );
 
 it('5-1 성장 활동은 플랫폼 구성과 활동량, 사용자당 세션 수, 일별 세션 수를 표시한다', async () => {
-  draw('growth');
+  draw('audience');
 
   for (const title of [
     '활성 사용자 플랫폼 구성',
@@ -1782,7 +1803,7 @@ it('5-1 성장 활동은 플랫폼 구성과 활동량, 사용자당 세션 수,
 
 it('5-1 성장 가입은 앱 신규 활성 사용자와 신규 퍼널 여섯 개를 표시한다', async () => {
   nav.search = 'tab=signups';
-  draw('growth');
+  draw('audience');
   expect(
     await screen.findByRole('heading', { name: '가입 전환율' }),
   ).toBeTruthy();
@@ -1817,7 +1838,7 @@ it.each([
   '5-1 성장 유입 %s는 하위 구분과 영역 요청을 표시한다',
   async (tab, title, path, other) => {
     nav.search = `tab=${tab}&from=2026-10-21&to=2026-10-23&adSegment=ads`;
-    draw('growth');
+    draw('inflow');
     expect(await screen.findByRole('heading', { name: title })).toBeTruthy();
     expect(await screen.findByRole('heading', { name: other })).toBeTruthy();
     expect(requests.some((url) => url.includes(path))).toBe(true);
@@ -1828,7 +1849,7 @@ it.each([
 it('5-1 첫 방문 활성화는 광고 구분만 바꾸면 받은 응답을 다시 그리고 요청하지 않는다', async () => {
   nav.search = 'tab=activation&from=2026-10-21&to=2026-10-23';
 
-  const view = draw('growth');
+  const view = draw('inflow');
 
   await waitForLoadedRequests(3, ['누적 도달', '첫 방문 활성화 퍼널']);
   expect(screen.getByText('610명')).toBeTruthy();
@@ -1843,7 +1864,7 @@ it('5-1 첫 방문 활성화는 광고 구분만 바꾸면 받은 응답을 다�
 
 it('5-1 첫 방문 활성화는 31일 초과면 두 데이터 요청을 모두 막는다', async () => {
   nav.search = 'tab=activation&from=2026-09-01&to=2026-10-23';
-  draw('growth');
+  draw('inflow');
   expect(await screen.findAllByRole('alert')).toHaveLength(2);
   await waitFor(() => expect(client.isFetching()).toBe(0));
   expect(requests).toEqual(['/api/campaigns']);
@@ -1853,7 +1874,7 @@ it('5-1 첫 방문 활성화는 31일 초과면 두 데이터 요청을 모두 �
 it('5-1 앱 유입은 32일 범위에서 배너만 요청하고 웹 이용 후 앱 이용을 막는다', async () => {
   nav.search =
     'tab=app&from=2026-09-22&to=2026-10-23&campaign=IGNORED&platform=android&segment=member';
-  draw('growth');
+  draw('inflow');
   await screen.findByRole('heading', { name: '앱 배너 사용자' });
   await waitFor(() => expect(client.isFetching()).toBe(0));
   expect(requests).toEqual([
@@ -1884,7 +1905,7 @@ it('5-1 신규 필드가 없는 이전 응답은 활동량과 세션 지표만 �
 
     return Response.json(data);
   });
-  draw('growth');
+  draw('audience');
   await waitForLoadedRequests(4, [
     '평균 세션 길이',
     '사용자당 세션 수',
@@ -1924,7 +1945,7 @@ it('5-1 플랫폼 구성은 전체 DAU와 별개로 세 값과 구성비를 보�
 
     return Response.json(data);
   });
-  draw('growth');
+  draw('audience');
 
   const heading = await screen.findByRole('heading', {
     name: '활성 사용자 플랫폼 구성',
@@ -1937,4 +1958,44 @@ it('5-1 플랫폼 구성은 전체 DAU와 별개로 세 값과 구성비를 보�
   expect(points[0]).toMatchObject({ web: 8, android: 4, unknown: 8 });
   expect(within(card).getAllByText('8명 (40.0%)')).toHaveLength(2);
   expect(within(card).getByText('4명 (20.0%)')).toBeTruthy();
+});
+
+it('유입의 앱 탭은 두 하위 구분을 두고 기존 URL 조건을 보존한다', async () => {
+  nav.search = 'range=last7d&campaign=TEST&platform=android&segment=member';
+
+  const view = draw('inflow');
+
+  fireEvent.click(screen.getByRole('tab', { name: '앱' }));
+  view.go();
+  expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
+    '광고 캠페인',
+    '유입 소스',
+    '앱',
+    '알림',
+    '앱 유입',
+    '앱 설치',
+  ]);
+  expect(nav.search).toContain('tab=app');
+  expect(nav.search).toContain('campaign=TEST');
+  fireEvent.click(screen.getByRole('tab', { name: '앱 설치' }));
+  view.go();
+  expect(
+    screen
+      .getByRole('button', { name: '기간: 전체 기간' })
+      .hasAttribute('disabled'),
+  ).toBe(true);
+  expect(nav.search).toContain('range=last7d');
+});
+it('소비·검수 탭은 보이지만 제작 탭에서 신규 지표를 미리 요청하지 않는다', async () => {
+  draw('content');
+  expect(screen.getByRole('tab', { name: '소비' })).toBeTruthy();
+  expect(screen.getByRole('tab', { name: '검수' })).toBeTruthy();
+  await waitFor(() => expect(client.isFetching()).toBe(0));
+  expect(
+    requests.some((url) =>
+      /stories\/consumption|moderation\/metrics|chats\/engagement|payments\/metrics|credits\/metrics/.test(
+        url,
+      ),
+    ),
+  ).toBe(false);
 });

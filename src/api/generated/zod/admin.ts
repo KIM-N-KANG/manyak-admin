@@ -889,6 +889,19 @@ export const StorySettingsParams = zod.object({
 
 export const StorySettingsResponse = zod.unknown();
 
+export const consumptionQueryRequestLimitMax = 50;
+
+export const ConsumptionQueryParams = zod.object({
+  request: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+    limit: zod.number().min(1).max(consumptionQueryRequestLimitMax).optional(),
+  }),
+});
+
+export const ConsumptionResponse = zod.unknown();
+
 export const QualityQueryParams = zod.object({
   platform: zod.string().optional(),
   segment: zod.enum(['all', 'guest', 'member']).optional(),
@@ -1109,6 +1122,16 @@ export const PaymentParams = zod.object({
 
 export const PaymentResponse = zod.unknown();
 
+export const MetricsQueryParams = zod.object({
+  request: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+  }),
+});
+
+export const MetricsResponse = zod.unknown();
+
 export const submissionsQueryQMax = 50;
 
 export const submissionsQuerySizeMax = 100;
@@ -1139,6 +1162,16 @@ export const SubmissionParams = zod.object({
 });
 
 export const SubmissionResponse = zod.unknown();
+
+export const Metrics1QueryParams = zod.object({
+  request: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+  }),
+});
+
+export const Metrics1Response = zod.unknown();
 
 export const holdsQueryQuerySizeMax = 100;
 
@@ -1242,12 +1275,12 @@ export const AttendanceQueryParams = zod.object({
 
 export const AttendanceResponse = zod.unknown();
 
-export const MetricsQueryParams = zod.object({
+export const Metrics2QueryParams = zod.object({
   from: zod.string().optional(),
   to: zod.string().optional(),
 });
 
-export const MetricsResponse = zod.object({
+export const Metrics2Response = zod.object({
   asOf: zod.iso.datetime({ offset: true }).optional(),
   from: zod.iso.date().optional(),
   to: zod.iso.date().optional(),
@@ -1537,6 +1570,16 @@ export const CreditTransactionsResponse = zod.unknown();
 
 export const PoliciesResponse = zod.unknown();
 
+export const Metrics3QueryParams = zod.object({
+  request: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+  }),
+});
+
+export const Metrics3Response = zod.unknown();
+
 export const ReachQueryParams = zod.object({
   segment: zod.enum(['all', 'guest', 'member']).optional(),
   days: zod.enum(['7', '30', '90']).optional(),
@@ -1672,6 +1715,16 @@ export const ChatParams = zod.object({
 
 export const ChatResponse = zod.unknown();
 
+export const EngagementQueryParams = zod.object({
+  request: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+  }),
+});
+
+export const EngagementResponse = zod.unknown();
+
 export const List8Response = zod.object({
   items: zod
     .array(
@@ -1798,6 +1851,9 @@ export const PushOpensResponse = zod.object({
         inboxOpens: zod.number().nullish(),
         webInboxOpens: zod.number().nullish(),
         androidInboxOpens: zod.number().nullish(),
+        chattedMembers: zod.number().nullish(),
+        chattedBeforeMembers: zod.number().nullish(),
+        chatRate: zod.number().nullish(),
       }),
     )
     .optional(),
@@ -1827,6 +1883,9 @@ export const PushOpensResponse = zod.object({
         inboxOpens: zod.number().nullish(),
         webInboxOpens: zod.number().nullish(),
         androidInboxOpens: zod.number().nullish(),
+        chattedMembers: zod.number().nullish(),
+        chattedBeforeMembers: zod.number().nullish(),
+        chatRate: zod.number().nullish(),
       }),
     )
     .optional(),
@@ -1857,6 +1916,9 @@ export const CampaignPushOpensResponse = zod.object({
   inboxOpens: zod.number().nullish(),
   webInboxOpens: zod.number().nullish(),
   androidInboxOpens: zod.number().nullish(),
+  chattedMembers: zod.number().nullish(),
+  chattedBeforeMembers: zod.number().nullish(),
+  chatRate: zod.number().nullish(),
 });
 
 export const Story1QueryParams = zod.object({

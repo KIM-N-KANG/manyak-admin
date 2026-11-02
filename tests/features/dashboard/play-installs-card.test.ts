@@ -109,21 +109,24 @@ it('상세 탭에 Play 날짜와 계단선 및 0 기준 상하 막대를 표시�
     playInstalls.daily.length,
   );
 });
-it('누적과 선택 기간 설치 합계를 표시하고 상세 화면으로 연결한다', () => {
+it('기간 합계가 큰 값이고 누적은 작은 줄이며 유입의 앱 설치로 연결한다', () => {
   const view = render(card());
-  const weekTotal = playInstalls.daily
+  const total = playInstalls.daily
     .slice(0, 7)
     .reduce((sum, day) => sum + day.installs, 0);
 
-  expect(weekTotal).toBeLessThan(playInstalls.totalInstalls);
-  expect(screen.getByText(String(playInstalls.totalInstalls))).toBeTruthy();
-  expect(screen.getByText(`최근 7일 합계 ${weekTotal}대`)).toBeTruthy();
+  expect(view.container.querySelector('dd')!.textContent).toContain(`${total}`);
+  expect(
+    screen.getByText(
+      `누적 ${playInstalls.totalInstalls.toLocaleString('ko-KR')}대`,
+    ),
+  ).toBeTruthy();
   expect(
     screen.getByRole('link', { name: '앱 설치(Android)' }).getAttribute('href'),
-  ).toBe('/analytics/growth?tab=installs');
+  ).toBe('/analytics/inflow?tab=installs');
   expect(view.container.querySelector('svg')).toBeNull();
-  expect(screen.queryByText(/보고서는 며칠/)).toBeNull();
 });
+
 it('503이면 설치 지표 사용 불가를 표시하고 재시도한다', () => {
   state.error = new FetchError('unavailable', 503, {
     code: 'SERVICE_UNAVAILABLE',
@@ -188,39 +191,44 @@ it('활성 기기의 null은 보고서 값 없음으로 표시하고 실제 0은
   expect(rows[2].lastElementChild!.textContent).toBe('0');
 });
 
-it('기간 안 보고일이 없으면 0대를 표시하고 보고서 누락은 0으로 만들지 않는다', () => {
-  const range = { from: '2026-12-01', to: '2026-12-07', label: '지난주' };
-  const view = render(card(range));
-
-  expect(screen.getByText('지난주 합계 0대')).toBeTruthy();
-  state.data = { ...playInstalls, daily: [] };
-  view.rerender(card(range));
-  expect(screen.getByText('지난주 합계 보고서 값 없음')).toBeTruthy();
+it('기간 안 보고일이 없으면 보고서 반영 전이고 증감은 숨긴다', () => {
+  render(card({ from: '2026-12-01', to: '2026-12-07', label: '지난주' }));
+  expect(screen.getByText('보고서 반영 전')).toBeTruthy();
+  expect(screen.queryByText(/이전 .*일 대비/)).toBeNull();
 });
 
-it('기간을 바꾸면 같은 설치 응답으로 다시 합산하고 마지막 보고일 뒤는 있는 날만 더한다', () => {
+it('기간을 바꾸면 받은 설치 응답으로 다시 합산하고 보고일 뒤는 있는 날만 더한다', () => {
   const view = render(card());
   const range = { from: '2026-10-15', to: '2026-10-31', label: '이번 달' };
-  const tail = playInstalls.daily
+  const total = playInstalls.daily
     .filter((day) => day.date >= range.from)
     .reduce((sum, day) => sum + day.installs, 0);
 
   view.rerender(card(range));
-  expect(screen.getByText(`이번 달 합계 ${tail}대`)).toBeTruthy();
+  expect(view.container.querySelector('dd')!.textContent).toContain(`${total}`);
+  expect(
+    screen.getByText(
+      `누적 ${playInstalls.totalInstalls.toLocaleString('ko-KR')}대`,
+    ),
+  ).toBeTruthy();
 });
 
-it('선택 기간이 오늘이면 기간 합계 줄을 표시하지 않는다', () => {
+it('오늘 보고일이 없으면 보고서 반영 전이며 누적은 유지한다', () => {
   const today = kstToday();
 
   render(card({ from: today, to: today, label: '오늘' }));
-  expect(screen.getByText(String(playInstalls.totalInstalls))).toBeTruthy();
-  expect(screen.queryByText(/합계/)).toBeNull();
+  expect(screen.getByText('보고서 반영 전')).toBeTruthy();
+  expect(
+    screen.getByText(
+      `누적 ${playInstalls.totalInstalls.toLocaleString('ko-KR')}대`,
+    ),
+  ).toBeTruthy();
 });
 
 it('설치 안내는 제목 옆 도움말에 포커스할 때 열고 기간 합계는 본문에 유지한다', async () => {
   render(card());
   expect(screen.queryByText(/보고서는 며칠 늦게/)).toBeNull();
-  expect(screen.getByText(/^최근 7일 합계/)).toBeTruthy();
+  expect(screen.getByText(/이전 7일 대비/)).toBeTruthy();
 
   const button = screen.getByRole('button', {
     name: '앱 설치(Android) 출처와 집계 안내',
@@ -237,6 +245,33 @@ it('설치 안내는 제목 옆 도움말에 포커스할 때 열고 기간 합�
     '기간 합계는 선택한 기간의 일별 기기 설치 수를 더한 값이며 최근 며칠은 아직 보고서에 없어 빠질 수 있습니다.',
   );
   expect(tooltip.textContent).toContain(
-    '기간이 오늘 하루면 기간 합계를 표시하지 않습니다.',
+    '누적은 보고서 전체 기간의 일별 기기 설치 수를 합산한 값입니다.',
   );
+});
+
+it('명세의 Play 날짜 비교는 직전 기간 설치 14 대비 선택 기간 12의 감소를 표시한다', () => {
+  state.data = {
+    ...playInstalls,
+    totalInstalls: 1520,
+    daily: [
+      ...Array.from({ length: 7 }, (_, i) => ({
+        date: `2026-10-${12 + i}`,
+        installs: 2,
+        uninstalls: 0,
+        cumulativeInstalls: 0,
+        activeDevices: null,
+      })),
+      ...[3, 4, 5].map((installs, i) => ({
+        date: `2026-10-${19 + i}`,
+        installs,
+        uninstalls: 0,
+        cumulativeInstalls: 0,
+        activeDevices: null,
+      })),
+    ],
+  };
+  render(card({ from: '2026-10-19', to: '2026-10-25', label: '최근 7일' }));
+  expect(screen.getByText('12')).toBeTruthy();
+  expect(screen.getByText('▼ 14.3%')).toBeTruthy();
+  expect(screen.getByText('누적 1,520대')).toBeTruthy();
 });

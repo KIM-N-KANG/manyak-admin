@@ -14,6 +14,7 @@ import {
   TextLink,
 } from '@/components/admin/data-ui';
 import { ExternalToolLink } from '@/components/admin/external-tool-link';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { ListFilterForm, SearchEmpty } from '@/components/admin/list-search';
 import { TableSkeleton } from '@/components/admin/loading-ui';
 import { PageNavigation } from '@/components/admin/page-navigation';
@@ -214,7 +215,10 @@ const configs: Record<Domain, { title: string; filters: Filter[] }> = {
     ],
   },
 };
-const headers: Record<Domain, (string | { label: string; key: string })[]> = {
+const headers: Record<
+  Domain,
+  (string | { label: string; key: string; help?: ReactNode })[]
+> = {
   stories: [
     '스토리',
     '장르 · 범위',
@@ -230,6 +234,17 @@ const headers: Record<Domain, (string | { label: string; key: string })[]> = {
     { label: '가입일', key: 'createdAt' },
     { label: '최근 활동', key: 'lastActiveAt' },
     { label: '채팅 수', key: 'chatCount' },
+    {
+      label: '누적 턴',
+      key: 'turnCount',
+      help: (
+        <HelpTooltip label="누적 턴 안내">
+          이 회원이 가진 채팅의 AI 응답 수입니다. 삭제한 채팅과 게스트 때의
+          채팅도 포함하고 재생성은 세지 않습니다. 기간 값은 채팅 기간에 시작한
+          채팅의 턴입니다.
+        </HelpTooltip>
+      ),
+    },
     { label: '이프 소모', key: 'creditsSpent' },
     { label: '결제액', key: 'paidKrw' },
   ],
@@ -462,6 +477,14 @@ export function ListScreen({ domain }: { domain: Domain }) {
             ) : null}
           </td>
           <td>
+            <NumberValue value={m.turnCount} />턴
+            {m.periodTurnCount != null ? (
+              <span className="ml-2 text-xs text-muted-foreground">
+                (기간 {m.periodTurnCount.toLocaleString('ko-KR')}턴)
+              </span>
+            ) : null}
+          </td>
+          <td>
             <NumberValue value={m.creditsSpent} />
           </td>
           <td>
@@ -477,10 +500,12 @@ export function ListScreen({ domain }: { domain: Domain }) {
         title={config.title}
         help={
           {
-            members: <TextLink href="/analytics/growth">성장 지표</TextLink>,
-            stories: <TextLink href="/analytics/stories">스토리 지표</TextLink>,
+            members: (
+              <TextLink href="/analytics/audience">사용자 지표</TextLink>
+            ),
+            stories: <TextLink href="/analytics/content">콘텐츠 지표</TextLink>,
             chats: <TextLink href="/analytics/chats">채팅 지표</TextLink>,
-            payments: <TextLink href="/analytics/payments">결제 지표</TextLink>,
+            payments: <TextLink href="/analytics/revenue">수익 지표</TextLink>,
           }[domain as 'members' | 'stories' | 'chats' | 'payments']
         }>
         {domain === 'payments' && (

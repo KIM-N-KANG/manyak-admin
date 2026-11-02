@@ -3,7 +3,11 @@
 import { type ReactNode, useContext } from 'react';
 
 import { percent, ratio } from './config';
-import { MetricHelp, MetricScope } from './metric-definition';
+import {
+  type MetricDefinitionTitle,
+  MetricHelp,
+  MetricScope,
+} from './metric-definition';
 import {
   basisMark,
   NumericTable,
@@ -40,7 +44,11 @@ export function Charts({
 }: {
   items: {
     title: string;
+    definitionTitle?: MetricDefinitionTitle;
     stacked?: boolean;
+    horizontal?: boolean;
+    categoryLabel?: string;
+    tooltipDetail?: (row: PlotRow) => ReactNode;
     composition?: boolean;
     rows: PlotRow[];
     series: Series[];
@@ -59,7 +67,9 @@ export function Charts({
     ? items[0]?.basis
     : undefined;
 
-  const definitions = items.map((item) => item.title);
+  const definitions = items.flatMap(
+    (item) => item.definitionTitle ?? item.title,
+  );
   const scope = useContext(MetricScope);
   const prepared = items.map((item) => ({
     ...item,
@@ -104,7 +114,10 @@ export function Charts({
               <span key="metric" className="inline-flex items-center gap-2">
                 {item.title}
                 {item.basis && !shared ? basisMark(item.basis) : null}
-                <MetricHelp title={item.title} />
+                <MetricHelp
+                  title={item.title}
+                  definitionTitle={item.definitionTitle}
+                />
               </span>,
               row.date,
               series.label,

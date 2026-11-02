@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { dateTime, NumberValue, QueryState } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
+import { DefinitionText } from '@/features/analytics/metric-definition';
+import { shiftDate } from '@/features/analytics/range';
+import { Comparison } from '@/features/dashboard/comparison';
 import { kstToday } from '@/features/dashboard/date-range';
 import type { DashboardAnalytics } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
@@ -12,7 +15,7 @@ import { useApi } from '@/features/shared/use-api';
 export function AnalyticsSection() {
   const today = kstToday();
   const query = useApi<DashboardAnalytics>(
-    `/api/dashboard/analytics?from=${today}&to=${today}`,
+    `/api/dashboard/analytics?from=${shiftDate(today, -1)}&to=${today}`,
     true,
     {
       refetchInterval: ({ state }) =>
@@ -30,17 +33,18 @@ export function AnalyticsSection() {
     <Card
       role="region"
       aria-label="오늘 활성 사용자"
-      className="relative min-w-0 p-4">
+      className="relative min-w-0 p-6">
       <div className="flex items-center gap-2">
         <h3 className="text-sm text-muted-foreground">
           <Link
-            href="/analytics/growth?tab=activity"
+            href="/analytics/audience?tab=activity"
             className="after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring">
             오늘 활성 사용자
           </Link>
         </h3>
         <span className="relative z-10">
           <HelpTooltip label="Amplitude 출처와 집계 안내">
+            <DefinitionText index={76} />
             {data
               ? `Amplitude 출처 지표이며 ${dateTime(data.asOf)} KST에 받은 값입니다.`
               : 'Amplitude 출처 지표입니다.'}{' '}
@@ -65,17 +69,32 @@ export function AnalyticsSection() {
           <dl>
             <div className="mt-3">
               <dt className="text-xs text-muted-foreground">합계</dt>
-              <dd className="mt-1 text-2xl font-semibold tracking-tight break-all sm:text-3xl">
-                {counts == null ? (
-                  <span role="status">준비 중</span>
-                ) : (
-                  <>
-                    <NumberValue value={counts.total} />
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">
-                      명
-                    </span>
-                  </>
-                )}
+              <dd className="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold tracking-tight break-all sm:text-3xl">
+                <span>
+                  {counts == null ? (
+                    <span role="status">준비 중</span>
+                  ) : (
+                    <>
+                      <NumberValue value={counts.total} />
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">
+                        명
+                      </span>
+                    </>
+                  )}
+                </span>
+                <Comparison
+                  value={counts?.total}
+                  previous={
+                    data.daily.find((day) => day.date === shiftDate(today, -1))
+                      ?.activeUsers.total
+                  }
+                  days={1}
+                  status={
+                    data.pendingDates.includes(shiftDate(today, -1))
+                      ? '준비 중'
+                      : undefined
+                  }
+                />
               </dd>
             </div>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -95,9 +114,6 @@ export function AnalyticsSection() {
               ))}
             </div>
           </dl>
-          <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            {dateTime(data.asOf)} KST
-          </p>
         </>
       ) : null}
     </Card>

@@ -21,7 +21,7 @@ const nav = vi.hoisted(() => ({ search: 'tab=push', push: vi.fn() }));
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(nav.search),
-  usePathname: () => '/analytics/growth',
+  usePathname: () => '/analytics/inflow',
   useRouter: () => ({ push: nav.push }),
 }));
 
@@ -145,7 +145,7 @@ function draw() {
     createElement(
       QueryClientProvider,
       { client },
-      createElement(DomainScreen, { domain: 'growth' }),
+      createElement(DomainScreen, { domain: 'inflow' }),
     );
   const view = render(element());
 
@@ -174,26 +174,19 @@ it('캠페인 목록을 기다리지 않고 최근 7일을 요청하며 성장 �
   ]);
   expect(screen.queryByRole('combobox', { name: '광고 캠페인' })).toBeNull();
   expect(screen.getAllByRole('tab').map((x) => x.textContent)).toEqual([
-    '유입',
-    '앱 설치',
-    '활동',
-    '가입',
-    '리텐션',
-    '캠페인 추이',
-    '첫 방문 활성화',
-    '광고 소재',
+    '광고 캠페인',
     '유입 소스',
-    '앱 유입',
-    '알림 열람',
+    '앱',
+    '알림',
   ]);
 
   const source = screen.getByRole('button', {
-    name: 'Amplitude 출처와 집계 안내',
+    name: 'Amplitude와 서버 DB 출처와 집계 안내',
   });
 
   await act(async () => source.focus());
   expect((await screen.findByRole('tooltip')).textContent).toBe(
-    'Amplitude 출처 지표입니다. 웹은 알림 링크로 연 페이지 조회를, 앱은 알림을 누른 기록을 날짜별 고유 사용자로 세어 더합니다. 도달 회원은 서버 발송 결과이며 팀 계정을 제외하지 않습니다.',
+    'Amplitude와 서버 DB 출처 지표입니다. 열람은 웹의 알림 링크로 연 페이지 조회와 앱의 알림을 누른 기록을 날짜별 고유 사용자로 세어 더합니다. 도달 회원과 채팅 전환은 서버 발송 결과와 채팅 기록으로 세며 팀 계정을 제외하지 않습니다.',
   );
 });
 
@@ -320,7 +313,7 @@ it('기간을 URL에 동기화하고 366일 초과는 요청하지 않는다', a
   fireEvent.click(screen.getByRole('button', { name: /기간:/ }));
   fireEvent.click(screen.getByRole('button', { name: '최근 30일' }));
   expect(nav.push.mock.calls.at(-1)![0]).toBe(
-    '/analytics/growth?tab=push&range=last30d',
+    '/analytics/inflow?tab=push&range=last30d',
   );
   view.go();
   await waitFor(() =>
@@ -333,7 +326,7 @@ it('기간을 URL에 동기화하고 366일 초과는 요청하지 않는다', a
     createElement(
       QueryClientProvider,
       { client },
-      createElement(DomainScreen, { domain: 'growth' }),
+      createElement(DomainScreen, { domain: 'inflow' }),
     ),
   );
   expect(screen.getByRole('alert').textContent).toContain('최대 366일');
@@ -350,7 +343,7 @@ it('503은 기존 Amplitude 오류와 재시도 UI로 처리한다', async () =>
   await screen.findByRole('heading', { name: '관리자 캠페인' });
 });
 
-it('로딩 중에도 두 표의 7열·5열 골격을 예약한다', async () => {
+it('로딩 중에도 두 표의 9열·7열 골격을 예약한다', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn(() => new Promise<Response>(() => {})),
@@ -363,10 +356,10 @@ it('로딩 중에도 두 표의 7열·5열 골격을 예약한다', async () => 
 
   expect(tables).toHaveLength(2);
   expect(tables[0].querySelector('[style]')?.getAttribute('style')).toContain(
-    'repeat(7,',
+    'repeat(9,',
   );
   expect(tables[1].querySelector('[style]')?.getAttribute('style')).toContain(
-    'repeat(5,',
+    'repeat(7,',
   );
 });
 

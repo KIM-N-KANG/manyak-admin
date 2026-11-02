@@ -189,31 +189,28 @@ describe('Amplitude 실패 격리', () => {
     );
   });
 
-  it('기간 선택은 DB 추이만 전환하고 Amplitude 카드는 KST 오늘 하루 조회를 유지한다', async () => {
+  it('기간 선택은 DB 추이만 전환하고 Amplitude 카드는 KST 어제와 오늘 조회를 유지한다', async () => {
     const view = render(dashboard());
 
     await screen.findByRole('heading', { name: '오늘 활성 사용자' });
     expect(requested).toContain(
-      '/api/dashboard/analytics?from=2026-10-21&to=2026-10-21',
+      '/api/dashboard/analytics?from=2026-10-20&to=2026-10-21',
     );
     expect(requested).toContain(
       '/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
     );
 
     const memberCard = await screen.findByRole('link', { name: /^가입자/ });
-    const headline = memberCard.querySelector('dl')!.textContent;
+    const headline = memberCard.querySelector('p.mt-3')!.textContent;
     const sevenDays = await chartsResponse(
       new Request(
         'http://localhost/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
       ),
     ).json();
-    const sevenTotal = sevenDays.daily.reduce(
-      (sum: number, day: { joined: number }) => sum + day.joined,
-      0,
-    );
+    const sevenTotal = sevenDays.totals.joined;
 
     await within(memberCard).findByText(
-      new RegExp(`최근 7일 합계 ${sevenTotal.toLocaleString('ko-KR')}명`),
+      `${sevenTotal.toLocaleString('ko-KR')}`,
     );
 
     fireEvent.click(screen.getByRole('button', { name: '기간: 최근 7일' }));
@@ -225,7 +222,7 @@ describe('Amplitude 실패 격리', () => {
     view.rerender(dashboard());
     await waitFor(() => {
       expect(requested.filter((url) => url.includes('/analytics'))).toEqual([
-        '/api/dashboard/analytics?from=2026-10-21&to=2026-10-21',
+        '/api/dashboard/analytics?from=2026-10-20&to=2026-10-21',
       ]);
       expect(requested).toContain(
         '/api/dashboard/charts?from=2026-07-24&to=2026-10-21',
@@ -240,16 +237,13 @@ describe('Amplitude 실패 격리', () => {
         'http://localhost/api/dashboard/charts?from=2026-07-24&to=2026-10-21',
       ),
     ).json();
-    const ninetyTotal = ninetyDays.daily.reduce(
-      (sum: number, day: { joined: number }) => sum + day.joined,
-      0,
-    );
+    const ninetyTotal = ninetyDays.totals.joined;
     const updatedCard = screen.getByRole('link', { name: /^가입자/ });
 
     await within(updatedCard).findByText(
-      new RegExp(`최근 90일 합계 ${ninetyTotal.toLocaleString('ko-KR')}명`),
+      `${ninetyTotal.toLocaleString('ko-KR')}`,
     );
-    expect(updatedCard.querySelector('dl')!.textContent).toBe(headline);
+    expect(updatedCard.querySelector('p.mt-3')!.textContent).toBe(headline);
   });
 
   it('출처 도움말은 키보드 포커스로 지연·팀 계정 제외 기준을 보여 준다', async () => {
@@ -282,7 +276,7 @@ describe('Amplitude 실패 격리', () => {
 describe('개요와 도메인 분포 영역 분리', () => {
   it.each([
     ['chats', '', ['채팅 참여 영역', '채팅 소유자 영역'], 5],
-    ['stories', '', ['콘텐츠 영역'], 2],
+    ['content', '', ['콘텐츠 영역'], 2],
     ['ops', 'tab=ai-quality', ['AI 품질 영역'], 2],
   ] as const)(
     '%s는 해당 분포만 그리며 기존 목록 링크와 기간 이동을 유지한다',
@@ -319,7 +313,7 @@ describe('개요와 도메인 분포 영역 분리', () => {
               'started-as',
               'member-chats',
             ]
-          : domain === 'stories'
+          : domain === 'content'
             ? ['creation-mode', 'characters']
             : ['ai-latency', 'ai-success'];
       const links = areas.flatMap((label) =>
@@ -368,18 +362,13 @@ describe('개요와 도메인 분포 영역 분리', () => {
       screen.getByRole('heading', { name: '개요', level: 1 }),
     ).toBeTruthy();
 
-    for (const [label, direction] of [
-      ['이프 적립', 'granted'],
-      ['이프 소모', 'spent'],
-    ]) {
-      expect(
-        screen
-          .getByRole('link', { name: new RegExp(`^${label}`) })
-          .getAttribute('href'),
-      ).toBe(`/credits/transactions?direction=${direction}`);
-    }
+    const select = screen.getByRole('combobox', { name: '지표' });
 
-    expect(screen.queryByRole('combobox', { name: '지표' })).toBeNull();
+    fireEvent.change(select, { target: { value: 'spent' } });
+    expect(navigation.push).toHaveBeenCalledWith(
+      '/dashboard?range=last7d&metric=spent',
+      { scroll: false },
+    );
 
     const links = Array.from(view.container.querySelectorAll('a')).map((link) =>
       link.getAttribute('href'),

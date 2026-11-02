@@ -7,6 +7,7 @@ import { chatBucket } from '@/fixtures/cohorts';
 import {
   getChatCounts,
   getMemberTransactions,
+  getTurnCounts,
   memberEmails,
   members,
 } from '@/fixtures/entities';
@@ -40,6 +41,9 @@ export function GET(request: Request) {
 
     const periodCounts = getChatCounts(q.get('chatFrom'), q.get('chatTo'));
     const hasChatPeriod = q.has('chatFrom') || q.has('chatTo');
+    const periodTurns = hasChatPeriod
+      ? getTurnCounts(q.get('chatFrom'), q.get('chatTo'))
+      : null;
     const filtered = members.filter((m) => {
       const email = memberEmails.get(m.memberId);
       const matches = matchesSearch(search, [m.nickname], [m.memberId, email]);
@@ -81,8 +85,12 @@ export function GET(request: Request) {
     return paginate(
       sorted.map((m) =>
         hasChatPeriod
-          ? { ...m, periodChatCount: periodCounts.get(m.memberId) ?? 0 }
-          : { ...m, periodChatCount: null },
+          ? {
+              ...m,
+              periodChatCount: periodCounts.get(m.memberId) ?? 0,
+              periodTurnCount: periodTurns?.get(m.memberId) ?? 0,
+            }
+          : { ...m, periodChatCount: null, periodTurnCount: null },
       ),
       q,
     );

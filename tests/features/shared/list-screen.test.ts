@@ -87,6 +87,7 @@ const columns = {
     ['가입일', 'createdAt'],
     ['최근 활동', 'lastActiveAt'],
     ['채팅 수', 'chatCount'],
+    ['누적 턴', 'turnCount'],
     ['이프 소모', 'creditsSpent'],
     ['결제액', 'paidKrw'],
   ],
@@ -159,6 +160,15 @@ for (const domain of Object.keys(columns) as ListDomain[]) {
               .getAttribute('aria-sort'),
           ).toBe('ascending'),
         );
+
+        if (domain === 'members' && key === 'turnCount') {
+          await waitFor(() =>
+            expect(
+              requested.some((url) => url.includes('sort=turnCount&order=asc')),
+            ).toBe(true),
+          );
+        }
+
         expect(
           screen.getByRole('button', { name: label }).textContent,
         ).toContain('↑');
@@ -424,10 +434,10 @@ describe('상세 하위 목록', () => {
 });
 
 it.each([
-  ['members', '성장 지표', '/analytics/growth'],
-  ['stories', '스토리 지표', '/analytics/stories'],
+  ['members', '사용자 지표', '/analytics/audience'],
+  ['stories', '콘텐츠 지표', '/analytics/content'],
   ['chats', '채팅 지표', '/analytics/chats'],
-  ['payments', '결제 지표', '/analytics/payments'],
+  ['payments', '수익 지표', '/analytics/revenue'],
 ] as const)(
   '%s 목록 제목 옆 지표 링크는 필터와 기간을 넘기지 않는다',
   (domain, label, href) => {

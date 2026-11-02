@@ -52,7 +52,7 @@ export function SummaryCardSkeleton({ visible = true }: { visible?: boolean }) {
     <Card
       aria-hidden="true"
       style={{ visibility: visible ? 'visible' : 'hidden' }}
-      className="min-w-0 p-4"
+      className="min-w-0 p-6"
       data-loading-layout="summary-card">
       <Skeleton className="h-5 w-24" />
       <InlineSkeleton />
@@ -73,7 +73,7 @@ export function SummarySkeleton({
     <div
       className={cn(
         'mb-5 grid items-stretch gap-3 sm:grid-cols-2',
-        overview ? 'xl:grid-cols-5' : 'gap-5 xl:grid-cols-4',
+        overview ? 'gap-5 xl:grid-cols-3' : 'gap-5 xl:grid-cols-4',
       )}>
       {Array.from({ length: count }, (_, i) =>
         overview ? (
@@ -165,17 +165,23 @@ export function ChartsSkeleton({
   columns = 2,
   compact = false,
   infra = false,
+  overview = false,
 }: {
   count?: number;
   columns?: 2 | 4;
   compact?: boolean;
   infra?: boolean;
+  overview?: boolean;
 }) {
   return (
     <div
       className={cn(
         'grid gap-5',
-        columns === 4 ? 'sm:grid-cols-2 xl:grid-cols-4' : 'xl:grid-cols-2',
+        overview
+          ? 'grid-cols-1'
+          : columns === 4
+            ? 'sm:grid-cols-2 xl:grid-cols-4'
+            : 'xl:grid-cols-2',
       )}
       data-loading-layout="charts">
       {Array.from({ length: count }, (_, i) => (
@@ -190,7 +196,13 @@ export function ChartsSkeleton({
           <div
             className={cn(
               'relative mt-5',
-              compact ? 'h-[200px]' : infra ? 'h-64' : 'h-72',
+              overview
+                ? 'h-[320px]'
+                : compact
+                  ? 'h-[200px]'
+                  : infra
+                    ? 'h-64'
+                    : 'h-72',
             )}>
             <Skeleton
               className={cn(
@@ -271,8 +283,8 @@ export function PageSkeleton({
       </div>
       {layout === 'overview' ? (
         <>
-          <SummarySkeleton count={10} overview />
-          <ChartsSkeleton count={8} columns={4} compact />
+          <SummarySkeleton count={6} overview />
+          <ChartsSkeleton count={1} overview />
         </>
       ) : layout === 'detail' ? (
         <DetailSkeleton />

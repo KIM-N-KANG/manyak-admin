@@ -7,6 +7,7 @@ export const listSorts = {
     'creditsSpent',
     'paidKrw',
     'chatCount',
+    'turnCount',
   ],
   payments: ['priceKrw', 'creditAmount', 'completedAt', 'refundedAt'],
   chats: ['turnCount', 'startedAt', 'lastActiveAt', 'creditsSpent'],

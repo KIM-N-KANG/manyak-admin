@@ -107,15 +107,15 @@ function draw(
   );
 }
 
-it('1초 응답 동안 개요의 10개 카드와 8개 추이를 같은 칸에 예약하고 값으로 교체한다', async () => {
+it('1초 응답 동안 개요의 6개 카드와 1개 추이를 같은 칸에 예약하고 값으로 교체한다', async () => {
   draw(DashboardScreen);
 
   const grid = screen.getByRole('region', { name: '요약 지표' });
-  const dbSkeletons = Array.from(grid.children).slice(1, 9) as HTMLElement[];
+  const dbSkeletons = Array.from(grid.children).slice(1, 5) as HTMLElement[];
 
-  expect(grid.children).toHaveLength(10);
+  expect(grid.children).toHaveLength(6);
   expect(grid.children[0].getAttribute('aria-label')).toBe('오늘 활성 사용자');
-  expect(grid.children[9].getAttribute('aria-label')).toBe('앱 설치(Android)');
+  expect(grid.children[5].getAttribute('aria-label')).toBe('앱 설치(Android)');
 
   for (const card of dbSkeletons)
     expect(card.getAttribute('data-loading-layout')).toBe('summary-card');
@@ -133,9 +133,9 @@ it('1초 응답 동안 개요의 10개 카드와 8개 추이를 같은 칸에 �
 
   const charts = document.querySelector('[data-loading-layout="charts"]')!;
 
-  expect(charts.children).toHaveLength(8);
+  expect(charts.children).toHaveLength(1);
   await tick(802);
-  expect(grid.children).toHaveLength(10);
+  expect(grid.children).toHaveLength(6);
   expect(grid.getAttribute('aria-busy')).toBe('false');
   expect(grid.querySelector('[data-slot="skeleton"]')).toBeNull();
   expect(
@@ -147,30 +147,42 @@ it('1초 응답 동안 개요의 10개 카드와 8개 추이를 같은 칸에 �
     '가입자',
     '채팅 시작',
     '턴',
-    '스토리',
-    '이프 적립',
-    '이프 소모',
-    '결제 건수',
     '결제 금액 (환불 포함)',
     '앱 설치(Android)',
   ]);
 });
-it('요약이 먼저 오면 누적·오늘을 유지하고 기간 합계 줄 높이만 예약한다', async () => {
+it('요약이 먼저 오면 오늘·누적을 유지하고 큰 숫자와 증감을 함께 예약한다', async () => {
   summaryDelay = 100;
   draw(DashboardScreen);
   await tick(250);
 
   const card = screen.getByRole('link', { name: /^가입자/ });
 
-  expect(within(card).getByText('누적')).toBeTruthy();
-  expect(within(card).getByText('오늘')).toBeTruthy();
+  expect(card.textContent).toContain('누적');
+  expect(card.textContent).toContain('오늘');
 
-  const skeleton = card.querySelector('[data-slot="skeleton"]')!;
+  const skeletons = card.querySelectorAll('[data-slot="skeleton"]');
 
-  expect(skeleton.className).toContain('h-5');
+  expect(skeletons).toHaveLength(2);
+
+  for (const skeleton of skeletons) expect(skeleton.className).toContain('h-9');
+
+  expect(within(card).queryByText('준비 중')).toBeNull();
+  expect(within(card).queryByText(/이전 .*일 대비/)).toBeNull();
   expect(within(card).getByText('데이터를 불러오는 중입니다…').className).toBe(
     'sr-only',
   );
+
+  for (const label of ['가입자', '채팅 시작', '턴', '결제 금액']) {
+    const dbCard = screen.getByRole('link', { name: new RegExp(`^${label}`) });
+
+    expect(dbCard.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(2);
+    expect(within(dbCard).queryByText('준비 중')).toBeNull();
+  }
+
+  await tick(752);
+  expect(card.querySelector('[data-slot="skeleton"]')).toBeNull();
+  expect(within(card).getAllByText('준비 중')).toHaveLength(2);
 });
 it.each([
   ['이프 내역', CreditTransactionsScreen, 4],

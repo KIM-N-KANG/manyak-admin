@@ -151,7 +151,7 @@ it('오늘 null은 가짜 0 없이 준비 중으로 표시하고 개요 차트�
   };
   const view = draw(vi.fn().mockResolvedValue(Response.json(data)));
 
-  await waitFor(() => expect(screen.getAllByText('준비 중')).toHaveLength(3));
+  await waitFor(() => expect(screen.getAllByText('준비 중')).toHaveLength(4));
   expect(view.container.querySelector('[data-trend-rows]')).toBeNull();
   expect(screen.queryByRole('table')).toBeNull();
 });
@@ -190,7 +190,7 @@ it.each([{ pendingDates: [] as string[] }, { pendingDates: ['2026-10-18'] }])(
     expect(
       fetchMock.mock.calls.every(
         ([url]) =>
-          url === '/api/dashboard/analytics?from=2026-10-21&to=2026-10-21',
+          url === '/api/dashboard/analytics?from=2026-10-20&to=2026-10-21',
       ),
     ).toBe(true);
     expect(screen.queryByText(/60초 뒤 다시/)).toBeNull();

@@ -314,6 +314,9 @@ export type NotificationOpenState =
   | 'NO_LINK'
   | 'PENDING';
 export type NotificationOpenValues = {
+  chattedMembers?: number | null;
+  chattedBeforeMembers?: number | null;
+  chatRate?: number | null;
   openState: NotificationOpenState;
   pushOpens: number | null;
   webPushOpens: number | null;

@@ -718,6 +718,35 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/stories/consumption',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'request',
+        in: 'query',
+        required: true,
+        schema: {
+          type: 'object',
+          properties: {
+            days: { type: ['string', 'null'], enum: ['7', '30', '90'] },
+            from: { type: ['string', 'null'] },
+            to: { type: ['string', 'null'] },
+            limit: {
+              type: 'integer',
+              format: 'int32',
+              maximum: 50,
+              minimum: 1,
+            },
+          },
+        },
+      },
+    ],
+    params: undefined,
+    query: schemas.ConsumptionQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/quality/client',
     method: 'GET',
     parameters: [
@@ -937,6 +966,29 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/payments/metrics',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'request',
+        in: 'query',
+        required: true,
+        schema: {
+          type: 'object',
+          properties: {
+            days: { type: ['string', 'null'], enum: ['7', '30', '90'] },
+            from: { type: ['string', 'null'] },
+            to: { type: ['string', 'null'] },
+          },
+        },
+      },
+    ],
+    params: undefined,
+    query: schemas.MetricsQueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/moderation/submissions',
     method: 'GET',
     parameters: [
@@ -1029,6 +1081,29 @@ export const adminOperations = [
     ],
     params: schemas.SubmissionParams,
     query: undefined,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
+    path: '/api/v1/admin/moderation/metrics',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'request',
+        in: 'query',
+        required: true,
+        schema: {
+          type: 'object',
+          properties: {
+            days: { type: ['string', 'null'], enum: ['7', '30', '90'] },
+            from: { type: ['string', 'null'] },
+            to: { type: ['string', 'null'] },
+          },
+        },
+      },
+    ],
+    params: undefined,
+    query: schemas.Metrics1QueryParams,
     body: undefined,
     bodyRequired: false,
   },
@@ -1217,7 +1292,7 @@ export const adminOperations = [
       { name: 'to', in: 'query', required: false, schema: { type: 'string' } },
     ],
     params: undefined,
-    query: schemas.MetricsQueryParams,
+    query: schemas.Metrics2QueryParams,
     body: undefined,
     bodyRequired: false,
   },
@@ -1369,6 +1444,29 @@ export const adminOperations = [
     bodyRequired: false,
   },
   {
+    path: '/api/v1/admin/credits/metrics',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'request',
+        in: 'query',
+        required: true,
+        schema: {
+          type: 'object',
+          properties: {
+            days: { type: ['string', 'null'], enum: ['7', '30', '90'] },
+            from: { type: ['string', 'null'] },
+            to: { type: ['string', 'null'] },
+          },
+        },
+      },
+    ],
+    params: undefined,
+    query: schemas.Metrics3QueryParams,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
     path: '/api/v1/admin/conversion/turn-reach',
     method: 'GET',
     parameters: [
@@ -1502,6 +1600,29 @@ export const adminOperations = [
     ],
     params: schemas.ChatParams,
     query: undefined,
+    body: undefined,
+    bodyRequired: false,
+  },
+  {
+    path: '/api/v1/admin/chats/engagement',
+    method: 'GET',
+    parameters: [
+      {
+        name: 'request',
+        in: 'query',
+        required: true,
+        schema: {
+          type: 'object',
+          properties: {
+            days: { type: ['string', 'null'], enum: ['7', '30', '90'] },
+            from: { type: ['string', 'null'] },
+            to: { type: ['string', 'null'] },
+          },
+        },
+      },
+    ],
+    params: undefined,
+    query: schemas.EngagementQueryParams,
     body: undefined,
     bodyRequired: false,
   },
