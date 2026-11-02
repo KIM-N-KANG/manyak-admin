@@ -21,7 +21,7 @@ const nav = vi.hoisted(() => ({ search: 'tab=push', push: vi.fn() }));
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(nav.search),
-  usePathname: () => '/analytics/growth',
+  usePathname: () => '/analytics/inflow',
   useRouter: () => ({ push: nav.push }),
 }));
 
@@ -145,7 +145,7 @@ function draw() {
     createElement(
       QueryClientProvider,
       { client },
-      createElement(DomainScreen, { domain: 'growth' }),
+      createElement(DomainScreen, { domain: 'inflow' }),
     );
   const view = render(element());
 
@@ -174,17 +174,10 @@ it('캠페인 목록을 기다리지 않고 최근 7일을 요청하며 성장 �
   ]);
   expect(screen.queryByRole('combobox', { name: '광고 캠페인' })).toBeNull();
   expect(screen.getAllByRole('tab').map((x) => x.textContent)).toEqual([
-    '유입',
-    '앱 설치',
-    '활동',
-    '가입',
-    '리텐션',
-    '캠페인 추이',
-    '첫 방문 활성화',
-    '광고 소재',
+    '광고 캠페인',
     '유입 소스',
-    '앱 유입',
-    '알림 열람',
+    '앱',
+    '알림',
   ]);
 
   const source = screen.getByRole('button', {
@@ -320,7 +313,7 @@ it('기간을 URL에 동기화하고 366일 초과는 요청하지 않는다', a
   fireEvent.click(screen.getByRole('button', { name: /기간:/ }));
   fireEvent.click(screen.getByRole('button', { name: '최근 30일' }));
   expect(nav.push.mock.calls.at(-1)![0]).toBe(
-    '/analytics/growth?tab=push&range=last30d',
+    '/analytics/inflow?tab=push&range=last30d',
   );
   view.go();
   await waitFor(() =>
@@ -333,7 +326,7 @@ it('기간을 URL에 동기화하고 366일 초과는 요청하지 않는다', a
     createElement(
       QueryClientProvider,
       { client },
-      createElement(DomainScreen, { domain: 'growth' }),
+      createElement(DomainScreen, { domain: 'inflow' }),
     ),
   );
   expect(screen.getByRole('alert').textContent).toContain('최대 366일');

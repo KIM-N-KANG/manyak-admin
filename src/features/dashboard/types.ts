@@ -64,6 +64,8 @@ export type DashboardCharts = {
   asOf: string;
   from: string;
   to: string;
+  totals?: Omit<DailyMetrics, 'date'>;
+  previous?: { from: string; to: string; totals: Omit<DailyMetrics, 'date'> };
   daily: DailyMetrics[];
   distributions: Distribution[];
 };

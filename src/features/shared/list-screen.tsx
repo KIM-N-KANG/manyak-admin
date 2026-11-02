@@ -500,10 +500,12 @@ export function ListScreen({ domain }: { domain: Domain }) {
         title={config.title}
         help={
           {
-            members: <TextLink href="/analytics/growth">성장 지표</TextLink>,
-            stories: <TextLink href="/analytics/stories">스토리 지표</TextLink>,
+            members: (
+              <TextLink href="/analytics/audience">사용자 지표</TextLink>
+            ),
+            stories: <TextLink href="/analytics/content">콘텐츠 지표</TextLink>,
             chats: <TextLink href="/analytics/chats">채팅 지표</TextLink>,
-            payments: <TextLink href="/analytics/payments">결제 지표</TextLink>,
+            payments: <TextLink href="/analytics/revenue">수익 지표</TextLink>,
           }[domain as 'members' | 'stories' | 'chats' | 'payments']
         }>
         {domain === 'payments' && (

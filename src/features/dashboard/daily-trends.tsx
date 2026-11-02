@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import { useRouter } from 'next/navigation';
 import {
   CartesianGrid,
@@ -22,7 +24,7 @@ import { chartNumber, periodAverage } from '@/features/dashboard/chart-data';
 import { getDailyMetricHref } from '@/features/dashboard/links';
 import type { DashboardCharts, MetricKey } from '@/features/dashboard/types';
 
-const metrics: Record<MetricKey, { label: string; unit: string }> = {
+export const metrics: Record<MetricKey, { label: string; unit: string }> = {
   joined: { label: '가입', unit: '명' },
   chats: { label: '채팅 시작', unit: '개' },
   turns: { label: '턴', unit: '턴' },
@@ -45,7 +47,7 @@ const axisNumber = new Intl.NumberFormat('ko-KR', {
   maximumFractionDigits: 1,
 });
 
-const dailyMetrics = [
+export const dailyMetrics = [
   'joined',
   'chats',
   'turns',
@@ -60,10 +62,14 @@ export function DailyTrends({
   data: c,
   selectedMetrics = dailyMetrics,
   basis,
+  controls,
+  tableMetrics = selectedMetrics,
 }: {
   data: DashboardCharts;
   selectedMetrics?: readonly MetricKey[];
   basis?: string | null;
+  controls?: ReactNode;
+  tableMetrics?: readonly MetricKey[];
 }) {
   const router = useRouter();
 
@@ -77,11 +83,16 @@ export function DailyTrends({
         <span className="text-xs text-muted-foreground">
           {c.from} ~ {c.to} (KST)
         </span>
+        {controls ? <div className="ml-auto">{controls}</div> : null}
       </div>{' '}
       {c ? (
         <section
           aria-label="일별 지표 추이"
-          className="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          className={
+            selectedMetrics.length === 1
+              ? 'grid min-w-0 grid-cols-1 gap-5'
+              : 'grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-2'
+          }>
           {selectedMetrics.map((metric) => {
             const average = periodAverage(c.daily.map((day) => day[metric]));
 
@@ -99,7 +110,11 @@ export function DailyTrends({
                       color: 'var(--primary)',
                     },
                   }}
-                  className="mt-5 h-[200px] w-full"
+                  className={
+                    selectedMetrics.length === 1
+                      ? 'mt-5 h-[320px] w-full'
+                      : 'mt-5 h-[200px] w-full'
+                  }
                   aria-label={`${metrics[metric].label} 일별 추이`}>
                   <LineChart
                     accessibilityLayer
@@ -158,7 +173,7 @@ export function DailyTrends({
               <DataTable
                 headers={[
                   '날짜',
-                  ...selectedMetrics.map(
+                  ...tableMetrics.map(
                     (metric) =>
                       `${metrics[metric].label} (${metrics[metric].unit})`,
                   ),
@@ -166,7 +181,7 @@ export function DailyTrends({
                 {c.daily.map((day) => (
                   <tr key={day.date}>
                     <td>{day.date}</td>
-                    {selectedMetrics.map((metric) => (
+                    {tableMetrics.map((metric) => (
                       <td key={metric}>
                         <TextLink href={getDailyMetricHref(metric, day.date)}>
                           <NumberValue value={day[metric]} />{' '}

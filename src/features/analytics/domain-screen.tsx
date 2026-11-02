@@ -42,11 +42,21 @@ import { cohorts } from './retention';
 import type { CampaignDefinition } from './types';
 
 export const domains = {
-  growth: {
-    title: '성장',
+  inflow: {
+    title: '유입',
     tabs: [
-      ['trend', '유입'],
-      ['installs', '앱 설치'],
+      ['trend', '광고 캠페인'],
+      ['sources', '유입 소스'],
+      ['app', '앱'],
+      ['push', '알림'],
+    ],
+    defaultTab: 'trend',
+    list: '',
+    link: '',
+  },
+  audience: {
+    title: '사용자',
+    tabs: [
       ['activity', '활동'],
       ['signups', '가입'],
       ['retention', '리텐션'],
@@ -55,13 +65,9 @@ export const domains = {
     list: '/members',
     link: '회원 목록',
   },
-  stories: {
-    title: '스토리',
-    tabs: [
-      ['making', '제작'],
-      ['creation', '간편 제작 퍼널'],
-      ['story-detail', '상세 진입 퍼널'],
-    ],
+  content: {
+    title: '콘텐츠',
+    tabs: [['making', '제작']],
     defaultTab: 'making',
     list: '/stories',
     link: '스토리 목록',
@@ -76,10 +82,13 @@ export const domains = {
     list: '/chats',
     link: '채팅 목록',
   },
-  payments: {
-    title: '결제',
-    tabs: [],
-    defaultTab: 'payments',
+  revenue: {
+    title: '수익',
+    tabs: [
+      ['sales', '매출'],
+      ['credits', '이프'],
+    ],
+    defaultTab: 'sales',
     list: '/payments',
     link: '결제 목록',
   },
@@ -101,9 +110,12 @@ const acquisitionTabs = [
   ['trend', '캠페인 추이'],
   ['activation', '첫 방문 활성화'],
   ['creatives', '광고 소재'],
-  ['sources', '유입 소스'],
+  ['creation', '간편 제작 퍼널'],
+  ['story-detail', '상세 진입 퍼널'],
+] as const;
+const appTabs = [
   ['app', '앱 유입'],
-  ['push', '알림 열람'],
+  ['installs', '앱 설치'],
 ] as const;
 const serviceTabs = [
   ['services', '서비스와 요청'],
@@ -213,7 +225,7 @@ function PaymentTrends({
   return (
     <div className="mb-8">
       <QueryState
-        skeleton={<ChartsSkeleton count={4} columns={4} compact />}
+        skeleton={<ChartsSkeleton count={4} columns={2} compact />}
         pending={response.isPending}
         error={response.error}
         retry={response.refetch}
@@ -236,35 +248,31 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
   const config = domains[domain];
   const options: readonly (readonly [string, string])[] = [
     ...config.tabs,
-    ...(domain === 'growth'
-      ? acquisitionTabs
+    ...(domain === 'inflow'
+      ? [...acquisitionTabs, ...appTabs]
       : domain === 'ops'
         ? serviceTabs
         : []),
   ];
   const tab = pick(params.get('tab'), options, config.defaultTab);
-  const acquisition =
-    domain === 'growth' &&
-    ['trend', 'activation', 'creatives', 'sources', 'app', 'push'].includes(
-      tab,
-    );
+  const acquisition = domain === 'inflow';
+  const adCampaign =
+    acquisition && acquisitionTabs.some(([key]) => key === tab);
+  const app = acquisition && appTabs.some(([key]) => key === tab);
   const services =
     domain === 'ops' && ['services', 'storage', 'tables'].includes(tab);
-  const campaign =
-    (domain === 'growth' &&
-      ['trend', 'activation', 'creatives'].includes(tab)) ||
-    (domain === 'stories' && tab !== 'making');
+  const campaign = adCampaign;
   const hasPlatform =
     !acquisition &&
     !services &&
-    !['creation', 'story-detail', 'installs', 'ai-cost'].includes(tab);
+    !['creation', 'story-detail', 'installs', 'ai-cost', 'sales'].includes(tab);
   const hasSegment =
     hasPlatform &&
     [
       'activity',
       'engagement',
       'chat-options',
-      'payments',
+      'credits',
       'ai-quality',
     ].includes(tab);
   const platform = hasPlatform
@@ -533,21 +541,23 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
               )}
             </>
           ) : null}
-          {domain === 'payments' ? (
+          {domain === 'revenue' && tab === 'sales' ? (
             <>
               <PaymentTrends
                 query={query}
                 basis={basisText(platform !== 'all', segment !== 'all')}
               />
-              {metrics(
+            </>
+          ) : null}
+          {domain === 'revenue' && tab === 'credits'
+            ? metrics(
                 'quality',
                 'client',
                 '이프와 초대 신호',
                 `/api/quality/client?${qualityQuery}`,
                 'signals',
-              )}
-            </>
-          ) : null}
+              )
+            : null}
           {tab === 'ai-quality' ? (
             <>
               <DistributionArea
@@ -634,27 +644,29 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
           }
         </div>
       </PageHeading>
-      {domain === 'payments' ? (
-        content
-      ) : (
-        <TabBar
-          label={`${config.title} 탭`}
-          value={acquisition ? 'trend' : services ? 'services' : tab}
-          options={config.tabs}
-          onChange={(tab) => update({ tab })}>
-          {acquisition || services ? (
-            <TabBar
-              label={acquisition ? '유입 하위 구분' : '서비스 하위 구분'}
-              value={tab}
-              options={acquisition ? acquisitionTabs : serviceTabs}
-              onChange={(tab) => update({ tab })}>
-              {content}
-            </TabBar>
-          ) : (
-            content
-          )}
-        </TabBar>
-      )}
+      <TabBar
+        label={`${config.title} 탭`}
+        value={adCampaign ? 'trend' : app ? 'app' : services ? 'services' : tab}
+        options={config.tabs}
+        onChange={(tab) => update({ tab })}>
+        {adCampaign || app || services ? (
+          <TabBar
+            label={
+              adCampaign
+                ? '광고 캠페인 하위 구분'
+                : app
+                  ? '앱 하위 구분'
+                  : '서비스 하위 구분'
+            }
+            value={tab}
+            options={adCampaign ? acquisitionTabs : app ? appTabs : serviceTabs}
+            onChange={(tab) => update({ tab })}>
+            {content}
+          </TabBar>
+        ) : (
+          content
+        )}
+      </TabBar>
     </>
   );
 }

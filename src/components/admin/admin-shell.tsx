@@ -33,6 +33,7 @@ const groupIcons = {
   dashboard: DashboardSquare01Icon,
   manage: Settings01Icon,
   notifications: Notification03Icon,
+  ops: Settings01Icon,
 };
 
 function subscribe(listener: () => void) {
