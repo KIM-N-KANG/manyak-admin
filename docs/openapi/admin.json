@@ -8,7 +8,13 @@
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
     "receivedAt": "2026-11-02T09:52:54.270Z",
-    "revision": "e9454ef"
+    "revision": "e9454ef",
+    "homeSections": {
+      "input": "/private/tmp/knk-3tier/server-openapi-1994.json",
+      "receivedAt": "2026-11-02T15:06:21.985Z",
+      "revision": "07774c585ae26b77a1f67cbdf371f204828a24ac",
+      "description": "PR #461 별도 클론의 H2 통합 테스트로 /v3/api-docs 추출. 홈 섹션 두 경로만 병합하여 기존 계약과 테스트 전용 경로를 보존한다."
+    }
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -3395,6 +3401,128 @@
           "200": {
             "description": "OK",
             "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/admin/home-sections": {
+      "get": {
+        "tags": ["admin-home-section-controller"],
+        "operationId": "list_4",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HomeSection"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["admin-home-section-controller"],
+        "operationId": "create_5",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeSectionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeSection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/home-sections/{sectionId}": {
+      "delete": {
+        "tags": ["admin-home-section-controller"],
+        "operationId": "delete_6",
+        "parameters": [
+          {
+            "name": "sectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeSectionDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["admin-home-section-controller"],
+        "operationId": "update_3",
+        "parameters": [
+          {
+            "name": "sectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeSectionUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeSection"
+                }
+              }
+            }
           }
         }
       }
@@ -9598,6 +9726,215 @@
             "type": "string"
           }
         }
+      },
+      "HomeSection": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "source",
+          "stories",
+          "genres",
+          "originalOnly",
+          "sort",
+          "itemLimit",
+          "isActive",
+          "sortOrder",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["MANUAL", "FILTER"]
+          },
+          "stories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["storyId", "title", "isListed"],
+              "properties": {
+                "storyId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "isListed": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "originalOnly": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": ["string", "null"],
+            "enum": ["popular", "latest", "likes", "chats", null]
+          },
+          "itemLimit": {
+            "type": "integer"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        }
+      },
+      "HomeSectionCreate": {
+        "type": "object",
+        "required": ["name", "source", "reason"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30,
+            "pattern": "[\\s\\S]*\\S[\\s\\S]*"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["MANUAL", "FILTER"]
+          },
+          "storyIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 20,
+            "uniqueItems": true
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 10
+          },
+          "originalOnly": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": "string",
+            "enum": ["popular", "latest", "likes", "chats"]
+          },
+          "itemLimit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "pattern": "[\\s\\S]*\\S[\\s\\S]*"
+          }
+        }
+      },
+      "HomeSectionUpdate": {
+        "type": "object",
+        "required": ["reason"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30,
+            "pattern": "[\\s\\S]*\\S[\\s\\S]*"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["MANUAL", "FILTER"]
+          },
+          "storyIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 20,
+            "uniqueItems": true
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 10
+          },
+          "originalOnly": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": "string",
+            "enum": ["popular", "latest", "likes", "chats"]
+          },
+          "itemLimit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "pattern": "[\\s\\S]*\\S[\\s\\S]*"
+          }
+        }
+      },
+      "HomeSectionDelete": {
+        "type": "object",
+        "required": ["reason"],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "pattern": "[\\s\\S]*\\S[\\s\\S]*"
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -9607,6 +9944,14 @@
         "scheme": "bearer",
         "bearerFormat": "JWT"
       }
+    }
+  },
+  "x-contract-overlay": {
+    "homeSections": {
+      "source": "knk-harness STORY/BACKEND 4-2-35~4-2-38, ADMIN/WEB 3-1",
+      "server": "https://github.com/KIM-N-KANG/manyak-server/pull/461",
+      "revision": "07774c585ae26b77a1f67cbdf371f204828a24ac",
+      "reason": "실제 OpenAPI의 ObjectNode 요청과 응답에 필드 스키마가 없어 계약으로 보완했다. 서버 머지 후 api:generate 재실행 필요"
     }
   }
 }

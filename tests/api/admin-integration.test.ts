@@ -11,6 +11,20 @@ const cookie = `${sessionCookie}=${Buffer.from(JSON.stringify({ accessToken: 'fo
 const reason = { reason: '테스트 사유' };
 const presign = { kind: 'COVER', contentType: 'image/png', contentLength: 32 };
 const cases: [string, string, string, unknown?][] = [
+  ['GET', '/home-sections', '/home-sections'],
+  [
+    'POST',
+    '/home-sections',
+    '/home-sections',
+    { name: '홈 섹션', source: 'FILTER', sort: 'popular', ...reason },
+  ],
+  [
+    'PATCH',
+    `/home-sections/${id}`,
+    `/home-sections/${id}`,
+    { isActive: false, ...reason },
+  ],
+  ['DELETE', `/home-sections/${id}`, `/home-sections/${id}`, reason],
   ...[
     '/stories/consumption',
     '/payments/metrics',
@@ -507,6 +521,11 @@ it.each(cases)(
 );
 
 it.each([
+  ['POST', '/home-sections', { name: '', source: 'FILTER', reason: '사유' }],
+  ['POST', '/home-sections', { name: '홈', source: 'FILTER', reason: '' }],
+  ['PATCH', `/home-sections/${id}`, { itemLimit: 21, ...reason }],
+  ['DELETE', `/home-sections/${id}`, {}],
+  ['GET', '/home-sections?q=test'],
   ['POST', '/notices', { ...reason, title: [], body: '본문' }],
   ['POST', `/notices/${id}/publish`, { reason: [] }],
   ['POST', '/notices', { ...reason, title: '공지', body: '본문' }],

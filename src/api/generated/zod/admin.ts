@@ -2274,3 +2274,189 @@ export const DeleteThumbnail1Body = zod.object({
 });
 
 export const DeleteThumbnail1Response = zod.unknown();
+
+export const List4Response = zod.object({
+  items: zod.array(
+    zod.object({
+      id: zod.uuid(),
+      name: zod.string(),
+      source: zod.enum(['MANUAL', 'FILTER']),
+      stories: zod.array(
+        zod.object({
+          storyId: zod.uuid(),
+          title: zod.string(),
+          isListed: zod.boolean(),
+        }),
+      ),
+      genres: zod.array(zod.string()),
+      originalOnly: zod.boolean(),
+      sort: zod
+        .union([
+          zod.literal('popular'),
+          zod.literal('latest'),
+          zod.literal('likes'),
+          zod.literal('chats'),
+          zod.literal(null),
+        ])
+        .nullable(),
+      itemLimit: zod.number(),
+      isActive: zod.boolean(),
+      sortOrder: zod.number(),
+      createdAt: zod.string(),
+      updatedAt: zod.string(),
+    }),
+  ),
+});
+
+export const create5BodyNameMax = 30;
+
+export const create5BodyNameRegExp = new RegExp('[\\s\\S]*\\S[\\s\\S]*');
+export const create5BodyStoryIdsMax = 20;
+
+export const create5BodyGenresMax = 10;
+
+export const create5BodyItemLimitMax = 20;
+
+export const create5BodySortOrderMax = 2147483647;
+
+export const create5BodyReasonMax = 500;
+
+export const create5BodyReasonRegExp = new RegExp('[\\s\\S]*\\S[\\s\\S]*');
+
+export const Create5Body = zod.object({
+  name: zod
+    .string()
+    .min(1)
+    .max(create5BodyNameMax)
+    .regex(create5BodyNameRegExp),
+  source: zod.enum(['MANUAL', 'FILTER']),
+  storyIds: zod.array(zod.uuid()).min(1).max(create5BodyStoryIdsMax).optional(),
+  genres: zod.array(zod.string().min(1)).max(create5BodyGenresMax).optional(),
+  originalOnly: zod.boolean().optional(),
+  sort: zod.enum(['popular', 'latest', 'likes', 'chats']).optional(),
+  itemLimit: zod.number().min(1).max(create5BodyItemLimitMax).optional(),
+  isActive: zod.boolean().optional(),
+  sortOrder: zod.number().min(1).max(create5BodySortOrderMax).optional(),
+  reason: zod
+    .string()
+    .min(1)
+    .max(create5BodyReasonMax)
+    .regex(create5BodyReasonRegExp),
+});
+
+export const Create5Response = zod.object({
+  id: zod.uuid(),
+  name: zod.string(),
+  source: zod.enum(['MANUAL', 'FILTER']),
+  stories: zod.array(
+    zod.object({
+      storyId: zod.uuid(),
+      title: zod.string(),
+      isListed: zod.boolean(),
+    }),
+  ),
+  genres: zod.array(zod.string()),
+  originalOnly: zod.boolean(),
+  sort: zod
+    .union([
+      zod.literal('popular'),
+      zod.literal('latest'),
+      zod.literal('likes'),
+      zod.literal('chats'),
+      zod.literal(null),
+    ])
+    .nullable(),
+  itemLimit: zod.number(),
+  isActive: zod.boolean(),
+  sortOrder: zod.number(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+
+export const Delete6Params = zod.object({
+  sectionId: zod.uuid(),
+});
+
+export const delete6BodyReasonMax = 500;
+
+export const delete6BodyReasonRegExp = new RegExp('[\\s\\S]*\\S[\\s\\S]*');
+
+export const Delete6Body = zod.object({
+  reason: zod
+    .string()
+    .min(1)
+    .max(delete6BodyReasonMax)
+    .regex(delete6BodyReasonRegExp),
+});
+
+export const Delete6Response = zod.void();
+
+export const Update3Params = zod.object({
+  sectionId: zod.uuid(),
+});
+
+export const update3BodyNameMax = 30;
+
+export const update3BodyNameRegExp = new RegExp('[\\s\\S]*\\S[\\s\\S]*');
+export const update3BodyStoryIdsMax = 20;
+
+export const update3BodyGenresMax = 10;
+
+export const update3BodyItemLimitMax = 20;
+
+export const update3BodySortOrderMax = 2147483647;
+
+export const update3BodyReasonMax = 500;
+
+export const update3BodyReasonRegExp = new RegExp('[\\s\\S]*\\S[\\s\\S]*');
+
+export const Update3Body = zod.object({
+  name: zod
+    .string()
+    .min(1)
+    .max(update3BodyNameMax)
+    .regex(update3BodyNameRegExp)
+    .optional(),
+  source: zod.enum(['MANUAL', 'FILTER']).optional(),
+  storyIds: zod.array(zod.uuid()).min(1).max(update3BodyStoryIdsMax).optional(),
+  genres: zod.array(zod.string().min(1)).max(update3BodyGenresMax).optional(),
+  originalOnly: zod.boolean().optional(),
+  sort: zod.enum(['popular', 'latest', 'likes', 'chats']).optional(),
+  itemLimit: zod.number().min(1).max(update3BodyItemLimitMax).optional(),
+  isActive: zod.boolean().optional(),
+  sortOrder: zod.number().min(1).max(update3BodySortOrderMax).optional(),
+  reason: zod
+    .string()
+    .min(1)
+    .max(update3BodyReasonMax)
+    .regex(update3BodyReasonRegExp),
+});
+
+export const Update3Response = zod.object({
+  id: zod.uuid(),
+  name: zod.string(),
+  source: zod.enum(['MANUAL', 'FILTER']),
+  stories: zod.array(
+    zod.object({
+      storyId: zod.uuid(),
+      title: zod.string(),
+      isListed: zod.boolean(),
+    }),
+  ),
+  genres: zod.array(zod.string()),
+  originalOnly: zod.boolean(),
+  sort: zod
+    .union([
+      zod.literal('popular'),
+      zod.literal('latest'),
+      zod.literal('likes'),
+      zod.literal('chats'),
+      zod.literal(null),
+    ])
+    .nullable(),
+  itemLimit: zod.number(),
+  isActive: zod.boolean(),
+  sortOrder: zod.number(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
