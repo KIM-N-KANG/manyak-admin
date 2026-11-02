@@ -2,6 +2,7 @@
 
 import { type ReactNode, useContext } from 'react';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Bar,
@@ -98,12 +99,15 @@ export function SummaryCards({
     aside?: ReactNode;
     definitionTitle?: string;
     help?: ReactNode;
+    href?: string;
   }[];
 }) {
   return (
     <div className="mb-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
-        <Card key={item.label} className="min-w-0">
+        <Card
+          key={item.label}
+          className="relative min-w-0 [&_button]:relative [&_button]:z-10">
           {item.aside ? (
             <div className="flex items-center gap-2">
               <h3 className="text-sm text-muted-foreground">{item.label}</h3>
@@ -129,7 +133,16 @@ export function SummaryCards({
             </>
           )}
           <div className="mt-3 text-2xl font-semibold break-words">
-            {item.value}
+            {item.href ? (
+              <Link
+                href={item.href}
+                aria-label={item.label}
+                className="after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring">
+                {item.value}
+              </Link>
+            ) : (
+              item.value
+            )}
           </div>
           {item.detail ? (
             <div className="mt-2 text-xs text-muted-foreground">
@@ -148,8 +161,10 @@ export function NumericTable({
   title = '전체 수치 표',
   basis,
   definitionTitle,
+  collapsible = true,
 }: {
   definitionTitle?: MetricDefinitionTitle;
+  collapsible?: boolean;
   headers: (
     | string
     | { label: string; definitionTitle?: MetricDefinitionTitle | null }
@@ -158,6 +173,47 @@ export function NumericTable({
   title?: string;
   basis?: string | null;
 }) {
+  const body = (
+    <div className="mt-3 max-h-80 overflow-auto">
+      <DataTable
+        headers={headers.map((header, index) => {
+          const label = typeof header === 'string' ? header : header.label;
+          const explicit =
+            typeof header !== 'string' && 'definitionTitle' in header;
+          const definition = explicit
+            ? header.definitionTitle
+            : definitionTitle && index !== 0
+              ? definitionTitle
+              : label;
+
+          return {
+            label,
+            help: <MetricHelp title={label} definitionTitle={definition} />,
+          };
+        })}
+        empty={!rows.length}>
+        {rows.map((row, i) => (
+          <tr key={i}>
+            {row.map((cell, j) => (
+              <td key={j}>{cell}</td>
+            ))}
+          </tr>
+        ))}
+      </DataTable>
+    </div>
+  );
+
+  if (!collapsible)
+    return (
+      <Card className="min-w-0">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold">{title}</h3>
+          <MetricHelp title={title} definitionTitle={definitionTitle} />
+        </div>
+        {body}
+      </Card>
+    );
+
   return (
     <details className="mt-4">
       <summary className="cursor-pointer text-xs text-muted-foreground">
@@ -165,33 +221,7 @@ export function NumericTable({
         <MetricHelp title={title} definitionTitle={definitionTitle} />
         {basis ? ` · ${basis}` : null}
       </summary>
-      <div className="mt-3 max-h-80 overflow-auto">
-        <DataTable
-          headers={headers.map((header, index) => {
-            const label = typeof header === 'string' ? header : header.label;
-            const explicit =
-              typeof header !== 'string' && 'definitionTitle' in header;
-            const definition = explicit
-              ? header.definitionTitle
-              : definitionTitle && index !== 0
-                ? definitionTitle
-                : label;
-
-            return {
-              label,
-              help: <MetricHelp title={label} definitionTitle={definition} />,
-            };
-          })}
-          empty={!rows.length}>
-          {rows.map((row, i) => (
-            <tr key={i}>
-              {row.map((cell, j) => (
-                <td key={j}>{cell}</td>
-              ))}
-            </tr>
-          ))}
-        </DataTable>
-      </div>
+      {body}
     </details>
   );
 }
@@ -220,7 +250,9 @@ export function formatPlotValue(
     : metricNumber(
         value,
         unit,
-        unit === '초' || title.includes('사용자당') ? 1 : 0,
+        unit === '초' || title.includes('사용자당') || title.includes('1인당')
+          ? 1
+          : 0,
       );
 }
 
@@ -268,6 +300,8 @@ export function SeriesChart({
   stacked = false,
   composition = false,
   grouped = false,
+  horizontal = false,
+  tooltipDetail,
   aside,
 }: {
   title: string;
@@ -281,6 +315,8 @@ export function SeriesChart({
   stacked?: boolean;
   composition?: boolean;
   grouped?: boolean;
+  horizontal?: boolean;
+  tooltipDetail?: (row: PlotRow) => ReactNode;
 }) {
   const scope = useContext(MetricScope);
   const { missing, format: values } = plotValues(scope, {
@@ -304,24 +340,33 @@ export function SeriesChart({
   const axes = (
     <>
       <CartesianGrid vertical={false} />
-      <XAxis
-        dataKey="date"
-        tickFormatter={(v) =>
-          categoryLabel === '날짜' ? String(v).slice(5) : String(v)
-        }
-        minTickGap={30}
-        tickLine={false}
-      />
-      <YAxis
-        width={64}
-        unit={unit}
-        domain={grouped ? [0, 1] : [0, 'auto']}
-        tickFormatter={(v) =>
-          unit === '%'
-            ? `${Number(v) * 100}`
-            : Number(v).toLocaleString('ko-KR')
-        }
-      />
+      {horizontal ? (
+        <>
+          <XAxis type="number" unit={unit} />
+          <YAxis type="category" dataKey="date" width={64} />
+        </>
+      ) : (
+        <>
+          <XAxis
+            dataKey="date"
+            tickFormatter={(v) =>
+              categoryLabel === '날짜' ? String(v).slice(5) : String(v)
+            }
+            minTickGap={30}
+            tickLine={false}
+          />
+          <YAxis
+            width={64}
+            unit={unit}
+            domain={grouped ? [0, 1] : [0, 'auto']}
+            tickFormatter={(v) =>
+              unit === '%'
+                ? `${Number(v) * 100}`
+                : Number(v).toLocaleString('ko-KR')
+            }
+          />
+        </>
+      )}
       <ChartTooltip
         cursor={grouped ? undefined : <ChartCrosshair />}
         isAnimationActive={false}
@@ -343,6 +388,9 @@ export function SeriesChart({
                       ),
                     )})`
                   : ''}
+                {tooltipDetail ? (
+                  <span className="ml-2">{tooltipDetail(item.payload)}</span>
+                ) : null}
               </span>
             )}
           />
@@ -395,7 +443,11 @@ export function SeriesChart({
           className="mt-5 h-72 w-full"
           aria-label={`${title} 추이`}>
           {grouped || stacked ? (
-            <BarChart accessibilityLayer data={rows} onClick={click}>
+            <BarChart
+              accessibilityLayer
+              data={rows}
+              layout={horizontal ? 'vertical' : 'horizontal'}
+              onClick={click}>
               {axes}
               {series.map((s) => (
                 <Bar
@@ -638,18 +690,36 @@ export function FunnelChart({
 export function Ranking({
   title,
   items,
+  unit = '명',
+  preserveOrder = false,
+  table = true,
+  aside,
 }: {
   title: string;
-  items: { label: string; value: number }[];
+  items: { label: string; value: number; display?: string }[];
+  unit?: string;
+  preserveOrder?: boolean;
+  table?: boolean;
+  aside?: ReactNode;
 }) {
-  const top = items.toSorted((a, b) => b.value - a.value).slice(0, 20);
+  const top = preserveOrder
+    ? items
+    : items.toSorted((a, b) => b.value - a.value).slice(0, 20);
 
   return (
     <Card className="min-w-0">
-      <h3 className="font-semibold">{title}</h3>
-      <MetricHelp title={title} />
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 className="font-semibold">{title}</h3>
+        <MetricHelp title={title} />
+        {aside}
+      </div>
       <ChartContainer
-        config={{ value: { label: '방문자', color: 'var(--primary)' } }}
+        config={{
+          value: {
+            label: unit === '명' ? '방문자' : '금액',
+            color: 'var(--primary)',
+          },
+        }}
         className="mt-5 w-full"
         style={{ height: Math.max(220, top.length * 36) }}
         aria-label={`${title} 순위`}>
@@ -657,34 +727,47 @@ export function Ranking({
           accessibilityLayer
           data={top}
           layout="vertical"
-          margin={{ right: 64 }}>
-          <XAxis type="number" unit="명" />
+          margin={{ right: unit === '명' ? 64 : 144 }}>
+          <XAxis type="number" unit={unit} />
           <YAxis
             type="category"
             dataKey="label"
-            width={130}
+            width={unit === '명' ? 130 : 100}
             tick={{ fontSize: 10 }}
           />
           <ChartTooltip
             isAnimationActive={false}
             content={
               <ChartTooltipContent
-                formatter={(value) =>
-                  `${Number(value).toLocaleString('ko-KR')}명`
+                formatter={(value, _name, item) =>
+                  item.payload.display ?? metricNumber(Number(value), unit)
                 }
               />
             }
           />
           <Bar dataKey="value" fill="var(--primary)" isAnimationActive={false}>
-            <LabelList dataKey="value" position="right" />
+            <LabelList
+              dataKey={
+                items.some((item) => item.display)
+                  ? (row: { value: number; display?: string }) =>
+                      row.display ?? metricNumber(row.value, unit)
+                  : 'value'
+              }
+              position="right"
+            />
           </Bar>
         </BarChart>
       </ChartContainer>
-      <NumericTable
-        definitionTitle={title}
-        headers={['구분', '방문자 (명)']}
-        rows={items.map((row) => [row.label, metricNumber(row.value, '명')])}
-      />
+      {table ? (
+        <NumericTable
+          definitionTitle={title}
+          headers={['구분', unit === '명' ? '방문자 (명)' : `값 (${unit})`]}
+          rows={items.map((row) => [
+            row.label,
+            row.display ?? metricNumber(row.value, unit),
+          ])}
+        />
+      ) : null}
     </Card>
   );
 }

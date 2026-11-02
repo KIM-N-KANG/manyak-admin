@@ -6,6 +6,7 @@ import { members } from '@/fixtures/entities';
 import { kstDate } from '@/fixtures/query';
 
 import { newMetricFixture } from './metrics-next';
+import { newMetricsFixture } from './new-metrics';
 import { notificationOpenValues } from './notification-opens';
 
 const id = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
@@ -77,6 +78,10 @@ const events = [
 ];
 
 export function metricFixture(path: string, query: URLSearchParams) {
+  const added = newMetricsFixture(path, query);
+
+  if (added) return added;
+
   if (path === '/campaigns') return campaignCatalog();
 
   const from = query.get('from')!,

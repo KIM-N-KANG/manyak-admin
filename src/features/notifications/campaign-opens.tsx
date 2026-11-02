@@ -6,6 +6,9 @@ import { sourceHelp } from '@/features/analytics/config';
 import { MetricScope } from '@/features/analytics/metric-definition';
 import { Source, SummaryCards } from '@/features/analytics/metric-ui';
 import {
+  hasChatConversion,
+  NotificationChatCount,
+  notificationChatRate,
   NotificationOpenCount,
   notificationOpenPartial,
   notificationOpenRate,
@@ -25,12 +28,12 @@ export function CampaignOpens({
       <MetricScope value="acquisition">
         <div className="mb-4 flex items-center gap-3">
           <h2 className="text-xl font-semibold">열람</h2>
-          <Source source="Amplitude" help={sourceHelp.push} />
+          <Source source="Amplitude와 서버 DB" help={sourceHelp.push} />
         </div>
         <QueryState
           skeleton={
-            <div className="[&>div]:xl:grid-cols-3">
-              <SummarySkeleton count={3} />
+            <div className="min-w-0">
+              <SummarySkeleton count={5} />
             </div>
           }
           pending={query.isPending}
@@ -55,9 +58,18 @@ export function CampaignOpens({
                 {notificationOpenPartial}
               </p>
             ) : null}
-            <div className="[&>div]:xl:grid-cols-3">
+            <div className="min-w-0">
               <SummaryCards
                 items={[
+                  ...(hasChatConversion(data)
+                    ? [
+                        {
+                          label: '채팅 전환',
+                          value: <NotificationChatCount values={data} />,
+                        },
+                        { label: '전환율', value: notificationChatRate(data) },
+                      ]
+                    : []),
                   {
                     label: '푸시 열람',
                     value: (

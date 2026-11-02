@@ -23,6 +23,9 @@ export function notificationOpenValues<S extends NotificationOpenState>(
 
   return {
     openState: state,
+    chattedMembers: delivered ? Math.round(delivered * 0.2354) : null,
+    chattedBeforeMembers: delivered ? Math.round(delivered * 0.1553) : null,
+    chatRate: delivered ? Math.round(delivered * 0.2354) / delivered : null,
     pushOpens: push,
     webPushOpens: measured ? webPush : null,
     androidPushOpens: measured ? androidPush : null,

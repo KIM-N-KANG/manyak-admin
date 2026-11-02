@@ -41,6 +41,9 @@ export function Charts({
   items: {
     title: string;
     stacked?: boolean;
+    horizontal?: boolean;
+    categoryLabel?: string;
+    tooltipDetail?: (row: PlotRow) => ReactNode;
     composition?: boolean;
     rows: PlotRow[];
     series: Series[];

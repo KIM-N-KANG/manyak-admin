@@ -36,6 +36,14 @@ import { infraRange } from './infra/data';
 import { InfraScreen } from './infra/infra-screen';
 import { MetricScope } from './metric-definition';
 import { Source } from './metric-ui';
+import {
+  ConsumptionTab,
+  CreditMetricsArea,
+  DepthTab,
+  MarginArea,
+  ModerationTab,
+  PaymentMetricsArea,
+} from './new-metrics-content';
 import { PendingTab } from './pending-dates';
 import { analyticsRange } from './range';
 import { cohorts } from './retention';
@@ -67,7 +75,11 @@ export const domains = {
   },
   content: {
     title: '콘텐츠',
-    tabs: [['making', '제작']],
+    tabs: [
+      ['making', '제작'],
+      ['consumption', '소비'],
+      ['moderation', '검수'],
+    ],
     defaultTab: 'making',
     list: '/stories',
     link: '스토리 목록',
@@ -77,6 +89,7 @@ export const domains = {
     tabs: [
       ['engagement', '참여'],
       ['chat-options', '옵션과 입력'],
+      ['depth', '몰입'],
     ],
     defaultTab: 'engagement',
     list: '/chats',
@@ -265,7 +278,16 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
   const hasPlatform =
     !acquisition &&
     !services &&
-    !['creation', 'story-detail', 'installs', 'ai-cost', 'sales'].includes(tab);
+    ![
+      'creation',
+      'story-detail',
+      'installs',
+      'ai-cost',
+      'sales',
+      'consumption',
+      'moderation',
+      'depth',
+    ].includes(tab);
   const hasSegment =
     hasPlatform &&
     [
@@ -483,6 +505,9 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
               onRange={select}
             />
           ) : null}
+          {tab === 'consumption' ? <ConsumptionTab query={query} /> : null}
+          {tab === 'moderation' ? <ModerationTab query={query} /> : null}
+          {tab === 'depth' ? <DepthTab query={query} /> : null}
           {tab === 'making' ? (
             <>
               {funnel(['story-creation', 'creation-entry-chat'])}
@@ -543,21 +568,26 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
           ) : null}
           {domain === 'revenue' && tab === 'sales' ? (
             <>
-              <PaymentTrends
+              <PaymentTrends query={query} basis={null} />
+              <PaymentMetricsArea query={query} />
+              <MarginArea query={query} />
+            </>
+          ) : null}
+          {domain === 'revenue' && tab === 'credits' ? (
+            <>
+              <CreditMetricsArea
                 query={query}
                 basis={basisText(platform !== 'all', segment !== 'all')}
               />
-            </>
-          ) : null}
-          {domain === 'revenue' && tab === 'credits'
-            ? metrics(
+              {metrics(
                 'quality',
                 'client',
                 '이프와 초대 신호',
                 `/api/quality/client?${qualityQuery}`,
                 'signals',
-              )
-            : null}
+              )}
+            </>
+          ) : null}
           {tab === 'ai-quality' ? (
             <>
               <DistributionArea
