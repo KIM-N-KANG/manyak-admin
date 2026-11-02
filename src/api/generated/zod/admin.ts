@@ -2275,38 +2275,41 @@ export const DeleteThumbnail1Body = zod.object({
 
 export const DeleteThumbnail1Response = zod.unknown();
 
-export const List4Response = zod.object({
-  items: zod.array(
-    zod.object({
-      id: zod.uuid(),
-      name: zod.string(),
-      source: zod.enum(['MANUAL', 'FILTER']),
-      stories: zod.array(
-        zod.object({
-          storyId: zod.uuid(),
-          title: zod.string(),
-          isListed: zod.boolean(),
-        }),
-      ),
-      genres: zod.array(zod.string()),
-      originalOnly: zod.boolean(),
-      sort: zod
-        .union([
-          zod.literal('popular'),
-          zod.literal('latest'),
-          zod.literal('likes'),
-          zod.literal('chats'),
-          zod.literal(null),
-        ])
-        .nullable(),
-      itemLimit: zod.number(),
-      isActive: zod.boolean(),
-      sortOrder: zod.number(),
-      createdAt: zod.string(),
-      updatedAt: zod.string(),
-    }),
-  ),
-});
+export const list4ResponseItemsItemItemLimitMax = 20;
+
+export const List4Response = zod
+  .object({
+    items: zod.array(
+      zod
+        .object({
+          id: zod.uuid(),
+          name: zod.string(),
+          source: zod.enum(['MANUAL', 'FILTER']),
+          stories: zod.array(
+            zod
+              .object({
+                storyId: zod.uuid(),
+                title: zod.string().describe('토큰 원문 제목'),
+                isListed: zod.boolean(),
+              })
+              .describe('수동 지정 스토리의 현재 상태'),
+          ),
+          genres: zod.array(zod.string()),
+          originalOnly: zod.boolean(),
+          sort: zod.enum(['popular', 'latest', 'likes', 'chats']).nullable(),
+          itemLimit: zod
+            .number()
+            .min(1)
+            .max(list4ResponseItemsItemItemLimitMax),
+          sortOrder: zod.number().min(1),
+          createdAt: zod.iso.datetime({ offset: true }),
+          updatedAt: zod.iso.datetime({ offset: true }),
+          isActive: zod.boolean(),
+        })
+        .describe('관리자 홈 섹션'),
+    ),
+  })
+  .describe('관리자 홈 섹션 목록');
 
 export const create5BodyNameMax = 30;
 
@@ -2317,61 +2320,87 @@ export const create5BodyGenresMax = 10;
 
 export const create5BodyItemLimitMax = 20;
 
-export const create5BodySortOrderMax = 2147483647;
-
 export const create5BodyReasonMax = 500;
 
 export const create5BodyReasonRegExp = new RegExp('[\\s\\S]*\\S[\\s\\S]*');
 
-export const Create5Body = zod.object({
-  name: zod
-    .string()
-    .min(1)
-    .max(create5BodyNameMax)
-    .regex(create5BodyNameRegExp),
-  source: zod.enum(['MANUAL', 'FILTER']),
-  storyIds: zod.array(zod.uuid()).min(1).max(create5BodyStoryIdsMax).optional(),
-  genres: zod.array(zod.string().min(1)).max(create5BodyGenresMax).optional(),
-  originalOnly: zod.boolean().optional(),
-  sort: zod.enum(['popular', 'latest', 'likes', 'chats']).optional(),
-  itemLimit: zod.number().min(1).max(create5BodyItemLimitMax).optional(),
-  isActive: zod.boolean().optional(),
-  sortOrder: zod.number().min(1).max(create5BodySortOrderMax).optional(),
-  reason: zod
-    .string()
-    .min(1)
-    .max(create5BodyReasonMax)
-    .regex(create5BodyReasonRegExp),
-});
+export const Create5Body = zod
+  .object({
+    name: zod
+      .string()
+      .min(1)
+      .max(create5BodyNameMax)
+      .regex(create5BodyNameRegExp)
+      .describe('이름. 앞뒤 공백 제거 후 1~30자'),
+    source: zod.enum(['MANUAL', 'FILTER']).describe('스토리 출처'),
+    storyIds: zod
+      .array(zod.uuid())
+      .min(1)
+      .max(create5BodyStoryIdsMax)
+      .optional()
+      .describe('MANUAL 필수. 스토리 공개 UUID 1~20개, 지정 순서 유지'),
+    genres: zod
+      .array(zod.string().min(1))
+      .max(create5BodyGenresMax)
+      .optional()
+      .describe(
+        'FILTER 전용. 활성 제공 장르 정식 이름 최대 10개. 빈 배열은 조건 제거',
+      ),
+    originalOnly: zod
+      .boolean()
+      .optional()
+      .describe('FILTER 전용. 기본값 false'),
+    sort: zod
+      .enum(['popular', 'latest', 'likes', 'chats'])
+      .optional()
+      .describe('FILTER 필수. 공개 목록 정렬'),
+    itemLimit: zod
+      .number()
+      .min(1)
+      .max(create5BodyItemLimitMax)
+      .optional()
+      .describe('카드 상한. 기본값 20'),
+    sortOrder: zod
+      .number()
+      .min(1)
+      .optional()
+      .describe('노출 순서. 등록 생략 시 현재 최댓값 + 1'),
+    reason: zod
+      .string()
+      .min(1)
+      .max(create5BodyReasonMax)
+      .regex(create5BodyReasonRegExp)
+      .describe('변경 사유 1~500자'),
+    isActive: zod.boolean().optional().describe('활성 여부. 기본값 true'),
+  })
+  .describe('홈 섹션 등록 요청');
 
-export const Create5Response = zod.object({
-  id: zod.uuid(),
-  name: zod.string(),
-  source: zod.enum(['MANUAL', 'FILTER']),
-  stories: zod.array(
-    zod.object({
-      storyId: zod.uuid(),
-      title: zod.string(),
-      isListed: zod.boolean(),
-    }),
-  ),
-  genres: zod.array(zod.string()),
-  originalOnly: zod.boolean(),
-  sort: zod
-    .union([
-      zod.literal('popular'),
-      zod.literal('latest'),
-      zod.literal('likes'),
-      zod.literal('chats'),
-      zod.literal(null),
-    ])
-    .nullable(),
-  itemLimit: zod.number(),
-  isActive: zod.boolean(),
-  sortOrder: zod.number(),
-  createdAt: zod.string(),
-  updatedAt: zod.string(),
-});
+export const create5ResponseItemLimitMax = 20;
+
+export const Create5Response = zod
+  .object({
+    id: zod.uuid(),
+    name: zod.string(),
+    source: zod.enum(['MANUAL', 'FILTER']),
+    stories: zod.array(
+      zod
+        .object({
+          storyId: zod.uuid(),
+          title: zod.string().describe('토큰 원문 제목'),
+          isListed: zod.boolean(),
+        })
+        .describe('수동 지정 스토리의 현재 상태'),
+    ),
+    genres: zod.array(zod.string()),
+    originalOnly: zod.boolean(),
+    sort: zod.enum(['popular', 'latest', 'likes', 'chats']).nullable(),
+    itemLimit: zod.number().min(1).max(create5ResponseItemLimitMax),
+    sortOrder: zod.number().min(1),
+    createdAt: zod.iso.datetime({ offset: true }),
+    updatedAt: zod.iso.datetime({ offset: true }),
+    isActive: zod.boolean(),
+  })
+  .describe('관리자 홈 섹션');
 
 export const Delete6Params = zod.object({
   sectionId: zod.uuid(),
@@ -2381,13 +2410,16 @@ export const delete6BodyReasonMax = 500;
 
 export const delete6BodyReasonRegExp = new RegExp('[\\s\\S]*\\S[\\s\\S]*');
 
-export const Delete6Body = zod.object({
-  reason: zod
-    .string()
-    .min(1)
-    .max(delete6BodyReasonMax)
-    .regex(delete6BodyReasonRegExp),
-});
+export const Delete6Body = zod
+  .object({
+    reason: zod
+      .string()
+      .min(1)
+      .max(delete6BodyReasonMax)
+      .regex(delete6BodyReasonRegExp)
+      .describe('변경 사유 1~500자'),
+  })
+  .describe('홈 섹션 삭제 요청');
 
 export const Delete6Response = zod.void();
 
@@ -2404,59 +2436,85 @@ export const update3BodyGenresMax = 10;
 
 export const update3BodyItemLimitMax = 20;
 
-export const update3BodySortOrderMax = 2147483647;
-
 export const update3BodyReasonMax = 500;
 
 export const update3BodyReasonRegExp = new RegExp('[\\s\\S]*\\S[\\s\\S]*');
 
-export const Update3Body = zod.object({
-  name: zod
-    .string()
-    .min(1)
-    .max(update3BodyNameMax)
-    .regex(update3BodyNameRegExp)
-    .optional(),
-  source: zod.enum(['MANUAL', 'FILTER']).optional(),
-  storyIds: zod.array(zod.uuid()).min(1).max(update3BodyStoryIdsMax).optional(),
-  genres: zod.array(zod.string().min(1)).max(update3BodyGenresMax).optional(),
-  originalOnly: zod.boolean().optional(),
-  sort: zod.enum(['popular', 'latest', 'likes', 'chats']).optional(),
-  itemLimit: zod.number().min(1).max(update3BodyItemLimitMax).optional(),
-  isActive: zod.boolean().optional(),
-  sortOrder: zod.number().min(1).max(update3BodySortOrderMax).optional(),
-  reason: zod
-    .string()
-    .min(1)
-    .max(update3BodyReasonMax)
-    .regex(update3BodyReasonRegExp),
-});
+export const Update3Body = zod
+  .object({
+    name: zod
+      .string()
+      .min(1)
+      .max(update3BodyNameMax)
+      .regex(update3BodyNameRegExp)
+      .optional()
+      .describe('이름. 앞뒤 공백 제거 후 1~30자'),
+    source: zod.enum(['MANUAL', 'FILTER']).optional().describe('스토리 출처'),
+    storyIds: zod
+      .array(zod.uuid())
+      .min(1)
+      .max(update3BodyStoryIdsMax)
+      .optional()
+      .describe('MANUAL 필수. 스토리 공개 UUID 1~20개, 지정 순서 유지'),
+    genres: zod
+      .array(zod.string().min(1))
+      .max(update3BodyGenresMax)
+      .optional()
+      .describe(
+        'FILTER 전용. 활성 제공 장르 정식 이름 최대 10개. 빈 배열은 조건 제거',
+      ),
+    originalOnly: zod
+      .boolean()
+      .optional()
+      .describe('FILTER 전용. 기본값 false'),
+    sort: zod
+      .enum(['popular', 'latest', 'likes', 'chats'])
+      .optional()
+      .describe('FILTER 필수. 공개 목록 정렬'),
+    itemLimit: zod
+      .number()
+      .min(1)
+      .max(update3BodyItemLimitMax)
+      .optional()
+      .describe('카드 상한. 기본값 20'),
+    sortOrder: zod
+      .number()
+      .min(1)
+      .optional()
+      .describe('노출 순서. 등록 생략 시 현재 최댓값 + 1'),
+    reason: zod
+      .string()
+      .min(1)
+      .max(update3BodyReasonMax)
+      .regex(update3BodyReasonRegExp)
+      .describe('변경 사유 1~500자'),
+    isActive: zod.boolean().optional().describe('활성 여부. 기본값 true'),
+  })
+  .describe('홈 섹션 부분 수정. 보낸 필드만 반영 요청');
 
-export const Update3Response = zod.object({
-  id: zod.uuid(),
-  name: zod.string(),
-  source: zod.enum(['MANUAL', 'FILTER']),
-  stories: zod.array(
-    zod.object({
-      storyId: zod.uuid(),
-      title: zod.string(),
-      isListed: zod.boolean(),
-    }),
-  ),
-  genres: zod.array(zod.string()),
-  originalOnly: zod.boolean(),
-  sort: zod
-    .union([
-      zod.literal('popular'),
-      zod.literal('latest'),
-      zod.literal('likes'),
-      zod.literal('chats'),
-      zod.literal(null),
-    ])
-    .nullable(),
-  itemLimit: zod.number(),
-  isActive: zod.boolean(),
-  sortOrder: zod.number(),
-  createdAt: zod.string(),
-  updatedAt: zod.string(),
-});
+export const update3ResponseItemLimitMax = 20;
+
+export const Update3Response = zod
+  .object({
+    id: zod.uuid(),
+    name: zod.string(),
+    source: zod.enum(['MANUAL', 'FILTER']),
+    stories: zod.array(
+      zod
+        .object({
+          storyId: zod.uuid(),
+          title: zod.string().describe('토큰 원문 제목'),
+          isListed: zod.boolean(),
+        })
+        .describe('수동 지정 스토리의 현재 상태'),
+    ),
+    genres: zod.array(zod.string()),
+    originalOnly: zod.boolean(),
+    sort: zod.enum(['popular', 'latest', 'likes', 'chats']).nullable(),
+    itemLimit: zod.number().min(1).max(update3ResponseItemLimitMax),
+    sortOrder: zod.number().min(1),
+    createdAt: zod.iso.datetime({ offset: true }),
+    updatedAt: zod.iso.datetime({ offset: true }),
+    isActive: zod.boolean(),
+  })
+  .describe('관리자 홈 섹션');
