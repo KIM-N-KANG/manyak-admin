@@ -150,7 +150,14 @@ function TabHeading({
   };
 }) {
   const db = ['signups', 'turn-reach', 'chat-options', 'ai-cost'].includes(tab);
-  const source = tab === 'ai-cost' ? 'Langfuse' : db ? '서버 DB' : 'Amplitude';
+  const source =
+    tab === 'push'
+      ? 'Amplitude와 서버 DB'
+      : tab === 'ai-cost'
+        ? 'Langfuse'
+        : db
+          ? '서버 DB'
+          : 'Amplitude';
   const template =
     sourceHelp[tab as keyof typeof sourceHelp] ?? sourceHelp[screen];
   const help =

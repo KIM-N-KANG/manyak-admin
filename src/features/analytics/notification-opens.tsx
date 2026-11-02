@@ -41,3 +41,36 @@ export function notificationOpenRate(values: NotificationOpenValues) {
     ? percent(values.pushOpenRate)
     : notificationOpenStates[values.openState];
 }
+
+/** 이전 서버 응답에는 없는 세 전환 필드가 모두 있는지 확인한다. */
+export function hasChatConversion(values: NotificationOpenValues) {
+  return (
+    values.chattedMembers !== undefined &&
+    values.chattedBeforeMembers !== undefined &&
+    values.chatRate !== undefined
+  );
+}
+
+export function NotificationChatCount({
+  values,
+}: {
+  values: NotificationOpenValues;
+}) {
+  if (values.chattedMembers == null) return '도달 없음';
+
+  return (
+    <>
+      <div>{metricNumber(values.chattedMembers, '명')}</div>
+      <div className="mt-1 text-xs font-normal text-muted-foreground">
+        도달 전 24시간{' '}
+        {values.chattedBeforeMembers == null
+          ? '도달 없음'
+          : metricNumber(values.chattedBeforeMembers, '명')}
+      </div>
+    </>
+  );
+}
+
+export function notificationChatRate(values: NotificationOpenValues) {
+  return percent(values.chatRate ?? null, '도달 없음');
+}

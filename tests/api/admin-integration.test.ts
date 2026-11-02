@@ -1365,3 +1365,41 @@ it.each([20, 0, undefined])(
     ).toEqual({ items: [chat] });
   },
 );
+
+it.each([
+  '/payments/metrics',
+  '/credits/metrics',
+  '/stories/consumption',
+  '/chats/engagement',
+  '/moderation/metrics',
+])(
+  '%s 신규 지표는 생성 Zod로 잘못된 쿼리를 업스트림 전에 거부한다',
+  async (path) => {
+    const fetchMock = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    for (const query of [
+      'unexpected=1',
+      'days=abc',
+      'days=1&days=2',
+      'from=2026-10-21&from=2026-10-22',
+    ]) {
+      expect((await invoke('GET', `${path}?${query}`)).status).toBe(400);
+    }
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  },
+);
+it.each(['0', '51', '1.5'])(
+  '소비의 limit=%s는 서버 모드에서도 전달 전에 거부한다',
+  async (limit) => {
+    const fetchMock = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+    expect(
+      (await invoke('GET', `/stories/consumption?limit=${limit}`)).status,
+    ).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  },
+);

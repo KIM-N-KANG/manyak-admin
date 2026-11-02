@@ -278,7 +278,7 @@ it.each([
   ],
   [
     'content',
-    ['제작'],
+    ['제작', '소비', '검수'],
     '제작',
     [
       '/api/conversion/funnels/story-creation',
@@ -289,7 +289,7 @@ it.each([
   ],
   [
     'chats',
-    ['참여', '옵션과 입력'],
+    ['참여', '옵션과 입력', '몰입'],
     '참여',
     [
       '/api/conversion/turn-reach',
@@ -297,7 +297,12 @@ it.each([
       '/api/conversion/funnels/story-detail-chat',
     ],
   ],
-  ['revenue', ['매출', '이프'], '매출', ['/api/dashboard/charts']],
+  [
+    'revenue',
+    ['매출', '이프'],
+    '매출',
+    ['/api/dashboard/charts', '/api/payments/metrics', '/api/quality/ai-cost'],
+  ],
   [
     'ops',
     ['서비스', 'AI 품질', 'AI 비용', '서비스와 요청', '저장소', 'DB 테이블'],
@@ -467,11 +472,14 @@ it('수익 매출은 개요 차트 캐시를 공유하고 이프 탭에서만 �
     screen.getByLabelText('일별 지표 추이').querySelectorAll('[data-rows]'),
   ).toHaveLength(4);
   expect(screen.queryByRole('combobox', { name: '플랫폼' })).toBeNull();
-  expect(requests).toHaveLength(0);
+  await waitFor(() => expect(requests).toHaveLength(2));
+  expect(requests.some((url) => url.includes('/dashboard/charts'))).toBe(false);
+  requests.length = 0;
   fireEvent.click(screen.getByRole('tab', { name: '이프' }));
   view.go();
   await screen.findByRole('heading', { name: '이프와 초대 신호 사용자' });
   expect(requests).toEqual([
+    '/api/credits/metrics?from=2026-09-24&to=2026-10-23',
     '/api/quality/client?from=2026-09-24&to=2026-10-23&platform=web&segment=guest',
   ]);
   expect(screen.queryByLabelText('일별 지표 추이')).toBeNull();
@@ -1978,10 +1986,10 @@ it('유입의 앱 탭은 두 하위 구분을 두고 기존 URL 조건을 보존
   ).toBe(true);
   expect(nav.search).toContain('range=last7d');
 });
-it('1973의 신규 탭과 지표 요청은 노출하지 않는다', async () => {
+it('소비·검수 탭은 보이지만 제작 탭에서 신규 지표를 미리 요청하지 않는다', async () => {
   draw('content');
-  expect(screen.queryByRole('tab', { name: '소비' })).toBeNull();
-  expect(screen.queryByRole('tab', { name: '검수' })).toBeNull();
+  expect(screen.getByRole('tab', { name: '소비' })).toBeTruthy();
+  expect(screen.getByRole('tab', { name: '검수' })).toBeTruthy();
   await waitFor(() => expect(client.isFetching()).toBe(0));
   expect(
     requests.some((url) =>

@@ -7,6 +7,9 @@ import { aiFeatureLabel, aiFeatures } from '@/features/dashboard/chart-data';
 
 import { Charts, dailyRows } from './charts';
 import {
+  hasChatConversion,
+  NotificationChatCount,
+  notificationChatRate,
   NotificationOpenCount,
   notificationOpenRate,
 } from './notification-opens';
@@ -452,6 +455,14 @@ export function AcquisitionContent({
   if (tab === 'push') {
     const d = data as T.PushOpensResponse;
     const rateHelp = <MetricHelp title="열람률" />;
+    const campaignConversion =
+      d.campaigns.length > 0 && d.campaigns.every(hasChatConversion);
+    const activityConversion =
+      d.activityTypes.length > 0 && d.activityTypes.every(hasChatConversion);
+    const conversionHeaders = [
+      { label: '채팅 전환', help: <MetricHelp title="채팅 전환" /> },
+      { label: '전환율', help: <MetricHelp title="전환율" /> },
+    ];
     const activities = (
       [
         'STORY_COMPLETED',
@@ -486,6 +497,7 @@ export function AcquisitionContent({
                 ),
               },
               { label: '도달 회원', help: <MetricHelp title="도달 회원" /> },
+              ...(campaignConversion ? conversionHeaders : []),
               { label: '푸시 열람', help: <MetricHelp title="푸시 열람" /> },
               { label: '열람률', help: rateHelp },
               {
@@ -508,6 +520,14 @@ export function AcquisitionContent({
                 <td>{row.kind === 'SERVICE' ? '정보성' : '광고성'}</td>
                 <td>{dateTime(row.startedAt)} KST</td>
                 <td>{n(row.deliveredMembers, '명')}</td>
+                {campaignConversion ? (
+                  <>
+                    <td>
+                      <NotificationChatCount values={row} />
+                    </td>
+                    <td>{notificationChatRate(row)}</td>
+                  </>
+                ) : null}
                 <td>
                   <NotificationOpenCount values={row} channel="push" />
                 </td>
@@ -530,6 +550,7 @@ export function AcquisitionContent({
             headers={[
               '종류',
               { label: '도달 회원', help: <MetricHelp title="도달 회원" /> },
+              ...(activityConversion ? conversionHeaders : []),
               { label: '푸시 열람', help: <MetricHelp title="푸시 열람" /> },
               { label: '열람률', help: rateHelp },
               {
@@ -551,6 +572,14 @@ export function AcquisitionContent({
                   }
                 </td>
                 <td>{n(row.deliveredMembers, '명')}</td>
+                {activityConversion ? (
+                  <>
+                    <td>
+                      <NotificationChatCount values={row} />
+                    </td>
+                    <td>{notificationChatRate(row)}</td>
+                  </>
+                ) : null}
                 <td>
                   <NotificationOpenCount values={row} channel="push" />
                 </td>

@@ -181,12 +181,12 @@ it('캠페인 목록을 기다리지 않고 최근 7일을 요청하며 성장 �
   ]);
 
   const source = screen.getByRole('button', {
-    name: 'Amplitude 출처와 집계 안내',
+    name: 'Amplitude와 서버 DB 출처와 집계 안내',
   });
 
   await act(async () => source.focus());
   expect((await screen.findByRole('tooltip')).textContent).toBe(
-    'Amplitude 출처 지표입니다. 웹은 알림 링크로 연 페이지 조회를, 앱은 알림을 누른 기록을 날짜별 고유 사용자로 세어 더합니다. 도달 회원은 서버 발송 결과이며 팀 계정을 제외하지 않습니다.',
+    'Amplitude와 서버 DB 출처 지표입니다. 열람은 웹의 알림 링크로 연 페이지 조회와 앱의 알림을 누른 기록을 날짜별 고유 사용자로 세어 더합니다. 도달 회원과 채팅 전환은 서버 발송 결과와 채팅 기록으로 세며 팀 계정을 제외하지 않습니다.',
   );
 });
 
@@ -343,7 +343,7 @@ it('503은 기존 Amplitude 오류와 재시도 UI로 처리한다', async () =>
   await screen.findByRole('heading', { name: '관리자 캠페인' });
 });
 
-it('로딩 중에도 두 표의 7열·5열 골격을 예약한다', async () => {
+it('로딩 중에도 두 표의 9열·7열 골격을 예약한다', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn(() => new Promise<Response>(() => {})),
@@ -356,10 +356,10 @@ it('로딩 중에도 두 표의 7열·5열 골격을 예약한다', async () => 
 
   expect(tables).toHaveLength(2);
   expect(tables[0].querySelector('[style]')?.getAttribute('style')).toContain(
-    'repeat(7,',
+    'repeat(9,',
   );
   expect(tables[1].querySelector('[style]')?.getAttribute('style')).toContain(
-    'repeat(5,',
+    'repeat(7,',
   );
 });
 

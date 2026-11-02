@@ -12,6 +12,7 @@ import {
 import { getRangeError, kstToday } from '@/features/dashboard/date-range';
 
 import { campaignCatalog, metricFixture } from './metrics';
+import { newMetricPaths } from './new-metrics';
 
 /** 고정 데이터에서도 생성 스키마 검증과 기간 정책을 적용한다. */
 export async function metricsRoute(request: Request) {
@@ -35,6 +36,20 @@ export async function metricsRoute(request: Request) {
     );
 
     const query = url.searchParams;
+    const newMetric = newMetricPaths.includes(path);
+
+    if (newMetric && query.has('days')) {
+      const days = Number(query.get('days'));
+
+      if (
+        !Number.isInteger(days) ||
+        days < 1 ||
+        days > 366 ||
+        query.has('from') ||
+        query.has('to')
+      )
+        return bffError(request, 400, '기간 범위를 확인해 주세요.', 'days');
+    }
 
     if (path === '/campaigns') return Response.json(campaignCatalog());
 
@@ -53,9 +68,12 @@ export async function metricsRoute(request: Request) {
     const campaign = campaignCatalog().items.find(
       (item) => item.campaign === query.get('campaign'),
     );
-    const defaults = defaultPeriod(tab, campaign);
+    const today = kstToday();
+    const defaults = newMetric
+      ? { from: shiftDate(today, -29), to: today }
+      : defaultPeriod(tab, campaign);
 
-    if (path === '/campaigns/push-opens' && query.has('days')) {
+    if ((newMetric || path === '/campaigns/push-opens') && query.has('days')) {
       if (query.has('from') || query.has('to'))
         return bffError(request, 400, '기간 범위를 확인해 주세요.', 'days');
 
