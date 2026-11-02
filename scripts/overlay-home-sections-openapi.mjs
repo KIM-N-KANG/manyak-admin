@@ -31,6 +31,9 @@ export function applyHomeSectionsOverlay(document) {
       maxItems: 10,
       items: { type: 'string', minLength: 1 },
     });
+    fields.name['x-trim'] = true;
+    fields.itemLimit.type = 'integer';
+    fields.sortOrder.type = 'integer';
     fields.name.pattern = '[\\s\\S]*\\S[\\s\\S]*';
   }
 

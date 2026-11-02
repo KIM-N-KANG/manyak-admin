@@ -35,7 +35,7 @@ it('실제 DTO 스냅샷을 보존하고 생성 입력에만 누락된 계약 �
   expect(
     result.components.schemas.HomeSectionCreateRequest.properties.itemLimit
       .type,
-  ).toEqual(['integer']);
+  ).toBe('integer');
   expect(
     result.paths['/api/v1/admin/home-sections'].get.responses['200'].content[
       'application/json'
@@ -91,3 +91,48 @@ it('선택 필드의 명시적 null과 배열 상한 및 공백 사유를 생성
     Create5Body.safeParse({ ...valid, storyIds: ['invalid'] }).success,
   ).toBe(false);
 });
+
+it.each([Create5Body, Update3Body])(
+  '이름은 trim 후 길이를 검사하고 사유는 원문 길이를 검사한다',
+  (schema) => {
+    const valid = {
+      name: ' '.repeat(30) + '가'.repeat(30) + ' '.repeat(30),
+      source: 'FILTER',
+      sort: 'popular',
+      reason: ' ' + '가'.repeat(498) + ' ',
+    };
+    const parsed = schema.parse(valid);
+
+    expect(parsed.name).toBe('가'.repeat(30));
+    expect(parsed.reason).toBe(valid.reason);
+    expect(schema.safeParse({ ...valid, name: ' ' }).success).toBe(false);
+    expect(
+      schema.safeParse({ ...valid, name: ' ' + '가'.repeat(31) + ' ' }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({ ...valid, reason: ' ' + '가'.repeat(499) + ' ' })
+        .success,
+    ).toBe(false);
+  },
+);
+
+it.each([Create5Body, Update3Body])(
+  '정수 필드는 소수와 범위 밖 값을 거부하며 정수 경계값을 허용한다',
+  (schema) => {
+    const valid = {
+      name: '홈 섹션',
+      source: 'FILTER',
+      sort: 'popular',
+      reason: '운영 변경',
+    };
+
+    for (const field of ['itemLimit', 'sortOrder']) {
+      expect(schema.safeParse({ ...valid, [field]: 1.5 }).success).toBe(false);
+      expect(schema.safeParse({ ...valid, [field]: 0 }).success).toBe(false);
+      expect(schema.safeParse({ ...valid, [field]: 1 }).success).toBe(true);
+    }
+
+    expect(schema.safeParse({ ...valid, itemLimit: 20 }).success).toBe(true);
+    expect(schema.safeParse({ ...valid, itemLimit: 21 }).success).toBe(false);
+  },
+);

@@ -2328,6 +2328,7 @@ export const Create5Body = zod
   .object({
     name: zod
       .string()
+      .trim()
       .min(1)
       .max(create5BodyNameMax)
       .regex(create5BodyNameRegExp)
@@ -2356,12 +2357,14 @@ export const Create5Body = zod
       .describe('FILTER 필수. 공개 목록 정렬'),
     itemLimit: zod
       .number()
+      .int()
       .min(1)
       .max(create5BodyItemLimitMax)
       .optional()
       .describe('카드 상한. 기본값 20'),
     sortOrder: zod
       .number()
+      .int()
       .min(1)
       .optional()
       .describe('노출 순서. 등록 생략 시 현재 최댓값 + 1'),
@@ -2444,6 +2447,7 @@ export const Update3Body = zod
   .object({
     name: zod
       .string()
+      .trim()
       .min(1)
       .max(update3BodyNameMax)
       .regex(update3BodyNameRegExp)
@@ -2473,12 +2477,14 @@ export const Update3Body = zod
       .describe('FILTER 필수. 공개 목록 정렬'),
     itemLimit: zod
       .number()
+      .int()
       .min(1)
       .max(update3BodyItemLimitMax)
       .optional()
       .describe('카드 상한. 기본값 20'),
     sortOrder: zod
       .number()
+      .int()
       .min(1)
       .optional()
       .describe('노출 순서. 등록 생략 시 현재 최댓값 + 1'),

@@ -9967,7 +9967,9 @@
         "응답 items 및 섹션과 stories 원소의 필수 필드가 required에 없다. HomeSectionResponse는 sort만 required다.",
         "요청의 선택 필드가 nullable로 노출되지만 계약과 서버 검증은 명시적 null을 거부한다.",
         "storyIds의 UUID 형식, 1~20개와 중복 금지, genres 최대 10개의 제약이 기계 판독 스키마에 없다.",
-        "name과 reason의 공백만 입력하는 값 금지 조건이 pattern에 없다."
+        "name과 reason의 공백만 입력하는 값 금지 조건이 pattern에 없다.",
+        "이름은 앞뒤 공백 제거 후 길이를 검사해야 하므로 생성 훅에서 trim을 길이 검사 앞에 적용한다.",
+        "itemLimit과 sortOrder를 integer 타입으로 보완하고 Orval 8.17이 누락하는 정수 검사를 생성 훅에서 반영한다."
       ]
     }
   }

@@ -208,3 +208,44 @@ it('교차 출처와 production fixture 실행을 차단한다', async () => {
   vi.stubEnv('VERCEL_ENV', 'production');
   expect((await request()).status).toBe(503);
 });
+
+it('fixture는 생성 스키마로 공백 포함 이름을 허용하고 정규화한 이름을 저장한다', async () => {
+  const name = ' '.repeat(30) + '가'.repeat(30) + ' '.repeat(30);
+  const response = await request('POST', { ...filter, name });
+
+  expect(response.status).toBe(201);
+
+  const row = await response.json();
+
+  expect(row.name).toBe('가'.repeat(30));
+
+  const update = await request(
+    'PATCH',
+    { name: ' '.repeat(30) + '나', reason: '변경' },
+    `/${row.id}`,
+  );
+
+  expect(update.status).toBe(200);
+  expect((await update.json()).name).toBe('나');
+});
+
+it.each(['itemLimit', 'sortOrder'])(
+  'fixture는 생성 검증에서 소수 %s를 거부하고 상태를 유지한다',
+  async (field) => {
+    const before = structuredClone(homeSectionRows());
+
+    expect((await request('POST', { ...filter, [field]: 1.5 })).status).toBe(
+      400,
+    );
+    expect(
+      (
+        await request(
+          'PATCH',
+          { reason: '변경', [field]: 1.5 },
+          `/${before[0].id}`,
+        )
+      ).status,
+    ).toBe(400);
+    expect(homeSectionRows()).toEqual(before);
+  },
+);

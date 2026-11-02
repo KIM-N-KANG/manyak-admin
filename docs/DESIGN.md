@@ -688,3 +688,5 @@ AI 비용은 `expiredDates`의 날짜 수와 보관 일수 안내를 요약 아�
 활성 전환, 이웃 간 순서 이동과 삭제는 공용 사유 대화상자를 사용한다. 처리 중에는 입력과 취소, Esc 및 바깥 닫기를 막는다. 순서 이동의 두 PATCH는 차례로 실행하고 둘째 실패는 실제 목록을 다시 불러와 일부 저장 문구를 표시한다. 404는 닫고 목록을 다시 받으며 400과 그 밖의 실패는 입력을 유지한다.
 
 홈 섹션 OpenAPI 경로와 참조 DTO는 서버 dev 머지 커밋 `43e309229bb7f65437819333fc597592b60d4f14`에서 실제 추출했다. 서버 dev 머지본으로 재생성함. 실제 스냅샷은 보존한다. 응답의 필수 필드 선언, 선택 입력의 null 금지, 스토리 UUID와 배열 개수, 공백 입력 금지 조건은 실제 스키마에 빠져 있어 `x-contract-overlay.homeSections`에 차이를 기록하고 overlay를 유지한다. `scripts/transform-admin-openapi.mjs`가 `scripts/overlay-home-sections-openapi.mjs`를 통해 생성 입력에만 누락된 계약 제약을 보완하며 Orval 생성물은 직접 수정하지 않는다. 서버 OpenAPI가 계약과 일치하면 이 보완을 제거하고 다시 생성한다. 관리자 웹 배포 전 서버 배포 상태도 확인한다.
+
+홈 섹션 이름은 생성 Zod의 trim 이후에 1~30자를 검증한다. 사유는 서버와 동일하게 원문 길이 1~500자와 공백만 입력 금지를 검사하며 trim하지 않는다. itemLimit과 sortOrder는 생성 입력에서 integer로 보완하고, Orval 8.17이 누락하는 trim과 정수 검사는 `scripts/refine-home-section-zod.mjs` 생성 훅으로 반영한다. fixture와 server BFF는 모두 같은 생성 스키마를 사용한다.

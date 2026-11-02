@@ -1422,3 +1422,29 @@ it.each(['0', '51', '1.5'])(
     expect(fetchMock).not.toHaveBeenCalled();
   },
 );
+
+it.each(['POST', 'PATCH'])(
+  '홈 섹션 %s는 trim 후 유효한 이름을 전달하고 소수는 업스트림 호출 전에 차단한다',
+  async (method) => {
+    const path = method === 'POST' ? '/home-sections' : `/home-sections/${id}`;
+    const body = {
+      name: ' '.repeat(30) + '가'.repeat(30) + ' '.repeat(30),
+      source: 'FILTER',
+      sort: 'popular',
+      ...reason,
+    };
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({}));
+
+    vi.stubGlobal('fetch', fetchMock);
+    expect((await invoke(method, path, body)).status).toBe(200);
+    expect(fetchMock.mock.calls[0][1].body).toBe(JSON.stringify(body));
+
+    for (const field of ['itemLimit', 'sortOrder']) {
+      fetchMock.mockClear();
+      expect(
+        (await invoke(method, path, { ...body, [field]: 1.5 })).status,
+      ).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    }
+  },
+);
