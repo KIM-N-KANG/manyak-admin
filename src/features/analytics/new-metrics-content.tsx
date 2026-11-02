@@ -279,6 +279,12 @@ export function MarginArea({ query }: { query: string }) {
         items={[
           {
             label: '결제 금액',
+            aside: (
+              <Source
+                source="서버 DB"
+                help="서버 DB 출처 지표입니다. 팀 계정은 제외합니다. 선택 기간에 완료된 주문의 가격 합이며 환불된 주문도 셉니다."
+              />
+            ),
             value: chart.isPending
               ? loadingNumber
               : revenue === undefined
@@ -289,6 +295,12 @@ export function MarginArea({ query }: { query: string }) {
           },
           {
             label: 'AI 비용',
+            aside: (
+              <Source
+                source="Langfuse"
+                help={c ? help : 'Langfuse 출처 지표입니다.'}
+              />
+            ),
             value: cost.isPending
               ? loadingNumber
               : waiting || costValue === undefined
@@ -603,6 +615,7 @@ export function ModerationTab({ query }: { query: string }) {
               items={[
                 {
                   title: '일별 판정',
+                  definitionTitle: ['일별 판정', '실행 실패'],
                   unit: '건',
                   stacked: true,
                   rows: dailyRows(d, (day) => ({

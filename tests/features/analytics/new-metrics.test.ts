@@ -454,3 +454,79 @@ it.each([
     expect(await screen.findByText(text)).toBeTruthy();
   },
 );
+
+it('마진의 단일 출처 카드에는 제목 옆 출처를 따로 표시한다', async () => {
+  draw('revenue', 'sales');
+  await screen.findByText('128,800원');
+
+  const region = area('마진');
+
+  for (const [label, source] of [
+    ['결제 금액', '서버 DB'],
+    ['AI 비용', 'Langfuse'],
+  ] as const) {
+    const heading = region.getByRole('heading', { name: label, level: 3 });
+    const card = heading.closest('[data-slot="card"]') as HTMLElement;
+    const button = within(card).getByRole('button', {
+      name: `${source} 출처와 집계 안내`,
+    });
+
+    expect(heading.parentElement).toBe(button.parentElement);
+    expect(button.textContent).toContain(source);
+    act(() => button.focus());
+
+    const tip = await screen.findByRole('tooltip');
+
+    expect(tip.textContent).toContain(`${source} 출처 지표`);
+    fireEvent.keyDown(button, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+  }
+
+  for (const label of ['마진', '마진율']) {
+    const card = region
+      .getByRole('heading', { name: label, level: 3 })
+      .closest('[data-slot="card"]') as HTMLElement;
+
+    expect(
+      within(card).queryByRole('button', { name: /출처와 집계 안내/ }),
+    ).toBeNull();
+  }
+});
+
+it('일별 판정 차트와 수치 표는 승인·거절 및 실행 실패 정의를 모두 설명한다', async () => {
+  draw('content', 'moderation');
+  await screen.findByText('15.2%');
+
+  const region = area('검수 판정');
+  const chart = region
+    .getByLabelText('일별 판정 추이')
+    .closest('[data-slot="card"]') as HTMLElement;
+
+  for (const details of region.getAllByText('전체 수치 표')) {
+    details.closest('details')!.open = true;
+  }
+
+  const buttons = [
+    within(chart).getByRole('button', { name: '일별 판정 지표 정의' }),
+    within(chart).getByRole('button', { name: '전체 수치 표 지표 정의' }),
+    ...['승인 (건)', '거절 (건)', '실행 실패 (건)'].map((name) =>
+      within(chart).getByRole('button', { name: `${name} 지표 정의` }),
+    ),
+    region.getByRole('button', { name: '지표 지표 정의' }),
+    region.getByRole('button', { name: '값 지표 정의' }),
+    ...region
+      .getAllByRole('button', { name: '일별 판정 지표 정의' })
+      .filter((button) => !chart.contains(button)),
+  ];
+
+  for (const button of buttons) {
+    act(() => button.focus());
+
+    const tip = await screen.findByRole('tooltip');
+
+    expect(tip.textContent).toContain('제출본의 승인 수와 거절 수');
+    expect(tip.textContent).toContain('실행 실패로 끝난 제출본 수');
+    fireEvent.keyDown(button, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+  }
+});

@@ -68,7 +68,10 @@ export async function metricsRoute(request: Request) {
     const campaign = campaignCatalog().items.find(
       (item) => item.campaign === query.get('campaign'),
     );
-    const defaults = defaultPeriod(tab, campaign);
+    const today = kstToday();
+    const defaults = newMetric
+      ? { from: shiftDate(today, -29), to: today }
+      : defaultPeriod(tab, campaign);
 
     if ((newMetric || path === '/campaigns/push-opens') && query.has('days')) {
       if (query.has('from') || query.has('to'))

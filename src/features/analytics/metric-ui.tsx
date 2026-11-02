@@ -291,6 +291,7 @@ export function plotValues(
 
 export function SeriesChart({
   title,
+  definitionTitle,
   categoryLabel = '날짜',
   rows,
   series: originalSeries,
@@ -305,6 +306,7 @@ export function SeriesChart({
   aside,
 }: {
   title: string;
+  definitionTitle?: MetricDefinitionTitle;
   aside?: ReactNode;
   categoryLabel?: string;
   rows: PlotRow[];
@@ -419,13 +421,21 @@ export function SeriesChart({
       {aside ? (
         <div className="flex items-center gap-2">
           <h3 className="font-semibold">{title}</h3>
-          <MetricHelp title={title} noEvents={missing.length > 0} />
+          <MetricHelp
+            title={title}
+            definitionTitle={definitionTitle}
+            noEvents={missing.length > 0}
+          />
           {aside}
         </div>
       ) : (
         <div className="flex items-center gap-2">
           <h3 className="font-semibold">{title}</h3>
-          <MetricHelp title={title} noEvents={missing.length > 0} />
+          <MetricHelp
+            title={title}
+            definitionTitle={definitionTitle}
+            noEvents={missing.length > 0}
+          />
         </div>
       )}
       {missing.length ? (
@@ -516,7 +526,7 @@ export function SeriesChart({
         </ChartContainer>
       ) : null}
       <NumericTable
-        definitionTitle={title}
+        definitionTitle={definitionTitle ?? title}
         headers={[
           categoryLabel,
           ...originalSeries.map((s) => `${s.label} (${unit})`),
