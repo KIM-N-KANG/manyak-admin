@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { DashboardCharts } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
+import { useAiCost } from './ai-cost';
 import { Charts, dailyRows } from './charts';
 import { metricNumber, percent, sourceHelp } from './config';
 import { MetricScope } from './metric-definition';
@@ -32,8 +33,6 @@ import type {
   StoryConsumption,
 } from './new-metrics-types';
 import { PendingDates } from './pending-dates';
-import { analyticsRefetch } from './range';
-import type { AiCostResponse } from './types';
 
 const n = (value: number, unit: string) => metricNumber(value, unit);
 const current = (
@@ -232,9 +231,7 @@ export function PaymentMetricsArea({ query }: { query: string }) {
 
 export function MarginArea({ query }: { query: string }) {
   const chart = useApi<DashboardCharts>(`/api/dashboard/charts?${query}`);
-  const cost = useApi<AiCostResponse>(`/api/quality/ai-cost?${query}`, true, {
-    refetchInterval: analyticsRefetch,
-  });
+  const cost = useAiCost(query);
   const c = cost.isError ? undefined : cost.data;
   const revenue = chart.isError ? undefined : chart.data?.totals?.revenue;
   const waiting = (c?.pendingDates.length ?? 0) > 0;
