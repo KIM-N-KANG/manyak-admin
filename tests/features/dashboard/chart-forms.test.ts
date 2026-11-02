@@ -333,13 +333,14 @@ it.each([
   },
 );
 
-it('개요는 카드 여섯 개와 지표를 고르는 큰 그래프 하나를 둔다', () => {
+it('개요는 카드 여덟 개와 지표를 고르는 큰 그래프 하나를 둔다', () => {
   const { container } = render(createElement(DashboardScreen));
   const summary = screen.getByRole('region', { name: '요약 지표' });
 
-  expect(within(summary).getAllByRole('link')).toHaveLength(6);
-  expect(summary.classList.contains('lg:grid-cols-3')).toBe(true);
-  expect(summary.classList.contains('2xl:grid-cols-6')).toBe(true);
+  expect(within(summary).getAllByRole('link')).toHaveLength(8);
+  expect(summary.classList.contains('xl:grid-cols-4')).toBe(true);
+  expect(summary.classList.contains('lg:grid-cols-3')).toBe(false);
+  expect(summary.classList.contains('2xl:grid-cols-6')).toBe(false);
   expect(summary.querySelector('svg')).toBeNull();
   expect(screen.getByRole('combobox', { name: '지표' })).toBeTruthy();
   expect(
@@ -477,7 +478,14 @@ it.each([
     state.chartsError = error;
     render(createElement(DashboardScreen));
 
-    for (const label of ['가입자', '채팅 시작', '턴']) {
+    for (const label of [
+      '가입자',
+      '스토리 생성',
+      '채팅 시작',
+      '턴',
+      '결제 금액',
+      '이프 소모',
+    ]) {
       const card = screen.getByRole('link', { name: new RegExp(`^${label}`) });
 
       if (pending) {
@@ -725,12 +733,12 @@ it('인프라의 근접한 끝 값은 실제 SVG에서 최소 18px 간격을 유
   expect(screen.getAllByRole('button')).toHaveLength(4);
 });
 
-it('요약 카드 6개는 고정 최소 높이 없이 같은 행의 내용 높이에 맞춘다', () => {
+it('요약 카드 8개는 고정 최소 높이 없이 같은 행의 내용 높이에 맞춘다', () => {
   render(createElement(DashboardScreen));
 
   const grid = screen.getByRole('region', { name: '요약 지표' });
 
-  expect(grid.children).toHaveLength(6);
+  expect(grid.children).toHaveLength(8);
   expect(grid.className).toContain('items-stretch');
 
   for (const card of grid.children)

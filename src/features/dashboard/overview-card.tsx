@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { changeText } from './comparison';
 
 export const overviewGridClassName =
-  'grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6';
+  'grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-4';
 
 const linkClassName =
   'after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring';
@@ -74,7 +74,7 @@ export function OverviewCard({
       </div>
       <div
         data-overview-slot="value"
-        className="min-h-8 min-w-0 text-2xl font-semibold tracking-tight whitespace-nowrap tabular-nums 2xl:text-lg">
+        className="min-h-8 min-w-0 text-2xl font-semibold tracking-tight whitespace-nowrap tabular-nums xl:text-xl 2xl:text-2xl">
         {loading && loading !== 'all' ? (
           <span role="status" className="sr-only">
             데이터를 불러오는 중입니다…

@@ -280,7 +280,7 @@ export function PageSkeleton({
       </div>
       {layout === 'overview' ? (
         <>
-          <SummarySkeleton count={6} overview />
+          <SummarySkeleton count={8} overview />
           <ChartsSkeleton count={1} overview />
         </>
       ) : layout === 'detail' ? (
