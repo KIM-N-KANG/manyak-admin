@@ -87,6 +87,7 @@ const columns = {
     ['가입일', 'createdAt'],
     ['최근 활동', 'lastActiveAt'],
     ['채팅 수', 'chatCount'],
+    ['누적 턴', 'turnCount'],
     ['이프 소모', 'creditsSpent'],
     ['결제액', 'paidKrw'],
   ],
@@ -159,6 +160,15 @@ for (const domain of Object.keys(columns) as ListDomain[]) {
               .getAttribute('aria-sort'),
           ).toBe('ascending'),
         );
+
+        if (domain === 'members' && key === 'turnCount') {
+          await waitFor(() =>
+            expect(
+              requested.some((url) => url.includes('sort=turnCount&order=asc')),
+            ).toBe(true),
+          );
+        }
+
         expect(
           screen.getByRole('button', { name: label }).textContent,
         ).toContain('↑');

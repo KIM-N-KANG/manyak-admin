@@ -7,9 +7,14 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { GET } from '@/app/api/members/[id]/route';
 import { DetailScreen } from '@/features/shared/detail-screen';
 import { ListScreen } from '@/features/shared/list-screen';
-import { chats, getMemberDetail, members } from '@/fixtures/entities';
+import {
+  chats,
+  deletedChats,
+  getMemberDetail,
+  members,
+} from '@/fixtures/entities';
 
-const data = vi.hoisted(() => ({ turns: 1234 }));
+const data = vi.hoisted(() => ({ turns: 1234, period: null as number | null }));
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
@@ -22,7 +27,16 @@ vi.mock('@/features/shared/use-api', () => ({
       url === `/api/members/${members[0].memberId}`
         ? { ...getMemberDetail(members[0].memberId), turnCount: data.turns }
         : {
-            items: url.startsWith('/api/members?') ? members : [],
+            items: url.startsWith('/api/members?')
+              ? [
+                  {
+                    ...members[0],
+                    turnCount: data.turns,
+                    periodChatCount: data.period === null ? null : 3,
+                    periodTurnCount: data.period,
+                  },
+                ]
+              : [],
             page: 1,
             size: 20,
             totalElements: 0,
@@ -36,6 +50,7 @@ vi.mock('@/features/shared/use-api', () => ({
 }));
 beforeEach(() => {
   data.turns = 1234;
+  data.period = null;
   vi.stubEnv('VERCEL_ENV', 'preview');
   vi.stubEnv('ADMIN_DATA_SOURCE', 'fixture');
 });
@@ -88,10 +103,47 @@ it('누적 턴 정의는 라벨 옆 물음표의 키보드 포커스와 설명 �
   expect(button.getAttribute('aria-describedby')).toBe(tip.id);
   expect(button.closest('dt')).toBeTruthy();
 });
-it('회원 목록 열과 목록 fixture에는 누적 턴을 추가하지 않는다', () => {
+it.each([null, 1500, 0])(
+  '회원 목록 누적 턴과 기간 값 %s를 올바른 열에 표시한다',
+  (period) => {
+    data.period = period;
+    render(createElement(ListScreen, { domain: 'members' }));
+
+    const header = screen.getByRole('columnheader', { name: /누적 턴/ });
+
+    expect(header.previousElementSibling?.textContent).toContain('채팅 수');
+    expect(header.nextElementSibling?.textContent).toContain('이프 소모');
+
+    const cell = screen
+      .getByText('1,234', { selector: '.font-mono' })
+      .closest('td')!;
+
+    expect(cell.textContent).toBe(
+      `1,234턴${period === null ? '' : `(기간 ${period.toLocaleString('ko-KR')}턴)`}`,
+    );
+
+    if (period !== null) expect(screen.getByText('(기간 3개)')).toBeTruthy();
+  },
+);
+it('회원 목록 도움말은 머리글 옆 물음표에 기간 정의까지 제공한다', async () => {
   render(createElement(ListScreen, { domain: 'members' }));
-  expect(screen.queryByRole('columnheader', { name: /누적 턴/ })).toBeNull();
-  expect(members[0]).not.toHaveProperty('turnCount');
+
+  const button = screen.getByRole('button', { name: '누적 턴 안내' });
+
+  expect(button.closest('th')).toBeTruthy();
+  act(() => button.focus());
+  expect((await screen.findByRole('tooltip')).textContent).toBe(
+    '이 회원이 가진 채팅의 AI 응답 수입니다. 삭제한 채팅과 게스트 때의 채팅도 포함하고 재생성은 세지 않습니다. 기간 값은 채팅 기간에 시작한 채팅의 턴입니다.',
+  );
+});
+it('회원 목록 fixture는 상세와 같은 누적 턴과 null 기간 값을 제공한다', () => {
+  for (const member of members) {
+    expect(member).toHaveProperty(
+      'turnCount',
+      getMemberDetail(member.memberId)?.turnCount,
+    );
+    expect(member).toHaveProperty('periodTurnCount', null);
+  }
 });
 it('회원 상세 fixture와 BFF는 소유 채팅의 턴 합을 정수로 제공한다', async () => {
   const member = members[1];
@@ -105,7 +157,7 @@ it('회원 상세 fixture와 BFF는 소유 채팅의 턴 합을 정수로 제공
   const result = await response.json();
 
   expect(result.turnCount).toBe(
-    chats
+    [...chats, ...deletedChats]
       .filter((chat) => chat.member?.memberId === member.memberId)
       .reduce((sum, chat) => sum + chat.turnCount, 0),
   );

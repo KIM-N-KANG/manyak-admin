@@ -6,6 +6,8 @@ export type MemberListItem = MemberSummary & {
   paidKrw: number;
   chatCount: number;
   periodChatCount: number | null;
+  turnCount: number;
+  periodTurnCount: number | null;
 };
 export type CreditTransaction = {
   amount: number;
@@ -14,7 +16,6 @@ export type CreditTransaction = {
   createdAt: string;
 };
 export type MemberDetail = MemberListItem & {
-  turnCount: number;
   creditBalance: number;
   storyCount: number;
   deletedAt: string | null;
