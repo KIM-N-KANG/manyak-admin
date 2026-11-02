@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useContext } from 'react';
+import { type ReactNode, useContext, useId } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,7 @@ import {
   LabelList,
   Line,
   LineChart,
+  Rectangle,
   XAxis,
   YAxis,
 } from 'recharts';
@@ -29,6 +30,7 @@ import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
 import { ChartEndLabels } from '@/features/dashboard/chart-end-labels';
 
 import { eventLabel, metricNumber, percent, ratio, sourceHelp } from './config';
+import { wrapFunnelLabel } from './funnel-label';
 import {
   allZero,
   eventMetric,
@@ -577,6 +579,8 @@ export function FunnelChart({
   extraTable?: ReactNode;
   help?: string;
 }) {
+  const patternId = `funnel-hatch-${useId().replaceAll(':', '')}`;
+
   if (steps[0]?.users === 0)
     return (
       <Card>
@@ -599,15 +603,28 @@ export function FunnelChart({
     ...s,
     label: eventLabel(s.event, s.turnNumber, s.minTurnNumber, s.platform),
     first: i === 0,
-    backgroundUsers: i ? Math.max(steps[i - 1].users, s.users) : s.users,
-    overallConversion: i ? ratio(s.users, steps[0].users) : null,
+    overallConversion: ratio(s.users, steps[0].users),
+    rate: (ratio(s.users, steps[0].users) ?? 0) * 100,
+    dropoff: i
+      ? (ratio(Math.max(steps[i - 1].users - s.users, 0), steps[0].users) ??
+          0) * 100
+      : 0,
     conversion: i ? ratio(s.users, steps[i - 1].users) : null,
   }));
 
   const valueLabel = (row: (typeof rows)[number]) =>
-    row.first
-      ? metricNumber(row.users, '명')
-      : `${metricNumber(row.users, '명')}, 첫 단계 대비 ${percent(row.overallConversion)}, 앞 단계 대비 ${percent(row.conversion)}`;
+    `${metricNumber(row.users, '명')}, 첫 단계 대비 ${percent(row.overallConversion)}${row.first ? '' : `, 앞 단계 대비 ${percent(row.conversion)}`}`;
+  const maxRate = Math.max(100, ...rows.map((row) => row.rate));
+  const minWidth = Math.max(640, steps.length * 120);
+  const labelWidth = Math.max(
+    48,
+    (minWidth - 48 - 24) / Math.max(steps.length, 1) - 32,
+  );
+  const lines = (label: string) => wrapFunnelLabel(label, labelWidth);
+  const axisHeight = Math.max(
+    64,
+    ...rows.map((row) => lines(row.label).length * 14 + 12),
+  );
 
   return (
     <>
@@ -645,23 +662,79 @@ export function FunnelChart({
         <div className="overflow-x-auto">
           {' '}
           <ChartContainer
-            config={{ users: { label: '사용자 수', color: 'var(--primary)' } }}
-            className="mt-5 w-full min-w-[960px]"
-            style={{ height: Math.max(300, steps.length * 64) }}
-            aria-label="단계별 전환 가로 막대">
+            config={{
+              rate: { label: '첫 단계 대비 전환율', color: 'var(--primary)' },
+            }}
+            className="mt-5 w-full"
+            style={{
+              height: 360 + Math.max(0, axisHeight - 64),
+              minWidth,
+            }}
+            aria-label="단계별 전환 세로 막대">
             <BarChart
               accessibilityLayer
               data={rows}
-              layout="vertical"
-              barSize={24}
-              barGap={-24}
-              margin={{ left: 0, right: 400 }}>
-              <XAxis type="number" unit="명" />
-              <YAxis
-                type="category"
+              maxBarSize={96}
+              barCategoryGap="20%"
+              margin={{ left: 0, right: 24, top: 32, bottom: 8 }}>
+              <defs>
+                <pattern
+                  id={patternId}
+                  width={8}
+                  height={8}
+                  patternUnits="userSpaceOnUse"
+                  patternTransform="rotate(45)">
+                  <rect
+                    width={8}
+                    height={8}
+                    fill="var(--primary)"
+                    fillOpacity={0.12}
+                  />
+                  <line
+                    x1={0}
+                    y1={0}
+                    x2={0}
+                    y2={8}
+                    stroke="var(--primary)"
+                    strokeWidth={3}
+                    strokeOpacity={0.3}
+                  />
+                </pattern>
+              </defs>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <XAxis
                 dataKey="label"
-                width={190}
-                tick={{ fontSize: 11 }}
+                interval={0}
+                height={axisHeight}
+                tick={({ x, y, payload }) => (
+                  <text
+                    x={x}
+                    y={y}
+                    textAnchor="middle"
+                    fill="var(--muted-foreground)"
+                    fontSize={11}>
+                    <title>{String(payload.value)}</title>
+                    {lines(String(payload.value)).map((line, index) => (
+                      <tspan key={index} x={x} dy={15}>
+                        {line}
+                      </tspan>
+                    ))}
+                  </text>
+                )}
+              />
+              <YAxis
+                type="number"
+                width={48}
+                domain={[0, maxRate]}
+                ticks={
+                  maxRate > 100
+                    ? [0, 25, 50, 75, 100, maxRate]
+                    : [0, 25, 50, 75, 100]
+                }
+                tickFormatter={(value: number) =>
+                  `${Number(value.toFixed(1))}%`
+                }
+                tick={{ fontSize: 10 }}
               />
               <ChartTooltip
                 isAnimationActive={false}
@@ -674,24 +747,78 @@ export function FunnelChart({
                 }
               />
               <Bar
-                dataKey="backgroundUsers"
+                dataKey="rate"
+                shape={<Rectangle />}
+                stackId="funnel"
                 fill="var(--primary)"
-                fillOpacity={0.18}
-                tooltipType="none"
-                legendType="none"
                 isAnimationActive={false}>
                 <LabelList
-                  dataKey={valueLabel}
-                  position="right"
-                  offset={8}
-                  fill="var(--foreground)"
-                  fontSize={11}
+                  dataKey={(row: (typeof rows)[number]) =>
+                    `${percent(row.overallConversion)} ${metricNumber(row.users, '명')}`
+                  }
+                  content={({ index, viewBox }) => {
+                    const row = index === undefined ? undefined : rows[index];
+
+                    if (
+                      !row ||
+                      !viewBox ||
+                      !('x' in viewBox) ||
+                      typeof viewBox.x !== 'number' ||
+                      typeof viewBox.y !== 'number' ||
+                      typeof viewBox.width !== 'number' ||
+                      typeof viewBox.height !== 'number'
+                    )
+                      return null;
+
+                    const center = viewBox.x + viewBox.width / 2;
+                    const count = metricNumber(row.users, '명');
+                    const rate = percent(row.overallConversion);
+                    const width = Math.max(
+                      64,
+                      count.length * 7 + 18,
+                      rate.length * 8 + 18,
+                    );
+                    const top = viewBox.y - Math.max(21, 46 - viewBox.height);
+
+                    return (
+                      <g data-funnel-label="">
+                        <rect
+                          x={center - width / 2}
+                          y={top}
+                          width={width}
+                          height={44}
+                          rx={3}
+                          fill="var(--card)"
+                          stroke="var(--border)"
+                        />
+                        <text
+                          x={center}
+                          y={top + 15}
+                          textAnchor="middle"
+                          fontSize={12}
+                          fontWeight={600}
+                          fill="var(--foreground)">
+                          {rate}
+                        </text>
+                        <text
+                          x={center}
+                          y={top + 32}
+                          textAnchor="middle"
+                          fontSize={11}
+                          fill="var(--muted-foreground)">
+                          {count}
+                        </text>
+                      </g>
+                    );
+                  }}
                 />
               </Bar>
               <Bar
-                dataKey="users"
-                fill="var(--primary)"
-                fillOpacity={1}
+                dataKey="dropoff"
+                stackId="funnel"
+                fill={`url(#${patternId})`}
+                tooltipType="none"
+                legendType="none"
                 isAnimationActive={false}
               />
             </BarChart>
@@ -709,7 +836,7 @@ export function FunnelChart({
             rows={rows.map((row) => [
               row.label,
               metricNumber(row.users, '명'),
-              row.first ? '' : percent(row.overallConversion),
+              percent(row.overallConversion),
               row.first ? '' : percent(row.conversion),
             ])}
           />

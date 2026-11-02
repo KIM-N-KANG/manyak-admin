@@ -40,6 +40,7 @@ vi.mock('recharts', () => {
     createElement('div', null, children);
 
   return {
+    Rectangle: () => null,
     usePlotArea: () => undefined,
     useXAxisScale: () => undefined,
     useYAxisScale: () => undefined,
