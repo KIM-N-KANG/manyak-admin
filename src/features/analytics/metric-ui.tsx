@@ -599,8 +599,15 @@ export function FunnelChart({
     ...s,
     label: eventLabel(s.event, s.turnNumber, s.minTurnNumber, s.platform),
     first: i === 0,
+    backgroundUsers: i ? Math.max(steps[i - 1].users, s.users) : s.users,
+    overallConversion: i ? ratio(s.users, steps[0].users) : null,
     conversion: i ? ratio(s.users, steps[i - 1].users) : null,
   }));
+
+  const valueLabel = (row: (typeof rows)[number]) =>
+    row.first
+      ? metricNumber(row.users, '명')
+      : `${metricNumber(row.users, '명')}, 첫 단계 대비 ${percent(row.overallConversion)}, 앞 단계 대비 ${percent(row.conversion)}`;
 
   return (
     <>
@@ -639,14 +646,16 @@ export function FunnelChart({
           {' '}
           <ChartContainer
             config={{ users: { label: '사용자 수', color: 'var(--primary)' } }}
-            className="mt-5 w-full min-w-[640px]"
+            className="mt-5 w-full min-w-[960px]"
             style={{ height: Math.max(300, steps.length * 64) }}
             aria-label="단계별 전환 가로 막대">
             <BarChart
               accessibilityLayer
               data={rows}
               layout="vertical"
-              margin={{ left: 0, right: 160 }}>
+              barSize={24}
+              barGap={-24}
+              margin={{ left: 0, right: 400 }}>
               <XAxis type="number" unit="명" />
               <YAxis
                 type="category"
@@ -658,37 +667,49 @@ export function FunnelChart({
                 isAnimationActive={false}
                 content={
                   <ChartTooltipContent
-                    formatter={(value) =>
-                      `${Number(value).toLocaleString('ko-KR')}명`
+                    formatter={(_value, _name, item) =>
+                      valueLabel(item.payload)
                     }
                   />
                 }
               />
               <Bar
-                dataKey="users"
+                dataKey="backgroundUsers"
                 fill="var(--primary)"
+                fillOpacity={0.18}
+                tooltipType="none"
+                legendType="none"
                 isAnimationActive={false}>
                 <LabelList
-                  dataKey={(row: (typeof rows)[number]) =>
-                    row.first
-                      ? metricNumber(row.users, '명')
-                      : `${metricNumber(row.users, '명')}, ${percent(row.conversion)}`
-                  }
+                  dataKey={valueLabel}
                   position="right"
+                  offset={8}
                   fill="var(--foreground)"
                   fontSize={11}
                 />
               </Bar>
+              <Bar
+                dataKey="users"
+                fill="var(--primary)"
+                fillOpacity={1}
+                isAnimationActive={false}
+              />
             </BarChart>
           </ChartContainer>
         </div>
         {extraTable ?? (
           <NumericTable
             definitionTitle={definitionTitle}
-            headers={['단계', '사용자 수', '앞 단계 대비 전환율']}
+            headers={[
+              '단계',
+              '사용자 수',
+              '첫 단계 대비 전환율',
+              '앞 단계 대비 전환율',
+            ]}
             rows={rows.map((row) => [
               row.label,
               metricNumber(row.users, '명'),
+              row.first ? '' : percent(row.overallConversion),
               row.first ? '' : percent(row.conversion),
             ])}
           />
