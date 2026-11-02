@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 
 import type {
-  MetricsResponse,
+  Metrics2Response,
   TablesResponse,
 } from '@/api/generated/zod/admin';
 
@@ -12,7 +12,7 @@ type Complete<T> = T extends (infer Item)[]
     ? { [Key in keyof T]-?: Complete<T[Key]> }
     : T;
 
-export type InfraMetrics = Complete<z.infer<typeof MetricsResponse>>;
+export type InfraMetrics = Complete<z.infer<typeof Metrics2Response>>;
 export type InfraTables = Complete<z.infer<typeof TablesResponse>>;
 export type InfraPoint = NonNullable<InfraMetrics['alb']>['requests'][number];
 export type InfraSeries = {

@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 
-import { MetricsResponse, TablesResponse } from '@/api/generated/zod/admin';
+import { Metrics2Response, TablesResponse } from '@/api/generated/zod/admin';
 import { GET as tables } from '@/app/api/infra/db-tables/route';
 import { GET as metrics } from '@/app/api/infra/metrics/route';
 import {
@@ -23,13 +23,13 @@ afterEach(() => {
 it('정본의 고정 데이터를 생성 스키마로 검증한다', () => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date('2026-10-23T03:00:00Z'));
-  expect(MetricsResponse.safeParse(infraMetricsFixture()).success).toBe(true);
+  expect(Metrics2Response.safeParse(infraMetricsFixture()).success).toBe(true);
   expect(
-    MetricsResponse.parse(infraMetricsFixture()).ecs?.services?.[0].cpuMax
+    Metrics2Response.parse(infraMetricsFixture()).ecs?.services?.[0].cpuMax
       ?.length,
   ).toBeGreaterThan(0);
   expect(
-    MetricsResponse.safeParse(infraMetricsFixture(undefined, undefined, true))
+    Metrics2Response.safeParse(infraMetricsFixture(undefined, undefined, true))
       .success,
   ).toBe(true);
   expect(TablesResponse.safeParse(infraTablesFixture()).success).toBe(true);

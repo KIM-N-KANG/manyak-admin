@@ -89,12 +89,12 @@ it.each(metrics)(
   },
 );
 
-it('관리자 스냅샷은 dev 배포 출처를 기록하고 테스트 전용 경로를 제외한다', () => {
+it('관리자 스냅샷은 통합 OpenAPI 출처를 기록하고 테스트 전용 경로를 제외한다', () => {
   const snapshot = JSON.parse(readFileSync('docs/openapi/admin.json', 'utf8'));
 
   expect(snapshot['x-source']).toMatchObject({
-    input: 'https://dev-api.manyak.app/v3/api-docs',
-    revision: '2301087',
+    input: '/tmp/knk-admin-dash-orch/admin-openapi-integrated-clean.json',
+    revision: 'integrated-b38a5eb',
     receivedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
   });
   expect(
@@ -102,6 +102,8 @@ it('관리자 스냅샷은 dev 배포 출처를 기록하고 테스트 전용 �
       path.includes('foundation-probe'),
     ),
   ).toBe(false);
+  expect(snapshot.paths).toHaveProperty('/api/v1/admin/stories/consumption');
+  expect(snapshot.paths).toHaveProperty('/api/v1/admin/chats/engagement');
 });
 
 const newPaths = [

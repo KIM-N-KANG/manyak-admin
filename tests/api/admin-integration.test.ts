@@ -11,6 +11,22 @@ const cookie = `${sessionCookie}=${Buffer.from(JSON.stringify({ accessToken: 'fo
 const reason = { reason: '테스트 사유' };
 const presign = { kind: 'COVER', contentType: 'image/png', contentLength: 32 };
 const cases: [string, string, string, unknown?][] = [
+  ...[
+    '/stories/consumption',
+    '/payments/metrics',
+    '/moderation/metrics',
+    '/credits/metrics',
+    '/chats/engagement',
+  ].map((path): [string, string, string] => [
+    'GET',
+    `${path}?from=2026-10-01&to=2026-10-21`,
+    `${path}?from=2026-10-01&to=2026-10-21`,
+  ]),
+  [
+    'GET',
+    '/members?sort=turnCount&order=desc&page=1',
+    '/members?sort=turnCount&order=desc&page=1',
+  ],
   ['GET', '/credits/promotions', '/chat-models'],
   [
     'PUT',

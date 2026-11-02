@@ -55,6 +55,8 @@ export const members: MemberListItem[] = (fixtureGlobal.manyakMembers ??=
     paidKrw: 4800 * (i % 6),
     chatCount: 0,
     periodChatCount: null,
+    turnCount: 0,
+    periodTurnCount: null,
   })));
 
 members[0].nickname = '마냑';
@@ -174,12 +176,10 @@ export function getMemberDetail(memberId: string): MemberDetail | null {
       0,
     ),
     storyCount: ownedStories.length,
-    turnCount: chats
-      .filter((chat) => chat.member?.memberId === memberId)
-      .reduce((sum, chat) => sum + chat.turnCount, 0),
     chatCount: member.chatCount,
     deletedAt: member.status === 'DELETED' ? '2026-10-20T05:00:00Z' : null,
     periodChatCount: null,
+    periodTurnCount: null,
   };
 }
 
@@ -283,6 +283,30 @@ export function getChatCounts(from?: string | null, to?: string | null) {
   }
 
   return counts;
+}
+
+// 삭제된 소유 채팅도 포함해 채팅 생성일 기준으로 누적 턴을 센다.
+export function getTurnCounts(from?: string | null, to?: string | null) {
+  const counts = new Map<string, number>();
+
+  for (const chat of [...chats, ...deletedChats]) {
+    const date = kstDate(chat.startedAt);
+
+    if (chat.member && (!from || date >= from) && (!to || date <= to))
+      counts.set(
+        chat.member.memberId,
+        (counts.get(chat.member.memberId) ?? 0) + chat.turnCount,
+      );
+  }
+
+  return counts;
+}
+
+const turns = getTurnCounts();
+
+for (const member of members) {
+  member.turnCount = turns.get(member.memberId) ?? 0;
+  member.periodTurnCount = null;
 }
 
 const counts = getChatCounts();
