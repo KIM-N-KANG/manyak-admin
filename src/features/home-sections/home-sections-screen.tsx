@@ -16,6 +16,7 @@ import {
   type SectionForm,
   sectionMessages,
 } from './form';
+import { sectionMoveUpdates } from './move';
 import { type FieldError, SectionEditor } from './section-editor';
 import { SectionSwitch } from './section-switch';
 
@@ -95,24 +96,20 @@ export function HomeSectionsScreen() {
           }),
         });
       } else {
-        await customInstance(url, {
-          method: 'PATCH',
-          body: JSON.stringify({
-            sortOrder: action.neighbor.sortOrder,
-            reason: value.trim(),
-          }),
-        });
-        firstSaved = true;
-        await customInstance(
-          `${endpoint}/${encodeURIComponent(action.neighbor.id)}`,
-          {
+        for (const update of sectionMoveUpdates(
+          rows,
+          action.section,
+          action.neighbor,
+        )) {
+          await customInstance(`${endpoint}/${encodeURIComponent(update.id)}`, {
             method: 'PATCH',
             body: JSON.stringify({
-              sortOrder: action.section.sortOrder,
+              sortOrder: update.sortOrder,
               reason: value.trim(),
             }),
-          },
-        );
+          });
+          firstSaved = true;
+        }
       }
 
       setAction(null);

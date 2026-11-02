@@ -416,3 +416,51 @@ it('폼은 30자 이름과 1~20개, 장르 10개까지 검증한다', () => {
     sectionFormSchema.safeParse({ ...form, name: 'x'.repeat(31) }).success,
   ).toBe(false);
 });
+
+it.each(['위로', '아래로'])(
+  '두 번째 PATCH 실패로 동률이 된 뒤 %s 이동을 다시 하면 실제 이웃 순서가 바뀐다',
+  async (direction) => {
+    await ready();
+    failSecond = true;
+    click('직접 고른 스토리 위로');
+    await confirm();
+    await screen.findByText(sectionMessages.partial);
+    expect(
+      homeSectionRows()
+        .slice(0, 2)
+        .map((row) => row.sortOrder),
+    ).toEqual([1, 1]);
+    failSecond = false;
+    click(
+      direction === '위로' ? '직접 고른 스토리 위로' : '인기 스토리 아래로',
+    );
+    await confirm();
+    await screen.findByText(sectionMessages.saved);
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('row')
+          .slice(1)
+          .map((row) => within(row).getAllByRole('cell')[1].textContent),
+      ).toEqual(['직접 고른 스토리', '인기 스토리', '오리지널 신작']),
+    );
+    expect(new Set(homeSectionRows().map((row) => row.sortOrder)).size).toBe(3);
+  },
+);
+
+it('이동하는 쌍 외에 동률이 있어도 다른 항목의 상대 순서를 보존하며 고유 순서를 저장한다', async () => {
+  homeSectionRows()[1].sortOrder = 1;
+  await ready();
+  click('오리지널 신작 위로');
+  await confirm();
+  await screen.findByText(sectionMessages.saved);
+  await waitFor(() =>
+    expect(
+      screen
+        .getAllByRole('row')
+        .slice(1)
+        .map((row) => within(row).getAllByRole('cell')[1].textContent),
+    ).toEqual(['인기 스토리', '오리지널 신작', '직접 고른 스토리']),
+  );
+  expect(new Set(homeSectionRows().map((row) => row.sortOrder)).size).toBe(3);
+});

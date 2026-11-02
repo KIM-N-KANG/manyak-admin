@@ -1,6 +1,6 @@
 /** 실제 스냅샷은 보존하고 서버 DTO에 빠진 STORY 계약 조건만 생성 입력에 보완한다. */
 export function applyHomeSectionsOverlay(document) {
-  if (!document['x-contract-overlay']?.homeSections) return document;
+  if (!document.paths?.['/api/v1/admin/home-sections']) return document;
 
   const schemas = document.components.schemas;
 
