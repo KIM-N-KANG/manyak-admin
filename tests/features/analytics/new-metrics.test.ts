@@ -227,7 +227,7 @@ it('수익 매출은 일별 추이·결제 지표·마진 순서로 세 요청�
   expect(area('결제 지표').getByText('8,261원')).toBeTruthy();
   expect(area('결제 지표').getByText('재결제 13건 104,000원')).toBeTruthy();
   expect(area('결제 지표').getByText('환불 1건')).toBeTruthy();
-  expect(area('마진').getByText('128,800원')).toBeTruthy();
+  expect(await area('마진').findByText('128,800원')).toBeTruthy();
   expect(area('마진').getByText('67.8%')).toBeTruthy();
   expect(
     screen.getByRole('button', { name: '서버 DB와 Langfuse 출처와 집계 안내' }),
@@ -251,8 +251,8 @@ it('마진 준비 중은 비용·마진·비율만 가리고 결제 금액과 �
   pending = true;
   draw('revenue', 'sales');
   await screen.findByText('AI 비용은 준비된 날짜만 더했습니다.');
+  expect(await area('마진').findByText('190,000원')).toBeTruthy();
   expect(area('마진').getAllByText('준비 중')).toHaveLength(3);
-  expect(area('마진').getByText('190,000원')).toBeTruthy();
 });
 it.each([
   ['content', 'consumption', '소비', '창작자', '/api/stories/consumption'],
@@ -430,8 +430,8 @@ it('결제 지표 실패는 일별 추이와 마진을 가리지 않으며 그 �
   fail = '/payments/metrics';
   draw('revenue', 'sales');
   await screen.findByText('데이터 불러오기 실패');
-  expect(screen.getByLabelText('일별 지표 추이')).toBeTruthy();
-  await waitFor(() => expect(area('마진').getByText('128,800원')).toBeTruthy());
+  expect(await screen.findByLabelText('일별 지표 추이')).toBeTruthy();
+  expect(await area('마진').findByText('128,800원')).toBeTruthy();
   fail = '';
   fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
   await screen.findByRole('heading', { name: '상품별 매출' });
