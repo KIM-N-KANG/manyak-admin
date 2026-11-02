@@ -85,7 +85,7 @@ afterEach(() => {
   vi.useRealTimers();
   vi.clearAllMocks();
 });
-it('개요는 기간 합계와 증감 카드 여섯 개를 3열로 그리고 일별 그래프는 하나만 표시한다', () => {
+it('개요는 기간 합계와 증감 카드 여섯 개를 반응형 격자로 그리고 일별 그래프는 하나만 표시한다', () => {
   render(createElement(DashboardScreen));
 
   const grid = screen.getByRole('region', { name: '요약 지표' });
@@ -102,7 +102,15 @@ it('개요는 기간 합계와 증감 카드 여섯 개를 3열로 그리고 일
     '/payments',
     '/analytics/inflow?tab=installs',
   ]);
-  expect(grid.className).toContain('xl:grid-cols-3');
+
+  for (const className of [
+    'grid-cols-1',
+    'sm:grid-cols-2',
+    'lg:grid-cols-3',
+    '2xl:grid-cols-6',
+    'items-stretch',
+  ])
+    expect(grid.classList.contains(className)).toBe(true);
 
   const member = within(grid).getByRole('link', { name: /^가입자/ });
 
@@ -150,4 +158,48 @@ it('이전 서버 응답에 totals와 previous가 없으면 DB 카드 값과 증
   expect(member.textContent).toContain('준비 중');
   expect(member.textContent).toContain('오늘');
   expect(member.textContent).toContain('누적');
+});
+
+it('여섯 개요 카드는 같은 슬롯 순서와 줄 높이를 쓰고 작은 줄의 전체 내용을 제공한다', () => {
+  Object.assign((state.charts as { totals: object }).totals, {
+    revenue: 1234567890,
+  });
+  render(createElement(DashboardScreen));
+
+  const grid = screen.getByRole('region', { name: '요약 지표' });
+  const cards = Array.from(grid.children);
+
+  expect(cards).toHaveLength(6);
+
+  const expected = ['title', 'value', 'change', 'comparison', 'detail'];
+  const classes = cards.map((card) => {
+    expect(card.getAttribute('data-overview-card')).toBe('');
+
+    const slots = Array.from(card.querySelectorAll('[data-overview-slot]'));
+
+    expect(
+      slots.map((slot) => slot.getAttribute('data-overview-slot')),
+    ).toEqual(expected);
+    expect(
+      within(slots[0] as HTMLElement).getByRole('heading', { level: 3 }),
+    ).toBeTruthy();
+    expect(card.querySelector('button[aria-label$="안내"]')).toBeTruthy();
+    expect(slots[1].classList.contains('whitespace-nowrap')).toBe(true);
+    expect(slots[1].classList.contains('tabular-nums')).toBe(true);
+    expect(slots[1].contains(slots[2])).toBe(false);
+    expect(slots[4].classList.contains('truncate')).toBe(true);
+    expect(slots[4].getAttribute('title')).toBe(slots[4].textContent);
+
+    return slots.map((slot) => slot.className);
+  });
+
+  for (const slots of classes) expect(slots).toEqual(classes[0]);
+
+  expect(
+    within(cards[4] as HTMLElement).getByText('1,234,567,890'),
+  ).toBeTruthy();
+
+  expect(
+    cards[0].querySelector('[data-overview-slot="detail"]')?.textContent,
+  ).toBe('웹 200명, 앱 20명');
 });

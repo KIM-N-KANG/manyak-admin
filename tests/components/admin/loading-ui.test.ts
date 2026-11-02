@@ -70,7 +70,8 @@ it('개요 Suspense 골격은 6개 요약과 큰 차트 하나를 같은 반응�
     '[data-loading-layout="summary-card"]',
   )!.parentElement!;
 
-  expect(grid.className).toContain('xl:grid-cols-3');
+  expect(grid.classList.contains('lg:grid-cols-3')).toBe(true);
+  expect(grid.classList.contains('2xl:grid-cols-6')).toBe(true);
   expect(grid.className).toContain('items-stretch');
 
   const charts = container.querySelector('[data-loading-layout="charts"]')!;

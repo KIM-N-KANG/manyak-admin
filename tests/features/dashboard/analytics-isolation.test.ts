@@ -146,9 +146,11 @@ function dashboard() {
 }
 
 async function expectDbMetricsVisible() {
-  expect(screen.getByText('가입자', { selector: 'p' })).toBeTruthy();
   expect(
-    screen.getByText('결제 금액 (환불 포함)', { selector: 'p' }),
+    screen.getByRole('heading', { name: '가입자', level: 3 }),
+  ).toBeTruthy();
+  expect(
+    screen.getByRole('heading', { name: '결제 금액 (환불 포함)', level: 3 }),
   ).toBeTruthy();
   expect(
     await screen.findByRole('region', { name: '일별 지표 추이' }),
@@ -201,7 +203,9 @@ describe('Amplitude 실패 격리', () => {
     );
 
     const memberCard = await screen.findByRole('link', { name: /^가입자/ });
-    const headline = memberCard.querySelector('p.mt-3')!.textContent;
+    const headline = memberCard.querySelector(
+      '[data-overview-slot="detail"]',
+    )!.textContent;
     const sevenDays = await chartsResponse(
       new Request(
         'http://localhost/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
@@ -243,7 +247,9 @@ describe('Amplitude 실패 격리', () => {
     await within(updatedCard).findByText(
       `${ninetyTotal.toLocaleString('ko-KR')}`,
     );
-    expect(updatedCard.querySelector('p.mt-3')!.textContent).toBe(headline);
+    expect(
+      updatedCard.querySelector('[data-overview-slot="detail"]')!.textContent,
+    ).toBe(headline);
   });
 
   it('출처 도움말은 키보드 포커스로 지연·팀 계정 제외 기준을 보여 준다', async () => {
@@ -481,7 +487,7 @@ it('DB 요약 실패는 인라인 텍스트로 표시하고 같은 요청만 재
 
   failSummary = false;
   fireEvent.click(within(alert).getByRole('button', { name: '다시 시도' }));
-  await screen.findByText('가입자', { selector: 'p' });
+  await screen.findByRole('heading', { name: '가입자', level: 3 });
   expect(requested.filter((url) => !url.includes('/summary'))).toEqual(
     otherRequests,
   );

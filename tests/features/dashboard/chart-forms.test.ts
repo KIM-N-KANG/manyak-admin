@@ -338,7 +338,8 @@ it('개요는 카드 여섯 개와 지표를 고르는 큰 그래프 하나를 �
   const summary = screen.getByRole('region', { name: '요약 지표' });
 
   expect(within(summary).getAllByRole('link')).toHaveLength(6);
-  expect(summary.className).toContain('xl:grid-cols-3');
+  expect(summary.classList.contains('lg:grid-cols-3')).toBe(true);
+  expect(summary.classList.contains('2xl:grid-cols-6')).toBe(true);
   expect(summary.querySelector('svg')).toBeNull();
   expect(screen.getByRole('combobox', { name: '지표' })).toBeTruthy();
   expect(

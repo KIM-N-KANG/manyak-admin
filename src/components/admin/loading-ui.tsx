@@ -6,6 +6,10 @@ import { usePathname } from 'next/navigation';
 
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  OverviewCard,
+  overviewGridClassName,
+} from '@/features/dashboard/overview-card';
 import { useSkeletonVisible } from '@/features/shared/use-skeleton-visible';
 import { cn } from '@/lib/utils';
 
@@ -48,16 +52,7 @@ export function InlineSkeleton() {
 }
 
 export function SummaryCardSkeleton({ visible = true }: { visible?: boolean }) {
-  return (
-    <Card
-      aria-hidden="true"
-      style={{ visibility: visible ? 'visible' : 'hidden' }}
-      className="min-w-0 p-6"
-      data-loading-layout="summary-card">
-      <Skeleton className="h-5 w-24" />
-      <InlineSkeleton />
-    </Card>
-  );
+  return <OverviewCard loading="all" visible={visible} />;
 }
 
 export function SummarySkeleton({
@@ -72,8 +67,10 @@ export function SummarySkeleton({
   return (
     <div
       className={cn(
-        'mb-5 grid items-stretch gap-3 sm:grid-cols-2',
-        overview ? 'gap-5 xl:grid-cols-3' : 'gap-5 xl:grid-cols-4',
+        'mb-5',
+        overview
+          ? overviewGridClassName
+          : 'grid items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-4',
       )}>
       {Array.from({ length: count }, (_, i) =>
         overview ? (
