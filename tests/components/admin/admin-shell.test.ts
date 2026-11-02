@@ -38,11 +38,11 @@ beforeEach(() => {
 
 const entries = [
   ['/dashboard', '개요'],
-  ['/analytics/growth', '성장'],
-  ['/analytics/stories', '스토리'],
+  ['/analytics/inflow', '유입'],
+  ['/analytics/audience', '사용자'],
+  ['/analytics/content', '콘텐츠'],
   ['/analytics/chats', '채팅'],
-  ['/analytics/payments', '결제'],
-  ['/analytics/ops', '운영'],
+  ['/analytics/revenue', '수익'],
   ['/members', '회원'],
   ['/stories', '스토리'],
   ['/moderation/submissions', '검수 제출'],
@@ -55,6 +55,7 @@ const entries = [
   ['/notifications/campaigns', '캠페인'],
   ['/notifications/stats', '발송 통계'],
   ['/notifications/templates', '문구 템플릿'],
+  ['/analytics/ops', '지표'],
 ] as const;
 
 function shell(pathname: string) {
@@ -66,11 +67,12 @@ function shell(pathname: string) {
 }
 
 describe('관리자 메뉴 구조', () => {
-  it('번호 없는 세 구역에 지정한 메뉴를 순서대로 배치한다', () => {
+  it('번호 없는 네 구역에 지정한 메뉴를 순서대로 배치한다', () => {
     shell('/dashboard');
 
     fireEvent.click(screen.getByRole('button', { name: '관리' }));
     fireEvent.click(screen.getByRole('button', { name: '알림' }));
+    fireEvent.click(screen.getByRole('button', { name: '운영' }));
 
     const nav = screen.getByRole('navigation', { name: '관리자 메뉴' });
 
@@ -78,7 +80,7 @@ describe('관리자 메뉴 구조', () => {
       within(nav)
         .getAllByRole('heading', { level: 2 })
         .map((heading) => heading.textContent?.replace('▸', '')),
-    ).toEqual(['대시보드', '관리', '알림']);
+    ).toEqual(['대시보드', '관리', '알림', '운영']);
     expect(
       within(nav)
         .getAllByRole('link')
@@ -129,9 +131,11 @@ describe('관리자 메뉴 구조', () => {
   it('지표 메뉴는 플랫폼, 대상, 캠페인을 유지하고 기간과 다른 조건은 붙이지 않는다', () => {
     navigation.search =
       'tab=activity&platform=android&segment=member&campaign=TEST&range=last7d&storyId=x';
-    shell('/analytics/growth');
+    shell('/analytics/audience');
 
-    const group = screen.getByRole('region', { name: '대시보드' });
+    fireEvent.click(screen.getByRole('button', { name: '운영' }));
+
+    const group = screen.getByRole('navigation', { name: '관리자 메뉴' });
 
     for (const [path] of entries.filter(([path]) =>
       path.startsWith('/analytics/'),

@@ -56,7 +56,7 @@ export const platformOptions = [
   ['web', '웹'],
   ['android', '앱'],
 ] as const;
-/** 성장 첫 방문 활성화와 스토리 간편 제작 퍼널의 광고 구분(URL `adSegment`)이다. 서버로 보내지 않는다. */
+/** 유입의 첫 방문 활성화와 간편 제작 퍼널의 광고 구분(URL `adSegment`)이다. 서버로 보내지 않는다. */
 export const adSegments = [
   ['all', '전체'],
   ['ads', '광고 유입'],

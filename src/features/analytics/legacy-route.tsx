@@ -12,30 +12,57 @@ export const legacyRoutes: Record<
   }
 > = {
   '/dashboard/analytics': { fallback: ['chats', 'engagement'], tabs: {} },
-  '/analytics/acquisition': {
-    fallback: ['growth', 'trend'],
+  '/analytics/growth': {
+    fallback: ['inflow', 'trend'],
+    tabs: Object.fromEntries([
+      ...[
+        'trend',
+        'activation',
+        'creatives',
+        'sources',
+        'app',
+        'push',
+        'installs',
+      ].map((tab) => [tab, ['inflow', tab] as const]),
+      ...['activity', 'signups', 'retention'].map((tab) => [
+        tab,
+        ['audience', tab] as const,
+      ]),
+    ]),
+  },
+  '/analytics/stories': {
+    fallback: ['content', 'making'],
     tabs: {
-      trend: ['growth', 'trend'],
-      creation: ['stories', 'creation'],
-      'story-detail': ['stories', 'story-detail'],
-      sources: ['growth', 'sources'],
-      push: ['growth', 'push'],
-      installs: ['growth', 'installs'],
+      making: ['content', 'making'],
+      creation: ['inflow', 'creation'],
+      'story-detail': ['inflow', 'story-detail'],
+    },
+  },
+  '/analytics/payments': { fallback: ['revenue', ''], tabs: {} },
+  '/analytics/acquisition': {
+    fallback: ['inflow', 'trend'],
+    tabs: {
+      trend: ['inflow', 'trend'],
+      creation: ['inflow', 'creation'],
+      'story-detail': ['inflow', 'story-detail'],
+      sources: ['inflow', 'sources'],
+      push: ['inflow', 'push'],
+      installs: ['inflow', 'installs'],
     },
   },
   '/analytics/users': {
-    fallback: ['growth', 'activity'],
+    fallback: ['audience', 'activity'],
     tabs: {
-      activity: ['growth', 'activity'],
-      sessions: ['growth', 'activity'],
-      retention: ['growth', 'retention'],
-      signups: ['growth', 'signups'],
+      activity: ['audience', 'activity'],
+      sessions: ['audience', 'activity'],
+      retention: ['audience', 'retention'],
+      signups: ['audience', 'signups'],
     },
   },
   '/analytics/conversion': {
-    fallback: ['growth', 'signups'],
+    fallback: ['audience', 'signups'],
     tabs: {
-      funnels: ['growth', 'signups'],
+      funnels: ['audience', 'signups'],
       'turn-reach': ['chats', 'engagement'],
     },
   },
@@ -65,7 +92,8 @@ export function legacyHref(pathname: string, params: URLSearchParams) {
     : mapping.fallback;
   const next = new URLSearchParams(params);
 
-  next.set('tab', tab);
+  if (tab) next.set('tab', tab);
+  else next.delete('tab');
 
   if (
     pathname === '/dashboard/analytics' &&
@@ -76,7 +104,9 @@ export function legacyHref(pathname: string, params: URLSearchParams) {
     next.delete('days');
   }
 
-  return `/analytics/${domain}?${next}`;
+  const query = next.toString();
+
+  return `/analytics/${domain}${query ? `?${query}` : ''}`;
 }
 
 export function LegacyRoute() {

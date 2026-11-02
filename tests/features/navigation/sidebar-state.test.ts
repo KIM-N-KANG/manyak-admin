@@ -27,9 +27,14 @@ describe('사이드바 펼침 상태', () => {
     expect(currentSidebarGroup('/unknown')).toBeNull();
     expect(expandedSidebar('/unknown', closedSidebar)).toEqual(closedSidebar);
   });
-  it('명시한 세 구역만 저장하고 잘못된 저장값과 저장 차단을 복구한다', () => {
+  it('명시한 네 구역만 저장하고 잘못된 저장값과 저장 차단을 복구한다', () => {
     const setItem = vi.fn();
-    const preferences = { dashboard: true, manage: false, notifications: true };
+    const preferences = {
+      dashboard: true,
+      manage: false,
+      notifications: true,
+      ops: false,
+    };
 
     expect(saveSidebarState({ setItem }, preferences)).toBe(true);
     expect(setItem).toHaveBeenCalledWith(

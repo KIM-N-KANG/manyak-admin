@@ -55,7 +55,7 @@ it('로딩 영역은 busy·status와 숨겨진 기존 문구를 한 번 제공�
   expect(rows.children[0].children).toHaveLength(4);
 });
 
-it('개요 Suspense 골격은 10개 요약과 8개 작은 차트를 같은 반응형 칸에 예약한다', () => {
+it('개요 Suspense 골격은 6개 요약과 큰 차트 하나를 같은 반응형 칸에 예약한다', () => {
   const { container } = render(
     createElement(PageSkeleton, {
       layout: 'overview',
@@ -64,20 +64,20 @@ it('개요 Suspense 골격은 10개 요약과 8개 작은 차트를 같은 반�
 
   expect(
     container.querySelectorAll('[data-loading-layout="summary-card"]'),
-  ).toHaveLength(10);
+  ).toHaveLength(6);
 
   const grid = container.querySelector(
     '[data-loading-layout="summary-card"]',
   )!.parentElement!;
 
-  expect(grid.className).toContain('xl:grid-cols-5');
+  expect(grid.className).toContain('xl:grid-cols-3');
   expect(grid.className).toContain('items-stretch');
 
   const charts = container.querySelector('[data-loading-layout="charts"]')!;
 
-  expect(charts.children).toHaveLength(8);
-  expect(charts.className).toContain('xl:grid-cols-4');
-  expect(charts.querySelectorAll('.h-\\[200px\\]')).toHaveLength(8);
+  expect(charts.children).toHaveLength(1);
+  expect(charts.className).toContain('grid-cols-1');
+  expect(charts.querySelectorAll('.h-\\[320px\\]')).toHaveLength(1);
 });
 
 it('검수 상세 골격은 실제 1:2 열을 유지하고 차트는 고정된 콘텐츠 높이를 사용한다', () => {

@@ -1,5 +1,6 @@
 import type { ChatRoom } from '@/features/chats/types';
 import { aiFeatures, genreDepthTitle } from '@/features/dashboard/chart-data';
+import { previousPeriod } from '@/features/dashboard/comparison';
 import type { DateRange } from '@/features/dashboard/date-range';
 import type {
   ChartLink,
@@ -281,10 +282,42 @@ export function getDashboardCharts(days: number | DateRange): DashboardCharts {
       'ai',
     );
 
+  const previous = previousPeriod({ from, to });
+  const totals = (rows: DailyMetrics[]) =>
+    Object.fromEntries(
+      [
+        'joined',
+        'chats',
+        'turns',
+        'stories',
+        'granted',
+        'spent',
+        'payments',
+        'revenue',
+        'attendance',
+      ].map((key) => [
+        key,
+        rows.reduce(
+          (sum, row) => sum + row[key as keyof Omit<DailyMetrics, 'date'>],
+          0,
+        ),
+      ]),
+    ) as Omit<DailyMetrics, 'date'>;
+
   return {
     asOf,
     from,
     to,
+    totals: totals(selected),
+    previous: {
+      from: previous.from,
+      to: previous.to,
+      totals: totals(
+        daily.filter(
+          (day) => day.date >= previous.from && day.date <= previous.to,
+        ),
+      ),
+    },
     daily: selected,
     distributions: [
       {

@@ -9,6 +9,14 @@ import { metricDefinitions } from './metric-definitions-data';
 export const MetricScope = createContext('');
 
 export const definitionTitles: Record<string, Record<string, number>> = {
+  overview: {
+    '오늘 활성 사용자': 76,
+    가입자: 77,
+    '채팅 시작': 77,
+    턴: 77,
+    '결제 금액 (환불 포함)': 77,
+    '앱 설치(Android)': 78,
+  },
   acquisition: {
     '기기 유형별 웹 신규 방문자': 52,
     '첫 방문 활성화 퍼널': 53,

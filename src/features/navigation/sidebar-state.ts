@@ -4,11 +4,11 @@ export const navigation = [
     title: '대시보드',
     items: [
       ['/dashboard', '개요'],
-      ['/analytics/growth', '성장'],
-      ['/analytics/stories', '스토리'],
+      ['/analytics/inflow', '유입'],
+      ['/analytics/audience', '사용자'],
+      ['/analytics/content', '콘텐츠'],
       ['/analytics/chats', '채팅'],
-      ['/analytics/payments', '결제'],
-      ['/analytics/ops', '운영'],
+      ['/analytics/revenue', '수익'],
     ],
   },
   {
@@ -35,6 +35,7 @@ export const navigation = [
       ['/notifications/templates', '문구 템플릿'],
     ],
   },
+  { id: 'ops', title: '운영', items: [['/analytics/ops', '지표']] },
 ] as const;
 
 export type SidebarGroup = (typeof navigation)[number]['id'];
@@ -44,6 +45,7 @@ export const closedSidebar: SidebarPreferences = {
   dashboard: false,
   manage: false,
   notifications: false,
+  ops: false,
 };
 
 export function isMenuActive(pathname: string, href: string) {
@@ -118,6 +120,7 @@ export function saveSidebarState(
         dashboard: value.dashboard,
         manage: value.manage,
         notifications: value.notifications,
+        ops: value.ops,
       }),
     );
 
