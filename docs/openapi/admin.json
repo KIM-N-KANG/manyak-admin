@@ -6,9 +6,9 @@
     "version": "v1"
   },
   "x-source": {
-    "input": "/tmp/knk-admin-dash-orch/admin-openapi-integrated-clean.json",
-    "receivedAt": "2026-11-02T07:59:23.676Z",
-    "revision": "integrated-b38a5eb"
+    "input": "https://dev-api.manyak.app/v3/api-docs",
+    "receivedAt": "2026-11-02T09:52:54.270Z",
+    "revision": "e9454ef"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -9505,10 +9505,19 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "integralNumber": {
+          "container": {
+            "type": "boolean"
+          },
+          "string": {
             "type": "boolean"
           },
           "floatingPointNumber": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "integralNumber": {
             "type": "boolean"
           },
           "nodeType": {
@@ -9525,7 +9534,10 @@
               "STRING"
             ]
           },
-          "valueNode": {
+          "int": {
+            "type": "boolean"
+          },
+          "long": {
             "type": "boolean"
           },
           "short": {
@@ -9540,6 +9552,15 @@
           "bigInteger": {
             "type": "boolean"
           },
+          "valueNode": {
+            "type": "boolean"
+          },
+          "object": {
+            "type": "boolean"
+          },
+          "pojo": {
+            "type": "boolean"
+          },
           "textual": {
             "type": "boolean",
             "deprecated": true
@@ -9548,27 +9569,6 @@
             "type": "boolean"
           },
           "binary": {
-            "type": "boolean"
-          },
-          "pojo": {
-            "type": "boolean"
-          },
-          "int": {
-            "type": "boolean"
-          },
-          "long": {
-            "type": "boolean"
-          },
-          "container": {
-            "type": "boolean"
-          },
-          "object": {
-            "type": "boolean"
-          },
-          "string": {
-            "type": "boolean"
-          },
-          "missingNode": {
             "type": "boolean"
           },
           "number": {
