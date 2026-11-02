@@ -347,7 +347,13 @@ it('개요는 카드 여덟 개와 지표를 고르는 큰 그래프 하나를 �
   expect(summary.classList.contains('xl:grid-cols-4')).toBe(true);
   expect(summary.classList.contains('lg:grid-cols-3')).toBe(false);
   expect(summary.classList.contains('2xl:grid-cols-6')).toBe(false);
-  expect(summary.querySelector('svg')).toBeNull();
+
+  for (const svg of summary.querySelectorAll('svg')) {
+    expect(svg.getAttribute('aria-hidden')).toBe('true');
+    expect(svg.querySelectorAll('path')).toHaveLength(1);
+    expect(svg.querySelectorAll('circle,text')).toHaveLength(0);
+  }
+
   expect(screen.getByRole('combobox', { name: '지표' })).toBeTruthy();
   expect(
     screen.getByRole('link', { name: '오늘 활성 사용자' }).getAttribute('href'),
