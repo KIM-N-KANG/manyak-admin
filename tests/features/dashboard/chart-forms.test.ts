@@ -362,7 +362,19 @@ it('개요는 카드 여섯 개와 지표를 고르는 큰 그래프 하나를 �
       .querySelector('.recharts-reference-line-line')
       ?.getAttribute('stroke-dasharray'),
   ).toBe('4 4');
-  expect(screen.getAllByRole('columnheader')).toHaveLength(9);
+
+  const trends = screen.getByRole('region', { name: '일별 지표 추이' });
+  const details = screen.getByText('일별 수치와 목록 이동').closest('details')!;
+
+  expect(trends.querySelectorAll('details')).toHaveLength(1);
+  expect(details.hasAttribute('open')).toBe(false);
+  expect(within(details).getAllByRole('columnheader')).toHaveLength(9);
+  expect(within(details).getAllByRole('row')).toHaveLength(
+    state.charts!.daily.length + 1,
+  );
+
+  for (const row of within(details).getAllByRole('row').slice(1))
+    expect(within(row).getAllByRole('link')).toHaveLength(8);
 });
 
 it('미리보기는 35개 장르 중 상위 30개와 나머지 안내·전체 표를 표시하고 서버 제목을 표시한다', () => {

@@ -123,27 +123,32 @@ export function DashboardScreen() {
                 <div className="mt-3 flex flex-wrap items-center gap-4">
                   {charts.isPending ? (
                     <LoadingStatus>
-                      <Skeleton className="h-9 w-24" />
+                      <div className="flex h-9 items-center gap-4">
+                        <Skeleton className="h-9 w-24" />
+                        <Skeleton className="h-9 w-28" />
+                      </div>
                     </LoadingStatus>
                   ) : (
-                    <span className="text-2xl font-semibold tracking-tight break-all sm:text-3xl">
-                      {status ??
-                        (c?.totals?.[key] == null ? (
-                          '준비 중'
-                        ) : (
-                          <>
-                            <NumberValue value={c.totals[key]} />
-                            {unit}
-                          </>
-                        ))}
-                    </span>
+                    <>
+                      <span className="text-2xl font-semibold tracking-tight break-all sm:text-3xl">
+                        {status ??
+                          (c?.totals?.[key] == null ? (
+                            '준비 중'
+                          ) : (
+                            <>
+                              <NumberValue value={c.totals[key]} />
+                              {unit}
+                            </>
+                          ))}
+                      </span>
+                      <Comparison
+                        value={c?.totals?.[key]}
+                        previous={c?.previous?.totals?.[key]}
+                        days={days}
+                        status={status}
+                      />
+                    </>
                   )}
-                  <Comparison
-                    value={c?.totals?.[key]}
-                    previous={c?.previous?.totals?.[key]}
-                    days={days}
-                    status={status}
-                  />
                 </div>
                 <p className="mt-3 text-xs text-muted-foreground">
                   오늘 {today.toLocaleString('ko-KR')}

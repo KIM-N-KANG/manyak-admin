@@ -151,7 +151,7 @@ it('1초 응답 동안 개요의 6개 카드와 1개 추이를 같은 칸에 예
     '앱 설치(Android)',
   ]);
 });
-it('요약이 먼저 오면 누적·오늘을 유지하고 기간 합계 줄 높이만 예약한다', async () => {
+it('요약이 먼저 오면 오늘·누적을 유지하고 큰 숫자와 증감을 함께 예약한다', async () => {
   summaryDelay = 100;
   draw(DashboardScreen);
   await tick(250);
@@ -161,12 +161,28 @@ it('요약이 먼저 오면 누적·오늘을 유지하고 기간 합계 줄 높
   expect(card.textContent).toContain('누적');
   expect(card.textContent).toContain('오늘');
 
-  const skeleton = card.querySelector('[data-slot="skeleton"]')!;
+  const skeletons = card.querySelectorAll('[data-slot="skeleton"]');
 
-  expect(skeleton.className).toContain('h-9');
+  expect(skeletons).toHaveLength(2);
+
+  for (const skeleton of skeletons) expect(skeleton.className).toContain('h-9');
+
+  expect(within(card).queryByText('준비 중')).toBeNull();
+  expect(within(card).queryByText(/이전 .*일 대비/)).toBeNull();
   expect(within(card).getByText('데이터를 불러오는 중입니다…').className).toBe(
     'sr-only',
   );
+
+  for (const label of ['가입자', '채팅 시작', '턴', '결제 금액']) {
+    const dbCard = screen.getByRole('link', { name: new RegExp(`^${label}`) });
+
+    expect(dbCard.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(2);
+    expect(within(dbCard).queryByText('준비 중')).toBeNull();
+  }
+
+  await tick(752);
+  expect(card.querySelector('[data-slot="skeleton"]')).toBeNull();
+  expect(within(card).getAllByText('준비 중')).toHaveLength(2);
 });
 it.each([
   ['이프 내역', CreditTransactionsScreen, 4],
