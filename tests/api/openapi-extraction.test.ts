@@ -1,9 +1,11 @@
 import { execFileSync } from 'node:child_process';
 import {
+  copyFileSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -211,3 +213,113 @@ it('채팅 모델 응답의 생성 입력 매체만 정규화하고 원본 계�
     expect(content['application/json']).toEqual(source['*/*']);
   }
 });
+
+it('메타데이터 없는 실제 OpenAPI를 임시 폴더에서 추출하고 생성해도 홈 섹션 보완을 유지한다', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'manyak-home-extraction-'));
+
+  try {
+    mkdirSync(join(directory, 'docs/openapi'), { recursive: true });
+    mkdirSync(join(directory, 'src/api/generated/zod'), { recursive: true });
+    mkdirSync(join(directory, 'scripts'), { recursive: true });
+    symlinkSync(
+      resolve('node_modules'),
+      join(directory, 'node_modules'),
+      'dir',
+    );
+    writeFileSync(
+      join(directory, 'package.json'),
+      JSON.stringify({ type: 'module', dependencies: { zod: '^4.4.3' } }),
+    );
+    copyFileSync(
+      'orval.admin.config.ts',
+      join(directory, 'orval.admin.config.ts'),
+    );
+
+    for (const name of [
+      'extract-admin-openapi.mjs',
+      'transform-admin-openapi.mjs',
+      'overlay-home-sections-openapi.mjs',
+      'refine-home-section-zod.mjs',
+    ])
+      copyFileSync(resolve('scripts', name), join(directory, 'scripts', name));
+
+    const original = JSON.parse(
+      readFileSync('docs/openapi/admin.json', 'utf8'),
+    );
+
+    delete original['x-contract-overlay'];
+    delete original['x-source'];
+
+    const input = join(directory, 'input.json');
+
+    writeFileSync(input, JSON.stringify(original));
+    execFileSync(
+      process.execPath,
+      [
+        join(directory, 'scripts/extract-admin-openapi.mjs'),
+        input,
+        'test-revision',
+      ],
+      { cwd: directory },
+    );
+
+    const snapshot = JSON.parse(
+      readFileSync(join(directory, 'docs/openapi/admin.json'), 'utf8'),
+    );
+
+    expect(snapshot['x-contract-overlay']).toBeUndefined();
+    expect(snapshot.components.schemas.HomeSectionCreateRequest).toEqual(
+      original.components.schemas.HomeSectionCreateRequest,
+    );
+    execFileSync(
+      process.execPath,
+      [
+        resolve('node_modules/orval/dist/bin/orval.mjs'),
+        '--config',
+        join(directory, 'orval.admin.config.ts'),
+      ],
+      {
+        cwd: directory,
+        env: {
+          ...process.env,
+          PATH: resolve('node_modules/.bin') + ':' + process.env.PATH,
+        },
+        stdio: 'pipe',
+      },
+    );
+
+    const result = JSON.parse(
+      execFileSync(
+        process.execPath,
+        [
+          '--input-type=module',
+          '-e',
+          `
+      import ts from 'typescript';
+      import { readFileSync, writeFileSync } from 'node:fs';
+      const source = readFileSync('src/api/generated/zod/admin.ts','utf8');
+      const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText;
+      writeFileSync('src/api/generated/zod/admin.mjs', code);
+      const { Create5Body, Update3Body, List4Response } = await import('./src/api/generated/zod/admin.mjs');
+      const valid = {name:' '.repeat(30)+'가',source:'FILTER',sort:'popular',reason:'변경'};
+      console.log(JSON.stringify({ name: Create5Body.parse(valid).name, decimalCreate: Create5Body.safeParse({...valid,itemLimit:1.5}).success, decimalUpdate: Update3Body.safeParse({reason:'변경',sortOrder:1.5}).success, blankReason: Create5Body.safeParse({...valid,reason:' '}).success, missingItems: List4Response.safeParse({}).success, invalidStory: Create5Body.safeParse({...valid,storyIds:['invalid']}).success, tooManyGenres: Create5Body.safeParse({...valid,genres:Array(11).fill('로맨스')}).success, nullFlag: Update3Body.safeParse({reason:'변경',originalOnly:null}).success }));
+    `,
+        ],
+        { cwd: directory, encoding: 'utf8' },
+      ),
+    );
+
+    expect(result).toEqual({
+      name: '가',
+      decimalCreate: false,
+      decimalUpdate: false,
+      blankReason: false,
+      missingItems: false,
+      invalidStory: false,
+      tooManyGenres: false,
+      nullFlag: false,
+    });
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}, 30000);

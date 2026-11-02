@@ -19,6 +19,7 @@ export const navigation = [
       ['/stories', '스토리'],
       ['/moderation/submissions', '검수 제출'],
       ['/originals', '오리지널'],
+      ['/home-sections', '홈 섹션'],
       ['/chats', '채팅'],
       ['/payments', '결제'],
       ['/credits/transactions', '이프'],
