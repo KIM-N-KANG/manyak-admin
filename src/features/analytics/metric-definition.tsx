@@ -4,7 +4,10 @@ import { createContext, type ReactNode, useContext } from 'react';
 
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 
-import { metricDefinitions } from './metric-definitions-data';
+import {
+  metricDefinitions,
+  overviewAiCostDefinition,
+} from './metric-definitions-data';
 
 export const MetricScope = createContext('');
 
@@ -12,6 +15,8 @@ export const definitionTitles: Record<string, Record<string, number>> = {
   overview: {
     '오늘 활성 사용자': 76,
     가입자: 77,
+    '스토리 생성': 77,
+    'AI 비용': overviewAiCostDefinition,
     '채팅 시작': 77,
     턴: 77,
     '결제 금액 (환불 포함)': 77,

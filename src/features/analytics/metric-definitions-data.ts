@@ -618,7 +618,7 @@ export const metricDefinitions = [
   ],
   [
     '개요',
-    '가입자, 채팅 시작, 턴, 결제 금액 (환불 포함) 카드',
+    '가입자, 결제 금액 (환불 포함), 스토리 생성, 채팅 시작, 턴 카드',
     '서버 DB',
     '팀 계정 제외',
     '선택 기간의 일별 값 합<br>증감은 같은 길이의 직전 기간 합 대비<br>작은 줄의 오늘은 KST 자정부터, 누적은 서비스 시작부터',
@@ -848,4 +848,14 @@ export const metricDefinitions = [
     '그날 활성 회원 수를 그날로 끝나는 30일 안 활성 회원 수로 나눈 값',
     '메시지 시각의 KST 날짜',
   ],
+  [
+    '개요',
+    'AI 비용 카드',
+    'Langfuse와 서버 DB',
+    '팀 계정을 포함한 모든 AI 호출',
+    '선택 기간의 AI 비용 합이며 정의는 운영 AI 비용의 총 AI 비용과 같음<br>증감은 같은 길이의 직전 기간 합 대비<br>작은 줄의 턴당 원가는 운영 AI 비용의 턴당 원가와 같음',
+    '호출 시각의 KST 날짜',
+  ],
 ] as const;
+
+export const overviewAiCostDefinition = metricDefinitions.length - 1;

@@ -5,6 +5,7 @@ import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 import { aiFeatureLabel, aiFeatures } from '@/features/dashboard/chart-data';
 
+import { costPerTurn } from './ai-cost';
 import { Charts, dailyRows } from './charts';
 import {
   hasChatConversion,
@@ -1165,15 +1166,7 @@ export function QualityContent({
           { label: '총 AI 비용', value: n(d.totals.costKrw, '원') },
           {
             label: '턴당 원가',
-            value:
-              d.totals.costPerTurnKrw === null
-                ? items.some(
-                    (item) =>
-                      item.feature === 'chat_response' && item.calls > 0,
-                  )
-                  ? '계산할 수 없음'
-                  : '호출 없음'
-                : n(d.totals.costPerTurnKrw, '원'),
+            value: costPerTurn(d),
           },
           {
             label: '스토리당 원가',
