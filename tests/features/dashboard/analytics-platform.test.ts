@@ -101,7 +101,9 @@ it('서버 합계를 크게 표시하고 Web·Android를 더해 합계를 재계
 
   await card.findByText('203');
 
-  expect(card.getByText('203').closest('dd')!.className).toContain('text-3xl');
+  expect(
+    card.getByText('203').closest('[data-overview-slot="value"]')!.className,
+  ).toContain('text-2xl');
   expect(card.getByText('186')).toBeTruthy();
   expect(card.getByText('19')).toBeTruthy();
   expect(card.queryByText('205')).toBeNull();

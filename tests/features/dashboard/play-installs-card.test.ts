@@ -115,7 +115,9 @@ it('기간 합계가 큰 값이고 누적은 작은 줄이며 유입의 앱 설�
     .slice(0, 7)
     .reduce((sum, day) => sum + day.installs, 0);
 
-  expect(view.container.querySelector('dd')!.textContent).toContain(`${total}`);
+  expect(
+    view.container.querySelector('[data-overview-slot="value"]')!.textContent,
+  ).toContain(`${total}`);
   expect(
     screen.getByText(
       `누적 ${playInstalls.totalInstalls.toLocaleString('ko-KR')}대`,
@@ -205,7 +207,9 @@ it('기간을 바꾸면 받은 설치 응답으로 다시 합산하고 보고일
     .reduce((sum, day) => sum + day.installs, 0);
 
   view.rerender(card(range));
-  expect(view.container.querySelector('dd')!.textContent).toContain(`${total}`);
+  expect(
+    view.container.querySelector('[data-overview-slot="value"]')!.textContent,
+  ).toContain(`${total}`);
   expect(
     screen.getByText(
       `누적 ${playInstalls.totalInstalls.toLocaleString('ko-KR')}대`,

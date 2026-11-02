@@ -75,6 +75,7 @@ let client: QueryClient;
 let failAnalytics: boolean;
 let failPlay: boolean;
 let failSummary: boolean;
+let failCost: boolean;
 const requested: string[] = [];
 
 beforeEach(() => {
@@ -87,6 +88,7 @@ beforeEach(() => {
   failAnalytics = false;
   failPlay = false;
   failSummary = false;
+  failCost = false;
   client = new QueryClient({
     defaultOptions: {
       queries: {
@@ -101,6 +103,9 @@ beforeEach(() => {
     'fetch',
     vi.fn(async (url: string) => {
       requested.push(url);
+
+      if (failCost && url.includes('/quality/ai-cost?from=2026-10-15'))
+        return Response.json({ message: 'unavailable' }, { status: 503 });
 
       const request = new Request(`http://localhost${url}`);
 
@@ -146,9 +151,11 @@ function dashboard() {
 }
 
 async function expectDbMetricsVisible() {
-  expect(screen.getByText('가입자', { selector: 'p' })).toBeTruthy();
   expect(
-    screen.getByText('결제 금액 (환불 포함)', { selector: 'p' }),
+    screen.getByRole('heading', { name: '가입자', level: 3 }),
+  ).toBeTruthy();
+  expect(
+    screen.getByRole('heading', { name: '결제 금액 (환불 포함)', level: 3 }),
   ).toBeTruthy();
   expect(
     await screen.findByRole('region', { name: '일별 지표 추이' }),
@@ -201,7 +208,9 @@ describe('Amplitude 실패 격리', () => {
     );
 
     const memberCard = await screen.findByRole('link', { name: /^가입자/ });
-    const headline = memberCard.querySelector('p.mt-3')!.textContent;
+    const headline = memberCard.querySelector(
+      '[data-overview-slot="detail"]',
+    )!.textContent;
     const sevenDays = await chartsResponse(
       new Request(
         'http://localhost/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
@@ -243,7 +252,9 @@ describe('Amplitude 실패 격리', () => {
     await within(updatedCard).findByText(
       `${ninetyTotal.toLocaleString('ko-KR')}`,
     );
-    expect(updatedCard.querySelector('p.mt-3')!.textContent).toBe(headline);
+    expect(
+      updatedCard.querySelector('[data-overview-slot="detail"]')!.textContent,
+    ).toBe(headline);
   });
 
   it('출처 도움말은 키보드 포커스로 지연·팀 계정 제외 기준을 보여 준다', async () => {
@@ -481,9 +492,49 @@ it('DB 요약 실패는 인라인 텍스트로 표시하고 같은 요청만 재
 
   failSummary = false;
   fireEvent.click(within(alert).getByRole('button', { name: '다시 시도' }));
-  await screen.findByText('가입자', { selector: 'p' });
+  await screen.findByRole('heading', { name: '가입자', level: 3 });
   expect(requested.filter((url) => !url.includes('/summary'))).toEqual(
     otherRequests,
   );
   expect(screen.queryByRole('alert')).toBeNull();
+});
+
+it('AI 비용 503은 나머지 일곱 카드 값을 유지하고 선택 비용만 다시 시도한다', async () => {
+  failCost = true;
+  render(dashboard());
+
+  const cost = within(screen.getByRole('region', { name: 'AI 비용' }));
+
+  await cost.findByRole('alert');
+
+  const grid = screen.getByRole('region', { name: '요약 지표' });
+
+  await waitFor(() => {
+    const others = Array.from(grid.children).filter(
+      (node) => node.getAttribute('aria-label') !== 'AI 비용',
+    );
+
+    expect(others).toHaveLength(7);
+
+    for (const node of others) {
+      expect(node.querySelector('[data-slot="skeleton"]')).toBeNull();
+      expect(
+        node.querySelector('[data-overview-slot="value"]')!.textContent,
+      ).not.toBe('');
+      expect(within(node as HTMLElement).queryByRole('alert')).toBeNull();
+    }
+  });
+
+  const otherRequests = requested.filter(
+    (url) => !url.includes('/quality/ai-cost?from=2026-10-15'),
+  );
+
+  failCost = false;
+  fireEvent.click(cost.getByRole('button', { name: '다시 시도' }));
+  await waitFor(() => expect(cost.queryByRole('alert')).toBeNull());
+  expect(
+    requested.filter(
+      (url) => !url.includes('/quality/ai-cost?from=2026-10-15'),
+    ),
+  ).toEqual(otherRequests);
 });

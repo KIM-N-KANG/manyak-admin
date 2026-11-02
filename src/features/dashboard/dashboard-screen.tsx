@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import {
@@ -11,10 +10,8 @@ import {
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 import {
   ChartsSkeleton,
-  LoadingStatus,
   SummaryCardSkeleton,
 } from '@/components/admin/loading-ui';
-import { Skeleton } from '@/components/ui/skeleton';
 import { DefinitionText } from '@/features/analytics/metric-definition';
 import { AnalyticsSection } from '@/features/dashboard/analytics-section';
 import {
@@ -34,7 +31,9 @@ import type {
 import { useApi } from '@/features/shared/use-api';
 import { useSkeletonVisible } from '@/features/shared/use-skeleton-visible';
 
-import { Comparison, previousPeriod } from './comparison';
+import { AiCostCard } from './ai-cost-card';
+import { previousPeriod } from './comparison';
+import { OverviewCard, overviewGridClassName } from './overview-card';
 
 export function DashboardScreen() {
   const range = useDashboardRange();
@@ -65,6 +64,22 @@ export function DashboardScreen() {
           'joined',
         ],
         [
+          '결제 금액 (환불 포함)',
+          s.payments.amountKrwTotal,
+          s.payments.amountKrwToday,
+          '/payments',
+          '원',
+          'revenue',
+        ],
+        [
+          '스토리 생성',
+          s.stories.total,
+          s.stories.createdToday,
+          '/stories',
+          '개',
+          'stories',
+        ],
+        [
           '채팅 시작',
           s.chats.startedTotal,
           s.chats.startedToday,
@@ -80,16 +95,52 @@ export function DashboardScreen() {
           '턴',
           'turns',
         ],
-        [
-          '결제 금액 (환불 포함)',
-          s.payments.amountKrwTotal,
-          s.payments.amountKrwToday,
-          '/payments',
-          '원',
-          'revenue',
-        ],
       ] as const)
     : [];
+
+  const dbCards = cards.map(([label, total, today, href, unit, key]) => (
+    <OverviewCard
+      key={key}
+      title={label}
+      href={href}
+      fullLink
+      loading={charts.isPending ? 'value' : undefined}
+      value={
+        status ??
+        (c?.totals?.[key] == null ? (
+          '준비 중'
+        ) : (
+          <>
+            <NumberValue value={c.totals[key]} />
+            <span className="ml-1 text-xs font-normal text-muted-foreground">
+              {unit}
+            </span>
+          </>
+        ))
+      }
+      comparison={{
+        value: c?.totals?.[key],
+        previous: c?.previous?.totals?.[key],
+        days,
+        status,
+      }}
+      detail={`오늘 ${today.toLocaleString('ko-KR')}${unit}, 누적 ${total.toLocaleString('ko-KR')}${unit}`}
+      detailTitle={`오늘 ${today.toLocaleString('ko-KR')}${unit}, 누적 ${total.toLocaleString('ko-KR')}${unit}`}
+      help={
+        <HelpTooltip label={`${label} 집계 안내`}>
+          <DefinitionText index={77} />
+          {key === 'joined' && s ? (
+            <p className="mt-2">
+              탈퇴한 회원을 포함한 가입자 수입니다. 현재 회원{' '}
+              {s.members.active.toLocaleString('ko-KR')}명, 누적 탈퇴{' '}
+              {s.members.withdrawn.toLocaleString('ko-KR')}명이며 팀 계정은
+              제외합니다.
+            </p>
+          ) : null}
+        </HelpTooltip>
+      }
+    />
+  ));
 
   return (
     <>
@@ -106,73 +157,20 @@ export function DashboardScreen() {
       <section
         aria-label="요약 지표"
         aria-busy={summary.isPending}
-        className="mb-8 grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        className={`mb-8 ${overviewGridClassName}`}>
         <AnalyticsSection />
+        {dbCards[0] ??
+          (summary.isPending ? (
+            <SummaryCardSkeleton visible={showSummarySkeleton} />
+          ) : null)}
+
+        <PlayInstallsCard range={range} />
         {summary.isPending
           ? Array.from({ length: 4 }, (_, index) => (
               <SummaryCardSkeleton key={index} visible={showSummarySkeleton} />
             ))
-          : null}
-        {cards.map(([label, total, today, href, unit, key]) => (
-          <div key={key} className="relative">
-            <Link
-              href={href}
-              className="flex h-full items-start gap-3 rounded-md border bg-card p-6 transition-colors hover:border-foreground-tertiary focus-visible:ring-2 focus-visible:ring-ring">
-              <div className="min-w-0 flex-1">
-                <p className="pr-7 text-sm text-muted-foreground">{label}</p>
-                <div className="mt-3 flex flex-wrap items-center gap-4">
-                  {charts.isPending ? (
-                    <LoadingStatus>
-                      <div className="flex h-9 items-center gap-4">
-                        <Skeleton className="h-9 w-24" />
-                        <Skeleton className="h-9 w-28" />
-                      </div>
-                    </LoadingStatus>
-                  ) : (
-                    <>
-                      <span className="text-2xl font-semibold tracking-tight break-all sm:text-3xl">
-                        {status ??
-                          (c?.totals?.[key] == null ? (
-                            '준비 중'
-                          ) : (
-                            <>
-                              <NumberValue value={c.totals[key]} />
-                              {unit}
-                            </>
-                          ))}
-                      </span>
-                      <Comparison
-                        value={c?.totals?.[key]}
-                        previous={c?.previous?.totals?.[key]}
-                        days={days}
-                        status={status}
-                      />
-                    </>
-                  )}
-                </div>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  오늘 {today.toLocaleString('ko-KR')}
-                  {unit}, 누적 {total.toLocaleString('ko-KR')}
-                  {unit}
-                </p>
-              </div>
-            </Link>
-            <span className="absolute top-6 right-6">
-              <HelpTooltip label={`${label} 집계 안내`}>
-                <DefinitionText index={77} />
-                {key === 'joined' && s ? (
-                  <p className="mt-2">
-                    탈퇴한 회원을 포함한 가입자 수입니다. 현재 회원{' '}
-                    {s.members.active.toLocaleString('ko-KR')}명, 누적 탈퇴{' '}
-                    {s.members.withdrawn.toLocaleString('ko-KR')}명이며 팀
-                    계정은 제외합니다.
-                  </p>
-                ) : null}
-              </HelpTooltip>
-            </span>
-          </div>
-        ))}
-        <PlayInstallsCard range={range} />
+          : dbCards.slice(1)}
+        <AiCostCard query={range.query} previous={c?.previous} days={days} />
       </section>
       <QueryState
         skeleton={<ChartsSkeleton count={1} overview />}

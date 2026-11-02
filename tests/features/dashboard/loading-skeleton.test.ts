@@ -107,15 +107,17 @@ function draw(
   );
 }
 
-it('1초 응답 동안 개요의 6개 카드와 1개 추이를 같은 칸에 예약하고 값으로 교체한다', async () => {
+it('1초 응답 동안 개요의 8개 카드와 1개 추이를 같은 칸에 예약하고 값으로 교체한다', async () => {
   draw(DashboardScreen);
 
   const grid = screen.getByRole('region', { name: '요약 지표' });
-  const dbSkeletons = Array.from(grid.children).slice(1, 5) as HTMLElement[];
+  const dbSkeletons = Array.from(grid.children).filter(
+    (_, index) => index !== 0 && index !== 2 && index !== 7,
+  ) as HTMLElement[];
 
-  expect(grid.children).toHaveLength(6);
+  expect(grid.children).toHaveLength(8);
   expect(grid.children[0].getAttribute('aria-label')).toBe('오늘 활성 사용자');
-  expect(grid.children[5].getAttribute('aria-label')).toBe('앱 설치(Android)');
+  expect(grid.children[2].getAttribute('aria-label')).toBe('앱 설치(Android)');
 
   for (const card of dbSkeletons)
     expect(card.getAttribute('data-loading-layout')).toBe('summary-card');
@@ -131,11 +133,20 @@ it('1초 응답 동안 개요의 6개 카드와 1개 추이를 같은 칸에 예
   for (const card of grid.children)
     expect(card.querySelector('[data-slot="skeleton"]')).toBeTruthy();
 
+  for (const card of grid.children) {
+    expect(card.getAttribute('data-overview-card')).toBe('');
+    expect(
+      Array.from(card.querySelectorAll('[data-overview-slot]')).map((slot) =>
+        slot.getAttribute('data-overview-slot'),
+      ),
+    ).toEqual(['title', 'value', 'change', 'comparison', 'detail']);
+  }
+
   const charts = document.querySelector('[data-loading-layout="charts"]')!;
 
   expect(charts.children).toHaveLength(1);
   await tick(802);
-  expect(grid.children).toHaveLength(6);
+  expect(grid.children).toHaveLength(8);
   expect(grid.getAttribute('aria-busy')).toBe('false');
   expect(grid.querySelector('[data-slot="skeleton"]')).toBeNull();
   expect(
@@ -145,10 +156,12 @@ it('1초 응답 동안 개요의 6개 카드와 1개 추이를 같은 칸에 예
   ).toEqual([
     '오늘 활성 사용자',
     '가입자',
+    '앱 설치(Android)',
+    '결제 금액 (환불 포함)',
+    '스토리 생성',
     '채팅 시작',
     '턴',
-    '결제 금액 (환불 포함)',
-    '앱 설치(Android)',
+    'AI 비용',
   ]);
 });
 it('요약이 먼저 오면 오늘·누적을 유지하고 큰 숫자와 증감을 함께 예약한다', async () => {
@@ -163,9 +176,14 @@ it('요약이 먼저 오면 오늘·누적을 유지하고 큰 숫자와 증감�
 
   const skeletons = card.querySelectorAll('[data-slot="skeleton"]');
 
-  expect(skeletons).toHaveLength(2);
+  expect(skeletons).toHaveLength(3);
 
-  for (const skeleton of skeletons) expect(skeleton.className).toContain('h-9');
+  for (const slot of ['value', 'change', 'comparison'])
+    expect(
+      card.querySelector(
+        `[data-overview-slot="${slot}"] [data-slot="skeleton"]`,
+      ),
+    ).toBeTruthy();
 
   expect(within(card).queryByText('준비 중')).toBeNull();
   expect(within(card).queryByText(/이전 .*일 대비/)).toBeNull();
@@ -173,10 +191,16 @@ it('요약이 먼저 오면 오늘·누적을 유지하고 큰 숫자와 증감�
     'sr-only',
   );
 
-  for (const label of ['가입자', '채팅 시작', '턴', '결제 금액']) {
+  for (const label of [
+    '가입자',
+    '스토리 생성',
+    '채팅 시작',
+    '턴',
+    '결제 금액',
+  ]) {
     const dbCard = screen.getByRole('link', { name: new RegExp(`^${label}`) });
 
-    expect(dbCard.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(2);
+    expect(dbCard.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(3);
     expect(within(dbCard).queryByText('준비 중')).toBeNull();
   }
 

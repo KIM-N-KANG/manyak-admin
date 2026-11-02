@@ -55,7 +55,7 @@ it('로딩 영역은 busy·status와 숨겨진 기존 문구를 한 번 제공�
   expect(rows.children[0].children).toHaveLength(4);
 });
 
-it('개요 Suspense 골격은 6개 요약과 큰 차트 하나를 같은 반응형 칸에 예약한다', () => {
+it('개요 Suspense 골격은 8개 요약과 큰 차트 하나를 같은 반응형 칸에 예약한다', () => {
   const { container } = render(
     createElement(PageSkeleton, {
       layout: 'overview',
@@ -64,13 +64,15 @@ it('개요 Suspense 골격은 6개 요약과 큰 차트 하나를 같은 반응�
 
   expect(
     container.querySelectorAll('[data-loading-layout="summary-card"]'),
-  ).toHaveLength(6);
+  ).toHaveLength(8);
 
   const grid = container.querySelector(
     '[data-loading-layout="summary-card"]',
   )!.parentElement!;
 
-  expect(grid.className).toContain('xl:grid-cols-3');
+  expect(grid.classList.contains('xl:grid-cols-4')).toBe(true);
+  expect(grid.classList.contains('lg:grid-cols-3')).toBe(false);
+  expect(grid.classList.contains('2xl:grid-cols-6')).toBe(false);
   expect(grid.className).toContain('items-stretch');
 
   const charts = container.querySelector('[data-loading-layout="charts"]')!;
