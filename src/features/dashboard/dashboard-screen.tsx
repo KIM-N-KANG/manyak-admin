@@ -31,6 +31,7 @@ import type {
 import { useApi } from '@/features/shared/use-api';
 import { useSkeletonVisible } from '@/features/shared/use-skeleton-visible';
 
+import { AiCostCard } from './ai-cost-card';
 import { previousPeriod } from './comparison';
 import { OverviewCard, overviewGridClassName } from './overview-card';
 
@@ -63,6 +64,14 @@ export function DashboardScreen() {
           'joined',
         ],
         [
+          '결제 금액 (환불 포함)',
+          s.payments.amountKrwTotal,
+          s.payments.amountKrwToday,
+          '/payments',
+          '원',
+          'revenue',
+        ],
+        [
           '스토리 생성',
           s.stories.total,
           s.stories.createdToday,
@@ -85,22 +94,6 @@ export function DashboardScreen() {
           '/chats?sort=turnCount',
           '턴',
           'turns',
-        ],
-        [
-          '결제 금액 (환불 포함)',
-          s.payments.amountKrwTotal,
-          s.payments.amountKrwToday,
-          '/payments',
-          '원',
-          'revenue',
-        ],
-        [
-          '이프 소모',
-          s.credits.spentTotal,
-          s.credits.spentToday,
-          '/credits/transactions?direction=spent',
-          '이프',
-          'spent',
         ],
       ] as const)
     : [];
@@ -173,10 +166,11 @@ export function DashboardScreen() {
 
         <PlayInstallsCard range={range} />
         {summary.isPending
-          ? Array.from({ length: 5 }, (_, index) => (
+          ? Array.from({ length: 4 }, (_, index) => (
               <SummaryCardSkeleton key={index} visible={showSummarySkeleton} />
             ))
           : dbCards.slice(1)}
+        <AiCostCard query={range.query} previous={c?.previous} days={days} />
       </section>
       <QueryState
         skeleton={<ChartsSkeleton count={1} overview />}

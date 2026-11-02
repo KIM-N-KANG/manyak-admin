@@ -32,6 +32,7 @@ import type {
 import { getDashboardAnalytics } from '@/fixtures/analytics';
 import { getDashboardCharts, summary } from '@/fixtures/dashboard';
 import { infraMetricsFixture } from '@/fixtures/infra';
+import { metricFixture } from '@/fixtures/metrics';
 import { playInstalls } from '@/fixtures/play-installs';
 
 import { DistributionCards } from '../../helpers/distribution-cards';
@@ -52,13 +53,18 @@ vi.mock('next/navigation', () => ({
 }));
 vi.mock('@/features/shared/use-api', () => ({
   useApi: (url: string) => ({
-    data: url.includes('/play-installs')
-      ? playInstalls
-      : url.includes('/summary')
-        ? state.summary
-        : url.includes('/analytics')
-          ? getDashboardAnalytics(7)
-          : state.charts,
+    data: url.includes('/quality/ai-cost')
+      ? metricFixture(
+          '/quality/ai-cost',
+          new URLSearchParams(url.split('?')[1]),
+        )
+      : url.includes('/play-installs')
+        ? playInstalls
+        : url.includes('/summary')
+          ? state.summary
+          : url.includes('/analytics')
+            ? getDashboardAnalytics(7)
+            : state.charts,
     isPending: url.includes('/charts') && state.chartsPending,
     isError: url.includes('/charts') && state.chartsError,
     error:
@@ -484,7 +490,6 @@ it.each([
       '채팅 시작',
       '턴',
       '결제 금액',
-      '이프 소모',
     ]) {
       const card = screen.getByRole('link', { name: new RegExp(`^${label}`) });
 

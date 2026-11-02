@@ -112,7 +112,7 @@ it('1초 응답 동안 개요의 8개 카드와 1개 추이를 같은 칸에 예
 
   const grid = screen.getByRole('region', { name: '요약 지표' });
   const dbSkeletons = Array.from(grid.children).filter(
-    (_, index) => index !== 0 && index !== 2,
+    (_, index) => index !== 0 && index !== 2 && index !== 7,
   ) as HTMLElement[];
 
   expect(grid.children).toHaveLength(8);
@@ -157,11 +157,11 @@ it('1초 응답 동안 개요의 8개 카드와 1개 추이를 같은 칸에 예
     '오늘 활성 사용자',
     '가입자',
     '앱 설치(Android)',
+    '결제 금액 (환불 포함)',
     '스토리 생성',
     '채팅 시작',
     '턴',
-    '결제 금액 (환불 포함)',
-    '이프 소모',
+    'AI 비용',
   ]);
 });
 it('요약이 먼저 오면 오늘·누적을 유지하고 큰 숫자와 증감을 함께 예약한다', async () => {
@@ -197,7 +197,6 @@ it('요약이 먼저 오면 오늘·누적을 유지하고 큰 숫자와 증감�
     '채팅 시작',
     '턴',
     '결제 금액',
-    '이프 소모',
   ]) {
     const dbCard = screen.getByRole('link', { name: new RegExp(`^${label}`) });
 

@@ -15,6 +15,7 @@ import {
   getDashboardCharts,
   summary as dashboardSummary,
 } from '@/fixtures/dashboard';
+import { metricFixture } from '@/fixtures/metrics';
 import { playInstalls } from '@/fixtures/play-installs';
 
 const nav = vi.hoisted(() => ({ search: '', push: vi.fn(), replace: vi.fn() }));
@@ -30,26 +31,31 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: nav.push, replace: nav.replace }),
 }));
 vi.mock('@/features/shared/use-api', () => ({
-  useApi: (url: string) => {
-    state.requests.push(url);
+  useApi: (url: string, enabled = true) => {
+    if (enabled) state.requests.push(url);
 
-    const data = url.startsWith('/api/dashboard/charts')
-      ? state.charts
-      : url === '/api/dashboard/summary'
-        ? dashboardSummary
-        : url.includes('/play-installs')
-          ? playInstalls
-          : {
-              asOf: '2026-10-25T00:00:00Z',
-              todayActiveUsers: { total: 220, web: 200, android: 20 },
-              pendingDates: [],
-              daily: [
-                {
-                  date: '2026-10-24',
-                  activeUsers: { total: 200, web: 180, android: 20 },
-                },
-              ],
-            };
+    const data = url.startsWith('/api/quality/ai-cost')
+      ? metricFixture(
+          '/quality/ai-cost',
+          new URLSearchParams(url.split('?')[1]),
+        )
+      : url.startsWith('/api/dashboard/charts')
+        ? state.charts
+        : url === '/api/dashboard/summary'
+          ? dashboardSummary
+          : url.includes('/play-installs')
+            ? playInstalls
+            : {
+                asOf: '2026-10-25T00:00:00Z',
+                todayActiveUsers: { total: 220, web: 200, android: 20 },
+                pendingDates: [],
+                daily: [
+                  {
+                    date: '2026-10-24',
+                    activeUsers: { total: 200, web: 180, android: 20 },
+                  },
+                ],
+              };
 
     return {
       data: state.error && url.includes('/charts') ? undefined : data,
@@ -112,11 +118,11 @@ it('개요는 기간 합계와 증감 카드 여덟 개를 반응형 격자로 �
     '/analytics/audience?tab=activity',
     '/members',
     '/analytics/inflow?tab=installs',
+    '/payments',
     '/stories',
     '/chats',
     '/chats?sort=turnCount',
-    '/payments',
-    '/credits/transactions?direction=spent',
+    '/analytics/ops?tab=ai-cost',
   ]);
 
   for (const className of [
@@ -177,7 +183,6 @@ it('이전 서버 응답에 totals와 previous가 없으면 DB 카드 값과 증
     '채팅 시작',
     '턴',
     '결제 금액 (환불 포함)',
-    '이프 소모',
   ]) {
     const card = screen.getByRole('region', { name: label });
 
@@ -224,7 +229,7 @@ it('여덟 개요 카드는 같은 슬롯 순서와 줄 높이를 쓰고 작은 
   for (const slots of classes) expect(slots).toEqual(classes[0]);
 
   expect(
-    within(cards[6] as HTMLElement).getByText('1,234,567,890'),
+    within(cards[3] as HTMLElement).getByText('1,234,567,890'),
   ).toBeTruthy();
 
   expect(
@@ -232,7 +237,7 @@ it('여덟 개요 카드는 같은 슬롯 순서와 줄 높이를 쓰고 작은 
   ).toBe('웹 200명, 앱 20명');
 });
 
-it('스토리 생성과 이프 소모는 기존 응답의 기간 합계·증감·오늘과 누적·링크를 표시한다', () => {
+it('스토리 생성은 기존 응답의 기간 합계·증감·오늘과 누적·링크를 표시한다', () => {
   render(createElement(DashboardScreen));
 
   for (const [label, value, change, href, today, total, unit] of [
@@ -244,15 +249,6 @@ it('스토리 생성과 이프 소모는 기존 응답의 기간 합계·증감�
       dashboardSummary.stories.createdToday,
       dashboardSummary.stories.total,
       '개',
-    ],
-    [
-      '이프 소모',
-      '4,800이프',
-      '▼ 20.0%',
-      '/credits/transactions?direction=spent',
-      dashboardSummary.credits.spentToday,
-      dashboardSummary.credits.spentTotal,
-      '이프',
     ],
   ] as const) {
     const card = screen.getByRole('region', { name: label });
@@ -274,15 +270,17 @@ it('스토리 생성과 이프 소모는 기존 응답의 기간 합계·증감�
     ).toBeTruthy();
   }
 
-  expect(state.requests).toHaveLength(4);
+  expect(state.requests).toHaveLength(6);
   expect(state.requests.map((url) => url.split('?')[0]).sort()).toEqual([
     '/api/dashboard/analytics',
     '/api/dashboard/charts',
     '/api/dashboard/play-installs',
     '/api/dashboard/summary',
+    '/api/quality/ai-cost',
+    '/api/quality/ai-cost',
   ]);
 });
-it('차트 실패는 DB 카드 여섯 장의 숫자와 증감에 표시하고 오늘·누적 줄은 유지한다', () => {
+it('차트 실패는 DB 카드 다섯 장의 숫자와 증감에 표시하고 오늘·누적 줄은 유지한다', () => {
   state.error = true;
   render(createElement(DashboardScreen));
 
@@ -292,7 +290,6 @@ it('차트 실패는 DB 카드 여섯 장의 숫자와 증감에 표시하고 �
     '채팅 시작',
     '턴',
     '결제 금액 (환불 포함)',
-    '이프 소모',
   ]) {
     const card = screen.getByRole('region', { name: label });
 
