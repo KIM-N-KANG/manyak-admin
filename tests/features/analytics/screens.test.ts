@@ -14,7 +14,10 @@ import {
 import { setTimeout as realDelay } from 'node:timers/promises';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-import { AnalyticsScreen } from '@/features/analytics/analytics-screen';
+import {
+  AnalyticsScreen,
+  MetricsTab,
+} from '@/features/analytics/analytics-screen';
 import type { AnalyticsScreenName } from '@/features/analytics/config';
 import { MetricScope } from '@/features/analytics/metric-definition';
 import { metricDefinitions } from '@/features/analytics/metric-definitions-data';
@@ -244,7 +247,7 @@ it('Amplitude 503은 현재 탭에 격리하며 DB 가입 탭은 새로 조회�
       .getAttribute('href'),
   ).toBe('/members?from=2026-10-17&to=2026-10-17');
 });
-it('캠페인 기본값과 변경, 기간 초과 차단과 맞추기, 생성 광고 구분은 URL에만 저장한다', async () => {
+it('캠페인 기본값과 변경을 유지하고 확정 3차 기간의 간편 제작을 요청한다', async () => {
   const view = draw('acquisition');
 
   await screen.findByText('웹 DAU 평균');
@@ -256,12 +259,10 @@ it('캠페인 기본값과 변경, 기간 초과 차단과 맞추기, 생성 광
   await waitFor(() => expect(requests.at(-1)).toContain('campaign=THIRD_2026'));
   fireEvent.click(screen.getByRole('tab', { name: '간편 제작 퍼널' }));
   view.go();
-  expect(screen.getByRole('alert').textContent).toContain('최대 20일');
-  expect(requests.some((x) => x.includes('/creation'))).toBe(false);
-  fireEvent.click(screen.getByRole('button', { name: '최근 20일로 맞추기' }));
-  view.go();
   await screen.findByText('첫 단계 사용자 수');
-  expect(requests.at(-1)).toContain('from=2026-09-09&to=2026-09-28');
+  expect(screen.queryByRole('alert')).toBeNull();
+  expect(requests.at(-1)).toContain('from=2026-08-25&to=2026-09-28');
+  expect(requests.at(-1)).toContain('campaign=THIRD_2026');
 
   const count = requests.length;
 
@@ -2804,5 +2805,177 @@ it.each([
         '전체 기준',
       );
     }
+  },
+);
+
+it('11월 3일 간편 제작의 지난달은 활성, 최근 30일 이상은 비활성이다', async () => {
+  vi.setSystemTime(new Date('2026-11-03T03:00:00Z'));
+  nav.search = 'tab=creation&campaign=THIRD_2026';
+
+  const view = draw('acquisition');
+  const picker = await screen.findByRole('button', {
+    name: '기간: 2026-09-05 ~ 2026-10-09',
+  });
+
+  fireEvent.click(picker);
+  expect(
+    screen.getByRole('button', { name: '지난달' }).hasAttribute('disabled'),
+  ).toBe(false);
+
+  for (const name of ['최근 30일', '최근 90일', '최근 6개월', '최근 1년'])
+    expect(screen.getByRole('button', { name }).hasAttribute('disabled')).toBe(
+      true,
+    );
+
+  fireEvent.click(screen.getByRole('button', { name: '지난달' }));
+  view.go();
+  await screen.findByText('첫 단계 사용자 수');
+  expect(requests.at(-1)).toContain('from=2026-10-01&to=2026-10-31');
+  expect(nav.search).toContain('campaign=THIRD_2026');
+});
+
+const advanceConfirmed = (ms: number) =>
+  act(async () => {
+    await vi.advanceTimersByTimeAsync(ms);
+  });
+const directCampaign = (tab: string, url: string) =>
+  render(
+    createElement(
+      QueryClientProvider,
+      { client },
+      createElement(MetricsTab, {
+        screen: 'acquisition',
+        tab,
+        url,
+        platform: 'all',
+        segment: 'all',
+        adSegment: 'all',
+      }),
+    ),
+  );
+
+it.each([
+  ['activation', '/campaigns/funnels/activation'],
+  ['reach', '/campaigns/reach'],
+  ['creation', '/campaigns/funnels/creation'],
+  ['story-detail', '/campaigns/funnels/story-detail'],
+])(
+  '확정 %s의 오류 상태에서도 실패 요청만 60초 재요청하고 200 뒤 멈춘다',
+  async (tab, path) => {
+    vi.useRealTimers();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-03T03:00:00Z'));
+    fail = path;
+
+    const original = vi.mocked(fetch).getMockImplementation()!;
+
+    vi.mocked(fetch).mockImplementation(async (url, init) => {
+      const response = await original(url, init);
+
+      if (!response.ok) return response;
+
+      return Response.json({ ...(await response.json()), pendingDates: [] });
+    });
+
+    const url = `/api${path}?from=2026-10-15&to=2026-10-21&campaign=THIRD_2026`;
+
+    directCampaign(tab, url);
+    await advanceConfirmed(600);
+
+    const alert = screen.getByRole('alert');
+
+    expect(alert.textContent).toContain('Amplitude 지표를 불러올 수 없음');
+    expect(alert.textContent).toContain(
+      '지난 기간은 Amplitude 조회 한도 때문에 나눠 받아 처음 볼 때 몇 분 걸릴 수 있습니다. 60초 뒤 다시 요청합니다.',
+    );
+    expect(requests.filter((request) => request === url)).toHaveLength(1);
+
+    const other = requests.filter((request) => request !== url);
+
+    fail = '';
+    await advanceConfirmed(60000);
+    expect(requests.filter((request) => request === url)).toHaveLength(2);
+    expect(requests.filter((request) => request !== url)).toEqual(other);
+    expect(screen.queryByRole('alert')).toBeNull();
+    await advanceConfirmed(120000);
+    expect(requests.filter((request) => request === url)).toHaveLength(2);
+  },
+);
+it.each([
+  ['2026-10-21', '서버 미구현', '기능 준비 중'],
+  ['2026-11-03', '설정 없음', 'Amplitude 지표를 불러올 수 없음'],
+  ['2026-11-02', '설정 없음', 'Amplitude 지표를 불러올 수 없음'],
+])('%s의 %s는 자동 재요청하지 않는다', async (to, message, title) => {
+  vi.useRealTimers();
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-11-03T03:00:00Z'));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      requests.push(url);
+
+      return Response.json({ message }, { status: 503 });
+    }),
+  );
+  directCampaign('reach', `/api/campaigns/reach?from=2026-10-15&to=${to}`);
+  await advanceConfirmed(600);
+  expect(screen.getByRole('alert').textContent).toContain(title);
+  expect(screen.queryByText(/지난 기간은 Amplitude/)).toBeNull();
+  await advanceConfirmed(180000);
+  expect(requests).toHaveLength(1);
+});
+it('확정 범위를 떠나면 오류 재요청도 멈춘다', async () => {
+  vi.useRealTimers();
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-11-03T03:00:00Z'));
+  fail = '/campaigns/reach';
+
+  const view = directCampaign(
+    'reach',
+    '/api/campaigns/reach?from=2026-10-15&to=2026-10-21',
+  );
+
+  await advanceConfirmed(600);
+  view.unmount();
+  await advanceConfirmed(180000);
+  expect(requests).toHaveLength(1);
+});
+
+it.each([
+  ['2026-10-01', '2026-11-02', 31, '2026-10-03'],
+  ['2026-08-01', '2026-10-21', 62, '2026-08-21'],
+] as const)(
+  '기간 %s~%s는 두 영역에 최대 %s일을 알리고 끝 날짜 그대로 맞춘다',
+  async (from, to, max, adjusted) => {
+    vi.setSystemTime(new Date('2026-11-03T03:00:00Z'));
+    nav.search = `tab=activation&campaign=THIRD_2026&from=${from}&to=${to}`;
+
+    const view = draw('acquisition');
+    const alerts = await screen.findAllByRole('alert');
+
+    expect(alerts).toHaveLength(2);
+
+    for (const alert of alerts)
+      expect(alert.textContent).toContain(`최대 ${max}일`);
+
+    expect(requests).toEqual(['/api/campaigns']);
+    fireEvent.click(
+      screen.getAllByRole('button', { name: `최근 ${max}일로 맞추기` })[0],
+    );
+    view.go();
+    await screen.findByRole('heading', { name: '단계별 전환' });
+    expect(
+      requests.filter(
+        (request) =>
+          request.includes('/funnels/activation') ||
+          request.includes('/reach?'),
+      ),
+    ).toHaveLength(2);
+    expect(
+      requests
+        .slice(-2)
+        .every((request) => request.includes(`from=${adjusted}&to=${to}`)),
+    ).toBe(true);
+    expect(nav.search).toContain('campaign=THIRD_2026');
   },
 );

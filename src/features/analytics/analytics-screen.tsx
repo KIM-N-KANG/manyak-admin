@@ -28,13 +28,18 @@ import {
   segmentTabs,
   sourceHelp,
 } from './config';
+import {
+  campaignRangePolicy,
+  confirmedUnavailableDescription,
+  retryableCampaignError,
+} from './confirmed-campaign';
 import { AppActivationContent } from './growth-content';
 import { kstTime } from './infra/data';
 import { MetricHelp, MetricScope } from './metric-definition';
 import { FunnelChart, PendingDates, Source } from './metric-ui';
 import { MetricsSkeleton } from './metrics-skeleton';
 import { PendingTab } from './pending-dates';
-import { analyticsRange, analyticsRefetch } from './range';
+import { analyticsRange, analyticsRefetch, tabLimits } from './range';
 import { cohorts } from './retention';
 import { SessionLengths } from './session-lengths';
 import {
@@ -242,18 +247,23 @@ export function MetricsTab({
   title?: string;
   qualityPart?: 'input' | 'errors' | 'signals' | 'completion' | 'activity';
 }) {
+  const policy = campaignRangePolicy(url);
   const query = useApi<unknown>(url, true, {
     refetchInterval: (query) =>
-      analyticsRefetch(
-        query as {
-          state: {
-            data?: {
-              pendingDates?: string[];
-              monthlyActiveUsers?: number | null;
-            };
-          };
-        },
-      ),
+      policy.supported && query.state.error
+        ? policy.confirmed && retryableCampaignError(query.state.error)
+          ? 60000
+          : false
+        : analyticsRefetch(
+            query as {
+              state: {
+                data?: {
+                  pendingDates?: string[];
+                  monthlyActiveUsers?: number | null;
+                };
+              };
+            },
+          ),
   });
   const data = query.data as
     | {
@@ -291,6 +301,9 @@ export function MetricsTab({
         error={query.error}
         retry={query.refetch}
         source={tab === 'ai-cost' ? 'langfuse' : db ? undefined : 'amplitude'}
+        unavailableDescription={
+          policy.confirmed ? confirmedUnavailableDescription : undefined
+        }
       />
       {data && !query.isError ? (
         <>
@@ -675,7 +688,7 @@ export function AnalyticsScreen({
                 }).toString(),
                 select: selectRange,
               }}
-              maxDays={range.maxDays}
+              maxDays={(to) => tabLimits(tab, to).maxDays}
               endDate={range.endDate}
             />
           </div>
@@ -811,13 +824,13 @@ export function AnalyticsScreen({
                         <Card role="alert">
                           <h2 className="font-semibold">기간 확인 필요</h2>
                           <p className="my-3 text-sm">
-                            이 지표는 최대 31일까지 볼 수 있습니다. 기간을 31일
-                            이내로 선택해 주세요.
+                            이 지표는 최대 {range.maxDays}일까지 볼 수 있습니다.
+                            기간을 {range.maxDays}일 이내로 선택해 주세요.
                           </p>
                           <Button
                             variant="outline"
                             onClick={() => selectRange(range.adjusted)}>
-                            최근 31일로 맞추기
+                            최근 {range.maxDays}일로 맞추기
                           </Button>
                         </Card>
                       </section>

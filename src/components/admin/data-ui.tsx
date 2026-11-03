@@ -39,6 +39,7 @@ export function QueryState({
   source,
   variant = 'panel',
   skeleton,
+  unavailableDescription,
 }: {
   pending: boolean;
   error: Error | null;
@@ -46,6 +47,7 @@ export function QueryState({
   source?: 'amplitude' | 'play' | 'langfuse';
   variant?: 'panel' | 'inline';
   skeleton?: ReactNode;
+  unavailableDescription?: string;
 }) {
   const serverNotImplemented =
     error instanceof FetchError &&
@@ -70,7 +72,7 @@ export function QueryState({
     const description = serverNotImplemented
       ? '이 기능은 서버 연결을 준비 중입니다.'
       : unavailable && source === 'amplitude'
-        ? '잠시 후 다시 시도해 주세요.'
+        ? (unavailableDescription ?? '잠시 후 다시 시도해 주세요.')
         : unavailable && source === 'play'
           ? '잠시 후 다시 시도해 주세요. 문제가 계속되면 Play 설치 지표 설정과 보고서 상태를 확인해 주세요.'
           : unavailable && source === 'langfuse'
