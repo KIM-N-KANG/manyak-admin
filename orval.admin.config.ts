@@ -16,6 +16,11 @@ export default defineConfig({
         },
       },
     },
-    hooks: { afterAllFilesWrite: 'prettier --write' },
+    hooks: {
+      afterAllFilesWrite: [
+        'node scripts/refine-home-section-zod.mjs',
+        'prettier --write',
+      ],
+    },
   },
 });

@@ -87,6 +87,7 @@ vi.mock('recharts', async () => {
   };
 
   return {
+    Rectangle: () => null,
     PieChart: Box,
     Pie: Box,
     Cell: Box,
@@ -906,8 +907,11 @@ it('퍼널 첫 단계의 수치 표는 전환율 빈칸을 유지하고 두 번�
 
   const rows = card.querySelectorAll('tbody tr');
 
-  expect(rows[0].querySelectorAll('td')[2].textContent).toBe('');
-  expect(rows[1].querySelectorAll('td')[2].textContent).toContain('%');
+  expect(rows[0].querySelectorAll('td')[2].textContent).toBe('100.0%');
+  expect(rows[0].querySelectorAll('td')[3].textContent).toBe('');
+
+  for (const index of [2, 3])
+    expect(rows[1].querySelectorAll('td')[index].textContent).toContain('%');
 });
 
 it('광고 퍼널 첫 단계는 세 광고 구분의 전환율을 모두 빈칸으로 둔다', async () => {
@@ -917,6 +921,11 @@ it('광고 퍼널 첫 단계는 세 광고 구분의 전환율을 모두 빈칸�
 
   const row = screen.getByRole('table').querySelector('tbody tr')!;
   const cells = row.querySelectorAll('td');
+
+  expect(cells).toHaveLength(7);
+  expect(
+    screen.queryByRole('columnheader', { name: /^첫 단계 대비 전환율/ }),
+  ).toBeNull();
 
   for (const index of [2, 4, 6]) expect(cells[index].textContent).toBe('');
 });
@@ -1539,8 +1548,8 @@ it('DomainScreen 성장 가입의 LabelList formatter는 첫 단계에 사용자
     screen.getByRole('heading', { name: '웹 첫 접속' }).closest('section')!,
   ).getByTestId('bar-labels').children;
 
-  expect(labels[0].textContent).toBe('100명');
-  expect(labels[1].textContent).toBe('40명, 40.0%');
+  expect(labels[0].textContent).toBe('100.0% 100명');
+  expect(labels[1].textContent).toBe('40.0% 40명');
 });
 
 it.each([

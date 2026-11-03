@@ -153,7 +153,7 @@ it('개요는 기간 합계와 증감 카드 여덟 개를 반응형 격자로 �
   ).toBe('joined');
   expect(screen.getAllByRole('columnheader')).toHaveLength(9);
   expect(state.requests).toContain(
-    '/api/dashboard/analytics?from=2026-10-24&to=2026-10-25',
+    '/api/dashboard/analytics?from=2026-09-26&to=2026-10-25',
   );
 });
 it('지표 선택은 metric 쿼리를 기록하고 모르는 값은 가입으로 표시한다', () => {
@@ -218,6 +218,17 @@ it('여덟 개요 카드는 같은 슬롯 순서와 줄 높이를 쓰고 작은 
     expect(card.querySelector('button[aria-label$="안내"]')).toBeTruthy();
     expect(slots[1].classList.contains('whitespace-nowrap')).toBe(true);
     expect(slots[1].classList.contains('tabular-nums')).toBe(true);
+    expect(card.classList.contains('@container')).toBe(false);
+    expect(
+      slots[1].parentElement!.classList.contains(
+        'grid-cols-[minmax(0,1fr)_36%]',
+      ),
+    ).toBe(true);
+    expect(
+      slots[1].parentElement!.classList.contains(
+        '2xl:grid-cols-[minmax(0,1fr)_46%]',
+      ),
+    ).toBe(true);
     expect(slots[1].classList.contains('2xl:text-lg')).toBe(false);
     expect(slots[1].contains(slots[2])).toBe(false);
     expect(slots[4].classList.contains('truncate')).toBe(true);
