@@ -6,9 +6,9 @@
     "version": "v1"
   },
   "x-source": {
-    "input": "/tmp/knk-admin-dash-orch/admin-openapi-2012.json",
-    "receivedAt": "2026-11-03T11:40:08.257Z",
-    "revision": "feat/KNK-2012-activity-hours"
+    "input": "https://dev-api.manyak.app/v3/api-docs",
+    "receivedAt": "2026-11-03T15:11:18.882Z",
+    "revision": "238a995"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -10061,34 +10061,38 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "integralNumber": {
-            "type": "boolean"
-          },
-          "floatingPointNumber": {
+          "string": {
             "type": "boolean"
           },
           "container": {
             "type": "boolean"
           },
+          "valueNode": {
+            "type": "boolean"
+          },
           "object": {
-            "type": "boolean"
-          },
-          "string": {
-            "type": "boolean"
-          },
-          "missingNode": {
-            "type": "boolean"
-          },
-          "number": {
             "type": "boolean"
           },
           "pojo": {
             "type": "boolean"
           },
-          "int": {
+          "textual": {
+            "type": "boolean",
+            "deprecated": true
+          },
+          "boolean": {
             "type": "boolean"
           },
-          "long": {
+          "binary": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "integralNumber": {
             "type": "boolean"
           },
           "nodeType": {
@@ -10105,7 +10109,10 @@
               "STRING"
             ]
           },
-          "valueNode": {
+          "int": {
+            "type": "boolean"
+          },
+          "long": {
             "type": "boolean"
           },
           "short": {
@@ -10120,14 +10127,7 @@
           "bigInteger": {
             "type": "boolean"
           },
-          "textual": {
-            "type": "boolean",
-            "deprecated": true
-          },
-          "boolean": {
-            "type": "boolean"
-          },
-          "binary": {
+          "number": {
             "type": "boolean"
           },
           "array": {
