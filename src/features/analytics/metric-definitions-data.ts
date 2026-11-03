@@ -849,6 +849,38 @@ export const metricDefinitions = [
     '메시지 시각의 KST 날짜',
   ],
   [
+    '사용자 시간대',
+    '채팅 메시지의 요약 카드, 요일 시간 격자, 수치 표',
+    '서버 DB',
+    '회원과 게스트, 팀 계정 제외',
+    '채팅에 보낸 사용자 메시지 수<br>삭제된 채팅과 입력 수정으로 숨긴 메시지를 세고 포크로 복사한 메시지는 뺌<br>칸은 그 요일 하루 평균',
+    '메시지 시각의 KST 요일과 시',
+  ],
+  [
+    '사용자 시간대',
+    '회원 가입의 요약 카드, 요일 시간 격자, 수치 표',
+    '서버 DB',
+    '회원, 탈퇴 회원 포함, 팀 계정 제외',
+    '만들어진 회원 계정 수이며 신규 가입자와 같은 정의<br>칸은 그 요일 하루 평균',
+    '계정 생성 시각의 KST 요일과 시',
+  ],
+  [
+    '사용자 시간대',
+    '스토리 생성의 요약 카드, 요일 시간 격자, 수치 표',
+    '서버 DB',
+    '팀 계정 제외',
+    '만들어진 스토리 수<br>삭제된 스토리도 셈<br>칸은 그 요일 하루 평균',
+    '스토리 생성 시각의 KST 요일과 시',
+  ],
+  [
+    '사용자 시간대',
+    '결제의 요약 카드, 요일 시간 격자, 수치 표',
+    '서버 DB',
+    '팀 계정 제외',
+    '완료된 주문 수<br>뒤에 환불된 주문도 셈<br>칸은 그 요일 하루 평균',
+    '주문 완료 시각의 KST 요일과 시',
+  ],
+  [
     '개요',
     'AI 비용 카드',
     'Langfuse와 서버 DB',
@@ -859,3 +891,5 @@ export const metricDefinitions = [
 ] as const;
 
 export const overviewAiCostDefinition = metricDefinitions.length - 1;
+
+export const activityHoursDefinitionStart = metricDefinitions.length - 5;

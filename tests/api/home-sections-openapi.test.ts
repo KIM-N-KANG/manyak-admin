@@ -9,6 +9,7 @@ import {
 import { homeSectionRows } from '@/fixtures/home-sections';
 
 import transform from '../../scripts/transform-admin-openapi.mjs';
+import { expectedAdminOpenapiSource } from '../helpers/admin-openapi-source';
 
 const snapshot = () =>
   JSON.parse(readFileSync('docs/openapi/admin.json', 'utf8'));
@@ -19,9 +20,7 @@ it('실제 DTO 스냅샷을 보존하고 생성 입력에만 누락된 계약 �
   const result = transform(original);
 
   expect(original).toEqual(before);
-  expect(original['x-source'].homeSections.revision).toBe(
-    '43e309229bb7f65437819333fc597592b60d4f14',
-  );
+  expect(original['x-source']).toMatchObject(expectedAdminOpenapiSource);
   expect(
     original.components.schemas.HomeSectionListResponse.required,
   ).toBeUndefined();

@@ -272,6 +272,7 @@ const moderation: ModerationMetrics = {
 };
 
 export const newMetricPaths = [
+  '/users/activity-hours',
   '/payments/metrics',
   '/credits/metrics',
   '/stories/consumption',
