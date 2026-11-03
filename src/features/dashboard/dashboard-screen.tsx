@@ -34,6 +34,7 @@ import { useSkeletonVisible } from '@/features/shared/use-skeleton-visible';
 import { AiCostCard } from './ai-cost-card';
 import { previousPeriod } from './comparison';
 import { OverviewCard, overviewGridClassName } from './overview-card';
+import { trendSeries } from './overview-sparkline';
 
 export function DashboardScreen() {
   const range = useDashboardRange();
@@ -104,6 +105,17 @@ export function DashboardScreen() {
       title={label}
       href={href}
       fullLink
+      trend={
+        c?.daily
+          ? trendSeries(
+              c.daily.map((day) => ({
+                date: day.date,
+                value: day[key] ?? null,
+              })),
+              range,
+            )
+          : undefined
+      }
       loading={charts.isPending ? 'value' : undefined}
       value={
         status ??
@@ -158,7 +170,7 @@ export function DashboardScreen() {
         aria-label="요약 지표"
         aria-busy={summary.isPending}
         className={`mb-8 ${overviewGridClassName}`}>
-        <AnalyticsSection />
+        <AnalyticsSection range={range} />
         {dbCards[0] ??
           (summary.isPending ? (
             <SummaryCardSkeleton visible={showSummarySkeleton} />

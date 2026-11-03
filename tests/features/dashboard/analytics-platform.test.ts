@@ -58,7 +58,10 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function draw(fetchMock: ReturnType<typeof vi.fn>) {
+function draw(
+  fetchMock: ReturnType<typeof vi.fn>,
+  range?: { from: string; to: string },
+) {
   vi.stubGlobal('fetch', fetchMock);
 
   const client = new QueryClient({
@@ -73,7 +76,7 @@ function draw(fetchMock: ReturnType<typeof vi.fn>) {
     createElement(
       QueryClientProvider,
       { client },
-      createElement(AnalyticsSection),
+      createElement(AnalyticsSection, { range }),
     ),
   );
 }
@@ -200,5 +203,39 @@ it.each([{ pendingDates: [] as string[] }, { pendingDates: ['2026-10-18'] }])(
       await vi.advanceTimersByTimeAsync(120000);
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  },
+);
+
+it.each([
+  ['2026-10-05', '2026-11-03', '2026-10-05', '2026-11-03', true],
+  ['2026-10-01', '2026-10-10', '2026-10-01', '2026-11-03', true],
+  ['2025-10-01', '2025-10-31', '2026-11-02', '2026-11-03', false],
+] as const)(
+  '선택 %s~%s는 한 요청으로 오늘·어제를 포함하고 366일 초과 시 그래프를 비운다',
+  async (from, to, requestFrom, requestTo, hasGraph) => {
+    vi.setSystemTime(new Date('2026-11-03T03:00:00Z'));
+
+    const data = getDashboardAnalytics(7);
+
+    data.daily = [from, to].map((date, i) => ({
+      ...data.daily[0],
+      date,
+      activeUsers: { total: 10 + i, web: 10 + i, android: 0 },
+    }));
+    data.pendingDates = [];
+
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(data));
+    const view = draw(fetchMock, { from, to });
+
+    await screen.findByText(String(data.todayActiveUsers!.total), {
+      selector: 'span.font-mono',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `/api/dashboard/analytics?from=${requestFrom}&to=${requestTo}`,
+    );
+    expect(!!view.container.querySelector('[data-overview-trend] svg')).toBe(
+      hasGraph,
+    );
   },
 );

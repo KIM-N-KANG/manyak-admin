@@ -9,6 +9,7 @@ import type { PlayInstalls } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
 import { OverviewCard } from './overview-card';
+import { trendSeries } from './overview-sparkline';
 
 export function PlayInstallsCard({
   range,
@@ -41,6 +42,17 @@ export function PlayInstallsCard({
   return (
     <OverviewCard
       title="앱 설치(Android)"
+      trend={
+        data
+          ? trendSeries(
+              (selected ?? []).map((day) => ({
+                date: day.date,
+                value: day.installs,
+              })),
+              range,
+            )
+          : undefined
+      }
       href="/analytics/inflow?tab=installs"
       help={
         <HelpTooltip label="앱 설치(Android) 출처와 집계 안내">
