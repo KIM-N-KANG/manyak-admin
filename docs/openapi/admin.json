@@ -7,14 +7,8 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-11-02T09:52:54.270Z",
-    "revision": "e9454ef",
-    "homeSections": {
-      "input": "/private/tmp/knk-3tier/server-openapi-1994-dev.json",
-      "receivedAt": "2026-11-02T15:52:33.297Z",
-      "revision": "43e309229bb7f65437819333fc597592b60d4f14",
-      "description": "서버 dev 43e3092의 H2 통합 테스트로 /v3/api-docs를 실제 추출했다. 홈 섹션 두 경로와 참조 DTO만 병합했다."
-    }
+    "receivedAt": "2026-11-03T15:11:18.882Z",
+    "revision": "238a995"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -828,6 +822,50 @@
         }
       }
     },
+    "/api/v1/admin/home-sections": {
+      "get": {
+        "tags": ["admin-home-section-controller"],
+        "operationId": "list_4",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeSectionListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["admin-home-section-controller"],
+        "operationId": "create_5",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeSectionCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeSectionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/credits/adjustments": {
       "post": {
         "tags": ["admin-credit-controller"],
@@ -1043,6 +1081,75 @@
             "bearerAuth": []
           }
         ]
+      }
+    },
+    "/api/v1/admin/home-sections/{sectionId}": {
+      "delete": {
+        "tags": ["admin-home-section-controller"],
+        "operationId": "delete_6",
+        "parameters": [
+          {
+            "name": "sectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeSectionDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["admin-home-section-controller"],
+        "operationId": "update_3",
+        "parameters": [
+          {
+            "name": "sectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeSectionUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeSectionResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/admin/users/signups": {
@@ -1355,6 +1462,56 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ActivityResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/activity-hours": {
+      "get": {
+        "tags": ["admin-activity-hours-controller"],
+        "operationId": "activityHours",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": ["7", "30", "90"]
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminActivityHoursResponse"
                 }
               }
             }
@@ -2768,7 +2925,7 @@
     "/api/v1/admin/chat-models": {
       "get": {
         "tags": ["admin-chat-model-controller"],
-        "operationId": "list_8",
+        "operationId": "list_9",
         "responses": {
           "200": {
             "description": "OK",
@@ -3401,119 +3558,6 @@
           "200": {
             "description": "OK",
             "content": {}
-          }
-        }
-      }
-    },
-    "/api/v1/admin/home-sections": {
-      "get": {
-        "tags": ["admin-home-section-controller"],
-        "operationId": "list_4",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/HomeSectionListResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": ["admin-home-section-controller"],
-        "operationId": "create_5",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HomeSectionCreateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/HomeSectionResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/home-sections/{sectionId}": {
-      "delete": {
-        "tags": ["admin-home-section-controller"],
-        "operationId": "delete_6",
-        "parameters": [
-          {
-            "name": "sectionId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HomeSectionDeleteRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": ["admin-home-section-controller"],
-        "operationId": "update_3",
-        "parameters": [
-          {
-            "name": "sectionId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HomeSectionUpdateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/HomeSectionResponse"
-                }
-              }
-            }
           }
         }
       }
@@ -4361,6 +4405,158 @@
           }
         }
       },
+      "HomeSectionListResponse": {
+        "type": "object",
+        "description": "관리자 홈 섹션 목록",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeSectionResponse"
+            }
+          }
+        }
+      },
+      "HomeSectionResponse": {
+        "type": "object",
+        "description": "관리자 홈 섹션",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["MANUAL", "FILTER"]
+          },
+          "stories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeSectionStoryResponse"
+            }
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "originalOnly": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": ["string", "null"],
+            "enum": ["popular", "latest", "likes", "chats"]
+          },
+          "itemLimit": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 20,
+            "minimum": 1
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": ["sort"]
+      },
+      "HomeSectionStoryResponse": {
+        "type": "object",
+        "description": "수동 지정 스토리의 현재 상태",
+        "properties": {
+          "storyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "토큰 원문 제목"
+          },
+          "isListed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "HomeSectionCreateRequest": {
+        "type": "object",
+        "description": "홈 섹션 등록 요청",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "이름. 앞뒤 공백 제거 후 1~30자",
+            "maxLength": 30,
+            "minLength": 1
+          },
+          "source": {
+            "type": "string",
+            "description": "스토리 출처",
+            "enum": ["MANUAL", "FILTER"]
+          },
+          "storyIds": {
+            "type": ["array", "null"],
+            "description": "MANUAL 필수. 스토리 공개 UUID 1~20개, 지정 순서 유지",
+            "items": {
+              "type": "string"
+            }
+          },
+          "genres": {
+            "type": ["array", "null"],
+            "description": "FILTER 전용. 활성 제공 장르 정식 이름 최대 10개. 빈 배열은 조건 제거",
+            "items": {
+              "type": "string"
+            }
+          },
+          "originalOnly": {
+            "type": ["boolean", "null"],
+            "description": "FILTER 전용. 기본값 false"
+          },
+          "sort": {
+            "type": ["string", "null"],
+            "description": "FILTER 필수. 공개 목록 정렬",
+            "enum": ["popular", "latest", "likes", "chats"]
+          },
+          "itemLimit": {
+            "type": ["integer", "null"],
+            "format": "int32",
+            "description": "카드 상한. 기본값 20",
+            "maximum": 20,
+            "minimum": 1
+          },
+          "sortOrder": {
+            "type": ["integer", "null"],
+            "format": "int32",
+            "description": "노출 순서. 등록 생략 시 현재 최댓값 + 1",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "description": "변경 사유 1~500자",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "isActive": {
+            "type": ["boolean", "null"],
+            "description": "활성 여부. 기본값 true"
+          }
+        },
+        "required": ["name", "reason", "source"]
+      },
       "AdminCreditAdjustmentRequest": {
         "type": "object",
         "properties": {
@@ -4506,6 +4702,83 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 0
+          }
+        },
+        "required": ["reason"]
+      },
+      "HomeSectionDeleteRequest": {
+        "type": "object",
+        "description": "홈 섹션 삭제 요청",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "변경 사유 1~500자",
+            "maxLength": 500,
+            "minLength": 1
+          }
+        },
+        "required": ["reason"]
+      },
+      "HomeSectionUpdateRequest": {
+        "type": "object",
+        "description": "홈 섹션 부분 수정. 보낸 필드만 반영 요청",
+        "properties": {
+          "name": {
+            "type": ["string", "null"],
+            "description": "이름. 앞뒤 공백 제거 후 1~30자",
+            "maxLength": 30,
+            "minLength": 1
+          },
+          "source": {
+            "type": ["string", "null"],
+            "description": "스토리 출처",
+            "enum": ["MANUAL", "FILTER"]
+          },
+          "storyIds": {
+            "type": ["array", "null"],
+            "description": "MANUAL 필수. 스토리 공개 UUID 1~20개, 지정 순서 유지",
+            "items": {
+              "type": "string"
+            }
+          },
+          "genres": {
+            "type": ["array", "null"],
+            "description": "FILTER 전용. 활성 제공 장르 정식 이름 최대 10개. 빈 배열은 조건 제거",
+            "items": {
+              "type": "string"
+            }
+          },
+          "originalOnly": {
+            "type": ["boolean", "null"],
+            "description": "FILTER 전용. 기본값 false"
+          },
+          "sort": {
+            "type": ["string", "null"],
+            "description": "FILTER 필수. 공개 목록 정렬",
+            "enum": ["popular", "latest", "likes", "chats"]
+          },
+          "itemLimit": {
+            "type": ["integer", "null"],
+            "format": "int32",
+            "description": "카드 상한. 기본값 20",
+            "maximum": 20,
+            "minimum": 1
+          },
+          "sortOrder": {
+            "type": ["integer", "null"],
+            "format": "int32",
+            "description": "노출 순서. 등록 생략 시 현재 최댓값 + 1",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "description": "변경 사유 1~500자",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "isActive": {
+            "type": ["boolean", "null"],
+            "description": "활성 여부. 기본값 true"
           }
         },
         "required": ["reason"]
@@ -5086,6 +5359,166 @@
             "format": "int64"
           }
         }
+      },
+      "AdminActivityHoursResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "totalDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "weekdayDays": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminActivityHoursWeekdayDays"
+            }
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/AdminActivityHoursMetrics"
+          }
+        },
+        "required": [
+          "asOf",
+          "from",
+          "metrics",
+          "to",
+          "totalDays",
+          "weekdayDays"
+        ]
+      },
+      "AdminActivityHoursWeekdayDays": {
+        "type": "object",
+        "properties": {
+          "weekday": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": ["days", "weekday"]
+      },
+      "AdminActivityHoursMetrics": {
+        "type": "object",
+        "properties": {
+          "signups": {
+            "$ref": "#/components/schemas/AdminActivityHoursMetric"
+          },
+          "messages": {
+            "$ref": "#/components/schemas/AdminActivityHoursMetric"
+          },
+          "stories": {
+            "$ref": "#/components/schemas/AdminActivityHoursMetric"
+          },
+          "payments": {
+            "$ref": "#/components/schemas/AdminActivityHoursMetric"
+          }
+        },
+        "required": ["messages", "payments", "signups", "stories"]
+      },
+      "AdminActivityHoursMetric": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "dailyAverage": {
+            "type": "number",
+            "format": "double"
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminActivityHoursCell"
+            }
+          },
+          "weekdays": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminActivityHoursWeekday"
+            }
+          },
+          "hours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminActivityHoursHour"
+            }
+          }
+        },
+        "required": ["cells", "dailyAverage", "hours", "total", "weekdays"]
+      },
+      "AdminActivityHoursCell": {
+        "type": "object",
+        "properties": {
+          "weekday": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "average": {
+            "type": ["number", "null"],
+            "format": "double"
+          }
+        },
+        "required": ["average", "count", "hour", "weekday"]
+      },
+      "AdminActivityHoursWeekday": {
+        "type": "object",
+        "properties": {
+          "weekday": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "average": {
+            "type": ["number", "null"],
+            "format": "double"
+          }
+        },
+        "required": ["average", "count", "weekday"]
+      },
+      "AdminActivityHoursHour": {
+        "type": "object",
+        "properties": {
+          "hour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "average": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": ["average", "count", "hour"]
       },
       "AdminStoriesRequest": {
         "type": "object",
@@ -9509,6 +9942,9 @@
               "NOTICE_UNPUBLISHED",
               "NOTICE_DELETED",
               "ORIGINAL_CREATED",
+              "HOME_SECTION_CREATED",
+              "HOME_SECTION_UPDATED",
+              "HOME_SECTION_DELETED",
               "ORIGINAL_UPDATED",
               "ORIGINAL_THUMBNAIL_DELETED",
               "STORY_TAKEN_DOWN",
@@ -9526,7 +9962,8 @@
               "PUSH_TEMPLATE",
               "NOTICE",
               "SUBMISSION",
-              "STORY"
+              "STORY",
+              "HOME_SECTION"
             ]
           },
           "category": {
@@ -9624,10 +10061,29 @@
       "JsonNode": {
         "type": "object",
         "properties": {
+          "string": {
+            "type": "boolean"
+          },
           "container": {
             "type": "boolean"
           },
-          "string": {
+          "valueNode": {
+            "type": "boolean"
+          },
+          "object": {
+            "type": "boolean"
+          },
+          "pojo": {
+            "type": "boolean"
+          },
+          "textual": {
+            "type": "boolean",
+            "deprecated": true
+          },
+          "boolean": {
+            "type": "boolean"
+          },
+          "binary": {
             "type": "boolean"
           },
           "floatingPointNumber": {
@@ -9671,25 +10127,6 @@
           "bigInteger": {
             "type": "boolean"
           },
-          "valueNode": {
-            "type": "boolean"
-          },
-          "object": {
-            "type": "boolean"
-          },
-          "pojo": {
-            "type": "boolean"
-          },
-          "textual": {
-            "type": "boolean",
-            "deprecated": true
-          },
-          "boolean": {
-            "type": "boolean"
-          },
-          "binary": {
-            "type": "boolean"
-          },
           "number": {
             "type": "boolean"
           },
@@ -9717,235 +10154,6 @@
             "type": "string"
           }
         }
-      },
-      "HomeSectionCreateRequest": {
-        "type": "object",
-        "description": "홈 섹션 등록 요청",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "이름. 앞뒤 공백 제거 후 1~30자",
-            "maxLength": 30,
-            "minLength": 1
-          },
-          "source": {
-            "type": "string",
-            "description": "스토리 출처",
-            "enum": ["MANUAL", "FILTER"]
-          },
-          "storyIds": {
-            "type": ["array", "null"],
-            "description": "MANUAL 필수. 스토리 공개 UUID 1~20개, 지정 순서 유지",
-            "items": {
-              "type": "string"
-            }
-          },
-          "genres": {
-            "type": ["array", "null"],
-            "description": "FILTER 전용. 활성 제공 장르 정식 이름 최대 10개. 빈 배열은 조건 제거",
-            "items": {
-              "type": "string"
-            }
-          },
-          "originalOnly": {
-            "type": ["boolean", "null"],
-            "description": "FILTER 전용. 기본값 false"
-          },
-          "sort": {
-            "type": ["string", "null"],
-            "description": "FILTER 필수. 공개 목록 정렬",
-            "enum": ["popular", "latest", "likes", "chats"]
-          },
-          "itemLimit": {
-            "type": ["integer", "null"],
-            "format": "int32",
-            "description": "카드 상한. 기본값 20",
-            "maximum": 20,
-            "minimum": 1
-          },
-          "sortOrder": {
-            "type": ["integer", "null"],
-            "format": "int32",
-            "description": "노출 순서. 등록 생략 시 현재 최댓값 + 1",
-            "minimum": 1
-          },
-          "reason": {
-            "type": "string",
-            "description": "변경 사유 1~500자",
-            "maxLength": 500,
-            "minLength": 1
-          },
-          "isActive": {
-            "type": ["boolean", "null"],
-            "description": "활성 여부. 기본값 true"
-          }
-        },
-        "required": ["name", "reason", "source"]
-      },
-      "HomeSectionDeleteRequest": {
-        "type": "object",
-        "description": "홈 섹션 삭제 요청",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "description": "변경 사유 1~500자",
-            "maxLength": 500,
-            "minLength": 1
-          }
-        },
-        "required": ["reason"]
-      },
-      "HomeSectionStoryResponse": {
-        "type": "object",
-        "description": "수동 지정 스토리의 현재 상태",
-        "properties": {
-          "storyId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string",
-            "description": "토큰 원문 제목"
-          },
-          "isListed": {
-            "type": "boolean"
-          }
-        }
-      },
-      "HomeSectionListResponse": {
-        "type": "object",
-        "description": "관리자 홈 섹션 목록",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/HomeSectionResponse"
-            }
-          }
-        }
-      },
-      "HomeSectionResponse": {
-        "type": "object",
-        "description": "관리자 홈 섹션",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "source": {
-            "type": "string",
-            "enum": ["MANUAL", "FILTER"]
-          },
-          "stories": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/HomeSectionStoryResponse"
-            }
-          },
-          "genres": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "originalOnly": {
-            "type": "boolean"
-          },
-          "sort": {
-            "type": ["string", "null"],
-            "enum": ["popular", "latest", "likes", "chats"]
-          },
-          "itemLimit": {
-            "type": "integer",
-            "format": "int32",
-            "maximum": 20,
-            "minimum": 1
-          },
-          "sortOrder": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 1
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "isActive": {
-            "type": "boolean"
-          }
-        },
-        "required": ["sort"]
-      },
-      "HomeSectionUpdateRequest": {
-        "type": "object",
-        "description": "홈 섹션 부분 수정. 보낸 필드만 반영 요청",
-        "properties": {
-          "name": {
-            "type": ["string", "null"],
-            "description": "이름. 앞뒤 공백 제거 후 1~30자",
-            "maxLength": 30,
-            "minLength": 1
-          },
-          "source": {
-            "type": ["string", "null"],
-            "description": "스토리 출처",
-            "enum": ["MANUAL", "FILTER"]
-          },
-          "storyIds": {
-            "type": ["array", "null"],
-            "description": "MANUAL 필수. 스토리 공개 UUID 1~20개, 지정 순서 유지",
-            "items": {
-              "type": "string"
-            }
-          },
-          "genres": {
-            "type": ["array", "null"],
-            "description": "FILTER 전용. 활성 제공 장르 정식 이름 최대 10개. 빈 배열은 조건 제거",
-            "items": {
-              "type": "string"
-            }
-          },
-          "originalOnly": {
-            "type": ["boolean", "null"],
-            "description": "FILTER 전용. 기본값 false"
-          },
-          "sort": {
-            "type": ["string", "null"],
-            "description": "FILTER 필수. 공개 목록 정렬",
-            "enum": ["popular", "latest", "likes", "chats"]
-          },
-          "itemLimit": {
-            "type": ["integer", "null"],
-            "format": "int32",
-            "description": "카드 상한. 기본값 20",
-            "maximum": 20,
-            "minimum": 1
-          },
-          "sortOrder": {
-            "type": ["integer", "null"],
-            "format": "int32",
-            "description": "노출 순서. 등록 생략 시 현재 최댓값 + 1",
-            "minimum": 1
-          },
-          "reason": {
-            "type": "string",
-            "description": "변경 사유 1~500자",
-            "maxLength": 500,
-            "minLength": 1
-          },
-          "isActive": {
-            "type": ["boolean", "null"],
-            "description": "활성 여부. 기본값 true"
-          }
-        },
-        "required": ["reason"]
       }
     },
     "securitySchemes": {
@@ -9955,22 +10163,6 @@
         "scheme": "bearer",
         "bearerFormat": "JWT"
       }
-    }
-  },
-  "x-contract-overlay": {
-    "homeSections": {
-      "source": "knk-harness STORY/BACKEND 4-2-35~4-2-38",
-      "server": "https://github.com/KIM-N-KANG/manyak-server/pull/461",
-      "revision": "43e309229bb7f65437819333fc597592b60d4f14",
-      "reason": "서버 dev 머지본으로 재생성함. 실제 스냅샷은 보존하며 아래 계약 불일치만 생성 입력에서 보완한다.",
-      "differences": [
-        "응답 items 및 섹션과 stories 원소의 필수 필드가 required에 없다. HomeSectionResponse는 sort만 required다.",
-        "요청의 선택 필드가 nullable로 노출되지만 계약과 서버 검증은 명시적 null을 거부한다.",
-        "storyIds의 UUID 형식, 1~20개와 중복 금지, genres 최대 10개의 제약이 기계 판독 스키마에 없다.",
-        "name과 reason의 공백만 입력하는 값 금지 조건이 pattern에 없다.",
-        "이름은 앞뒤 공백 제거 후 길이를 검사해야 하므로 생성 훅에서 trim을 길이 검사 앞에 적용한다.",
-        "itemLimit과 sortOrder를 integer 타입으로 보완하고 Orval 8.17이 누락하는 정수 검사를 생성 훅에서 반영한다."
-      ]
     }
   }
 }

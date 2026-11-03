@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
-import type { List8Response } from '@/api/generated/zod/admin';
+import type { List9Response } from '@/api/generated/zod/admin';
 
 // OpenAPI의 선택 필드를 화면 계약에서 필수로 좁히며 필드 타입은 생성 응답에서 가져온다.
 type GeneratedModel = NonNullable<
-  z.infer<typeof List8Response>['items']
+  z.infer<typeof List9Response>['items']
 >[number];
 
 export type ModelPromotion = Required<NonNullable<GeneratedModel['promotion']>>;

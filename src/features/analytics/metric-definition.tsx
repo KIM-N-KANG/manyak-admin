@@ -5,6 +5,7 @@ import { createContext, type ReactNode, useContext } from 'react';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
 
 import {
+  activityHoursDefinitionStart,
   metricDefinitions,
   overviewAiCostDefinition,
 } from './metric-definitions-data';
@@ -22,6 +23,20 @@ export const definitionTitles: Record<string, Record<string, number>> = {
     '결제 금액 (환불 포함)': 77,
     '앱 설치(Android)': 78,
   },
+  ...Object.fromEntries(
+    ['messages', 'signups', 'stories', 'payments'].map((metric, i) => [
+      `hours-${metric}`,
+      Object.fromEntries(
+        [
+          '기간 합계',
+          '하루 평균',
+          '가장 많은 시간대',
+          '요일 시간 격자',
+          '전체 수치 표',
+        ].map((title) => [title, activityHoursDefinitionStart + i]),
+      ),
+    ]),
+  ),
   'payment-metrics': {
     '결제 전환율': 81,
     '결제 회원 1인당 금액': 82,

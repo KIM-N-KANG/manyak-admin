@@ -4,12 +4,25 @@ const javaNonBlank = '(?sU).*\\S.*';
 // Java UNICODE_CHARACTER_CLASS의 White_Space와 DOTALL 의미를 플래그 없는 ECMAScript 문자 클래스로 옮긴다.
 const ecmaNonBlank = String.raw`[\s\S]*[^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000][\s\S]*`;
 
-/** 원본 스냅샷은 보존하고 생성 입력의 Java 정규식과 JSON 객체 미디어 표기를 변환한다. */
+/** 원본 스냅샷은 보존하고 생성 입력의 Java 정규식·정수 열거값·JSON 객체 미디어 표기를 변환한다. */
 export default function transformAdminOpenapi(document) {
   const result = applyHomeSectionsOverlay(structuredClone(document));
 
   function visit(value) {
     if (!value || typeof value !== 'object') return;
+
+    // 정수 스키마에 문자열로 기록된 Spring 허용값을 생성 Zod의 숫자 리터럴로 옮긴다.
+    if (
+      value.type === 'integer' &&
+      Array.isArray(value.enum) &&
+      value.enum.every(
+        (item) =>
+          typeof item === 'string' &&
+          /^[+-]?\d+$/.test(item) &&
+          Number.isSafeInteger(Number(item)),
+      )
+    )
+      value.enum = value.enum.map(Number);
 
     if (typeof value.pattern === 'string') {
       if (value.pattern === javaNonBlank) value.pattern = ecmaNonBlank;

@@ -268,7 +268,7 @@ it.each([
   ],
   [
     'audience',
-    ['활동', '가입', '리텐션'],
+    ['활동', '가입', '리텐션', '시간대'],
     '활동',
     [
       '/api/users/activity',
@@ -2041,4 +2041,46 @@ it('DomainScreen 간편 제작의 지난달은 활성이고 최근 30일은 비�
   expect(
     screen.getByRole('button', { name: '최근 30일' }).hasAttribute('disabled'),
   ).toBe(true);
+});
+
+it('시간대는 어제까지 28일을 기간만 요청하고 지표 변경은 URL만 바꾼다', async () => {
+  nav.search = 'tab=hours&platform=web&segment=member';
+
+  const view = draw('audience');
+
+  await screen.findByRole('table', { name: '요일 시간 격자' });
+  expect(requests).toEqual([
+    '/api/users/activity-hours?from=2026-09-25&to=2026-10-22',
+  ]);
+  expect(screen.queryByLabelText('플랫폼')).toBeNull();
+  expect(screen.queryByLabelText('대상')).toBeNull();
+  expect(screen.getByText('서버 DB')).toBeTruthy();
+  fireEvent.focus(
+    screen.getByRole('button', { name: '서버 DB 출처와 집계 안내' }),
+  );
+  expect((await screen.findByRole('tooltip')).textContent).toContain(
+    '서버 DB 출처 지표입니다. 팀 계정은 제외하고 게스트 채팅은 포함합니다. 시각은 KST이고 칸은 그 요일 하루 평균입니다. 기간에 오늘이 있으면 아직 오지 않은 시각은 0으로 셉니다.',
+  );
+  expect((screen.getByLabelText('지표') as HTMLSelectElement).value).toBe(
+    'messages',
+  );
+  fireEvent.change(screen.getByLabelText('지표'), {
+    target: { value: 'payments' },
+  });
+  view.go();
+  await waitFor(() =>
+    expect((screen.getByLabelText('지표') as HTMLSelectElement).value).toBe(
+      'payments',
+    ),
+  );
+  expect(nav.search).toContain('hoursMetric=payments');
+  expect(requests).toHaveLength(1);
+});
+it('알 수 없는 시간대 지표는 채팅 메시지를 선택한다', async () => {
+  nav.search = 'tab=hours&hoursMetric=unknown';
+  draw('audience');
+  await screen.findByRole('table', { name: '요일 시간 격자' });
+  expect((screen.getByLabelText('지표') as HTMLSelectElement).value).toBe(
+    'messages',
+  );
 });

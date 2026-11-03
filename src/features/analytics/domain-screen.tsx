@@ -18,6 +18,7 @@ import { RangePicker } from '@/features/dashboard/range-picker';
 import type { DashboardCharts } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
+import { ActivityHoursArea, hoursMetrics } from './activity-hours';
 import {
   AnalyticsScreen,
   FunnelCards,
@@ -68,6 +69,7 @@ export const domains = {
       ['activity', '활동'],
       ['signups', '가입'],
       ['retention', '리텐션'],
+      ['hours', '시간대'],
     ],
     defaultTab: 'activity',
     list: '/members',
@@ -287,6 +289,7 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
       'consumption',
       'moderation',
       'depth',
+      'hours',
     ].includes(tab);
   const hasSegment =
     hasPlatform &&
@@ -417,8 +420,20 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
 
   const tooLong =
     (Date.parse(range.to) - Date.parse(range.from)) / 86400000 + 1 > 366;
+  const hoursMetric = pick(params.get('hoursMetric'), hoursMetrics, 'messages');
+
   const content = (
     <PendingTab key={`${domain}/${tab}/${query}/${platform}/${segment}`}>
+      {tab === 'hours' ? (
+        <div className="mb-5">
+          <Select
+            label="지표"
+            value={hoursMetric}
+            options={hoursMetrics}
+            onChange={(hoursMetric) => update({ hoursMetric })}
+          />
+        </div>
+      ) : null}
       {campaign || acquisition ? (
         <AnalyticsScreen screen="acquisition" embedded />
       ) : services ? (
@@ -504,6 +519,9 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
               onChange={(cohort) => update({ cohort })}
               onRange={select}
             />
+          ) : null}
+          {tab === 'hours' ? (
+            <ActivityHoursArea query={query} metric={hoursMetric} />
           ) : null}
           {tab === 'consumption' ? <ConsumptionTab query={query} /> : null}
           {tab === 'moderation' ? <ModerationTab query={query} /> : null}

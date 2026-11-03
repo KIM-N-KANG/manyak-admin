@@ -19,8 +19,10 @@ const document = JSON.parse(
 );
 const receivedAt = new Date().toISOString();
 const paths = Object.fromEntries(
-  Object.entries(document.paths).filter(([path]) =>
-    path.startsWith('/api/v1/admin/'),
+  Object.entries(document.paths).filter(
+    ([path]) =>
+      path.startsWith('/api/v1/admin/') &&
+      !/^\/api\/v1\/admin\/foundation-probe(\/|$)/.test(path),
   ),
 );
 

@@ -10,8 +10,15 @@ import type { ChatOptionDay, SignupDay } from '@/features/analytics/types';
 import { sessionCookie } from '@/features/auth/session';
 import { metricFixture } from '@/fixtures/metrics';
 
+import { expectedAdminOpenapiSource } from '../helpers/admin-openapi-source';
+
 const period = 'from=2026-10-21&to=2026-10-23';
 const metrics: [string, ZodType, string][] = [
+  [
+    '/users/activity-hours',
+    schemas.ActivityHoursResponse,
+    'metrics.messages.cells.0.average',
+  ],
   [
     '/campaigns/funnels/activation',
     schemas.ActivationResponse,
@@ -89,12 +96,11 @@ it.each(metrics)(
   },
 );
 
-it('관리자 스냅샷은 dev OpenAPI 출처를 기록하고 테스트 전용 경로를 제외한다', () => {
+it('관리자 스냅샷은 실제 OpenAPI 출처를 기록하고 테스트 전용 경로를 제외한다', () => {
   const snapshot = JSON.parse(readFileSync('docs/openapi/admin.json', 'utf8'));
 
   expect(snapshot['x-source']).toMatchObject({
-    input: 'https://dev-api.manyak.app/v3/api-docs',
-    revision: 'e9454ef',
+    ...expectedAdminOpenapiSource,
     receivedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
   });
   expect(
@@ -107,6 +113,7 @@ it('관리자 스냅샷은 dev OpenAPI 출처를 기록하고 테스트 전용 �
 });
 
 const newPaths = [
+  '/users/activity-hours',
   '/campaigns/funnels/activation',
   '/campaigns/reach',
   '/campaigns/creatives',

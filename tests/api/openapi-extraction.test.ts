@@ -43,6 +43,8 @@ it.each([undefined, '로컬 병합 #435 6811081 + #434 aeea52c'])(
               },
             },
             '/api/v1/public': { get: {} },
+            '/api/v1/admin/foundation-probe': { get: {} },
+            '/api/v1/admin/foundation-probe/access': { get: {} },
           },
           components: {
             securitySchemes: {
@@ -323,3 +325,19 @@ it('메타데이터 없는 실제 OpenAPI를 임시 폴더에서 추출하고 �
     rmSync(directory, { recursive: true, force: true });
   }
 }, 30000);
+
+it('시간대 days의 정수 열거값은 생성 입력에서만 숫자로 정규화한다', async () => {
+  const { default: transform } =
+    await import('../../scripts/transform-admin-openapi.mjs');
+  const original = JSON.parse(readFileSync('docs/openapi/admin.json', 'utf8'));
+  const before = structuredClone(original);
+  const result = transform(original);
+  const parameters =
+    result.paths['/api/v1/admin/users/activity-hours'].get.parameters;
+
+  expect(
+    parameters.find((param: { name: string }) => param.name === 'days').schema
+      .enum,
+  ).toEqual([7, 30, 90]);
+  expect(original).toEqual(before);
+});
