@@ -5,6 +5,7 @@ import { kstToday } from '@/features/dashboard/date-range';
 import { members } from '@/fixtures/entities';
 import { kstDate } from '@/fixtures/query';
 
+import { activityHoursFixture } from './activity-hours';
 import { newMetricFixture } from './metrics-next';
 import { newMetricsFixture } from './new-metrics';
 import { notificationOpenValues } from './notification-opens';
@@ -78,6 +79,9 @@ const events = [
 ];
 
 export function metricFixture(path: string, query: URLSearchParams) {
+  if (path === '/users/activity-hours')
+    return activityHoursFixture(query.get('from')!, query.get('to')!);
+
   const added = newMetricsFixture(path, query);
 
   if (added) return added;

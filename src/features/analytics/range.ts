@@ -59,10 +59,14 @@ export function defaultPeriod(
     'engagement',
   ].includes(tab)
     ? 7
-    : ['sessions', 'session-lengths'].includes(tab)
-      ? 30
-      : 30;
-  const to = tab === 'retention' ? shiftDate(today, -1) : today;
+    : tab === 'hours'
+      ? 28
+      : ['sessions', 'session-lengths'].includes(tab)
+        ? 30
+        : 30;
+  const to = ['retention', 'hours'].includes(tab)
+    ? shiftDate(today, -1)
+    : today;
 
   return { from: shiftDate(to, 1 - days), to };
 }

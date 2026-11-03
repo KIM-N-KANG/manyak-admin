@@ -31,6 +31,7 @@ const cases: [string, string, string, unknown?][] = [
     '/moderation/metrics',
     '/credits/metrics',
     '/chats/engagement',
+    '/users/activity-hours',
   ].map((path): [string, string, string] => [
     'GET',
     `${path}?from=2026-10-01&to=2026-10-21`,
@@ -1390,6 +1391,7 @@ it.each([
   '/credits/metrics',
   '/stories/consumption',
   '/chats/engagement',
+  '/users/activity-hours',
   '/moderation/metrics',
 ])(
   '%s 신규 지표는 생성 Zod로 잘못된 쿼리를 업스트림 전에 거부한다',

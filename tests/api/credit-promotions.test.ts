@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { findAdminEndpoint } from '@/api/admin-endpoints';
 import {
   Delete3Body,
-  List8Response,
+  List9Response,
   Upsert2Body,
 } from '@/api/generated/zod/admin';
 import { GET as handle } from '@/app/api/admin-upstream/[...path]/route';
@@ -87,9 +87,9 @@ it('설정과 해제는 실제 생성 본문 스키마를 사용한다', () => {
   expect(
     findAdminEndpoint('/credits/promotions/LITE', 'DELETE')?.operation?.body,
   ).toBe(Delete3Body);
-  expect(List8Response.safeParse({ items: [model] }).success).toBe(true);
+  expect(List9Response.safeParse({ items: [model] }).success).toBe(true);
   expect(
-    List8Response.safeParse({
+    List9Response.safeParse({
       items: [{ ...model, promotion: { ...promotion, status: 'WRONG' } }],
     }).success,
   ).toBe(false);
