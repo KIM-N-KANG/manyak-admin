@@ -1471,14 +1471,17 @@ it('DomainScreen 성장 유입 소스는 10일 상한을 적용하고 끝 날짜
   expect(nav.search).toContain('campaign=THIRD_2026');
 });
 
-it('DomainScreen 스토리 상세 진입은 3차 기본 기간 35일을 보존하고 31일 상한에서 요청을 막는다', async () => {
+it('DomainScreen 스토리 상세 진입은 확정 3차 기본 기간 35일을 보존해 요청한다', async () => {
   nav.search = 'tab=story-detail&campaign=THIRD_2026';
 
   const view = draw('inflow');
 
-  await screen.findByRole('alert');
-  expect(screen.getByRole('alert').textContent).toContain('최대 31일');
-  await waitFor(() => expect(requests).toEqual(['/api/campaigns']));
+  await screen.findByRole('heading', { name: '단계별 전환' });
+  expect(screen.queryByRole('alert')).toBeNull();
+  expect(requests).toEqual([
+    '/api/campaigns',
+    '/api/campaigns/funnels/story-detail?from=2026-08-25&to=2026-09-28&campaign=THIRD_2026',
+  ]);
   expect(
     screen.getByRole('button', { name: '기간: 2026-08-25 ~ 2026-09-28' }),
   ).toBeTruthy();
@@ -2007,4 +2010,35 @@ it('소비·검수 탭은 보이지만 제작 탭에서 신규 지표를 미리 
       ),
     ),
   ).toBe(false);
+});
+
+it('3차 첫 방문 활성화 35일은 퍼널과 누적 도달을 함께 요청한다', async () => {
+  nav.search = 'tab=activation&campaign=THIRD_2026';
+  draw('inflow');
+  await waitForLoadedRequests(3, ['첫 방문 활성화 퍼널', '누적 도달']);
+  expect(screen.queryByRole('alert')).toBeNull();
+  expect(
+    requests
+      .slice(1)
+      .every((request) =>
+        request.includes('from=2026-08-25&to=2026-09-28&campaign=THIRD_2026'),
+      ),
+  ).toBe(true);
+});
+it('DomainScreen 간편 제작의 지난달은 활성이고 최근 30일은 비활성이다', async () => {
+  vi.setSystemTime(new Date('2026-11-03T03:00:00Z'));
+  nav.search = 'tab=creation&campaign=THIRD_2026';
+  draw('inflow');
+
+  const picker = await screen.findByRole('button', {
+    name: '기간: 2026-09-05 ~ 2026-10-09',
+  });
+
+  fireEvent.click(picker);
+  expect(
+    screen.getByRole('button', { name: '지난달' }).hasAttribute('disabled'),
+  ).toBe(false);
+  expect(
+    screen.getByRole('button', { name: '최근 30일' }).hasAttribute('disabled'),
+  ).toBe(true);
 });

@@ -45,7 +45,7 @@ import {
   PaymentMetricsArea,
 } from './new-metrics-content';
 import { PendingTab } from './pending-dates';
-import { analyticsRange } from './range';
+import { analyticsRange, tabLimits } from './range';
 import { cohorts } from './retention';
 import type { CampaignDefinition } from './types';
 
@@ -657,7 +657,9 @@ export function DomainScreen({ domain }: { domain: DomainName }) {
           {
             <RangePicker
               disabled={['installs', 'tables'].includes(tab)}
-              maxDays={range.maxDays}
+              maxDays={
+                campaign ? (to) => tabLimits(tab, to).maxDays : range.maxDays
+              }
               endDate={range.endDate}
               range={{
                 ...range,

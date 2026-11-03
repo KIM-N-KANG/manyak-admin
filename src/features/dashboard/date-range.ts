@@ -14,6 +14,7 @@ export const quickRanges = [
 ] as const;
 export type RangeName = (typeof quickRanges)[number][0];
 export type DateRange = { from: string; to: string };
+export type RangeLimit = number | ((to: string) => number);
 export function kstToday() {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(
     new Date(),
@@ -64,7 +65,7 @@ export function quickRange(name: RangeName, today = kstToday()): DateRange {
 export function getRangeError(
   { from, to }: DateRange,
   today = kstToday(),
-  maxDays = 366,
+  maxDays: RangeLimit = 366,
 ) {
   const validDate = (v: string) =>
     /^\d{4}-\d{2}-\d{2}$/.test(v) &&
@@ -78,8 +79,10 @@ export function getRangeError(
 
   if (to > today) return '끝 날짜는 오늘 또는 이전 날짜로 선택해 주세요.';
 
-  if ((Date.parse(to) - Date.parse(from)) / 86400000 >= maxDays)
-    return `시작 날짜와 끝 날짜를 포함해 ${maxDays}일 이내로 선택해 주세요.`;
+  const limit = typeof maxDays === 'function' ? maxDays(to) : maxDays;
+
+  if ((Date.parse(to) - Date.parse(from)) / 86400000 >= limit)
+    return `시작 날짜와 끝 날짜를 포함해 ${limit}일 이내로 선택해 주세요.`;
 
   return null;
 }

@@ -7,7 +7,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { popoverMotionClass } from '@/components/ui/popover-motion';
 
-import type { DateRange, RangeName } from './date-range';
+import type { DateRange, RangeLimit, RangeName } from './date-range';
 import {
   getRangeError,
   kstToday,
@@ -66,7 +66,7 @@ export function RangePicker({
     select: (value: DateRange | RangeName) => void;
     query?: string;
   };
-  maxDays?: number;
+  maxDays?: RangeLimit;
   endDate?: string;
   disabled?: boolean;
 }) {
@@ -76,6 +76,8 @@ export function RangePicker({
   const today = kstToday();
   const lastDate = endDate ?? today;
   const rangeError = getRangeError(draft, lastDate, maxDays);
+  const draftMaxDays =
+    typeof maxDays === 'function' ? maxDays(draft.to || range.to) : maxDays;
 
   return (
     <Popover.Root
@@ -118,11 +120,7 @@ export function RangePicker({
                     className="rounded-sm px-3 py-1.5 text-left text-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
                     aria-pressed={range.name === key}
                     disabled={
-                      quickRange(key, today).to > lastDate ||
-                      (Date.parse(quickRange(key, today).to) -
-                        Date.parse(quickRange(key, today).from)) /
-                        86400000 >=
-                        maxDays
+                      !!getRangeError(quickRange(key, today), lastDate, maxDays)
                     }
                     onClick={() => {
                       range.select(key);
@@ -171,7 +169,7 @@ export function RangePicker({
                 </label>
                 <p className="max-w-56 text-xs text-muted-foreground">
                   끝 날짜는 {lastDate}까지 선택할 수 있으며 시작 날짜와 끝
-                  날짜를 포함해 최대 {maxDays}일입니다.
+                  날짜를 포함해 최대 {draftMaxDays}일입니다.
                 </p>
                 {rangeError && (
                   <p role="alert" className="text-xs text-destructive">

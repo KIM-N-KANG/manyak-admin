@@ -57,9 +57,19 @@ it('5-1 공통: 기간 상한은 선택을 보존하고 끝 날짜를 유지한 
 
   const third = campaignCatalog(today).items[2];
 
-  expect(
-    analyticsRange(new URLSearchParams(), 'story-detail', third, today).error,
-  ).toBe('limit');
+  const storyRange = analyticsRange(
+    new URLSearchParams(),
+    'story-detail',
+    third,
+    today,
+  );
+
+  expect(storyRange.error).toBeNull();
+  expect(storyRange.maxDays).toBe(35);
+  expect({ from: storyRange.from, to: storyRange.to }).toEqual({
+    from: third.startDate,
+    to: third.endDate,
+  });
 });
 it('5-1 비율·표시 이름은 0과 null, 100% 초과와 새 코드를 구분한다', () => {
   expect(percent(ratio(7, 6))).toBe('116.7%');

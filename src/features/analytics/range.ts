@@ -8,16 +8,31 @@ import {
 
 export const shiftDate = (date: string, days: number) =>
   new Date(Date.parse(date) + days * 86400000).toISOString().slice(0, 10);
-export function tabLimits(tab: string) {
+export function isConfirmedDate(to: string, today = kstToday()) {
+  return !!to && to <= shiftDate(today, -2);
+}
+export function tabLimits(tab: string, to = kstToday(), today = kstToday()) {
+  const confirmed = isConfirmedDate(to, today);
+
   return {
     maxDays:
       tab === 'creation'
-        ? 20
-        : ['story-detail', 'funnels', 'activation'].includes(tab)
-          ? 31
-          : tab === 'sources'
-            ? 10
-            : 366,
+        ? confirmed
+          ? 41
+          : 20
+        : tab === 'activation'
+          ? confirmed
+            ? 62
+            : 31
+          : tab === 'story-detail'
+            ? confirmed
+              ? 35
+              : 31
+            : tab === 'funnels'
+              ? 31
+              : tab === 'sources'
+                ? 10
+                : 366,
     yesterday: tab === 'retention',
   };
 }
@@ -65,7 +80,7 @@ export function analyticsRange(
     : validCustom
       ? { ...custom, name: null, label: `${custom.from} ~ ${custom.to}` }
       : { ...defaultPeriod(tab, campaign, today), name: null, label: '' };
-  const { maxDays, yesterday } = tabLimits(tab);
+  const { maxDays, yesterday } = tabLimits(tab, range.to, today);
   const endDate = yesterday ? shiftDate(today, -1) : today;
   const error =
     range.to > endDate
