@@ -22,3 +22,18 @@ export function costPerTurn(data: AiCostResponse) {
       : '호출 없음'
     : metricNumber(data.totals.costPerTurnKrw, '원');
 }
+
+export function dailyCost(
+  items: { costKrw: number | null; feature?: string }[],
+  feature?: string,
+) {
+  const costs = items.filter(
+    (item) =>
+      item.costKrw !== null &&
+      (feature === undefined || item.feature === feature),
+  );
+
+  return costs.length
+    ? costs.reduce((sum, item) => sum + item.costKrw!, 0)
+    : null;
+}

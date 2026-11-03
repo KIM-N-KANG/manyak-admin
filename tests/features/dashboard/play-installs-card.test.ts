@@ -126,7 +126,11 @@ it('기간 합계가 큰 값이고 누적은 작은 줄이며 유입의 앱 설�
   expect(
     screen.getByRole('link', { name: '앱 설치(Android)' }).getAttribute('href'),
   ).toBe('/analytics/inflow?tab=installs');
-  expect(view.container.querySelector('svg')).toBeNull();
+  expect(
+    view.container
+      .querySelector('[data-overview-trend] svg')!
+      .getAttribute('aria-hidden'),
+  ).toBe('true');
 });
 
 it('503이면 설치 지표 사용 불가를 표시하고 재시도한다', () => {

@@ -1,13 +1,17 @@
 'use client';
 
-import { QueryState } from '@/components/admin/data-ui';
+import { NumberValue, QueryState } from '@/components/admin/data-ui';
 import { HelpTooltip } from '@/components/admin/help-tooltip';
-import { costPerTurn, useAiCost } from '@/features/analytics/ai-cost';
-import { metricNumber } from '@/features/analytics/config';
+import {
+  costPerTurn,
+  dailyCost,
+  useAiCost,
+} from '@/features/analytics/ai-cost';
 import { DefinitionText } from '@/features/analytics/metric-definition';
 import { overviewAiCostDefinition } from '@/features/analytics/metric-definitions-data';
 
 import { OverviewCard } from './overview-card';
+import { trendSeries } from './overview-sparkline';
 
 export function AiCostCard({
   query,
@@ -36,9 +40,24 @@ export function AiCostCard({
           : undefined;
   const detail = data?.totals ? `턴당 원가 ${costPerTurn(data)}` : undefined;
 
+  const params = new URLSearchParams(query);
+  const range = { from: params.get('from')!, to: params.get('to')! };
+
   return (
     <OverviewCard
       title="AI 비용"
+      trend={
+        data
+          ? trendSeries(
+              data.daily.map((day) => ({
+                date: day.date,
+                value: dailyCost(day.byFeature),
+              })),
+              range,
+              data.pendingDates,
+            )
+          : undefined
+      }
       href="/analytics/ops?tab=ai-cost"
       loading={current.isPending ? 'data' : undefined}
       help={
@@ -60,7 +79,12 @@ export function AiCostCard({
         ) : waiting || !data?.totals ? (
           '준비 중'
         ) : (
-          metricNumber(data.totals.costKrw, '원')
+          <>
+            <NumberValue value={Math.round(data.totals.costKrw)} />
+            <span className="ml-1 text-xs font-normal text-muted-foreground">
+              원
+            </span>
+          </>
         )
       }
       comparison={{

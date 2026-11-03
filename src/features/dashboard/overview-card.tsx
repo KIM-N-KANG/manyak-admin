@@ -10,6 +10,7 @@ import { useSkeletonVisible } from '@/features/shared/use-skeleton-visible';
 import { cn } from '@/lib/utils';
 
 import { changeText } from './comparison';
+import { Sparkline, type TrendPoint } from './overview-sparkline';
 
 export const overviewGridClassName =
   'grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-4';
@@ -28,6 +29,7 @@ export function OverviewCard({
   fullLink = false,
   loading,
   visible,
+  trend,
 }: {
   title?: string;
   href?: string;
@@ -44,6 +46,7 @@ export function OverviewCard({
   fullLink?: boolean;
   loading?: 'all' | 'data' | 'value';
   visible?: boolean;
+  trend?: TrendPoint[];
 }) {
   const showSkeleton = useSkeletonVisible(!!loading);
   const skeleton = (className: string) => (
@@ -72,36 +75,39 @@ export function OverviewCard({
           </h3>
         )}
       </div>
-      <div
-        data-overview-slot="value"
-        className="min-h-8 min-w-0 text-2xl font-semibold tracking-tight whitespace-nowrap tabular-nums xl:text-xl 2xl:text-2xl">
-        {loading && loading !== 'all' ? (
-          <span role="status" className="sr-only">
-            데이터를 불러오는 중입니다…
-          </span>
-        ) : null}
-        {loading ? skeleton('h-8 w-24 max-w-full') : value}
-      </div>
-      <div
-        data-overview-slot="change"
-        className="min-h-4 text-xs font-normal text-muted-foreground">
-        {loading
-          ? skeleton('h-4 w-20')
-          : comparison
-            ? (comparison.status ??
-              (comparison.value == null || comparison.previous == null
-                ? '준비 중'
-                : changeText(comparison.value, comparison.previous)))
-            : null}
-      </div>
-      <div
-        data-overview-slot="comparison"
-        className="min-h-4 text-xs font-normal text-muted-foreground">
-        {loading
-          ? skeleton('h-4 w-24')
-          : comparison
-            ? `이전 ${comparison.days}일 대비`
-            : null}
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36%] gap-x-2 gap-y-1 2xl:grid-cols-[minmax(0,1fr)_46%]">
+        <div
+          data-overview-slot="value"
+          className="col-start-1 row-start-1 min-h-8 min-w-0 text-lg font-semibold tracking-tight whitespace-nowrap tabular-nums min-[1800px]:text-2xl sm:text-xl lg:text-2xl xl:text-lg 2xl:text-xl">
+          {loading && loading !== 'all' ? (
+            <span role="status" className="sr-only">
+              데이터를 불러오는 중입니다…
+            </span>
+          ) : null}
+          {loading ? skeleton('h-8 w-24 max-w-full') : value}
+        </div>
+        <div
+          data-overview-slot="change"
+          className="col-start-1 min-h-4 text-xs font-normal text-muted-foreground">
+          {loading
+            ? skeleton('h-4 w-20')
+            : comparison
+              ? (comparison.status ??
+                (comparison.value == null || comparison.previous == null
+                  ? '준비 중'
+                  : changeText(comparison.value, comparison.previous)))
+              : null}
+        </div>
+        <div
+          data-overview-slot="comparison"
+          className="col-start-1 min-h-4 text-xs font-normal text-muted-foreground">
+          {loading
+            ? skeleton('h-4 w-24')
+            : comparison
+              ? `이전 ${comparison.days}일 대비`
+              : null}
+        </div>
+        <Sparkline trend={loading ? undefined : trend} />
       </div>
       <div
         data-overview-slot="detail"

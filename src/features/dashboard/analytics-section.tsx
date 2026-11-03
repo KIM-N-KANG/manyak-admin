@@ -9,10 +9,18 @@ import { OverviewCard } from '@/features/dashboard/overview-card';
 import type { DashboardAnalytics } from '@/features/dashboard/types';
 import { useApi } from '@/features/shared/use-api';
 
-export function AnalyticsSection() {
+import { type DateRange } from './date-range';
+import { trendSeries } from './overview-sparkline';
+
+export function AnalyticsSection({ range }: { range?: DateRange }) {
   const today = kstToday();
+  const yesterday = shiftDate(today, -1);
+  const selected = range ?? { from: yesterday, to: today };
+  const from = selected.from < yesterday ? selected.from : yesterday;
+  const to = selected.to > today ? selected.to : today;
+  const tooLong = (Date.parse(to) - Date.parse(from)) / 86400000 + 1 > 366;
   const query = useApi<DashboardAnalytics>(
-    `/api/dashboard/analytics?from=${shiftDate(today, -1)}&to=${today}`,
+    `/api/dashboard/analytics?from=${tooLong ? yesterday : from}&to=${tooLong ? today : to}`,
     true,
     {
       refetchInterval: ({ state }) =>
@@ -34,6 +42,18 @@ export function AnalyticsSection() {
   return (
     <OverviewCard
       title="오늘 활성 사용자"
+      trend={
+        data && !tooLong
+          ? trendSeries(
+              data.daily.map((day) => ({
+                date: day.date,
+                value: day.activeUsers.total,
+              })),
+              selected,
+              data.pendingDates,
+            )
+          : undefined
+      }
       href="/analytics/audience?tab=activity"
       help={
         <HelpTooltip label="Amplitude 출처와 집계 안내">

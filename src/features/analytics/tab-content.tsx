@@ -5,7 +5,7 @@ import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 import { aiFeatureLabel, aiFeatures } from '@/features/dashboard/chart-data';
 
-import { costPerTurn } from './ai-cost';
+import { costPerTurn, dailyCost } from './ai-cost';
 import { Charts, dailyRows } from './charts';
 import {
   hasChatConversion,
@@ -1221,17 +1221,7 @@ export function QualityContent({
               (day) =>
                 Object.fromEntries(
                   aiFeatures.map((feature) => {
-                    const costs = day.byFeature.filter(
-                      (item) =>
-                        item.feature === feature && item.costKrw !== null,
-                    );
-
-                    return [
-                      feature,
-                      costs.length
-                        ? costs.reduce((sum, item) => sum + item.costKrw!, 0)
-                        : null,
-                    ];
+                    return [feature, dailyCost(day.byFeature, feature)];
                   }),
                 ),
               { preservePendingValues: true },

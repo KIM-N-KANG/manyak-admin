@@ -86,7 +86,10 @@ it('두 기간의 비용·증감·턴당 원가·링크를 표시하고 마진�
   const view = draw();
 
   await tick(600);
-  expect(card().getByText('120,000원')).toBeTruthy();
+  expect(
+    card().getByText('120,000').closest('[data-overview-slot="value"]')!
+      .textContent,
+  ).toBe('120,000원');
   expect(card().getByText('▲ 20.0%')).toBeTruthy();
   expect(card().getByText('이전 30일 대비')).toBeTruthy();
   expect(card().getByText('턴당 원가 3.5원')).toBeTruthy();
@@ -122,7 +125,11 @@ it.each([false, true])(
     await tick(600);
     expect(card().getAllByText('준비 중')).toHaveLength(prev ? 1 : 2);
 
-    if (prev) expect(card().getByText('120,000원')).toBeTruthy();
+    if (prev)
+      expect(
+        card().getByText('120,000').closest('[data-overview-slot="value"]')!
+          .textContent,
+      ).toBe('120,000원');
 
     pending = previousPending = false;
     await tick(60000);
@@ -140,7 +147,10 @@ it('직전 비용 만료는 큰 숫자를 유지하고 비교할 이전 값 없�
   expired = true;
   draw();
   await tick(600);
-  expect(card().getByText('120,000원')).toBeTruthy();
+  expect(
+    card().getByText('120,000').closest('[data-overview-slot="value"]')!
+      .textContent,
+  ).toBe('120,000원');
   expect(card().getByText('비교할 이전 값 없음')).toBeTruthy();
 });
 it('선택 비용 503은 카드 안에 오류와 재시도를 표시한다', async () => {
@@ -151,7 +161,10 @@ it('선택 비용 503은 카드 안에 오류와 재시도를 표시한다', asy
   fail = false;
   fireEvent.click(card().getByRole('button', { name: '다시 시도' }));
   await tick(600);
-  expect(card().getByText('120,000원')).toBeTruthy();
+  expect(
+    card().getByText('120,000').closest('[data-overview-slot="value"]')!
+      .textContent,
+  ).toBe('120,000원');
 });
 it('턴당 원가 null 처리는 운영 AI 비용과 같은 함수를 쓴다', async () => {
   unit = null;
@@ -200,4 +213,44 @@ it('공유 원가 함수는 null일 때 응답 호출 유무에 따라 같은 �
   expect(costPerTurn(data)).toBe('계산할 수 없음');
   data.daily = [];
   expect(costPerTurn(data)).toBe('호출 없음');
+});
+
+it('AI 비용은 원 단위로 반올림하고 숫자와 작은 단위를 분리한다', async () => {
+  client.setQueryData([`/api/quality/ai-cost?${selected}`], {
+    ...metricFixture('/quality/ai-cost', new URLSearchParams(selected)),
+    pendingDates: [],
+    totals: { costKrw: 106155.88, costPerTurnKrw: 3.5 },
+  });
+  draw();
+  await tick(600);
+
+  const number = card().getByText('106,156');
+
+  expect(number.classList.contains('font-mono')).toBe(true);
+  expect(number.parentElement!.textContent).toBe('106,156원');
+  expect(card().getByText('원').classList.contains('text-xs')).toBe(true);
+  expect(card().getByText('턴당 원가 3.5원')).toBeTruthy();
+});
+
+it('선택 비용의 준비 중 날짜는 실제 미니 선에서도 끊는다', async () => {
+  const data = metricFixture(
+    '/quality/ai-cost',
+    new URLSearchParams(selected),
+  ) as AiCostResponse;
+
+  data.pendingDates = ['2026-10-15'];
+  data.daily = data.daily.map((day) => ({
+    ...day,
+    byFeature: day.byFeature.map((item) => ({ ...item, costKrw: 1 })),
+  }));
+  client.setQueryData([`/api/quality/ai-cost?${selected}`], data);
+  draw();
+  await tick(600);
+
+  const node = screen
+    .getByRole('region', { name: 'AI 비용' })
+    .querySelector('[data-overview-trend] path')!;
+
+  expect(node.getAttribute('d')!.match(/M/g)).toHaveLength(2);
+  expect(card().getAllByText('준비 중')).toHaveLength(2);
 });

@@ -197,12 +197,12 @@ describe('Amplitude 실패 격리', () => {
     );
   });
 
-  it('기간 선택은 DB 추이만 전환하고 Amplitude 카드는 KST 어제와 오늘 조회를 유지한다', async () => {
+  it('기간 선택은 DB 추이와 Amplitude 일별 범위를 전환하고 오늘 카드의 집계는 유지한다', async () => {
     const view = render(dashboard());
 
     await screen.findByRole('heading', { name: '오늘 활성 사용자' });
     expect(requested).toContain(
-      '/api/dashboard/analytics?from=2026-10-20&to=2026-10-21',
+      '/api/dashboard/analytics?from=2026-10-15&to=2026-10-21',
     );
     expect(requested).toContain(
       '/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
@@ -232,7 +232,8 @@ describe('Amplitude 실패 격리', () => {
     view.rerender(dashboard());
     await waitFor(() => {
       expect(requested.filter((url) => url.includes('/analytics'))).toEqual([
-        '/api/dashboard/analytics?from=2026-10-20&to=2026-10-21',
+        '/api/dashboard/analytics?from=2026-10-15&to=2026-10-21',
+        '/api/dashboard/analytics?from=2026-07-24&to=2026-10-21',
       ]);
       expect(requested).toContain(
         '/api/dashboard/charts?from=2026-07-24&to=2026-10-21',
@@ -538,4 +539,75 @@ it('AI 비용 503은 나머지 일곱 카드 값을 유지하고 선택 비용�
       (url) => !url.includes('/quality/ai-cost?from=2026-10-15'),
     ),
   ).toEqual(otherRequests);
+});
+
+it('최근 30일의 여덟 미니 그래프는 기존 BFF 요청 여섯 번만 사용한다', async () => {
+  navigation.search = 'range=last30d';
+  render(dashboard());
+  await waitFor(() => expect(requested).toHaveLength(6));
+  expect([...requested].sort()).toEqual(
+    [
+      '/api/dashboard/summary',
+      '/api/dashboard/charts?from=2026-09-22&to=2026-10-21',
+      '/api/dashboard/analytics?from=2026-09-22&to=2026-10-21',
+      '/api/dashboard/play-installs',
+      '/api/quality/ai-cost?from=2026-09-22&to=2026-10-21',
+      '/api/quality/ai-cost?from=2026-08-23&to=2026-09-21',
+    ].sort(),
+  );
+
+  const grid = screen.getByRole('region', { name: '요약 지표' });
+
+  await waitFor(() =>
+    expect(grid.querySelectorAll('[data-overview-trend] svg')).toHaveLength(8),
+  );
+
+  for (const card of grid.children)
+    expect(
+      card.querySelectorAll('[data-overview-trend] svg path'),
+    ).toHaveLength(1);
+});
+
+it('분석 503이면 오늘 활성 사용자만 그래프를 비우고 다른 일곱 선은 유지한다', async () => {
+  failAnalytics = true;
+  navigation.search = 'range=last30d';
+  render(dashboard());
+
+  const active = screen.getByRole('region', { name: '오늘 활성 사용자' });
+
+  await within(active).findByRole('alert');
+
+  const grid = screen.getByRole('region', { name: '요약 지표' });
+
+  await waitFor(() =>
+    expect(grid.querySelectorAll('[data-overview-trend] svg')).toHaveLength(7),
+  );
+  expect(active.querySelector('svg')).toBeNull();
+});
+it('스토리 일별 값이 하루뿐이면 숫자·증감을 유지하고 미니 그래프만 비운다', async () => {
+  const data = await (
+    await chartsResponse(
+      new Request(
+        'http://localhost/api/dashboard/charts?from=2026-10-15&to=2026-10-21',
+      ),
+    )
+  ).json();
+
+  data.daily = data.daily.slice(0, 1);
+  client.setQueryData(
+    ['/api/dashboard/charts?from=2026-10-15&to=2026-10-21'],
+    data,
+  );
+  render(dashboard());
+
+  const story = await screen.findByRole('region', { name: '스토리 생성' });
+
+  expect(story.querySelector('[data-overview-trend]')).toBeTruthy();
+  expect(story.querySelector('svg')).toBeNull();
+  expect(story.querySelector('[data-overview-slot="value"]')!.textContent).toBe(
+    `${data.totals.stories.toLocaleString('ko-KR')}개`,
+  );
+  expect(
+    story.querySelector('[data-overview-slot="comparison"]')!.textContent,
+  ).toBe('이전 7일 대비');
 });
