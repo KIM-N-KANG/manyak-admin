@@ -46,6 +46,7 @@ vi.mock('recharts', () => {
     createElement('div', { 'data-rows': JSON.stringify(data) }, children);
 
   return {
+    Rectangle: () => null,
     usePlotArea: () => undefined,
     useXAxisScale: () => undefined,
     useYAxisScale: () => undefined,

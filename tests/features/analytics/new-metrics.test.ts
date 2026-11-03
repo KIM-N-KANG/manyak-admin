@@ -75,6 +75,7 @@ vi.mock('recharts', async () => {
   };
 
   return {
+    Rectangle: () => null,
     PieChart: Box,
     Pie: Box,
     Cell: Box,
