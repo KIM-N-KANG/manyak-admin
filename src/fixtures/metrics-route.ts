@@ -88,7 +88,7 @@ export async function metricsRoute(request: Request) {
       query.has('from') !== query.has('to') ||
       getRangeError({ from, to }) ||
       (Date.parse(to) - Date.parse(from)) / 86400000 >=
-        tabLimits(tab).maxDays ||
+        tabLimits(tab, to).maxDays ||
       (tab === 'retention' && to > shiftDate(kstToday(), -1))
     )
       return bffError(request, 400, '기간 범위를 확인해 주세요.', 'from');

@@ -80,6 +80,16 @@ it('5-1 새 퍼널 표시 이름과 플랫폼 고정 키를 지원한다', () =>
     analyticsRange(
       new URLSearchParams('from=2026-09-01&to=2026-10-23'),
       'activation',
+      undefined,
+      '2026-11-03',
+    ).maxDays,
+  ).toBe(62);
+  expect(
+    analyticsRange(
+      new URLSearchParams('from=2026-10-01&to=2026-11-03'),
+      'activation',
+      undefined,
+      '2026-11-03',
     ).maxDays,
   ).toBe(31);
 });
