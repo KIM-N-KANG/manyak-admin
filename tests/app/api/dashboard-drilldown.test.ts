@@ -38,6 +38,10 @@ async function all<T>(
 
   url.searchParams.set('size', '100');
 
+  // 화면의 삭제 제외(deleted=exclude)는 요청에서 빠지므로 같은 요청을 만든다.
+  if (url.searchParams.get('deleted') === 'exclude')
+    url.searchParams.delete('deleted');
+
   const items: T[] = [];
   let number = 1;
   let totalPages = 1;
