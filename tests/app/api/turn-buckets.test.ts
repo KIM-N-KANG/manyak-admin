@@ -64,7 +64,8 @@ describe('턴 수 분포 13구간', () => {
 
       const response = chats(
         request(
-          `${getDistributionHref(point.link)}&size=100&sort=turnCount&order=asc`,
+          // 화면의 제외(deleted=exclude)는 요청에서 빠지므로 같은 요청을 만든다.
+          `${getDistributionHref(point.link).replace('&deleted=exclude', '')}&size=100&sort=turnCount&order=asc`,
         ),
       );
 

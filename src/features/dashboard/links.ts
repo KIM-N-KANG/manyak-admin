@@ -30,5 +30,10 @@ export function getDailyMetricHref(metric: MetricKey, date: string) {
 }
 
 export function getDistributionHref(link: ChartLink) {
-  return `/${link.list}?${new URLSearchParams(link.params)}`;
+  const query = new URLSearchParams(link.params);
+
+  // 분포는 미삭제 채팅만 세므로 기본이 삭제 포함인 목록에 제외를 명시한다.
+  if (link.list !== 'members') query.set('deleted', 'exclude');
+
+  return `/${link.list}?${query}`;
 }
