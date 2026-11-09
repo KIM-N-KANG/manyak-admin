@@ -145,9 +145,9 @@ const configs: Record<Domain, { title: string; filters: Filter[] }> = {
       {
         key: 'deleted',
         label: '삭제된 스토리',
-        emptyLabel: '제외',
+        emptyLabel: '포함',
         options: [
-          ['include', '포함'],
+          ['exclude', '제외'],
           ['only', '삭제된 스토리만'],
         ],
       },
@@ -205,9 +205,9 @@ const configs: Record<Domain, { title: string; filters: Filter[] }> = {
       {
         key: 'deleted',
         label: '삭제된 채팅',
-        emptyLabel: '제외',
+        emptyLabel: '포함',
         options: [
-          ['include', '포함'],
+          ['exclude', '제외'],
           ['only', '삭제된 채팅만'],
         ],
       },

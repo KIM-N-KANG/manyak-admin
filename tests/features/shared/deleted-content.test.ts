@@ -110,7 +110,7 @@ function pushed() {
 }
 
 it.each(['stories', 'chats'] as const)(
-  '%s 삭제 필터는 제외·포함·삭제만 순서이고 선택값을 URL과 요청에 반영한다',
+  '%s 삭제 필터는 포함·제외·삭제만 순서로 포함이 기본이고 선택값을 URL과 요청에 반영한다',
   async (domain) => {
     nav.pathname = `/${domain}`;
 
@@ -122,12 +122,12 @@ it.each(['stories', 'chats'] as const)(
       within(select)
         .getAllByRole('option')
         .map((x) => x.textContent),
-    ).toEqual(['제외', '포함', `${label}만`]);
+    ).toEqual(['포함', '제외', `${label}만`]);
     expect((select as HTMLSelectElement).value).toBe('');
     await waitFor(() => expect(requested.length).toBeGreaterThan(0));
-    expect(requested.at(-1)!.searchParams.has('deleted')).toBe(false);
+    expect(requested.at(-1)!.searchParams.get('deleted')).toBe('include');
 
-    for (const value of ['include', 'only', '']) {
+    for (const value of ['exclude', 'only', '']) {
       fireEvent.change(screen.getByRole('combobox', { name: label }), {
         target: { value },
       });
@@ -141,7 +141,7 @@ it.each(['stories', 'chats'] as const)(
       view.rerender(list(domain));
       await waitFor(() =>
         expect(requested.at(-1)!.searchParams.get('deleted')).toBe(
-          value || null,
+          value === 'exclude' ? null : value || 'include',
         ),
       );
     }
@@ -149,7 +149,7 @@ it.each(['stories', 'chats'] as const)(
 );
 
 it.each(['stories', 'chats'] as const)(
-  '%s의 알 수 없는 삭제 필터는 제외로 그리고 요청에서 뺀다',
+  '%s의 알 수 없는 삭제 필터는 기본인 포함으로 그리고 요청한다',
   async (domain) => {
     nav.pathname = `/${domain}`;
     nav.search = 'deleted=all';
@@ -162,7 +162,7 @@ it.each(['stories', 'chats'] as const)(
       ).value,
     ).toBe('');
     await waitFor(() => expect(requested.length).toBeGreaterThan(0));
-    expect(requested.at(-1)!.searchParams.has('deleted')).toBe(false);
+    expect(requested.at(-1)!.searchParams.get('deleted')).toBe('include');
   },
 );
 
@@ -175,7 +175,7 @@ it.each([
   async (kind, scopeKey, id) => {
     nav.pathname = scopeKey === 'storyId' ? `/stories/${id}` : `/members/${id}`;
     nav.search =
-      'storiesDeleted=only&chatsDeleted=include&storiesPage=3&chatsPage=2';
+      'storiesDeleted=only&chatsDeleted=exclude&storiesPage=3&chatsPage=2';
 
     const node = () =>
       wrap(createElement(RelatedList, { kind, scope: { [scopeKey]: id } }));
@@ -183,12 +183,14 @@ it.each([
     const select = screen.getByRole('combobox', {
       name: kind === 'stories' ? '삭제된 스토리' : '삭제된 채팅',
     });
-    const value = kind === 'stories' ? 'only' : 'include';
+    const value = kind === 'stories' ? 'only' : 'exclude';
 
     expect((select as HTMLSelectElement).value).toBe(value);
     await waitFor(() => expect(requested.length).toBeGreaterThan(0));
     expect(requested.at(-1)!.searchParams.get(scopeKey)).toBe(id);
-    expect(requested.at(-1)!.searchParams.get('deleted')).toBe(value);
+    expect(requested.at(-1)!.searchParams.get('deleted')).toBe(
+      value === 'exclude' ? null : value,
+    );
     expect(
       requested
         .at(-1)!
@@ -203,20 +205,20 @@ it.each([
       pushed().searchParams.get(
         kind === 'stories' ? 'chatsDeleted' : 'storiesDeleted',
       ),
-    ).toBe(kind === 'stories' ? 'include' : 'only');
+    ).toBe(kind === 'stories' ? 'exclude' : 'only');
     nav.search = pushed().search.slice(1);
     view.rerender(node());
     await waitFor(() =>
-      expect(requested.at(-1)!.searchParams.has('deleted')).toBe(false),
+      expect(requested.at(-1)!.searchParams.get('deleted')).toBe('include'),
     );
   },
 );
 
 it.each([
-  ['stories', 'memberId', members[1].memberId, 'include'],
+  ['stories', 'memberId', members[1].memberId, 'exclude'],
   ['chats', 'storyId', stories[1].storyId, 'only'],
 ] as const)(
-  '%s 범위 목록: %s=%s를 유지하며 제외에서 %s로 바꿔도 함께 열린 다른 목록 요청은 그대로다',
+  '%s 범위 목록: %s=%s를 유지하며 포함에서 %s로 바꿔도 함께 열린 다른 목록 요청은 그대로다',
   async (kind, scopeKey, id, value) => {
     nav.pathname =
       scopeKey === 'memberId' ? `/members/${id}` : `/stories/${id}`;
@@ -250,8 +252,10 @@ it.each([
       expect(requestsFor(kind)).toHaveLength(1);
       expect(requestsFor(otherKind)).toHaveLength(1);
     });
-    expect(requestsFor(kind)[0].searchParams.has('deleted')).toBe(false);
-    expect(requestsFor(otherKind)[0].searchParams.has('deleted')).toBe(false);
+    expect(requestsFor(kind)[0].searchParams.get('deleted')).toBe('include');
+    expect(requestsFor(otherKind)[0].searchParams.get('deleted')).toBe(
+      'include',
+    );
 
     const otherRequests = requestsFor(otherKind).map((url) => url.href);
 
@@ -269,7 +273,9 @@ it.each([
 
     await waitFor(() => {
       expect(requestsFor(kind)).toHaveLength(2);
-      expect(requestsFor(kind).at(-1)!.searchParams.get('deleted')).toBe(value);
+      expect(requestsFor(kind).at(-1)!.searchParams.get('deleted')).toBe(
+        value === 'exclude' ? null : value,
+      );
     });
 
     const params = requestsFor(kind).at(-1)!.searchParams;
@@ -277,7 +283,7 @@ it.each([
     expect(Object.fromEntries(params)).toEqual({
       [scopeKey]: id,
       page: '1',
-      deleted: value,
+      ...(value === 'exclude' ? {} : { deleted: value }),
     });
     expect(
       (screen.getByRole('combobox', { name: label }) as HTMLSelectElement)
@@ -387,14 +393,18 @@ it.each(['stories', 'chats'] as const)(
   },
 );
 
-it('차트 막대와 개요 일별 추이에서 연 목록은 삭제 제외로 요청한다', async () => {
-  for (const href of [
-    getDistributionHref({ list: 'chats', params: { turnBucket: '3' } }),
-    getDailyMetricHref('stories', '2026-10-21'),
-  ]) {
+it('차트 막대는 삭제 제외로, 삭제를 함께 세는 일별 추이는 기본인 포함으로 목록을 연다', async () => {
+  for (const [href, value, sent] of [
+    [
+      getDistributionHref({ list: 'chats', params: { turnBucket: '3' } }),
+      'exclude',
+      null,
+    ],
+    [getDailyMetricHref('stories', '2026-10-21'), '', 'include'],
+  ] as const) {
     const url = new URL(href, 'http://localhost');
 
-    expect(url.searchParams.has('deleted')).toBe(false);
+    expect(url.searchParams.get('deleted')).toBe(value || null);
     nav.pathname = url.pathname;
     nav.search = url.search.slice(1);
     render(list(url.pathname === '/stories' ? 'stories' : 'chats'));
@@ -404,11 +414,11 @@ it('차트 막대와 개요 일별 추이에서 연 목록은 삭제 제외로 �
           name: url.pathname === '/stories' ? '삭제된 스토리' : '삭제된 채팅',
         }) as HTMLSelectElement
       ).value,
-    ).toBe('');
+    ).toBe(value);
     await waitFor(() =>
       expect(requested.at(-1)!.pathname).toBe(`/api${url.pathname}`),
     );
-    expect(requested.at(-1)!.searchParams.has('deleted')).toBe(false);
+    expect(requested.at(-1)!.searchParams.get('deleted')).toBe(sent);
     cleanup();
   }
 });

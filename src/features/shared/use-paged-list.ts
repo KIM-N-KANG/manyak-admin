@@ -28,9 +28,14 @@ export function usePagedList(
       if (value !== null) apiParams.set(name, value);
     }
 
-  // 삭제 필터의 제외와 알 수 없는 값은 요청에 싣지 않는다.
-  if (!['include', 'only'].includes(apiParams.get('deleted') ?? ''))
-    apiParams.delete('deleted');
+  // 삭제 필터는 빈 값과 알 수 없는 값을 기본인 포함으로 보고, 제외만 요청에서 뺀다.
+  const deleted = ['exclude', 'only'].includes(apiParams.get('deleted') ?? '')
+    ? apiParams.get('deleted')!
+    : '';
+
+  if (domain !== 'stories' && domain !== 'chats') apiParams.delete('deleted');
+  else if (deleted === 'exclude') apiParams.delete('deleted');
+  else apiParams.set('deleted', deleted || 'include');
 
   const query = useApi<Page<Story | MemberListItem | PaymentOrder | ChatRoom>>(
     `/api/${domain}?${apiParams}`,
@@ -74,7 +79,7 @@ export function usePagedList(
     query,
     sort,
     order,
-    deleted: apiParams.get('deleted') ?? '',
+    deleted,
     changeSort,
     changeDeleted,
     href,

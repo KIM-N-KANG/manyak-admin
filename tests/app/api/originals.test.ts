@@ -444,7 +444,7 @@ describe('최신 오리지널 계약', () => {
       (
         await storyList(
           new Request(
-            `http://localhost/api${getDistributionHref(point.link)}&size=100`,
+            `http://localhost/api${getDistributionHref(point.link).replace('&deleted=exclude', '')}&size=100`,
           ),
         ).json()
       ).items.some((s: { storyId: string }) => s.storyId === item.storyId),
