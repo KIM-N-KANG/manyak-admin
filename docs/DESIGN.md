@@ -609,7 +609,7 @@ MAU, 가중 평균과 서버 합계는 다시 계산하지 않는다. 준비 중
 
 인프라 용량은 바이트를 10^9/10^6으로 나눈 GB/MB, 응답 시간은 ms로 소수 한 자리까지 표시한다. 점 목록이 빈 요약 값은 ‘수집된 값 없음’이다. null 묶음은 그 자리에 문구를 두며 `unavailable`에 있으면 일시 조회 실패, 없으면 설정 없음 문구다. 받은 시각(asOf)은 본문 설명 없이 출처 툴팁에 KST로 표시한다. 영역 제목 옆 출처는 "CloudWatch와 Prometheus", Redis 구역 제목 옆 출처는 "Redis"다. 화면 제목 아래 설명 문장은 없다. 출처와 추정 행 수 도움말은 공용 HelpTooltip을 사용한다. 공용 기간 선택기는 선택적 maxDays로 인프라의 31일 상한을 적용하고 기존 화면 기본값 366일은 유지한다.
 
-인프라 BFF는 생성 operation과 Zod를 사용하며 서버 모드는 공통 프록시로 전달한다. 인프라 스키마는 manyak-server KNK-2113 브랜치(852a4a1)의 OpenAPI에서 추출했다. 원본의 인프라 JSON 객체 와일드카드 응답 미디어는 생성 입력에서만 application/json으로 정규화한다. from/to의 기간 의미 검증은 서버가 수행하며 fixture는 같은 기간 규칙을 적용한다. 비운영 fixture의 기본 응답은 모든 묶음이 있는 응답이고, ADMIN_INFRA_FIXTURE_SCENARIO=not-configured로 앱 호스트 CPU 설정 없음을, partial로 Prometheus 출처 실패(세 묶음 null과 `unavailable`)를, unavailable로 503을, empty로 빈 점 목록과 실제 0의 구분을 표시한다. 운영 fixture 차단은 기존 공통 정책을 따른다.
+인프라 BFF는 생성 operation과 Zod를 사용하며 서버 모드는 공통 프록시로 전달한다. 인프라 스키마는 배포된 서버 cfa3527의 실제 dev OpenAPI에서 추출했다. 원본의 인프라 JSON 객체 와일드카드 응답 미디어는 생성 입력에서만 application/json으로 정규화한다. from/to의 기간 의미 검증은 서버가 수행하며 fixture는 같은 기간 규칙을 적용한다. 비운영 fixture의 기본 응답은 모든 묶음이 있는 응답이고, ADMIN_INFRA_FIXTURE_SCENARIO=not-configured로 앱 호스트 CPU 설정 없음을, partial로 Prometheus 출처 실패(세 묶음 null과 `unavailable`)를, unavailable로 503을, empty로 빈 점 목록과 실제 0의 구분을 표시한다. 운영 fixture 차단은 기존 공통 정책을 따른다.
 
 개요의 가입자 카드는 탈퇴 회원을 포함한 누적 가입자를 대표 숫자로, 오늘 가입과 선택 기간의 가입 합계를 보조 줄로 표시한다. 카드는 excludeDeleted 없는 회원 목록으로 연결한다. 제목 옆 공용 HelpTooltip에 현재 회원 수와 누적 탈퇴 수 및 팀 계정 제외 기준을 정본 문구로 제공한다. 도움말 버튼은 카드 링크 밖에 두어 포커스와 클릭이 목록 이동으로 이어지지 않는다.
 

@@ -6,10 +6,9 @@
     "version": "v1"
   },
   "x-source": {
-    "input": "/tmp/knk2111/server-api-docs-2113.json",
-    "receivedAt": "2026-11-20T05:24:43.985Z",
-    "revision": "852a4a1",
-    "description": "manyak-server #566 브랜치(852a4a1) 테스트 컨텍스트의 /v3/api-docs"
+    "input": "https://dev-api.manyak.app/v3/api-docs",
+    "receivedAt": "2026-11-20T09:24:57.947Z",
+    "revision": "cfa3527"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -10079,16 +10078,25 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "number": {
+          "empty": {
             "type": "boolean"
           },
-          "floatingPointNumber": {
+          "array": {
             "type": "boolean"
           },
-          "valueNode": {
+          "null": {
             "type": "boolean"
           },
-          "missingNode": {
+          "object": {
+            "type": "boolean"
+          },
+          "float": {
+            "type": "boolean"
+          },
+          "string": {
+            "type": "boolean"
+          },
+          "container": {
             "type": "boolean"
           },
           "nodeType": {
@@ -10105,22 +10113,13 @@
               "STRING"
             ]
           },
-          "string": {
-            "type": "boolean"
-          },
-          "integralNumber": {
-            "type": "boolean"
-          },
-          "pojo": {
-            "type": "boolean"
-          },
-          "short": {
-            "type": "boolean"
-          },
           "int": {
             "type": "boolean"
           },
           "long": {
+            "type": "boolean"
+          },
+          "short": {
             "type": "boolean"
           },
           "double": {
@@ -10130,6 +10129,21 @@
             "type": "boolean"
           },
           "bigInteger": {
+            "type": "boolean"
+          },
+          "valueNode": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "integralNumber": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
+            "type": "boolean"
+          },
+          "pojo": {
             "type": "boolean"
           },
           "textual": {
@@ -10142,22 +10156,7 @@
           "binary": {
             "type": "boolean"
           },
-          "container": {
-            "type": "boolean"
-          },
-          "empty": {
-            "type": "boolean"
-          },
-          "array": {
-            "type": "boolean"
-          },
-          "null": {
-            "type": "boolean"
-          },
-          "object": {
-            "type": "boolean"
-          },
-          "float": {
+          "number": {
             "type": "boolean"
           },
           "embeddedValue": {
