@@ -322,9 +322,9 @@ it('저장소는 Redis 현재 값 카드와 AOF 상태, OpenSearch 상태를 보
   const view = draw();
 
   await screen.findByText('RDS 여유 스토리지');
-  expect(within(card('Redis 메모리')).getByText('2.4MB')).toBeTruthy();
+  expect(within(card('Redis 메모리')).getByText('2.5MB')).toBeTruthy();
   expect(
-    within(card('Redis 메모리')).getByText('한도 256.0MB, 0.9%'),
+    within(card('Redis 메모리')).getByText('한도 268.4MB, 0.9%'),
   ).toBeTruthy();
 
   const redis = screen.getByRole('region', { name: 'Redis' });
@@ -466,7 +466,7 @@ it('일시 조회 실패 묶음은 그 구역에 실패 문구를 두고 CPU, RD
       'CPU 사용률',
     ),
   ).toBeTruthy();
-  expect(within(card('Redis 메모리')).getByText('2.4MB')).toBeTruthy();
+  expect(within(card('Redis 메모리')).getByText('2.5MB')).toBeTruthy();
 });
 
 it('출처는 영역 제목 옆 CloudWatch와 Prometheus와 Redis 구역의 Redis이고 받은 시각을 툴팁에 보인다', async () => {

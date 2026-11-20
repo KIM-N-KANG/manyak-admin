@@ -87,13 +87,13 @@ it('용량·백분율·지연·크레딧·KST 시각과 테이블 이름을 정�
   );
   expect(tableName({ schema: 'audit', name: 'events' })).toBe('audit.events');
 });
-it('Redis 메모리는 한도와 사용률, 한도 0은 한도 없음이다', () => {
+it('Redis 메모리는 다른 용량과 같은 10진 MB로 한도와 사용률을 보이고 한도 0은 한도 없음이다', () => {
   expect(redisMemory(2474639, 268435456)).toEqual({
-    value: '2.4MB',
-    detail: '한도 256.0MB, 0.9%',
+    value: '2.5MB',
+    detail: '한도 268.4MB, 0.9%',
   });
   expect(redisMemory(2474639, 0)).toEqual({
-    value: '2.4MB',
+    value: '2.5MB',
     detail: '한도 없음',
   });
 });

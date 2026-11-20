@@ -56,15 +56,12 @@ export function statusCheck(points: InfraPoint[]) {
   return failed ? `실패 ${failed.toLocaleString('ko-KR')}구간` : '정상';
 }
 
-const mebibytes = (bytes: number) =>
-  `${(bytes / 1048576).toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}MB`;
-
-/** Redis 메모리는 1MB를 1,048,576바이트로 계산한다(WEB 5-1 Redis 카드). 한도 0은 한도 없음이다. */
+/** Redis 메모리의 사용량과 한도, 사용률 문구를 반환한다. 다른 용량과 같은 10진 MB이며 한도 0은 한도 없음이다. */
 export function redisMemory(used: number, max: number) {
   return {
-    value: mebibytes(used),
+    value: infraNumber(used, 'MB'),
     detail: max
-      ? `한도 ${mebibytes(max)}, ${((used / max) * 100).toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
+      ? `한도 ${infraNumber(max, 'MB')}, ${infraNumber((used / max) * 100, '%')}`
       : '한도 없음',
   };
 }
