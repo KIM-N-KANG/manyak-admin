@@ -703,7 +703,7 @@ it('가입자 카드는 탈퇴 포함 누적과 오늘 값을 표시하고 전�
 
 it('인프라의 근접한 끝 값은 실제 SVG에서 최소 18px 간격을 유지하고 첫 입력 시간은 SVG 라벨이 없다', () => {
   const data = infraMetricsFixture('2026-10-20', '2026-10-20');
-  const at = data.alb!.requests.at(-1)!.at;
+  const at = data.requests!.requests.at(-1)!.at;
   const series = ['서버', 'AI', '알림'].map((label, i) => ({
     key: `s${i}`,
     label,

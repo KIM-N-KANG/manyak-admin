@@ -5,10 +5,20 @@ import type {
 } from '@/features/analytics/infra/types';
 import { kstToday } from '@/features/dashboard/date-range';
 
+/**
+ * 인프라 지표 고정 데이터 시나리오(WEB 3-2).
+ * `not-configured`는 묶음 하나가 설정 없음으로 `null`, `partial`은 Prometheus 출처 실패로 세 묶음이 `null`이고 `unavailable`에 있다.
+ */
+export type InfraFixtureScenario =
+  | 'complete'
+  | 'not-configured'
+  | 'partial'
+  | 'empty';
+
 export function infraMetricsFixture(
   from = kstToday(),
   to = from,
-  withRedis = false,
+  scenario: InfraFixtureScenario = 'complete',
 ): InfraMetrics {
   const now = new Date();
   const days = (Date.parse(to) - Date.parse(from)) / 86400000 + 1;
@@ -31,66 +41,89 @@ export function infraMetricsFixture(
   );
   const points = (value: number, gaps = false): InfraPoint[] =>
     times.flatMap((at, i) =>
-      gaps && (i === 3 || i === 7)
-        ? []
-        : [
-            {
-              at,
-              value: Math.max(
-                0,
-                value + (value > 1 ? Math.sin(i / 5) * value * 0.04 : 0),
-              ),
-            },
-          ],
+      gaps && (i === 3 || i === 7) ? [] : [{ at, value }],
     );
   const counts = (values: number[]) =>
-    times.map((at, i) => ({ at, value: values[i] ?? 0 }));
-
-  return {
+    times.slice(0, values.length).map((at, i) => ({ at, value: values[i] }));
+  const data: InfraMetrics = {
     asOf: now.toISOString(),
     from,
     to,
     periodSeconds,
-    ecs: {
-      services: ['server', 'ai', 'notification'].map((name, i) => ({
-        name,
-        runningTasks: i === 0 ? 1 : 2,
-        desiredTasks: 2,
-        pendingTasks: i === 0 ? 1 : 0,
-        cpu: points(7 + i * 3, true),
-        memory: points(40 + i * 5, true),
-        cpuMax: points(21 + i * 5, true),
-        memoryMax: points(55 + i * 5, true),
-      })),
+    unavailable: [],
+    host: {
+      cpu: points(4.1, true),
+      cpuMax: points(12.3, true),
+      cpuCreditBalance: points(331.4),
+      statusCheckFailed: points(0),
     },
-    alb: {
+    hostSystem: {
+      memoryTotalBytes: 4015000000,
+      memoryAvailableBytes: points(1876000000),
+      disks: [
+        {
+          mount: '/',
+          totalBytes: 21462000000,
+          availableBytes: points(15400000000),
+        },
+        {
+          mount: '/data',
+          totalBytes: 10000000000,
+          availableBytes: points(9900000000),
+        },
+      ],
+    },
+    requests: {
       requests: counts([312, 0, 40]),
-      elb5xx: counts([0, 0, 0]),
-      target5xx: counts([1, 0, 0]),
-      responseTimeP95Ms: times.map((at) => ({ at, value: 182 })),
+      server5xx: counts([1, 0, 2]),
+      responseTimeP95Ms: points(182),
     },
     rds: {
       cpu: points(4.9, true),
-      freeStorageBytes: times.map((at) => ({ at, value: 18253611008 })),
-      connections: times.map((at) => ({ at, value: 21 })),
+      freeStorageBytes: points(18253611008),
+      connections: points(21),
       readLatencyMs: points(0.8, true),
       writeLatencyMs: points(1.6, true),
     },
-    redis: withRedis
-      ? {
-          nodes: ['fixture-redis-001', 'fixture-redis-002'].map((id, i) => ({
-            id,
-            cpu: points(1.2 + i, true),
-            memory: points(3.4 + i, true),
-            connections: times.map((at) => ({ at, value: 18 + i })),
-          })),
-        }
-      : null,
+    redis: {
+      usedMemoryBytes: 2474639,
+      maxMemoryBytes: 268435456,
+      connectedClients: 6,
+      keys: 7450,
+      aofLastWriteOk: true,
+    },
     opensearch: {
-      freeStorageBytes: times.map((at) => ({ at, value: 6442450944 })),
-      jvmMemoryPressure: times.map((at) => ({ at, value: 58 })),
+      status: 'green',
+      diskTotalBytes: 137170518016,
+      diskAvailableBytes: points(114949550080),
+      jvmMemoryPressure: points(9),
     },
   };
+
+  if (scenario === 'not-configured') data.host = null;
+
+  if (scenario === 'partial') {
+    data.unavailable = ['hostSystem', 'requests', 'opensearch'];
+    data.hostSystem = null;
+    data.requests = null;
+    data.opensearch = null;
+  }
+
+  if (scenario === 'empty') {
+    data.opensearch!.diskAvailableBytes = [];
+    data.opensearch!.jvmMemoryPressure = [];
+    data.rds!.connections = data.rds!.connections.map((point) => ({
+      ...point,
+      value: 0,
+    }));
+    data.requests!.requests = [];
+    data.requests!.server5xx = [];
+    data.host!.cpuCreditBalance = [];
+    data.host!.statusCheckFailed = [];
+    data.hostSystem!.memoryAvailableBytes = [];
+  }
+
+  return data;
 }
 export function infraTablesFixture(limit = 20): InfraTables {
   const tables = [
@@ -134,19 +167,4 @@ export function infraTablesFixture(limit = 20): InfraTables {
     tableCount: 74,
     tables: tables.slice(0, limit),
   };
-}
-
-export function infraEmptyMetricsFixture(
-  from: string,
-  to: string,
-): InfraMetrics {
-  const data = infraMetricsFixture(from, to);
-
-  data.opensearch!.freeStorageBytes = [];
-  data.rds!.connections = data.rds!.connections.map((point) => ({
-    ...point,
-    value: 0,
-  }));
-
-  return data;
 }

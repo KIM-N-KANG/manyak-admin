@@ -396,37 +396,31 @@ it('인프라는 평균 선과 평균 / 최대 표·툴팁을 표시하며 최�
   );
 
   const data = infraMetricsFixture('2026-10-21', '2026-10-21');
-  const at = data.ecs!.services[0].cpu[0].at;
+  const at = data.host!.cpu[0].at;
+  const next = new Date(Date.parse(at) + 300000).toISOString();
 
-  for (const service of data.ecs!.services) {
-    service.cpu = [
-      { at, value: 7.4 },
-      { at: new Date(Date.parse(at) + 300000).toISOString(), value: 7.4 },
-    ];
-    service.cpuMax = [
-      { at, value: 21 },
-      { at: new Date(Date.parse(at) + 300000).toISOString(), value: 21 },
-    ];
-  }
+  data.host!.cpu = [
+    { at, value: 4.1 },
+    { at: next, value: 4.1 },
+  ];
+  data.host!.cpuMax = [
+    { at, value: 12.3 },
+    { at: next, value: 12.3 },
+  ];
 
   const { container } = render(createElement(InfraServices, { data }));
   const chart = screen.getByLabelText('CPU 사용률');
 
-  expect(chart.querySelectorAll('.recharts-line-curve')).toHaveLength(3);
   expect(
     Array.from(chart.querySelectorAll('.recharts-line-curve')).map((path) =>
       path.getAttribute('stroke'),
     ),
-  ).toEqual([
-    'var(--color-service_0)',
-    'var(--color-service_1)',
-    'var(--color-service_2)',
-  ]);
+  ).toEqual(['var(--color-cpu)']);
 
   const card = chart.closest('section')!;
 
-  expect(within(card).getByText('서버 (평균 / 최대)')).toBeTruthy();
-  expect(within(card).getAllByText('7.4% / 21.0%')).toHaveLength(6);
+  expect(within(card).getByText('CPU (평균 / 최대)')).toBeTruthy();
+  expect(within(card).getAllByText('4.1% / 12.3%')).toHaveLength(2);
   fireEvent.mouseMove(chart.querySelector('.recharts-wrapper')!, {
     clientX: 60,
     clientY: 90,
@@ -434,29 +428,24 @@ it('인프라는 평균 선과 평균 / 최대 표·툴팁을 표시하며 최�
   await waitFor(() =>
     expect(
       chart.querySelector('.recharts-tooltip-wrapper')?.textContent,
-    ).toContain('서버 7.4% / 21.0%'),
+    ).toContain('CPU 4.1% / 12.3%'),
   );
   expect(
     container.querySelectorAll('.recharts-line-curve').length,
-  ).toBeGreaterThan(3);
+  ).toBeGreaterThan(1);
 });
 
-it('스토리 상세 fixture는 12개 기준 턴을 응답하고 Redis는 노드 번호 순서로 표시한다', () => {
+it('스토리 상세 fixture는 12개 기준 턴을 응답하고 Redis 구역은 차트 없이 현재 값만 그린다', () => {
   expect(
     getStoryDetail(stories[0].storyId)!.retention.map((point) => point.turn),
   ).toEqual([...TURN_THRESHOLDS]);
 
-  const data = infraMetricsFixture('2026-10-21', '2026-10-21', true);
-
-  data.redis!.nodes.reverse();
-
+  const data = infraMetricsFixture('2026-10-21', '2026-10-21');
   const { container } = render(createElement(InfraStorage, { data }));
   const redis = screen.getByRole('region', { name: 'Redis' });
-  const chart = within(redis).getByLabelText('CPU 사용률');
 
-  expect(chart.textContent!.indexOf('노드 001')).toBeLessThan(
-    chart.textContent!.indexOf('노드 002'),
-  );
+  expect(redis.querySelector('.recharts-line-curve')).toBeNull();
+  expect(within(redis).getByText('7,450개')).toBeTruthy();
   expect(
     container.querySelectorAll('.recharts-line-curve').length,
   ).toBeGreaterThan(0);
@@ -610,21 +599,22 @@ it('도달률 끝 라벨은 선택한 대상 하나이고 근접한 인프라 �
 
   const infra = infraMetricsFixture('2026-10-21', '2026-10-21');
 
-  for (const service of infra.ecs!.services) {
-    service.cpu = service.cpu.map((point) => ({ ...point, value: 7.4 }));
-    service.cpuMax = service.cpuMax.map((point) => ({ ...point, value: 21 }));
-  }
+  // 두 디스크의 여유가 비슷하면 끝 값 라벨이 겹치므로 최소 간격을 지켜야 한다.
+  for (const [index, disk] of infra.hostSystem!.disks.entries())
+    disk.availableBytes = disk.availableBytes.map((point) => ({
+      ...point,
+      value: 9900000000 + index * 10000000,
+    }));
 
   const { container } = render(createElement(InfraServices, { data: infra }));
-  const chart = screen.getByLabelText('CPU 사용률');
+  const chart = screen.getByLabelText('디스크 여유');
   const ys = Array.from(chart.querySelectorAll('.chart-end-labels text'))
     .map((node) => Number(node.getAttribute('y')))
     .toSorted((a, b) => a - b);
 
-  expect(ys).toHaveLength(3);
+  expect(ys).toHaveLength(2);
   expect(ys[1] - ys[0]).toBeGreaterThanOrEqual(18);
-  expect(ys[2] - ys[1]).toBeGreaterThanOrEqual(18);
-  expect(container.textContent).toContain('7.4% / 21.0%');
+  expect(container.textContent).toContain('9.9GB / 10.0GB');
 });
 it('1턴 대비 도달률은 서버 DB 차트와 따로 고른 플랫폼 선 하나를 그리고 100%를 넘어도 자르지 않는다', () => {
   const data = metricFixture(

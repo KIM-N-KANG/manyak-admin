@@ -846,7 +846,7 @@ it('운영 서비스 하위 구분은 캐시를 공유하고 DB 테이블은 현
 
   const view = draw('ops');
 
-  await screen.findByRole('heading', { name: '서버 태스크' });
+  await screen.findByRole('region', { name: '앱 호스트' });
   await waitFor(() => expect(requests).toHaveLength(1));
   fireEvent.click(screen.getByRole('tab', { name: '저장소' }));
   view.go();
