@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import {
   Bar,
   BarChart,
@@ -12,6 +14,7 @@ import {
 } from 'recharts';
 
 import { DataTable } from '@/components/admin/data-ui';
+import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 import {
   ChartContainer,
@@ -23,7 +26,14 @@ import {
 import { ChartCrosshair } from '@/features/dashboard/chart-crosshair';
 import { ChartEndLabels } from '@/features/dashboard/chart-end-labels';
 
-import { infraNumber, infraValue, kstTime, tableName, timeRows } from './data';
+import {
+  fractionUnits,
+  infraNumber,
+  infraValue,
+  kstTime,
+  tableName,
+  timeRows,
+} from './data';
 import type {
   InfraMetrics,
   InfraSeries,
@@ -32,18 +42,23 @@ import type {
 } from './types';
 
 const number = (value: number, unit: InfraUnit) =>
-  `${value.toLocaleString('ko-KR', { maximumFractionDigits: ['%', 'GB', 'MB', 'ms'].includes(unit) ? 1 : 0, minimumFractionDigits: ['%', 'GB', 'MB', 'ms'].includes(unit) ? 1 : 0 })}${unit}`;
+  `${value.toLocaleString('ko-KR', { maximumFractionDigits: fractionUnits.includes(unit) ? 1 : 0, minimumFractionDigits: fractionUnits.includes(unit) ? 1 : 0 })}${unit}`;
 
 export function InfraChart({
   title,
   data,
   series,
   unit,
+  domain,
+  help,
 }: {
   title: string;
   data: InfraMetrics;
   series: InfraSeries[];
   unit: InfraUnit;
+  /** 세로 축 범위(표시 단위). 없으면 %는 0~100, 그 밖은 값에 맞춘다. */
+  domain?: [number, number];
+  help?: ReactNode;
 }) {
   const rows = timeRows(data, series, unit);
   const maxRows = timeRows(
@@ -69,7 +84,12 @@ export function InfraChart({
 
   return (
     <Card className="min-w-0">
-      <h3 className="font-semibold">{title}</h3>
+      <div className="flex items-center gap-2">
+        <h3 className="font-semibold">{title}</h3>
+        {help ? (
+          <HelpTooltip label={`${title} 도움말`}>{help}</HelpTooltip>
+        ) : null}
+      </div>
       <ChartContainer
         config={config}
         className="mt-5 h-64 w-full"
@@ -95,7 +115,7 @@ export function InfraChart({
           />
           <YAxis
             width={60}
-            domain={unit === '%' ? [0, 100] : undefined}
+            domain={domain ?? (unit === '%' ? [0, 100] : undefined)}
             unit={unit}
             tickFormatter={(v) =>
               Number(v).toLocaleString('ko-KR', { maximumFractionDigits: 1 })
@@ -177,7 +197,9 @@ export function InfraChart({
             headers={[
               '시각 (KST)',
               ...series.map((item) =>
-                item.maxPoints ? `${item.label} (평균 / 최대)` : item.label,
+                item.maxPoints
+                  ? `${item.label} (${item.pairLabel ?? '평균 / 최대'})`
+                  : item.label,
               ),
             ]}
             empty={!rows.length}>

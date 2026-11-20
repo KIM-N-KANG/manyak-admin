@@ -6,24 +6,38 @@ import { HelpTooltip } from '@/components/admin/help-tooltip';
 import { Card } from '@/components/ui/card';
 
 import {
+  bundleNotice,
   infraNumber,
+  kstTime,
   listedSeries,
-  orderedServices,
   pairSeries,
-  serviceName,
-  serviceSeries,
+  redisMemory,
+  statusCheck,
   tableName,
 } from './data';
 import { InfraChart, InfraRanking } from './infra-chart';
-import type { InfraMetrics, InfraPoint, InfraTables, InfraUnit } from './types';
+import type {
+  InfraBundle,
+  InfraMetrics,
+  InfraPoint,
+  InfraTables,
+  InfraUnit,
+} from './types';
+
+type SummaryItem = { label: string; value: ReactNode; detail?: string };
 
 export function InfraSummaries({
   items,
+  label = '요약 지표',
 }: {
-  items: { label: string; value: ReactNode; detail?: string }[];
+  items: SummaryItem[];
+  label?: string;
 }) {
   return (
-    <div className="mb-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+    <div
+      role="group"
+      aria-label={label}
+      className="mb-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
         <Card key={item.label} className="min-w-0">
           <h3 className="text-sm text-muted-foreground">{item.label}</h3>
@@ -39,234 +53,336 @@ export function InfraSummaries({
   );
 }
 
+const empty = '수집된 값 없음';
 const last = (points: InfraPoint[], unit: InfraUnit) =>
-  points.length ? infraNumber(points.at(-1)!.value, unit) : '수집된 값 없음';
-const sum = (points: InfraPoint[]) =>
-  points.reduce((total, point) => total + point.value, 0);
-const missing = (name: string) => (
-  <p
-    role="status"
-    className="mb-5 rounded-md border p-4 text-sm text-muted-foreground">
-    이 환경에는 {name} 지표 설정이 없습니다.
-  </p>
-);
+  points.length ? infraNumber(points.at(-1)!.value, unit) : empty;
+const sum = (points: InfraPoint[], unit: InfraUnit) =>
+  points.length
+    ? infraNumber(
+        points.reduce((total, point) => total + point.value, 0),
+        unit,
+      )
+    : empty;
+const grid =
+  'grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2';
+
+/** null 묶음 자리에 둘 문구다. 설정 없음과 일시 조회 실패를 가른다. */
+function Notice({ data, bundle }: { data: InfraMetrics; bundle: InfraBundle }) {
+  const text = bundleNotice(data, bundle);
+
+  return text ? (
+    <p
+      role="status"
+      className="mb-5 rounded-md border p-4 text-sm text-muted-foreground">
+      {text}
+    </p>
+  ) : null;
+}
+
+function Region({
+  title,
+  aside,
+  children,
+}: {
+  title: string;
+  aside?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section aria-label={title} className="mb-8">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        {aside}
+      </div>
+      {children}
+    </section>
+  );
+}
 
 export function InfraServices({ data }: { data: InfraMetrics }) {
-  const services = data.ecs ? orderedServices(data.ecs) : [];
+  const { host, hostSystem, requests } = data;
+  const memoryTotal = hostSystem?.memoryTotalBytes ?? null;
 
   return (
     <>
-      {!data.ecs ? missing('ECS') : null}
-      {!data.alb ? missing('ALB') : null}
       <InfraSummaries
         items={[
-          ...services.map((service) => ({
-            label: `${serviceName(service.name)} 태스크`,
-            value: `${service.runningTasks.toLocaleString('ko-KR')}개`,
-            detail: `목표 ${service.desiredTasks.toLocaleString('ko-KR')}개, 시작 중 ${service.pendingTasks.toLocaleString('ko-KR')}개`,
-          })),
-          ...(data.alb
+          ...(hostSystem
             ? [
                 {
-                  label: '요청 수',
-                  value: data.alb.requests.length
-                    ? infraNumber(sum(data.alb.requests), '회')
-                    : '수집된 값 없음',
+                  label: '사용 가능 메모리',
+                  value: last(hostSystem.memoryAvailableBytes, 'GB'),
+                  detail:
+                    memoryTotal === null
+                      ? undefined
+                      : `전체 ${infraNumber(memoryTotal, 'GB')}`,
+                },
+              ]
+            : []),
+          ...(host
+            ? [
+                {
+                  label: 'CPU 크레딧 잔액',
+                  value: last(host.cpuCreditBalance, '크레딧'),
                 },
                 {
-                  label: '5xx 응답',
-                  value:
-                    data.alb.target5xx.length || data.alb.elb5xx.length
-                      ? infraNumber(
-                          sum(data.alb.target5xx) + sum(data.alb.elb5xx),
-                          '회',
-                        )
-                      : '수집된 값 없음',
+                  label: '상태 검사',
+                  value: statusCheck(host.statusCheckFailed),
                 },
+              ]
+            : []),
+          ...(requests
+            ? [
+                { label: '요청 수', value: sum(requests.requests, '회') },
+                { label: '5xx 응답', value: sum(requests.server5xx, '회') },
               ]
             : []),
         ]}
       />
-      <div className="grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2">
-        {data.ecs
-          ? (['cpu', 'memory'] as const).map((metric) => (
-              <InfraChart
-                key={metric}
-                title={metric === 'cpu' ? 'CPU 사용률' : '메모리 사용률'}
-                data={data}
-                series={services.map((service, index) => ({
-                  ...serviceSeries(service.name, service[metric]),
-                  maxPoints: service[metric === 'cpu' ? 'cpuMax' : 'memoryMax'],
-                  key: `service_${index}`,
-                }))}
-                unit="%"
-              />
-            ))
-          : null}
-        {data.alb ? (
-          <>
+      <Region title="앱 호스트">
+        <Notice data={data} bundle="host" />
+        <Notice data={data} bundle="hostSystem" />
+        {host || hostSystem ? (
+          <div className={grid}>
+            {host ? (
+              <>
+                <InfraChart
+                  title="CPU 사용률"
+                  data={data}
+                  series={[
+                    {
+                      ...pairSeries('cpu', 'CPU', host.cpu),
+                      maxPoints: host.cpuMax,
+                    },
+                  ]}
+                  unit="%"
+                />
+                <InfraChart
+                  title="CPU 크레딧 잔액"
+                  data={data}
+                  series={[pairSeries('credit', '잔액', host.cpuCreditBalance)]}
+                  unit="크레딧"
+                />
+              </>
+            ) : null}
+            {hostSystem ? (
+              <>
+                <InfraChart
+                  title="사용 가능 메모리"
+                  data={data}
+                  series={[
+                    pairSeries(
+                      'memory',
+                      '사용 가능 메모리',
+                      hostSystem.memoryAvailableBytes,
+                    ),
+                  ]}
+                  unit="GB"
+                  domain={
+                    memoryTotal === null
+                      ? undefined
+                      : [0, memoryTotal / 1000000000]
+                  }
+                />
+                <InfraChart
+                  title="디스크 여유"
+                  data={data}
+                  series={hostSystem.disks.map((disk, index) => ({
+                    ...listedSeries(
+                      `disk_${index}`,
+                      disk.mount,
+                      disk.availableBytes,
+                      index,
+                    ),
+                    ...(disk.totalBytes === null
+                      ? {}
+                      : {
+                          maxPoints: disk.availableBytes.map((point) => ({
+                            at: point.at,
+                            value: disk.totalBytes!,
+                          })),
+                          pairLabel: '여유 / 크기',
+                        }),
+                  }))}
+                  unit="GB"
+                />
+              </>
+            ) : null}
+          </div>
+        ) : null}
+      </Region>
+      <Region title="요청">
+        <Notice data={data} bundle="requests" />
+        {requests ? (
+          <div className={grid}>
             <InfraChart
               title="요청 수"
               data={data}
-              series={[pairSeries('requests', '요청 수', data.alb.requests)]}
+              series={[pairSeries('requests', '요청 수', requests.requests)]}
               unit="회"
             />
             <InfraChart
               title="5xx 응답"
               data={data}
-              series={[
-                pairSeries('target5xx', '대상 5xx', data.alb.target5xx),
-                pairSeries('elb5xx', 'ALB 5xx', data.alb.elb5xx, true),
-              ]}
+              series={[pairSeries('server5xx', '5xx 응답', requests.server5xx)]}
               unit="회"
+              help="서버가 돌려준 5xx만 셉니다. 서버가 응답하지 못해 프록시가 돌려준 502와 504는 들어가지 않습니다."
             />
             <InfraChart
-              title="대상 응답 시간 p95"
+              title="응답 시간 p95"
               data={data}
-              series={[pairSeries('p95', 'p95', data.alb.responseTimeP95Ms)]}
+              series={[pairSeries('p95', 'p95', requests.responseTimeP95Ms)]}
               unit="ms"
+              help="채팅 스트림처럼 오래 열려 있는 SSE 요청은 빼고 계산합니다."
             />
-          </>
+          </div>
         ) : null}
-      </div>
+      </Region>
     </>
   );
 }
+
 export function InfraStorage({ data }: { data: InfraMetrics }) {
+  const { rds, redis, opensearch } = data;
+  const memory = redis
+    ? redisMemory(redis.usedMemoryBytes, redis.maxMemoryBytes)
+    : null;
+  const diskTotal = opensearch?.diskTotalBytes ?? null;
+
   return (
     <>
       <InfraSummaries
         items={[
-          ...(data.rds
+          ...(rds
             ? [
                 {
                   label: 'RDS 여유 스토리지',
-                  value: last(data.rds.freeStorageBytes, 'GB'),
+                  value: last(rds.freeStorageBytes, 'GB'),
                 },
               ]
             : []),
-          ...(data.opensearch
+          ...(memory ? [{ label: 'Redis 메모리', ...memory }] : []),
+          ...(opensearch
             ? [
                 {
-                  label: 'OpenSearch 여유 스토리지',
-                  value: last(data.opensearch.freeStorageBytes, 'GB'),
+                  label: 'OpenSearch 디스크 여유',
+                  value: last(opensearch.diskAvailableBytes, 'GB'),
+                  detail:
+                    diskTotal === null
+                      ? undefined
+                      : `전체 ${infraNumber(diskTotal, 'GB')}`,
                 },
                 {
                   label: 'OpenSearch JVM 메모리 압박',
-                  value: data.opensearch.jvmMemoryPressure.length
+                  value: opensearch.jvmMemoryPressure.length
                     ? infraNumber(
                         Math.max(
-                          ...data.opensearch.jvmMemoryPressure.map(
+                          ...opensearch.jvmMemoryPressure.map(
                             (point) => point.value,
                           ),
                         ),
                         '%',
                       )
-                    : '수집된 값 없음',
+                    : empty,
                 },
               ]
             : []),
         ]}
       />
-      <section aria-label="RDS" className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold">RDS</h2>
-        {data.rds ? (
-          <div className="grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2">
+      <Region title="RDS">
+        <Notice data={data} bundle="rds" />
+        {rds ? (
+          <div className={grid}>
             <InfraChart
               title="CPU 사용률"
               data={data}
-              series={[pairSeries('cpu', 'CPU', data.rds.cpu)]}
+              series={[pairSeries('cpu', 'CPU', rds.cpu)]}
               unit="%"
             />
             <InfraChart
               title="여유 스토리지"
               data={data}
               series={[
-                pairSeries(
-                  'storage',
-                  '여유 스토리지',
-                  data.rds.freeStorageBytes,
-                ),
+                pairSeries('storage', '여유 스토리지', rds.freeStorageBytes),
               ]}
               unit="GB"
             />
             <InfraChart
               title="연결 수"
               data={data}
-              series={[
-                pairSeries('connections', '연결 수', data.rds.connections),
-              ]}
+              series={[pairSeries('connections', '연결 수', rds.connections)]}
               unit="개"
             />
             <InfraChart
               title="읽기와 쓰기 지연"
               data={data}
               series={[
-                pairSeries('read', '읽기', data.rds.readLatencyMs),
-                pairSeries('write', '쓰기', data.rds.writeLatencyMs, true),
+                pairSeries('read', '읽기', rds.readLatencyMs),
+                pairSeries('write', '쓰기', rds.writeLatencyMs, true),
               ]}
               unit="ms"
             />
           </div>
-        ) : (
-          missing('RDS')
-        )}
-      </section>
-      <section aria-label="Redis" className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold">Redis</h2>
-        {data.redis ? (
-          <div className="grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2">
-            {(['cpu', 'memory', 'connections'] as const).map((metric) => (
-              <InfraChart
-                key={metric}
-                title={
-                  {
-                    cpu: 'CPU 사용률',
-                    memory: '메모리 사용률',
-                    connections: '연결 수',
-                  }[metric]
-                }
-                data={data}
-                series={data
-                  .redis!.nodes.toSorted((a, b) =>
-                    a.id
-                      .split('-')
-                      .at(-1)!
-                      .localeCompare(b.id.split('-').at(-1)!, undefined, {
-                        numeric: true,
-                      }),
-                  )
-                  .map((node, index) =>
-                    listedSeries(
-                      `node_${index}`,
-                      `노드 ${node.id.split('-').at(-1)}`,
-                      node[metric],
-                      index,
-                    ),
-                  )}
-                unit={metric === 'connections' ? '개' : '%'}
-              />
-            ))}
-          </div>
-        ) : (
-          missing('Redis')
-        )}
-      </section>
-      <section aria-label="OpenSearch" className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold">OpenSearch</h2>
-        {data.opensearch ? (
-          <div className="grid gap-5 xl:grid-cols-2 [&>*:last-child:nth-child(odd)]:xl:col-span-2">
+        ) : null}
+      </Region>
+      <Region
+        title="Redis"
+        aside={
+          redis ? (
+            <HelpTooltip source="Redis" label="Redis 출처 안내">
+              서버가 Redis에 직접 물은 값이며 {kstTime(data.asOf)} KST
+              기준입니다. 기간과 무관한 현재 값입니다.
+            </HelpTooltip>
+          ) : null
+        }>
+        <Notice data={data} bundle="redis" />
+        {redis && memory ? (
+          <InfraSummaries
+            label="Redis 현재 값"
+            items={[
+              { label: '사용 메모리와 한도', ...memory },
+              {
+                label: '연결 수',
+                value: infraNumber(redis.connectedClients, '개'),
+              },
+              { label: '키 수', value: infraNumber(redis.keys, '개') },
+              {
+                label: 'AOF 쓰기 상태',
+                value:
+                  redis.aofLastWriteOk === null
+                    ? '사용 안 함'
+                    : redis.aofLastWriteOk
+                      ? '정상'
+                      : '실패',
+              },
+            ]}
+          />
+        ) : null}
+      </Region>
+      <Region
+        title="OpenSearch"
+        aside={
+          opensearch ? (
+            <span className="text-sm font-medium">
+              {opensearch.status ?? empty}
+            </span>
+          ) : null
+        }>
+        <Notice data={data} bundle="opensearch" />
+        {opensearch ? (
+          <div className={grid}>
             <InfraChart
-              title="여유 스토리지"
+              title="디스크 여유"
               data={data}
               series={[
                 pairSeries(
-                  'storage',
-                  '여유 스토리지',
-                  data.opensearch.freeStorageBytes,
+                  'disk',
+                  '디스크 여유',
+                  opensearch.diskAvailableBytes,
                 ),
               ]}
               unit="GB"
+              help="홈서버의 다른 컨테이너와 같이 쓰는 디스크의 여유입니다."
             />
             <InfraChart
               title="JVM 메모리 압박"
@@ -275,16 +391,14 @@ export function InfraStorage({ data }: { data: InfraMetrics }) {
                 pairSeries(
                   'jvm',
                   'JVM 메모리 압박',
-                  data.opensearch.jvmMemoryPressure,
+                  opensearch.jvmMemoryPressure,
                 ),
               ]}
               unit="%"
             />
           </div>
-        ) : (
-          missing('OpenSearch')
-        )}
-      </section>
+        ) : null}
+      </Region>
     </>
   );
 }
