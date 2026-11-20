@@ -215,6 +215,10 @@ it('범주색 다섯 개는 정본의 서로 다른 색상이며 UI 토큰과 �
 });
 
 it('AI 비용 fixture는 Langfuse 출처 필드·준비 중·0원·미연결 비용을 제공한다', () => {
+  // 고정 데이터의 보관 기간이 오늘 기준이라 고정 날짜를 조회하는 이 테스트는 시계를 고정한다.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-23T03:00:00Z'));
+
   const data = metricFixture(
     '/quality/ai-cost',
     new URLSearchParams('from=2026-10-21&to=2026-10-23'),
@@ -344,6 +348,10 @@ it('새 퍼널 단계 이름은 홈 진입과 간편 제작 진입이다', () =>
 });
 
 it('대화 요약 fixture는 모델 없는 호출과 Langfuse 모델 비용을 나누고 총 비용과 턴당 원가에 포함한다', () => {
+  // 고정 데이터의 보관 기간이 오늘 기준이라 고정 날짜를 조회하는 이 테스트는 시계를 고정한다.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-23T03:00:00Z'));
+
   const data = metricFixture(
     '/quality/ai-cost',
     new URLSearchParams('from=2026-10-21&to=2026-10-21'),
