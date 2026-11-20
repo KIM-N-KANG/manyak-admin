@@ -5,7 +5,13 @@ import {
   resolveRange,
 } from '@/features/dashboard/date-range';
 
-import type { InfraMetrics, InfraPoint, InfraSeries, InfraUnit } from './types';
+import type {
+  InfraBundle,
+  InfraMetrics,
+  InfraPoint,
+  InfraSeries,
+  InfraUnit,
+} from './types';
 
 export function infraRange(params: URLSearchParams, today = kstToday()) {
   const custom = { from: params.get('from') ?? '', to: params.get('to') ?? '' };
@@ -23,38 +29,42 @@ export function infraRange(params: URLSearchParams, today = kstToday()) {
       (Date.parse(range.to) - Date.parse(range.from)) / 86400000 + 1 > 31,
   };
 }
-export const serviceName = (name: string) =>
-  (
-    ({ server: '서버', ai: 'AI', notification: '알림' }) as Record<
-      string,
-      string
-    >
-  )[name] ?? name;
-export const serviceOrder = ['server', 'ai', 'notification'];
-export const orderedServices = (data: NonNullable<InfraMetrics['ecs']>) =>
-  data.services.toSorted((a, b) => {
-    const rank = (name: string) =>
-      serviceOrder.includes(name) ? serviceOrder.indexOf(name) : 3;
 
-    return rank(a.name) - rank(b.name);
-  });
-export const serviceSeries = (
-  name: string,
-  points: InfraPoint[],
-): InfraSeries => ({
-  key: name,
-  label: serviceName(name),
-  points,
-  color:
-    (
-      {
-        server: 'var(--chart-1)',
-        ai: 'var(--chart-2)',
-        notification: 'var(--chart-3)',
-      } as Record<string, string>
-    )[name] ?? 'var(--chart-3)',
-  dash: ({ ai: '6 3', notification: '2 3' } as Record<string, string>)[name],
-});
+const bundleNames: Record<InfraBundle, string> = {
+  host: '앱 호스트 CPU',
+  hostSystem: '앱 호스트 메모리와 디스크',
+  requests: '요청',
+  rds: 'RDS',
+  redis: 'Redis',
+  opensearch: 'OpenSearch',
+};
+
+/** null 묶음의 문구를 반환한다. unavailable에 있으면 일시 조회 실패, 없으면 설정 없음이다(WEB 4-1). */
+export function bundleNotice(data: InfraMetrics, bundle: InfraBundle) {
+  if (data[bundle] !== null) return null;
+
+  return data.unavailable.includes(bundle)
+    ? `지금 ${bundleNames[bundle]} 지표를 가져올 수 없습니다. 잠시 후 다시 시도해 주세요.`
+    : `이 환경에는 ${bundleNames[bundle]} 지표 설정이 없습니다.`;
+}
+/** 상태 검사가 실패(1)한 구간 수를 문구로 반환한다. */
+export function statusCheck(points: InfraPoint[]) {
+  if (!points.length) return '수집된 값 없음';
+
+  const failed = points.filter((point) => point.value >= 1).length;
+
+  return failed ? `실패 ${failed.toLocaleString('ko-KR')}구간` : '정상';
+}
+
+/** Redis 메모리의 사용량과 한도, 사용률 문구를 반환한다. 다른 용량과 같은 10진 MB이며 한도 0은 한도 없음이다. */
+export function redisMemory(used: number, max: number) {
+  return {
+    value: infraNumber(used, 'MB'),
+    detail: max
+      ? `한도 ${infraNumber(max, 'MB')}, ${infraNumber((used / max) * 100, '%')}`
+      : '한도 없음',
+  };
+}
 export function listedSeries(
   key: string,
   label: string,
@@ -97,8 +107,9 @@ export function infraValue(value: number, unit: InfraUnit) {
       ? value / 1000000
       : value;
 }
+export const fractionUnits: InfraUnit[] = ['%', 'GB', 'MB', 'ms', '크레딧'];
 export function infraNumber(value: number, unit: InfraUnit) {
-  return `${infraValue(value, unit).toLocaleString('ko-KR', { minimumFractionDigits: ['%', 'GB', 'MB', 'ms'].includes(unit) ? 1 : 0, maximumFractionDigits: ['%', 'GB', 'MB', 'ms'].includes(unit) ? 1 : 0 })}${unit}`;
+  return `${infraValue(value, unit).toLocaleString('ko-KR', { minimumFractionDigits: fractionUnits.includes(unit) ? 1 : 0, maximumFractionDigits: fractionUnits.includes(unit) ? 1 : 0 })}${unit}`;
 }
 export function kstTime(at: string, timeOnly = false) {
   const text = new Date(Date.parse(at) + 9 * 3600000).toISOString();

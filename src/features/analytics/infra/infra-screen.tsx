@@ -66,6 +66,8 @@ export function InfraScreen({ embedded = false }: { embedded?: boolean }) {
       : (Date.parse(range.to) - Date.parse(range.from)) / 86400000 < 7
         ? 900
         : 3600);
+  const intervalText =
+    interval === 300 ? '5분' : interval === 900 ? '15분' : '1시간';
   const unavailable =
     metrics.error instanceof FetchError &&
     metrics.error.status === 503 &&
@@ -128,7 +130,7 @@ export function InfraScreen({ embedded = false }: { embedded?: boolean }) {
             </h2>
             {!data ? (
               <span className="text-xs text-muted-foreground">
-                {tab === 'tables' ? '서버 DB' : 'CloudWatch'}
+                {tab === 'tables' ? '서버 DB' : 'CloudWatch와 Prometheus'}
               </span>
             ) : tab === 'tables' ? (
               <HelpTooltip source="서버 DB" label="서버 DB 출처 안내">
@@ -136,12 +138,14 @@ export function InfraScreen({ embedded = false }: { embedded?: boolean }) {
                 카탈로그에서 읽은 크기입니다. 조회 결과는 5분간 캐시합니다.
               </HelpTooltip>
             ) : (
-              <HelpTooltip source="CloudWatch" label="CloudWatch 출처 안내">
+              <HelpTooltip
+                source="CloudWatch와 Prometheus"
+                label="CloudWatch와 Prometheus 출처 안내">
                 CloudWatch 출처 지표이며 {kstTime(data.asOf)} KST에 받은
-                값입니다.{' '}
-                {interval === 300 ? '5분' : interval === 900 ? '15분' : '1시간'}{' '}
-                단위로 집계하며 1~2분 늦게 반영될 수 있습니다. 태스크 수는 조회
-                시각 기준 값입니다.
+                값입니다. {intervalText} 단위로 집계하며 1~2분 늦게 반영될 수
+                있습니다. 홈서버 Prometheus 출처 지표이며 {kstTime(data.asOf)}{' '}
+                KST에 받은 값입니다. {intervalText} 단위로 집계하며 1~2분 늦게
+                반영될 수 있습니다.
               </HelpTooltip>
             )}
           </div>
@@ -174,7 +178,8 @@ export function InfraScreen({ embedded = false }: { embedded?: boolean }) {
                   </h2>
                   <p className="my-3 text-sm">
                     잠시 후 다시 시도해 주세요. 문제가 계속되면 서버의
-                    CloudWatch 권한과 인프라 지표 설정을 확인해 주세요.
+                    CloudWatch 권한, 홈서버 Prometheus 연결, Redis 상태를 확인해
+                    주세요.
                   </p>
                   <Button variant="outline" onClick={() => metrics.refetch()}>
                     다시 시도
@@ -187,10 +192,10 @@ export function InfraScreen({ embedded = false }: { embedded?: boolean }) {
                       <TableSkeleton columns={5} rows={10} pagination={false} />
                     ) : (
                       <>
-                        <SummarySkeleton count={tab === 'services' ? 5 : 3} />
+                        <SummarySkeleton count={tab === 'services' ? 5 : 4} />
                         <ChartsSkeleton
                           infra
-                          count={tab === 'services' ? 5 : 9}
+                          count={tab === 'services' ? 7 : 6}
                         />
                       </>
                     )

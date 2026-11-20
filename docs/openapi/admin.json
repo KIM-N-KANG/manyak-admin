@@ -7,8 +7,8 @@
   },
   "x-source": {
     "input": "https://dev-api.manyak.app/v3/api-docs",
-    "receivedAt": "2026-11-03T15:11:18.882Z",
-    "revision": "238a995"
+    "receivedAt": "2026-11-20T09:24:57.947Z",
+    "revision": "cfa3527"
   },
   "paths": {
     "/api/v1/admin/push/templates/{templateKey}": {
@@ -7765,20 +7765,36 @@
             "type": "integer",
             "format": "int32"
           },
-          "ecs": {
+          "unavailable": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "host": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/InfraEcsMetrics"
+                "$ref": "#/components/schemas/InfraHostMetrics"
               },
               {
                 "type": "null"
               }
             ]
           },
-          "alb": {
+          "hostSystem": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/InfraAlbMetrics"
+                "$ref": "#/components/schemas/InfraHostSystemMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requests": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InfraRequestMetrics"
               },
               {
                 "type": "null"
@@ -7817,42 +7833,10 @@
           }
         }
       },
-      "InfraEcsMetrics": {
+      "InfraHostMetrics": {
         "type": "object",
         "properties": {
-          "services": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InfraServiceMetrics"
-            }
-          }
-        }
-      },
-      "InfraServiceMetrics": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "runningTasks": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "desiredTasks": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pendingTasks": {
-            "type": "integer",
-            "format": "int32"
-          },
           "cpu": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InfraMetricPoint"
-            }
-          },
-          "memory": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/InfraMetricPoint"
@@ -7864,7 +7848,13 @@
               "$ref": "#/components/schemas/InfraMetricPoint"
             }
           },
-          "memoryMax": {
+          "cpuCreditBalance": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "statusCheckFailed": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/InfraMetricPoint"
@@ -7885,7 +7875,46 @@
           }
         }
       },
-      "InfraAlbMetrics": {
+      "InfraHostSystemMetrics": {
+        "type": "object",
+        "properties": {
+          "memoryTotalBytes": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "memoryAvailableBytes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          },
+          "disks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraDisk"
+            }
+          }
+        }
+      },
+      "InfraDisk": {
+        "type": "object",
+        "properties": {
+          "mount": {
+            "type": "string"
+          },
+          "totalBytes": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "availableBytes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InfraMetricPoint"
+            }
+          }
+        }
+      },
+      "InfraRequestMetrics": {
         "type": "object",
         "properties": {
           "requests": {
@@ -7894,13 +7923,7 @@
               "$ref": "#/components/schemas/InfraMetricPoint"
             }
           },
-          "elb5xx": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InfraMetricPoint"
-            }
-          },
-          "target5xx": {
+          "server5xx": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/InfraMetricPoint"
@@ -7952,44 +7975,38 @@
       "InfraRedisMetrics": {
         "type": "object",
         "properties": {
-          "nodes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InfraRedisNode"
-            }
-          }
-        }
-      },
-      "InfraRedisNode": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
+          "usedMemoryBytes": {
+            "type": "integer",
+            "format": "int64"
           },
-          "cpu": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InfraMetricPoint"
-            }
+          "maxMemoryBytes": {
+            "type": "integer",
+            "format": "int64"
           },
-          "memory": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InfraMetricPoint"
-            }
+          "connectedClients": {
+            "type": "integer",
+            "format": "int64"
           },
-          "connections": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InfraMetricPoint"
-            }
+          "keys": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "aofLastWriteOk": {
+            "type": ["boolean", "null"]
           }
         }
       },
       "InfraSearchMetrics": {
         "type": "object",
         "properties": {
-          "freeStorageBytes": {
+          "status": {
+            "type": ["string", "null"]
+          },
+          "diskTotalBytes": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "diskAvailableBytes": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/InfraMetricPoint"
@@ -10061,38 +10078,25 @@
       "JsonNode": {
         "type": "object",
         "properties": {
-          "string": {
+          "empty": {
             "type": "boolean"
           },
-          "container": {
+          "array": {
             "type": "boolean"
           },
-          "valueNode": {
+          "null": {
             "type": "boolean"
           },
           "object": {
             "type": "boolean"
           },
-          "pojo": {
+          "float": {
             "type": "boolean"
           },
-          "textual": {
-            "type": "boolean",
-            "deprecated": true
-          },
-          "boolean": {
+          "string": {
             "type": "boolean"
           },
-          "binary": {
-            "type": "boolean"
-          },
-          "floatingPointNumber": {
-            "type": "boolean"
-          },
-          "missingNode": {
-            "type": "boolean"
-          },
-          "integralNumber": {
+          "container": {
             "type": "boolean"
           },
           "nodeType": {
@@ -10127,19 +10131,32 @@
           "bigInteger": {
             "type": "boolean"
           },
+          "valueNode": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "integralNumber": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
+            "type": "boolean"
+          },
+          "pojo": {
+            "type": "boolean"
+          },
+          "textual": {
+            "type": "boolean",
+            "deprecated": true
+          },
+          "boolean": {
+            "type": "boolean"
+          },
+          "binary": {
+            "type": "boolean"
+          },
           "number": {
-            "type": "boolean"
-          },
-          "array": {
-            "type": "boolean"
-          },
-          "empty": {
-            "type": "boolean"
-          },
-          "null": {
-            "type": "boolean"
-          },
-          "float": {
             "type": "boolean"
           },
           "embeddedValue": {

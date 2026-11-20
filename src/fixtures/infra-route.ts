@@ -5,11 +5,7 @@ import { productionDataSourceError } from '@/api/data-source-guard';
 import { adminOperations } from '@/api/generated/admin-operations';
 import { getRangeError, kstToday } from '@/features/dashboard/date-range';
 
-import {
-  infraEmptyMetricsFixture,
-  infraMetricsFixture,
-  infraTablesFixture,
-} from './infra';
+import { infraMetricsFixture, infraTablesFixture } from './infra';
 
 export function infraRoute(path: 'metrics' | 'db-tables') {
   return async function GET(request: Request) {
@@ -46,20 +42,23 @@ export function infraRoute(path: 'metrics' | 'db-tables') {
       )
         throw new Error('기간이 올바르지 않다.');
 
-      if (process.env.ADMIN_INFRA_FIXTURE_SCENARIO === 'unavailable')
+      const scenario = process.env.ADMIN_INFRA_FIXTURE_SCENARIO;
+
+      if (scenario === 'unavailable')
         return Response.json(
           { message: '인프라 지표를 가져올 수 없습니다.' },
           { status: 503 },
         );
 
-      if (process.env.ADMIN_INFRA_FIXTURE_SCENARIO === 'empty')
-        return Response.json(infraEmptyMetricsFixture(from, to));
-
       return Response.json(
         infraMetricsFixture(
           from,
           to,
-          process.env.ADMIN_INFRA_FIXTURE_SCENARIO === 'complete',
+          scenario === 'empty' ||
+            scenario === 'not-configured' ||
+            scenario === 'partial'
+            ? scenario
+            : 'complete',
         ),
       );
     } catch {

@@ -1668,41 +1668,64 @@ export const Metrics2Response = zod.object({
   from: zod.iso.date().optional(),
   to: zod.iso.date().optional(),
   periodSeconds: zod.number().optional(),
-  ecs: zod
+  unavailable: zod.array(zod.string()).optional(),
+  host: zod
     .union([
       zod.object({
-        services: zod
+        cpu: zod
           .array(
             zod.object({
-              name: zod.string().optional(),
-              runningTasks: zod.number().optional(),
-              desiredTasks: zod.number().optional(),
-              pendingTasks: zod.number().optional(),
-              cpu: zod
-                .array(
-                  zod.object({
-                    at: zod.iso.datetime({ offset: true }).optional(),
-                    value: zod.number().optional(),
-                  }),
-                )
-                .optional(),
-              memory: zod
-                .array(
-                  zod.object({
-                    at: zod.iso.datetime({ offset: true }).optional(),
-                    value: zod.number().optional(),
-                  }),
-                )
-                .optional(),
-              cpuMax: zod
-                .array(
-                  zod.object({
-                    at: zod.iso.datetime({ offset: true }).optional(),
-                    value: zod.number().optional(),
-                  }),
-                )
-                .optional(),
-              memoryMax: zod
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        cpuMax: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        cpuCreditBalance: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        statusCheckFailed: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  hostSystem: zod
+    .union([
+      zod.object({
+        memoryTotalBytes: zod.number().nullish(),
+        memoryAvailableBytes: zod
+          .array(
+            zod.object({
+              at: zod.iso.datetime({ offset: true }).optional(),
+              value: zod.number().optional(),
+            }),
+          )
+          .optional(),
+        disks: zod
+          .array(
+            zod.object({
+              mount: zod.string().optional(),
+              totalBytes: zod.number().nullish(),
+              availableBytes: zod
                 .array(
                   zod.object({
                     at: zod.iso.datetime({ offset: true }).optional(),
@@ -1717,7 +1740,7 @@ export const Metrics2Response = zod.object({
       zod.null(),
     ])
     .optional(),
-  alb: zod
+  requests: zod
     .union([
       zod.object({
         requests: zod
@@ -1728,15 +1751,7 @@ export const Metrics2Response = zod.object({
             }),
           )
           .optional(),
-        elb5xx: zod
-          .array(
-            zod.object({
-              at: zod.iso.datetime({ offset: true }).optional(),
-              value: zod.number().optional(),
-            }),
-          )
-          .optional(),
-        target5xx: zod
+        server5xx: zod
           .array(
             zod.object({
               at: zod.iso.datetime({ offset: true }).optional(),
@@ -1806,37 +1821,11 @@ export const Metrics2Response = zod.object({
   redis: zod
     .union([
       zod.object({
-        nodes: zod
-          .array(
-            zod.object({
-              id: zod.string().optional(),
-              cpu: zod
-                .array(
-                  zod.object({
-                    at: zod.iso.datetime({ offset: true }).optional(),
-                    value: zod.number().optional(),
-                  }),
-                )
-                .optional(),
-              memory: zod
-                .array(
-                  zod.object({
-                    at: zod.iso.datetime({ offset: true }).optional(),
-                    value: zod.number().optional(),
-                  }),
-                )
-                .optional(),
-              connections: zod
-                .array(
-                  zod.object({
-                    at: zod.iso.datetime({ offset: true }).optional(),
-                    value: zod.number().optional(),
-                  }),
-                )
-                .optional(),
-            }),
-          )
-          .optional(),
+        usedMemoryBytes: zod.number().optional(),
+        maxMemoryBytes: zod.number().optional(),
+        connectedClients: zod.number().optional(),
+        keys: zod.number().optional(),
+        aofLastWriteOk: zod.boolean().nullish(),
       }),
       zod.null(),
     ])
@@ -1844,7 +1833,9 @@ export const Metrics2Response = zod.object({
   opensearch: zod
     .union([
       zod.object({
-        freeStorageBytes: zod
+        status: zod.string().nullish(),
+        diskTotalBytes: zod.number().nullish(),
+        diskAvailableBytes: zod
           .array(
             zod.object({
               at: zod.iso.datetime({ offset: true }).optional(),
