@@ -43,7 +43,7 @@ src/
 tests/                  # BFF, mutator, 유틸, 주석 컨벤션 검증
 ```
 
-디자인 기준은 [docs/DESIGN.md](docs/DESIGN.md), 개발 규칙은 [AGENTS.md](AGENTS.md)와 [CLAUDE.md](CLAUDE.md)에 있습니다. 루트 메타데이터는 검색 엔진의 색인과 링크 추적을 비활성화합니다.
+디자인 기준은 [docs/DESIGN.md](docs/DESIGN.md), 개발 규칙은 [AGENTS.md](AGENTS.md)에 있습니다. 루트 메타데이터는 검색 엔진의 색인과 링크 추적을 비활성화합니다.
 
 ## API와 인증
 

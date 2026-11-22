@@ -487,7 +487,7 @@ it('출처는 영역 제목 옆 CloudWatch와 Prometheus와 Redis 구역의 Redi
 
   expect(source.getAttribute('aria-describedby')).toBe(tooltip.id);
   expect(tooltip.textContent).toBe(
-    'CloudWatch 출처 지표이며 2026-11-20 10:12 KST에 받은 값입니다. 5분 단위로 집계하며 1~2분 늦게 반영될 수 있습니다. 홈서버 Prometheus 출처 지표이며 2026-11-20 10:12 KST에 받은 값입니다. 5분 단위로 집계하며 1~2분 늦게 반영될 수 있습니다.',
+    'CloudWatch 출처 지표이며 2026-11-20 10:12 KST에 받은 값입니다. 5분 단위로 집계하며 1~2분 늦게 반영될 수 있습니다. 관측 서버 Prometheus 출처 지표이며 2026-11-20 10:12 KST에 받은 값입니다. 5분 단위로 집계하며 1~2분 늦게 반영될 수 있습니다.',
   );
   fireEvent.keyDown(source, { key: 'Escape' });
   await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
@@ -565,7 +565,7 @@ it('인프라 지표 사용 불가는 두 하위 구분에 격리하고 DB 테�
   await screen.findByText('인프라 지표를 불러올 수 없음');
   expect(
     screen.getByText(
-      '잠시 후 다시 시도해 주세요. 문제가 계속되면 서버의 CloudWatch 권한, 홈서버 Prometheus 연결, Redis 상태를 확인해 주세요.',
+      '잠시 후 다시 시도해 주세요. 문제가 계속되면 서버의 CloudWatch 권한, 관측 서버 Prometheus 연결, Redis 상태를 확인해 주세요.',
     ),
   ).toBeTruthy();
   view.change('tab=storage');

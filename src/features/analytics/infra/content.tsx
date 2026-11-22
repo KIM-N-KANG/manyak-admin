@@ -382,7 +382,7 @@ export function InfraStorage({ data }: { data: InfraMetrics }) {
                 ),
               ]}
               unit="GB"
-              help="홈서버의 다른 컨테이너와 같이 쓰는 디스크의 여유입니다."
+              help="같은 서버의 다른 컨테이너와 같이 쓰는 디스크의 여유입니다."
             />
             <InfraChart
               title="JVM 메모리 압박"
