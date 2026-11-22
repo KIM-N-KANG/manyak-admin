@@ -143,9 +143,9 @@ export function InfraScreen({ embedded = false }: { embedded?: boolean }) {
                 label="CloudWatch와 Prometheus 출처 안내">
                 CloudWatch 출처 지표이며 {kstTime(data.asOf)} KST에 받은
                 값입니다. {intervalText} 단위로 집계하며 1~2분 늦게 반영될 수
-                있습니다. 홈서버 Prometheus 출처 지표이며 {kstTime(data.asOf)}{' '}
-                KST에 받은 값입니다. {intervalText} 단위로 집계하며 1~2분 늦게
-                반영될 수 있습니다.
+                있습니다. 관측 서버 Prometheus 출처 지표이며{' '}
+                {kstTime(data.asOf)} KST에 받은 값입니다. {intervalText} 단위로
+                집계하며 1~2분 늦게 반영될 수 있습니다.
               </HelpTooltip>
             )}
           </div>
@@ -178,8 +178,8 @@ export function InfraScreen({ embedded = false }: { embedded?: boolean }) {
                   </h2>
                   <p className="my-3 text-sm">
                     잠시 후 다시 시도해 주세요. 문제가 계속되면 서버의
-                    CloudWatch 권한, 홈서버 Prometheus 연결, Redis 상태를 확인해
-                    주세요.
+                    CloudWatch 권한, 관측 서버 Prometheus 연결, Redis 상태를
+                    확인해 주세요.
                   </p>
                   <Button variant="outline" onClick={() => metrics.refetch()}>
                     다시 시도
