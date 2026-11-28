@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { productionDataSourceError } from '@/api/data-source-guard';
 import { isFixturePreview } from '@/features/auth/preview';
@@ -104,4 +105,28 @@ export async function forwardAdminRequest(
   } catch {
     return failure(502, '관리자 서버에 연결할 수 없습니다.');
   }
+}
+
+const genres = z.array(z.object({ id: z.number(), name: z.string() }));
+// 공개 장르 API는 관리자 OpenAPI 생성물에 없어 응답 형태만 직접 검증한다.
+const originalCatalog = z.object({ genres, featuredGenres: genres });
+
+/** 게스트 허용 공개 장르 API를 관리자 토큰 없이 불러 형태를 검증한 응답을 돌려준다. */
+export async function forwardOriginalCatalog(request: NextRequest) {
+  const upstream = await forwardAdminRequest(
+    request,
+    '/api/v1/stories/genres',
+    undefined,
+    false,
+  );
+
+  if (!upstream.ok) return upstream;
+
+  const catalog = originalCatalog.safeParse(
+    await upstream.json().catch(() => null),
+  );
+
+  return catalog.success
+    ? NextResponse.json(catalog.data, { headers: upstream.headers })
+    : failure(502, '장르 목록 응답이 올바르지 않습니다.');
 }
