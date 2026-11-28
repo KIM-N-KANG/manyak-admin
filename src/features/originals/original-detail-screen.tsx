@@ -21,7 +21,9 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDialog } from '@/features/originals/confirm-dialog';
 import type { OriginalDetail } from '@/features/originals/types';
+import { imageFrame } from '@/features/shared/image-frame';
 import { useApi } from '@/features/shared/use-api';
+import { cn } from '@/lib/utils';
 
 export function OriginalDetailScreen({ id }: { id: string }) {
   const query = useApi<OriginalDetail>(
@@ -169,9 +171,12 @@ export function OriginalDetailScreen({ id }: { id: string }) {
                           key={image.id ?? position}
                           src={image.imageUrl!}
                           alt={image.imageName}
-                          width={120}
-                          height={160}
-                          className="h-40 w-28 rounded-sm bg-muted object-cover"
+                          width={imageFrame.CHARACTER.size.width}
+                          height={imageFrame.CHARACTER.size.height}
+                          className={cn(
+                            'h-36 rounded-sm bg-muted object-contain',
+                            imageFrame.CHARACTER.width,
+                          )}
                         />
                       ))}
                   </div>
