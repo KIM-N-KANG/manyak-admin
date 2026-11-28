@@ -3,6 +3,7 @@
 import { createElement } from 'react';
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -277,6 +278,50 @@ describe('모바일 메뉴 서랍', () => {
     fireEvent.keyDown(drawer, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();
     await waitFor(() => expect(document.activeElement).toBe(trigger));
+  });
+
+  it('서랍을 연 채 경로가 바뀌면 닫히고 이전 경로로 돌아와도 다시 열리지 않는다', () => {
+    const view = shell('/dashboard');
+    const { trigger } = open();
+    const rerender = (pathname: string) => {
+      navigation.pathname = pathname;
+      view.rerender(
+        createElement(AdminShell, null, createElement('h1', null, '본문')),
+      );
+    };
+
+    rerender('/members');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    rerender('/dashboard');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('서랍을 연 채 데스크톱 너비가 됐다가 모바일로 돌아와도 다시 열리지 않는다', () => {
+    const listeners = new Set<() => void>();
+    const media = {
+      matches: false,
+      addEventListener: (_: string, listener: () => void) =>
+        listeners.add(listener),
+      removeEventListener: (_: string, listener: () => void) =>
+        listeners.delete(listener),
+    };
+    const resize = (desktop: boolean) =>
+      act(() => {
+        media.matches = desktop;
+        listeners.forEach((listener) => listener());
+      });
+
+    vi.stubGlobal('matchMedia', () => media);
+    shell('/dashboard');
+
+    const { trigger } = open();
+
+    resize(true);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    resize(false);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
   });
 
   it('버튼을 다시 누르면 닫는다', () => {

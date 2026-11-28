@@ -77,7 +77,13 @@ export function AdminShell({
   const current = currentSidebarGroup(pathname);
   const name = nickname || '관리자';
   const desktop = useDesktop();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const url = `${pathname}?${search}`;
+  const [drawerUrl, setDrawerUrl] = useState<string | null>(null);
+
+  // 서랍을 연 뒤 뒤로 가기 등으로 주소가 바뀌거나 데스크톱 너비가 되면 렌더 중에 닫는다.
+  if (drawerUrl !== null && (desktop || drawerUrl !== url)) setDrawerUrl(null);
+
+  const closeDrawer = () => setDrawerUrl(null);
 
   function toggle(group: SidebarGroup) {
     if (group === current) return;
@@ -204,7 +210,9 @@ export function AdminShell({
         className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:bg-card focus:p-4">
         본문으로 이동
       </a>
-      <Dialog.Root open={drawerOpen && !desktop} onOpenChange={setDrawerOpen}>
+      <Dialog.Root
+        open={drawerUrl !== null}
+        onOpenChange={(open) => setDrawerUrl(open ? url : null)}>
         <header className="sticky top-0 z-40 flex h-14 items-center gap-1 border-b bg-sidebar px-2 lg:hidden">
           <Dialog.Trigger
             aria-label="관리자 메뉴"
@@ -213,7 +221,7 @@ export function AdminShell({
           </Dialog.Trigger>
           <Link
             href="/dashboard"
-            onClick={() => setDrawerOpen(false)}
+            onClick={closeDrawer}
             className="flex min-h-11 items-center px-2">
             <ManyakLogo className="shrink-0 text-primary" />
           </Link>
@@ -223,7 +231,7 @@ export function AdminShell({
           <Dialog.Backdrop className="fixed inset-x-0 top-14 bottom-0 z-30 bg-black/40 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-none lg:hidden" />
           <Dialog.Popup className="fixed top-14 bottom-0 left-0 z-30 flex w-72 max-w-[calc(100vw-3rem)] flex-col overflow-y-auto overscroll-contain border-r bg-sidebar transition-transform duration-200 ease-out outline-none data-ending-style:-translate-x-full data-starting-style:-translate-x-full motion-reduce:transition-none lg:hidden">
             <Dialog.Title className="sr-only">관리자 메뉴</Dialog.Title>
-            {sidebar('drawer-nav', () => setDrawerOpen(false))}
+            {sidebar('drawer-nav', closeDrawer)}
           </Dialog.Popup>
         </Dialog.Portal>
       </Dialog.Root>
