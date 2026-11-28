@@ -251,6 +251,41 @@ it('대체 텍스트와 크게 보기 버튼 이름은 표지와 이미지 이�
   ).toBeTruthy();
 });
 
+it('표지는 3:4, 인물 이미지는 4:3 칸에 같은 높이로 자르지 않고 보인다', async () => {
+  const section = await loaded();
+  const cover = within(section).getByRole('button', { name: '표지 크게 보기' });
+  const character = within(section).getByRole('button', {
+    name: '도윤_기본 크게 보기',
+  });
+
+  expect(cover.closest('figure')!.className).toContain('w-27');
+  expect(character.closest('figure')!.className).toContain('w-48');
+
+  for (const trigger of [cover, character]) {
+    expect(trigger.className).toContain('h-36');
+    expect(trigger.className).toContain('w-full');
+    expect(trigger.querySelector('img')!.className).toContain('object-contain');
+  }
+
+  expect(cover.querySelector('img')!.getAttribute('width')).toBe('108');
+  expect(character.querySelector('img')!.getAttribute('width')).toBe('192');
+
+  fireEvent.click(character);
+
+  const large = within(await screen.findByRole('dialog')).getByAltText(
+    '도윤_기본',
+  );
+
+  expect([large.getAttribute('width'), large.getAttribute('height')]).toEqual([
+    '1600',
+    '1200',
+  ]);
+  fireEvent.error(within(section).getByAltText('도윤_놀람'));
+  expect(
+    within(section).getByText('이미지 불러오기 실패').parentElement!.className,
+  ).toContain('w-full');
+});
+
 it('크게 보기는 닫기 버튼에 초점을 두고 Esc로 닫으면 누른 이미지로 돌아간다', async () => {
   const section = await loaded();
   const trigger = within(section).getByRole('button', {
