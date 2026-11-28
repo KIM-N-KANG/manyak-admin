@@ -3,10 +3,12 @@
 import { createElement } from 'react';
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -99,8 +101,10 @@ describe('관리자 메뉴 구조', () => {
       within(nav).getByRole('region', { name: '알림' }).querySelectorAll('a'),
     ).toHaveLength(3);
     expect(
-      screen.getByRole('link', { name: '마냑 관리자' }).getAttribute('href'),
-    ).toBe('/dashboard');
+      screen
+        .getAllByRole('link', { name: '마냑 관리자' })
+        .map((link) => link.getAttribute('href')),
+    ).toEqual(['/dashboard', '/dashboard']);
   });
 
   it.each(entries)('%s는 %s 메뉴만 활성화한다', (pathname, label) => {
@@ -211,4 +215,122 @@ it('사이드바 하단에 빌드 시점 버전 표시를 노출한다', () => {
   render(createElement(AdminShell, { nickname: '운영자 이름' }, '내용'));
   expect(screen.getByText('v0.7.0 · abc1234')).toBeTruthy();
   vi.unstubAllEnvs();
+});
+
+describe('모바일 메뉴 서랍', () => {
+  function open() {
+    const trigger = screen.getByRole('button', { name: '관리자 메뉴' });
+
+    fireEvent.click(trigger);
+
+    return {
+      trigger,
+      drawer: screen.getByRole('dialog', { name: '관리자 메뉴' }),
+    };
+  }
+
+  it('햄버거 버튼으로 서랍을 열고 aria 관계와 포커스를 서랍 안으로 옮긴다', async () => {
+    vi.stubEnv('APP_VERSION_LABEL', 'v0.19.1 · abc1234');
+    navigation.pathname = '/dashboard';
+    render(createElement(AdminShell, { nickname: '운영자 이름' }, '본문'));
+
+    const trigger = screen.getByRole('button', { name: '관리자 메뉴' });
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    const { drawer } = open();
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(trigger.getAttribute('aria-controls')).toBe(drawer.id);
+    expect(
+      within(drawer).getByRole('navigation', { name: '관리자 메뉴' }),
+    ).toBeTruthy();
+    expect(within(drawer).getByRole('link', { name: '개요' })).toBeTruthy();
+    expect(
+      within(drawer).getByRole('button', { name: '외부 도구' }),
+    ).toBeTruthy();
+    expect(within(drawer).getByText('운영자 이름')).toBeTruthy();
+    expect(within(drawer).getByText('v0.19.1 · abc1234')).toBeTruthy();
+    await waitFor(() =>
+      expect(drawer.contains(document.activeElement)).toBe(true),
+    );
+    vi.unstubAllEnvs();
+  });
+
+  it('메뉴 항목으로 이동하면 서랍을 닫는다', () => {
+    shell('/dashboard');
+
+    const { trigger, drawer } = open();
+    const link = within(drawer).getByRole('link', { name: '유입' });
+
+    link.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(link);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('Esc로 닫으면 포커스를 햄버거 버튼으로 돌려준다', async () => {
+    shell('/dashboard');
+
+    const { trigger, drawer } = open();
+
+    fireEvent.keyDown(drawer, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+  });
+
+  it('서랍을 연 채 경로가 바뀌면 닫히고 이전 경로로 돌아와도 다시 열리지 않는다', () => {
+    const view = shell('/dashboard');
+    const { trigger } = open();
+    const rerender = (pathname: string) => {
+      navigation.pathname = pathname;
+      view.rerender(
+        createElement(AdminShell, null, createElement('h1', null, '본문')),
+      );
+    };
+
+    rerender('/members');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    rerender('/dashboard');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('서랍을 연 채 데스크톱 너비가 됐다가 모바일로 돌아와도 다시 열리지 않는다', () => {
+    const listeners = new Set<() => void>();
+    const media = {
+      matches: false,
+      addEventListener: (_: string, listener: () => void) =>
+        listeners.add(listener),
+      removeEventListener: (_: string, listener: () => void) =>
+        listeners.delete(listener),
+    };
+    const resize = (desktop: boolean) =>
+      act(() => {
+        media.matches = desktop;
+        listeners.forEach((listener) => listener());
+      });
+
+    vi.stubGlobal('matchMedia', () => media);
+    shell('/dashboard');
+
+    const { trigger } = open();
+
+    resize(true);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    resize(false);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('버튼을 다시 누르면 닫는다', () => {
+    shell('/dashboard');
+
+    const { trigger } = open();
+
+    fireEvent.click(trigger);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
 });
