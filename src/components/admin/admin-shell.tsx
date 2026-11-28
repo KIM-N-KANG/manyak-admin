@@ -2,8 +2,10 @@
 
 import { type ReactNode, useState, useSyncExternalStore } from 'react';
 
+import { Dialog } from '@base-ui/react/dialog';
 import {
   DashboardSquare01Icon,
+  Menu01Icon,
   Notification03Icon,
   Settings01Icon,
 } from '@hugeicons/core-free-icons';
@@ -26,6 +28,7 @@ import {
   type SidebarPreferences,
   sidebarStorageKey,
 } from '@/features/navigation/sidebar-state';
+import { useDesktop } from '@/lib/use-desktop';
 import { cn } from '@/lib/utils';
 
 const sidebarEvent = 'manyak-sidebar-change';
@@ -73,6 +76,8 @@ export function AdminShell({
   const expanded = expandedSidebar(pathname, stored);
   const current = currentSidebarGroup(pathname);
   const name = nickname || '관리자';
+  const desktop = useDesktop();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   function toggle(group: SidebarGroup) {
     if (group === current) return;
@@ -91,19 +96,10 @@ export function AdminShell({
     if (saved) window.dispatchEvent(new Event(sidebarEvent));
   }
 
-  return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[224px_minmax(0,1fr)]">
-      <a
-        href="#content"
-        className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:bg-card focus:p-4">
-        본문으로 이동
-      </a>
-      <aside className="border-b bg-sidebar lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:border-r lg:border-b-0">
-        <Link
-          href="/dashboard"
-          className="flex shrink-0 items-center justify-center border-b px-6 py-5">
-          <ManyakLogo className="shrink-0 text-primary" />
-        </Link>
+  /** 데스크톱 사이드바와 모바일 서랍이 함께 쓰는 메뉴와 하단 영역을 그린다. */
+  function sidebar(prefix: string, onNavigate?: () => void) {
+    return (
+      <>
         <nav
           aria-label="관리자 메뉴"
           className="space-y-6 overflow-y-auto p-3 lg:py-6">
@@ -112,9 +108,9 @@ export function AdminShell({
               <h2>
                 <button
                   type="button"
-                  id={`nav-${group.id}`}
+                  id={`${prefix}-${group.id}`}
                   aria-expanded={expanded[group.id]}
-                  aria-controls={`nav-${group.id}-items`}
+                  aria-controls={`${prefix}-${group.id}-items`}
                   onClick={() => toggle(group.id)}
                   title={
                     group.id === current
@@ -140,9 +136,9 @@ export function AdminShell({
                 </button>
               </h2>
               <div
-                id={`nav-${group.id}-items`}
+                id={`${prefix}-${group.id}-items`}
                 role="region"
-                aria-labelledby={`nav-${group.id}`}
+                aria-labelledby={`${prefix}-${group.id}`}
                 aria-hidden={!expanded[group.id]}
                 inert={!expanded[group.id]}
                 className={cn(
@@ -155,6 +151,7 @@ export function AdminShell({
                       <Link
                         key={href}
                         href={menuHref(href, search)}
+                        onClick={onNavigate}
                         aria-current={
                           isMenuActive(pathname, href) ? 'page' : undefined
                         }
@@ -196,6 +193,47 @@ export function AdminShell({
             </p>
           )}
         </div>
+      </>
+    );
+  }
+
+  return (
+    <div className="min-h-dvh lg:grid lg:grid-cols-[224px_minmax(0,1fr)]">
+      <a
+        href="#content"
+        className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:bg-card focus:p-4">
+        본문으로 이동
+      </a>
+      <Dialog.Root open={drawerOpen && !desktop} onOpenChange={setDrawerOpen}>
+        <header className="sticky top-0 z-40 flex h-14 items-center gap-1 border-b bg-sidebar px-2 lg:hidden">
+          <Dialog.Trigger
+            aria-label="관리자 메뉴"
+            className="flex size-11 shrink-0 items-center justify-center rounded-sm hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground">
+            <HugeiconsIcon icon={Menu01Icon} size={22} aria-hidden="true" />
+          </Dialog.Trigger>
+          <Link
+            href="/dashboard"
+            onClick={() => setDrawerOpen(false)}
+            className="flex min-h-11 items-center px-2">
+            <ManyakLogo className="shrink-0 text-primary" />
+          </Link>
+        </header>
+        <Dialog.Portal>
+          {/* 상단 바(z-40)는 배경 위에 남겨 햄버거 버튼 재클릭으로도 닫히게 한다. */}
+          <Dialog.Backdrop className="fixed inset-x-0 top-14 bottom-0 z-30 bg-black/40 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-none lg:hidden" />
+          <Dialog.Popup className="fixed top-14 bottom-0 left-0 z-30 flex w-72 max-w-[calc(100vw-3rem)] flex-col overflow-y-auto overscroll-contain border-r bg-sidebar transition-transform duration-200 ease-out outline-none data-ending-style:-translate-x-full data-starting-style:-translate-x-full motion-reduce:transition-none lg:hidden">
+            <Dialog.Title className="sr-only">관리자 메뉴</Dialog.Title>
+            {sidebar('drawer-nav', () => setDrawerOpen(false))}
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+      <aside className="hidden bg-sidebar lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:border-r">
+        <Link
+          href="/dashboard"
+          className="flex shrink-0 items-center justify-center border-b px-6 py-5">
+          <ManyakLogo className="shrink-0 text-primary" />
+        </Link>
+        {sidebar('nav')}
       </aside>
       <main
         id="content"

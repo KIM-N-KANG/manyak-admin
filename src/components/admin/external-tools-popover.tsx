@@ -1,34 +1,17 @@
 'use client';
 
-import { useRef, useSyncExternalStore } from 'react';
+import { useRef } from 'react';
 
 import { Popover } from '@base-ui/react/popover';
 
 import { ExternalToolLink } from '@/components/admin/external-tool-link';
 import { popoverMotionClass } from '@/components/ui/popover-motion';
 import { externalLinks } from '@/lib/external-links';
+import { useDesktop } from '@/lib/use-desktop';
 import { cn } from '@/lib/utils';
 
-const desktopQuery = '(min-width: 1024px)';
-
-function subscribe(listener: () => void) {
-  const media = window.matchMedia?.(desktopQuery);
-
-  media?.addEventListener('change', listener);
-
-  return () => media?.removeEventListener('change', listener);
-}
-
-const desktopSnapshot = () =>
-  window.matchMedia?.(desktopQuery).matches ?? false;
-const serverSnapshot = () => false;
-
 export function ExternalToolsPopover() {
-  const desktop = useSyncExternalStore(
-    subscribe,
-    desktopSnapshot,
-    serverSnapshot,
-  );
+  const desktop = useDesktop();
   const trigger = useRef<HTMLButtonElement>(null);
 
   return (

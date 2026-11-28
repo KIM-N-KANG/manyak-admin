@@ -151,7 +151,8 @@ export function DataTable({
   emptyContent?: ReactNode;
 }) {
   return (
-    <div className="overflow-x-auto rounded-md border bg-card">
+    // relative는 셀 안의 sr-only(absolute) 요소가 스크롤 영역 밖으로 페이지를 넓히지 않게 한다.
+    <div className="relative overflow-x-auto rounded-md border bg-card">
       <table className="w-full text-left text-sm">
         <thead className="border-b bg-muted/50">
           <tr>
