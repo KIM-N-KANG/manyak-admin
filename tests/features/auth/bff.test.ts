@@ -349,29 +349,91 @@ describe('보호와 서버 연동', () => {
     vi.stubEnv('ADMIN_DATA_SOURCE', 'server');
 
     const fetchMock = vi.fn();
+    const auditLog = () =>
+      upstreamRoute(request('/api/admin-upstream/audit-logs/1', {}, true), {
+        params: Promise.resolve({ path: ['audit-logs', '1'] }),
+      });
 
     vi.stubGlobal('fetch', fetchMock);
 
-    const response = await upstreamRoute(
-      request('/api/admin-upstream/originals/catalog', {}, true),
-      { params: Promise.resolve({ path: ['originals', 'catalog'] }) },
-    );
+    const response = await auditLog();
 
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ message: '서버 미구현' });
     expect(fetchMock).not.toHaveBeenCalled();
     vi.stubEnv('ADMIN_DATA_SOURCE', 'fixture');
     vi.stubEnv('VERCEL_ENV', 'preview');
-    expect(
-      (
-        await upstreamRoute(
-          request('/api/admin-upstream/originals/catalog', {}, true),
-          {
-            params: Promise.resolve({ path: ['originals', 'catalog'] }),
-          },
-        )
-      ).status,
-    ).toBe(404);
+    expect((await auditLog()).status).toBe(404);
+  });
+  describe('오리지널 장르 카탈로그', () => {
+    const catalog = {
+      genres: [
+        { id: 1, name: '로맨스' },
+        { id: 2, name: '회귀' },
+      ],
+      featuredGenres: [{ id: 2, name: '회귀' }],
+    };
+    const catalogRoute = (signedIn = true) =>
+      upstreamRoute(
+        request('/api/admin-upstream/originals/catalog', {}, signedIn),
+        { params: Promise.resolve({ path: ['originals', 'catalog'] }) },
+      );
+
+    beforeEach(() => vi.stubEnv('ADMIN_DATA_SOURCE', 'server'));
+
+    it('server 모드는 관리자 토큰 없이 공개 장르 API를 불러 검증한 응답을 돌려준다', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(Response.json({ ...catalog, extra: 'ignored' }));
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      const response = await catalogRoute();
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(catalog);
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(fetchMock.mock.calls[0][0]).toBe(
+        'https://server.example/api/v1/stories/genres',
+      );
+      expect(fetchMock.mock.calls[0][1].method).toBe('GET');
+      expect(fetchMock.mock.calls[0][1].headers.has('Authorization')).toBe(
+        false,
+      );
+    });
+    it('세션이 없으면 서버를 부르지 않고 401이다', async () => {
+      const fetchMock = vi.fn();
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      expect((await catalogRoute(false)).status).toBe(401);
+      expect((await proxy(request('/api/originals/catalog'))).status).toBe(401);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+    it('proxy는 server 모드의 카탈로그 요청을 공통 업스트림으로 넘긴다', () => {
+      const response = proxy(request('/api/originals/catalog', {}, true));
+
+      expect(response.headers.get('x-middleware-rewrite')).toBe(
+        `${origin}/api/admin-upstream/originals/catalog`,
+      );
+    });
+    it('서버 오류는 그대로, 형태가 다른 응답은 502로 돌려준다', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValueOnce(
+            Response.json({ message: '점검 중' }, { status: 503 }),
+          )
+          .mockResolvedValueOnce(Response.json({ genres: [{ id: 1 }] })),
+      );
+
+      const failed = await catalogRoute();
+
+      expect(failed.status).toBe(503);
+      expect(await failed.json()).toEqual({ message: '점검 중' });
+      expect((await catalogRoute()).status).toBe(502);
+    });
   });
   it('서버 경로 매핑과 미지원 경로를 고정한다', () => {
     expect(findAdminEndpoint('/payments/abc', 'GET')?.serverPath).toBe(
@@ -381,9 +443,7 @@ describe('보호와 서버 연동', () => {
       findAdminEndpoint('/notifications/templates/key', 'PUT')?.serverPath,
     ).toBe('/api/v1/admin/push/templates/key');
     expect(findAdminEndpoint('/evil', 'POST')).toBeNull();
-    expect(
-      findAdminEndpoint('/originals/catalog', 'GET')?.serverPath,
-    ).toBeNull();
+    expect(findAdminEndpoint('/audit-logs/1', 'GET')?.serverPath).toBeNull();
   });
 });
 

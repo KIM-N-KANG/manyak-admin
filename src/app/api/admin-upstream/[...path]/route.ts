@@ -4,6 +4,7 @@ import { findAdminEndpoint } from '@/api/admin-endpoints';
 import {
   failure,
   forwardAdminRequest,
+  forwardOriginalCatalog,
   isServerMode,
 } from '@/api/admin-upstream';
 import { validateAdminRequest } from '@/api/admin-validation';
@@ -32,6 +33,10 @@ async function handle(
   if (!isServerMode()) return failure(404, '지원하지 않는 경로입니다.');
 
   const { path } = await context.params;
+
+  if (request.method === 'GET' && path.join('/') === 'originals/catalog')
+    return forwardOriginalCatalog(request);
+
   const endpoint = findAdminEndpoint(`/${path.join('/')}`, request.method);
 
   if (!endpoint) return failure(404, '지원하지 않는 경로입니다.');
