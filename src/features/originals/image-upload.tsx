@@ -10,6 +10,8 @@ import type {
   OriginalPresign,
   OriginalUpload,
 } from '@/features/originals/types';
+import { imageFrame } from '@/features/shared/image-frame';
+import { cn } from '@/lib/utils';
 
 export function ImageUpload({
   label,
@@ -102,9 +104,12 @@ export function ImageUpload({
           unoptimized
           src={imageUrl}
           alt={`${label} 미리보기`}
-          width={240}
-          height={180}
-          className="h-40 w-full rounded-sm bg-muted object-contain"
+          width={imageFrame[kind].size.width}
+          height={imageFrame[kind].size.height}
+          className={cn(
+            'h-36 rounded-sm bg-muted object-contain',
+            imageFrame[kind].width,
+          )}
         />
       ) : (
         <p className="text-xs text-muted-foreground">이미지 없음</p>

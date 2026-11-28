@@ -11,6 +11,7 @@ import { FormSkeleton } from '@/components/admin/loading-ui';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { imageStatusLabel } from '@/features/moderation/labels';
+import { imageFrame, type ImageKind } from '@/features/shared/image-frame';
 import { useApi } from '@/features/shared/use-api';
 import type { StorySettings } from '@/features/stories/types';
 
@@ -52,20 +53,23 @@ function SettingImage({
   src,
   name,
   status,
+  kind,
   caption = true,
 }: {
   src: string;
   name: string;
   status: string;
+  kind: ImageKind;
   caption?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   const close = useRef<HTMLButtonElement>(null);
+  const frame = imageFrame[kind];
 
   return (
-    <figure className="w-28">
+    <figure className={frame.width}>
       {failed ? (
-        <div className="flex h-36 w-28 flex-col items-center justify-center gap-1 rounded-sm border bg-muted p-2 text-center text-xs text-muted-foreground">
+        <div className="flex h-36 w-full flex-col items-center justify-center gap-1 rounded-sm border bg-muted p-2 text-center text-xs text-muted-foreground">
           <span className="break-keep">이미지 불러오기 실패</span>
           <span className="break-all">{name}</span>
         </div>
@@ -73,13 +77,13 @@ function SettingImage({
         <Dialog.Root>
           <Dialog.Trigger
             aria-label={`${name} 크게 보기`}
-            className="block h-36 w-28 rounded-sm bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            className="block h-36 w-full rounded-sm bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <Image
               unoptimized
               src={src}
               alt={name}
-              width={112}
-              height={144}
+              width={frame.size.width}
+              height={frame.size.height}
               onError={() => setFailed(true)}
               className="h-full w-full object-contain"
             />
@@ -104,8 +108,8 @@ function SettingImage({
                 unoptimized
                 src={src}
                 alt={name}
-                width={1200}
-                height={1600}
+                width={frame.large.width}
+                height={frame.large.height}
                 className="min-h-0 w-full flex-1 object-contain"
               />
             </Dialog.Popup>
@@ -131,6 +135,7 @@ function Settings({ data: d }: { data: StorySettings }) {
                 src={d.thumbnailUrl}
                 name="표지"
                 status={d.thumbnailModerationStatus}
+                kind="COVER"
                 caption={false}
               />
             ) : (
@@ -182,6 +187,7 @@ function Settings({ data: d }: { data: StorySettings }) {
                             src={image.imageUrl}
                             name={image.imageName}
                             status={image.moderationStatus}
+                            kind="CHARACTER"
                           />
                         ))}
                       </div>

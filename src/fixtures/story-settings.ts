@@ -29,7 +29,7 @@ function original(index: number): Partial<StorySettings> {
           {
             id: id(index, 20),
             imageName: '도윤_기본',
-            imageUrl: picture('#3B6EA8', 600, 800, '도윤_기본'),
+            imageUrl: picture('#3B6EA8', 1024, 768, '도윤_기본'),
             moderationStatus: 'APPROVED',
           },
         ],
@@ -53,7 +53,7 @@ function userFull(index: number): Partial<StorySettings> {
           {
             id: id(index, 20),
             imageName: '도윤_기본',
-            imageUrl: picture('#3B6EA8', 600, 800, '도윤_기본'),
+            imageUrl: picture('#3B6EA8', 1024, 768, '도윤_기본'),
             moderationStatus: 'APPROVED',
           },
           {
